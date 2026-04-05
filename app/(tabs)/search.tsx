@@ -62,7 +62,7 @@ export default function SearchScreen() {
       <FlatList
         data={resultados}
         numColumns={2}
-        contentContainerStyle={{ padding: 16, gap: 12 }}
+        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 90 }}
         columnWrapperStyle={{ gap: 12 }}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (

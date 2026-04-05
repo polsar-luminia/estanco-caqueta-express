@@ -12,9 +12,10 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 interface Props {
   product: Producto;
   onPress: () => void;
+  badge?: string;
 }
 
-export function ProductCard({ product, onPress }: Props) {
+export function ProductCard({ product, onPress, badge }: Props) {
   const addItem = useCartStore((s) => s.addItem);
   const { animatedStyle, onPressIn, onPressOut } = useScalePress();
 
@@ -41,31 +42,41 @@ export function ProductCard({ product, onPress }: Props) {
       style={[animatedStyle, { flex: 1 }]}
     >
       <View
-        className="bg-white rounded-2xl overflow-hidden"
+        className="bg-white overflow-hidden"
         style={{
           padding: 12,
           borderRadius: 16,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 4 },
+          shadowColor: "#1A1C1A",
+          shadowOffset: { width: 0, height: 12 },
           shadowOpacity: 0.04,
-          shadowRadius: 12,
+          shadowRadius: 32,
           elevation: 2,
         }}
       >
-        {/* Imagen del producto */}
+        {/* Imagen con badge */}
         <View
           className="w-full overflow-hidden"
           style={{ borderRadius: 12, backgroundColor: "#FAFAF6" }}
         >
+          {badge && (
+            <View
+              className="absolute top-2 left-2 z-10 px-2 py-1 rounded"
+              style={{ backgroundColor: "#D33587" }}
+            >
+              <Text className="text-white font-bold" style={{ fontSize: 8, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                {badge}
+              </Text>
+            </View>
+          )}
           <ShimmerImage
             imageUrl={product.imagen_url}
             fallbackCategory={product.categoria}
             style={{ width: "100%", aspectRatio: 1 }}
-            contentFit="contain"
+            contentFit="cover"
           />
         </View>
 
-        {/* Info del producto */}
+        {/* Info */}
         <View className="mt-3">
           <Text
             className="text-sm font-bold text-gray-900"
@@ -89,13 +100,13 @@ export function ProductCard({ product, onPress }: Props) {
               }}
               className="items-center justify-center"
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 20,
+                width: 36,
+                height: 36,
+                borderRadius: 18,
                 backgroundColor: "#1FAF55",
               }}
             >
-              <Text className="text-white text-xl font-bold" style={{ marginTop: -1 }}>
+              <Text className="text-white text-lg font-bold" style={{ marginTop: -1 }}>
                 +
               </Text>
             </Pressable>

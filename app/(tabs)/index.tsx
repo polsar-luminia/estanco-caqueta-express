@@ -10,6 +10,8 @@ import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridS
 import { CategoryStripSkeleton } from "../../src/components/skeletons/CategoryStripSkeleton";
 import { BannerSkeleton } from "../../src/components/skeletons/BannerSkeleton";
 
+const BADGES = ["Mas Vendido", "Oferta", null, null, "Mas Vendido", null];
+
 export default function HomeScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -42,20 +44,16 @@ export default function HomeScreen() {
     <ScrollView
       className="flex-1"
       style={{ backgroundColor: "#FAFAF6" }}
+      contentContainerStyle={{ paddingBottom: 90 }}
       refreshControl={
-        <RefreshControl refreshing={false} onRefresh={onRefresh} colors={["#17994A"]} />
+        <RefreshControl refreshing={false} onRefresh={onRefresh} colors={["#1FAF55"]} />
       }
     >
       {isLoading ? (
         <>
-          {/* Skeleton para búsqueda */}
           <View className="px-4 pt-4 pb-2">
-            <View
-              className="rounded-xl"
-              style={{ height: 52, backgroundColor: "#E2E3DF" }}
-            />
+            <View className="rounded-xl" style={{ height: 48, backgroundColor: "#E2E3DF" }} />
           </View>
-          <BannerSkeleton />
           <View className="px-4 py-4">
             <CategoryStripSkeleton />
           </View>
@@ -65,22 +63,22 @@ export default function HomeScreen() {
         </>
       ) : (
         <>
-          {/* Barra de búsqueda */}
+          {/* Search bar */}
           <Pressable
-            className="mx-4 mt-4 mb-2"
+            className="mx-4 mt-3 mb-2"
             onPress={() => router.push("/(tabs)/search")}
           >
             <View
               className="flex-row items-center rounded-xl"
-              style={{ backgroundColor: "#E2E3DF", paddingVertical: 14, paddingLeft: 48, paddingRight: 16 }}
+              style={{ backgroundColor: "#E8E8E5", paddingVertical: 12, paddingLeft: 44, paddingRight: 16 }}
             >
               <Feather
                 name="search"
-                size={20}
-                color="#6B7280"
-                style={{ position: "absolute", left: 16 }}
+                size={18}
+                color="#6D7B6C"
+                style={{ position: "absolute", left: 14 }}
               />
-              <Text className="text-gray-500 text-base">
+              <Text style={{ color: "#6D7B6C", fontSize: 14 }}>
                 ¿Qué te apetece hoy?
               </Text>
             </View>
@@ -91,7 +89,7 @@ export default function HomeScreen() {
 
           {/* Categorías */}
           <View className="px-4 pt-4 pb-2">
-            <Text className="text-lg font-bold text-gray-800 mb-3">
+            <Text className="text-base font-bold text-gray-800 mb-3">
               Explorar Categorías
             </Text>
             <CategoryStrip
@@ -101,13 +99,13 @@ export default function HomeScreen() {
           </View>
 
           {/* Destacados */}
-          <View className="px-4 pt-4 pb-6">
+          <View className="px-4 pt-3 pb-6">
             <View className="flex-row items-center mb-3">
               <View
                 className="rounded-full mr-2"
                 style={{ width: 8, height: 8, backgroundColor: "#D33587" }}
               />
-              <Text className="text-lg font-bold text-gray-800">
+              <Text className="text-base font-bold text-gray-800">
                 Destacados
               </Text>
             </View>
@@ -115,13 +113,14 @@ export default function HomeScreen() {
               data={destacados}
               numColumns={2}
               scrollEnabled={false}
-              columnWrapperStyle={{ gap: 12 }}
-              contentContainerStyle={{ gap: 12 }}
+              columnWrapperStyle={{ gap: 10 }}
+              contentContainerStyle={{ gap: 10 }}
               keyExtractor={(item) => String(item.id)}
-              renderItem={({ item }) => (
+              renderItem={({ item, index }) => (
                 <ProductCard
                   product={item}
                   onPress={() => router.push(`/product/${item.id}`)}
+                  badge={BADGES[index % BADGES.length] || undefined}
                 />
               )}
             />
