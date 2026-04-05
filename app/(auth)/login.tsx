@@ -1,21 +1,14 @@
 import { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { Link } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import Toast from "react-native-toast-message";
 import { useAuthStore } from "../../src/stores/auth";
 
 export default function LoginScreen() {
   const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const login = useAuthStore((s) => s.login);
 
@@ -28,11 +21,7 @@ export default function LoginScreen() {
     try {
       await login(telefono.trim(), password);
     } catch (err: any) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: err.message || "No se pudo iniciar sesion",
-      });
+      Toast.show({ type: "error", text1: "Error", text2: err.message || "No se pudo iniciar sesion" });
     } finally {
       setLoading(false);
     }
@@ -40,10 +29,11 @@ export default function LoginScreen() {
 
   return (
     <View className="flex-1">
+      {/* Gradient background */}
       <LinearGradient
-        colors={["#1FAF55", "#FAFAF6"]}
-        locations={[0, 0.45]}
-        className="absolute top-0 left-0 right-0 bottom-0"
+        colors={["#1FAF55", "rgba(31,175,85,0.08)", "#FAFAF6"]}
+        locations={[0, 0.25, 0.5]}
+        style={{ position: "absolute", width: "100%", height: "100%" }}
       />
 
       <KeyboardAvoidingView
@@ -51,148 +41,142 @@ export default function LoginScreen() {
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
           keyboardShouldPersistTaps="handled"
-          className="flex-1 px-6"
         >
-          {/* --- Card --- */}
+          {/* Card */}
           <View
             className="bg-white rounded-2xl p-8"
             style={{
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.08,
-              shadowRadius: 16,
-              elevation: 6,
+              shadowColor: "#1A1C1A",
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: 0.06,
+              shadowRadius: 32,
+              elevation: 4,
             }}
           >
-            {/* --- Logo --- */}
-            <View className="items-center mb-6">
-              {/* Icono placeholder */}
-              <View className="w-16 h-16 rounded-2xl bg-[#1FAF55] items-center justify-center mb-3">
-                <Text className="text-white text-2xl font-bold">EC</Text>
+            {/* Logo */}
+            <View className="items-center mb-8">
+              <View
+                className="items-center justify-center mb-4"
+                style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: "#F4F4F0" }}
+              >
+                <Text style={{ fontSize: 28 }}>🍸</Text>
               </View>
-
               <View className="flex-row items-baseline">
-                <Text className="text-3xl font-extrabold text-[#D33587]">
-                  Estanco
-                </Text>
-                <Text className="text-3xl font-extrabold text-[#1FAF55] ml-2">
-                  Caqueta
-                </Text>
+                <Text style={{ fontWeight: "800", fontSize: 26, color: "#D33587" }}>Estanco</Text>
+                <Text style={{ fontWeight: "800", fontSize: 26, color: "#1FAF55", marginLeft: 4 }}>Caquetá</Text>
               </View>
-
-              <View className="bg-[#1FAF55] rounded-md px-4 py-1 mt-1">
-                <Text className="text-white text-xs font-bold tracking-widest">
-                  EXPRESS
-                </Text>
-              </View>
-
-              <Text className="text-sm text-gray-500 mt-3">
+              <Text style={{ fontWeight: "800", fontSize: 18, color: "#D33587", letterSpacing: 4, marginTop: 2 }}>
+                EXPRESS
+              </Text>
+              <Text style={{ color: "#6D7B6C", fontSize: 13, marginTop: 12 }}>
                 Tus licores favoritos en minutos.
               </Text>
             </View>
 
-            {/* --- Inputs --- */}
-            <View className="gap-4 mb-4">
-              {/* Telefono */}
-              <View className="relative">
-                <View className="absolute left-4 top-0 bottom-0 justify-center z-10">
-                  <Text className="text-gray-400 text-base">📱</Text>
-                </View>
+            {/* Phone */}
+            <View style={{ gap: 4, marginBottom: 16 }}>
+              <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginLeft: 4 }}>
+                Número de Teléfono
+              </Text>
+              <View className="flex-row items-center rounded-2xl" style={{ backgroundColor: "#E2E3DF", paddingHorizontal: 16, paddingVertical: 14 }}>
+                <Text style={{ fontSize: 18, marginRight: 10, color: "#6D7B6C" }}>📱</Text>
                 <TextInput
-                  className="border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 text-base text-gray-800 bg-gray-50"
-                  placeholder="Telefono (ej: 3155519216)"
-                  placeholderTextColor="#9CA3AF"
+                  className="flex-1 text-base"
+                  style={{ color: "#1A1C1A" }}
+                  placeholder="300 000 0000"
+                  placeholderTextColor="#BCCABA"
                   keyboardType="phone-pad"
                   value={telefono}
                   onChangeText={setTelefono}
                   autoCapitalize="none"
                 />
               </View>
+            </View>
 
-              {/* Contrasena */}
-              <View className="relative">
-                <View className="absolute left-4 top-0 bottom-0 justify-center z-10">
-                  <Text className="text-gray-400 text-base">🔒</Text>
-                </View>
+            {/* Password */}
+            <View style={{ gap: 4, marginBottom: 8 }}>
+              <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginLeft: 4 }}>
+                Contraseña
+              </Text>
+              <View className="flex-row items-center rounded-2xl" style={{ backgroundColor: "#E2E3DF", paddingHorizontal: 16, paddingVertical: 14 }}>
+                <Text style={{ fontSize: 18, marginRight: 10, color: "#6D7B6C" }}>🔒</Text>
                 <TextInput
-                  className="border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 text-base text-gray-800 bg-gray-50"
-                  placeholder="Contrasena"
-                  placeholderTextColor="#9CA3AF"
-                  secureTextEntry
+                  className="flex-1 text-base"
+                  style={{ color: "#1A1C1A" }}
+                  placeholder="••••••••"
+                  placeholderTextColor="#BCCABA"
+                  secureTextEntry={!showPass}
                   value={password}
                   onChangeText={setPassword}
                 />
+                <Pressable onPress={() => setShowPass(!showPass)}>
+                  <Text style={{ fontSize: 18, color: "#6D7B6C" }}>{showPass ? "🙈" : "👁️"}</Text>
+                </Pressable>
               </View>
+              <Text className="self-end mt-1" style={{ fontSize: 11, color: "#1FAF55", fontWeight: "500" }}>
+                ¿Olvidaste tu contraseña?
+              </Text>
             </View>
 
-            {/* Olvidaste tu contrasena */}
-            <Pressable className="self-end mb-6">
-              <Text className="text-[#D33587] text-xs font-medium">
-                Olvidaste tu contrasena?
-              </Text>
-            </Pressable>
-
-            {/* Boton Ingresar */}
+            {/* Button */}
             <Pressable
               onPress={handleLogin}
               disabled={loading}
-              className={`rounded-xl py-4 items-center ${
-                loading ? "bg-gray-400" : "bg-[#1FAF55]"
-              }`}
+              className="items-center rounded-xl mt-4"
               style={{
+                backgroundColor: loading ? "#9E9E9E" : "#1FAF55",
+                paddingVertical: 16,
                 shadowColor: "#1FAF55",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.2,
+                shadowRadius: 16,
                 elevation: 4,
               }}
             >
-              <Text className="text-white font-bold text-base">
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>
                 {loading ? "Ingresando..." : "Ingresar"}
               </Text>
             </Pressable>
 
-            {/* --- Divider --- */}
+            {/* Divider */}
             <View className="flex-row items-center my-6">
-              <View className="flex-1 h-px bg-gray-200" />
-              <Text className="mx-4 text-xs text-gray-400">
-                O continua con
+              <View className="flex-1" style={{ height: 1, backgroundColor: "#E2E3DF" }} />
+              <Text style={{ color: "#6D7B6C", fontSize: 10, fontWeight: "700", letterSpacing: 1.5, textTransform: "uppercase", marginHorizontal: 12 }}>
+                O continúa con
               </Text>
-              <View className="flex-1 h-px bg-gray-200" />
+              <View className="flex-1" style={{ height: 1, backgroundColor: "#E2E3DF" }} />
             </View>
 
-            {/* --- Social buttons --- */}
-            <View className="flex-row gap-3">
+            {/* Social */}
+            <View className="flex-row" style={{ gap: 12 }}>
               <Pressable
-                className="flex-1 flex-row items-center justify-center border border-gray-200 rounded-xl py-3"
+                className="flex-1 flex-row items-center justify-center rounded-2xl py-3"
+                style={{ backgroundColor: "#F4F4F0", borderWidth: 1, borderColor: "#E2E3DF" }}
               >
-                <Text className="text-sm font-medium text-gray-600">
-                  Google
-                </Text>
+                <Text style={{ fontSize: 16, marginRight: 6 }}>🟦</Text>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: "#3D4A3E" }}>Google</Text>
               </Pressable>
               <Pressable
-                className="flex-1 flex-row items-center justify-center border border-gray-200 rounded-xl py-3"
+                className="flex-1 flex-row items-center justify-center rounded-2xl py-3"
+                style={{ backgroundColor: "#F4F4F0", borderWidth: 1, borderColor: "#E2E3DF" }}
               >
-                <Text className="text-sm font-medium text-gray-600">
-                  Facebook
-                </Text>
+                <Text style={{ fontSize: 16, marginRight: 6 }}>📘</Text>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: "#3D4A3E" }}>Facebook</Text>
               </Pressable>
             </View>
 
-            {/* --- Footer link --- */}
-            <View className="flex-row justify-center mt-6">
-              <Text className="text-sm text-gray-500">
-                No tienes cuenta?{" "}
-              </Text>
-              <Link href="/(auth)/register" asChild>
-                <Pressable>
-                  <Text className="text-sm font-semibold text-[#D33587]">
-                    Registrate
-                  </Text>
-                </Pressable>
-              </Link>
+            {/* Footer */}
+            <View className="items-center mt-8">
+              <View className="flex-row">
+                <Text style={{ color: "#6D7B6C", fontSize: 13 }}>¿No tienes una cuenta? </Text>
+                <Link href="/(auth)/register" asChild>
+                  <Pressable>
+                    <Text style={{ color: "#D33587", fontSize: 13, fontWeight: "700" }}>Regístrate</Text>
+                  </Pressable>
+                </Link>
+              </View>
             </View>
           </View>
         </ScrollView>

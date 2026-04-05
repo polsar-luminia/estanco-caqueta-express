@@ -1,14 +1,5 @@
 import { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { Link } from "expo-router";
 import Toast from "react-native-toast-message";
 import { useAuthStore } from "../../src/stores/auth";
@@ -17,6 +8,7 @@ export default function RegisterScreen() {
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const register = useAuthStore((s) => s.register);
 
@@ -26,189 +18,150 @@ export default function RegisterScreen() {
       return;
     }
     if (password.length < 6) {
-      Toast.show({
-        type: "error",
-        text1: "Contrasena muy corta",
-        text2: "Minimo 6 caracteres",
-      });
+      Toast.show({ type: "error", text1: "Contrasena muy corta", text2: "Minimo 6 caracteres" });
       return;
     }
     setLoading(true);
     try {
       await register(telefono.trim(), nombre.trim(), password);
     } catch (err: any) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: err.message || "No se pudo crear la cuenta",
-      });
+      Toast.show({ type: "error", text1: "Error", text2: err.message || "No se pudo crear la cuenta" });
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <View className="flex-1">
-      <LinearGradient
-        colors={["#1FAF55", "#FAFAF6"]}
-        locations={[0, 0.45]}
-        className="absolute top-0 left-0 right-0 bottom-0"
-      />
+  const InputField = ({ label, icon, placeholder, value, onChangeText, keyboardType, secureTextEntry, showToggle }: any) => (
+    <View style={{ gap: 4, marginBottom: 12 }}>
+      <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginLeft: 16 }}>
+        {label}
+      </Text>
+      <View className="flex-row items-center" style={{ backgroundColor: "#F4F4F0", borderRadius: 999, paddingHorizontal: 20, paddingVertical: 14 }}>
+        <Text style={{ fontSize: 18, marginRight: 12, color: "#6D7B6C" }}>{icon}</Text>
+        <TextInput
+          className="flex-1 text-base"
+          style={{ color: "#1A1C1A" }}
+          placeholder={placeholder}
+          placeholderTextColor="#BCCABA"
+          keyboardType={keyboardType || "default"}
+          secureTextEntry={secureTextEntry}
+          value={value}
+          onChangeText={onChangeText}
+          autoCapitalize={keyboardType === "phone-pad" || keyboardType === "email-address" ? "none" : "words"}
+        />
+        {showToggle && (
+          <Pressable onPress={() => setShowPass(!showPass)}>
+            <Text style={{ fontSize: 18, color: "#6D7B6C" }}>{showPass ? "🙈" : "👁️"}</Text>
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
 
+  return (
+    <View className="flex-1" style={{ backgroundColor: "#FFFFFF" }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
           keyboardShouldPersistTaps="handled"
-          className="flex-1 px-6"
         >
-          {/* --- Card --- */}
-          <View
-            className="bg-white rounded-2xl p-8"
+          {/* Logo */}
+          <View className="items-center mb-8">
+            <View
+              className="items-center justify-center mb-4"
+              style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: "#F4F4F0" }}
+            >
+              <Text style={{ fontSize: 28 }}>🍾</Text>
+            </View>
+            <View className="flex-row items-baseline">
+              <Text style={{ fontWeight: "800", fontSize: 28, color: "#D33587" }}>Estanco</Text>
+              <Text style={{ fontWeight: "800", fontSize: 28, color: "#1FAF55", marginLeft: 4 }}>Caquetá</Text>
+            </View>
+            <Text style={{ fontWeight: "900", fontSize: 18, color: "#D33587", letterSpacing: 4, fontStyle: "italic", marginTop: -2 }}>
+              EXPRESS
+            </Text>
+            <Text style={{ color: "#6D7B6C", fontSize: 13, marginTop: 12 }}>
+              Tu licorera favorita en minutos
+            </Text>
+          </View>
+
+          {/* Form */}
+          <InputField label="Nombre Completo" icon="👤" placeholder="Ej. Juan Pérez" value={nombre} onChangeText={setNombre} />
+          <InputField label="Número de Teléfono" icon="📱" placeholder="+57 300 000 0000" value={telefono} onChangeText={setTelefono} keyboardType="phone-pad" />
+          <InputField label="Contraseña" icon="🔒" placeholder="••••••••" value={password} onChangeText={setPassword} secureTextEntry={!showPass} showToggle />
+
+          {/* Button */}
+          <Pressable
+            onPress={handleRegister}
+            disabled={loading}
+            className="items-center mt-4"
             style={{
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.08,
-              shadowRadius: 16,
+              backgroundColor: loading ? "#9E9E9E" : "#1FAF55",
+              paddingVertical: 16,
+              borderRadius: 999,
+              shadowColor: "#1FAF55",
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: 0.2,
+              shadowRadius: 32,
               elevation: 6,
             }}
           >
-            {/* --- Logo --- */}
-            <View className="items-center mb-6">
-              {/* Icono placeholder */}
-              <View className="w-16 h-16 rounded-2xl bg-[#1FAF55] items-center justify-center mb-3">
-                <Text className="text-white text-2xl font-bold">EC</Text>
-              </View>
+            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>
+              {loading ? "Creando cuenta..." : "Crear Cuenta"}
+            </Text>
+          </Pressable>
 
-              <View className="flex-row items-baseline">
-                <Text className="text-3xl font-extrabold text-[#D33587]">
-                  Estanco
-                </Text>
-                <Text className="text-3xl font-extrabold text-[#1FAF55] ml-2">
-                  Caqueta
-                </Text>
-              </View>
-
-              <View className="bg-[#1FAF55] rounded-md px-4 py-1 mt-1">
-                <Text className="text-white text-xs font-bold tracking-widest">
-                  EXPRESS
-                </Text>
-              </View>
-
-              <Text className="text-sm text-gray-500 mt-3">
-                Crea tu cuenta en segundos.
-              </Text>
-            </View>
-
-            {/* --- Inputs --- */}
-            <View className="gap-4 mb-6">
-              {/* Nombre */}
-              <View className="relative">
-                <View className="absolute left-4 top-0 bottom-0 justify-center z-10">
-                  <Text className="text-gray-400 text-base">👤</Text>
-                </View>
-                <TextInput
-                  className="border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 text-base text-gray-800 bg-gray-50"
-                  placeholder="Tu nombre"
-                  placeholderTextColor="#9CA3AF"
-                  value={nombre}
-                  onChangeText={setNombre}
-                />
-              </View>
-
-              {/* Telefono */}
-              <View className="relative">
-                <View className="absolute left-4 top-0 bottom-0 justify-center z-10">
-                  <Text className="text-gray-400 text-base">📱</Text>
-                </View>
-                <TextInput
-                  className="border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 text-base text-gray-800 bg-gray-50"
-                  placeholder="Telefono (ej: 3155519216)"
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="phone-pad"
-                  value={telefono}
-                  onChangeText={setTelefono}
-                  autoCapitalize="none"
-                />
-              </View>
-
-              {/* Contrasena */}
-              <View className="relative">
-                <View className="absolute left-4 top-0 bottom-0 justify-center z-10">
-                  <Text className="text-gray-400 text-base">🔒</Text>
-                </View>
-                <TextInput
-                  className="border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 text-base text-gray-800 bg-gray-50"
-                  placeholder="Contrasena (minimo 6 caracteres)"
-                  placeholderTextColor="#9CA3AF"
-                  secureTextEntry
-                  value={password}
-                  onChangeText={setPassword}
-                />
-              </View>
-            </View>
-
-            {/* Boton Registrarme */}
-            <Pressable
-              onPress={handleRegister}
-              disabled={loading}
-              className={`rounded-xl py-4 items-center ${
-                loading ? "bg-gray-400" : "bg-[#1FAF55]"
-              }`}
-              style={{
-                shadowColor: "#1FAF55",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-                elevation: 4,
-              }}
-            >
-              <Text className="text-white font-bold text-base">
-                {loading ? "Creando cuenta..." : "Registrarme"}
-              </Text>
-            </Pressable>
-
-            {/* --- Divider --- */}
-            <View className="flex-row items-center my-6">
-              <View className="flex-1 h-px bg-gray-200" />
-              <Text className="mx-4 text-xs text-gray-400">
-                O continua con
-              </Text>
-              <View className="flex-1 h-px bg-gray-200" />
-            </View>
-
-            {/* --- Social buttons --- */}
-            <View className="flex-row gap-3">
-              <Pressable
-                className="flex-1 flex-row items-center justify-center border border-gray-200 rounded-xl py-3"
-              >
-                <Text className="text-sm font-medium text-gray-600">
-                  Google
-                </Text>
-              </Pressable>
-              <Pressable
-                className="flex-1 flex-row items-center justify-center border border-gray-200 rounded-xl py-3"
-              >
-                <Text className="text-sm font-medium text-gray-600">
-                  Facebook
-                </Text>
-              </Pressable>
-            </View>
-
-            {/* --- Footer link --- */}
-            <View className="flex-row justify-center mt-6">
-              <Text className="text-sm text-gray-500">
-                Ya tienes cuenta?{" "}
-              </Text>
+          {/* Login link */}
+          <View className="items-center mt-6">
+            <View className="flex-row">
+              <Text style={{ color: "#6D7B6C", fontSize: 13 }}>¿Ya tienes una cuenta? </Text>
               <Link href="/(auth)/login" asChild>
                 <Pressable>
-                  <Text className="text-sm font-semibold text-[#D33587]">
-                    Inicia sesion
-                  </Text>
+                  <Text style={{ color: "#D33587", fontSize: 13, fontWeight: "700" }}>Inicia sesión</Text>
                 </Pressable>
               </Link>
+            </View>
+          </View>
+
+          {/* Divider */}
+          <View className="flex-row items-center my-8">
+            <View className="flex-1" style={{ height: 1, backgroundColor: "rgba(188,202,186,0.2)" }} />
+            <Text style={{ color: "#6D7B6C", fontSize: 9, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase", marginHorizontal: 12 }}>
+              O continúa con
+            </Text>
+            <View className="flex-1" style={{ height: 1, backgroundColor: "rgba(188,202,186,0.2)" }} />
+          </View>
+
+          {/* Social */}
+          <View className="flex-row" style={{ gap: 12 }}>
+            <Pressable
+              className="flex-1 flex-row items-center justify-center py-3.5"
+              style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(188,202,186,0.3)", backgroundColor: "#fff" }}
+            >
+              <Text style={{ fontSize: 14, marginRight: 8 }}>🔵</Text>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: "#1A1C1A" }}>Google</Text>
+            </Pressable>
+            <Pressable
+              className="flex-1 flex-row items-center justify-center py-3.5"
+              style={{ borderRadius: 999, backgroundColor: "#1877F2" }}
+            >
+              <Text style={{ fontSize: 14, marginRight: 8 }}>📘</Text>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: "#fff" }}>Facebook</Text>
+            </Pressable>
+          </View>
+
+          {/* Terms */}
+          <View className="items-center mt-8">
+            <Text style={{ fontSize: 9, color: "#6D7B6C", textAlign: "center", letterSpacing: 1, textTransform: "uppercase", lineHeight: 14 }}>
+              Al registrarte, aceptas nuestros Términos de Servicio y Política de Privacidad.
+            </Text>
+            <View className="flex-row mt-4" style={{ gap: 6 }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#1FAF55" }} />
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#D33587" }} />
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#1FAF55" }} />
             </View>
           </View>
         </ScrollView>
