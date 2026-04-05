@@ -1,8 +1,9 @@
-import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import { View, Text, FlatList } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { getProductos } from "../../src/lib/api";
 import { ProductCard } from "../../src/components/ProductCard";
+import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
 
 export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -15,8 +16,8 @@ export default function CategoryScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-gray-50 items-center justify-center">
-        <ActivityIndicator color="#17994A" />
+      <View className="flex-1 bg-gray-50 p-4">
+        <ProductGridSkeleton count={8} />
       </View>
     );
   }

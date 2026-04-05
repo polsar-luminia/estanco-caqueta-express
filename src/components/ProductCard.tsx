@@ -1,8 +1,14 @@
 import { View, Text, Pressable } from "react-native";
-import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated from "react-native-reanimated";
+import Toast from "react-native-toast-message";
 import { formatCOP } from "../lib/format";
 import { useCartStore } from "../stores/cart";
+import { useScalePress } from "../hooks/useScalePress";
+import { ShimmerImage } from "./ShimmerImage";
 import type { Producto } from "../lib/api";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props {
   product: Producto;
@@ -11,11 +17,7 @@ interface Props {
 
 export function ProductCard({ product, onPress }: Props) {
   const addItem = useCartStore((s) => s.addItem);
-
-  const imageUri =
-    product.imagen_url ||
-    "https://placehold.co/200x200/E8F5E9/1B5E20?text=" +
-      encodeURIComponent(product.categoria || "P");
+  const { animatedStyle, onPressIn, onPressOut } = useScalePress();
 
   const handleAdd = () => {
     addItem({
@@ -24,41 +26,54 @@ export function ProductCard({ product, onPress }: Props) {
       precioUnitario: product.precio_app,
       imagenUrl: product.imagen_url || undefined,
     });
+    Toast.show({
+      type: "success",
+      text1: "Agregado al carrito",
+      text2: product.nombre,
+      visibilityTime: 1500,
+    });
   };
 
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
-      className="flex-1 bg-white rounded-xl overflow-hidden border border-gray-100"
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      style={[animatedStyle, { flex: 1 }]}
     >
-      <Image
-        source={{ uri: imageUri }}
-        style={{ width: "100%", height: 140 }}
-        contentFit="contain"
-        className="bg-gray-50"
-      />
-      <View className="p-3">
-        <Text className="text-xs text-gray-500 mb-1" numberOfLines={1}>
-          {product.categoria}
-        </Text>
-        <Text className="text-sm font-medium text-gray-800 mb-2" numberOfLines={2}>
-          {product.nombre}
-        </Text>
-        <View className="flex-row items-center justify-between">
-          <Text className="text-base font-bold text-brand-800">
-            {formatCOP(product.precio_app)}
+      <LinearGradient
+        colors={["#F3F4F6", "#FFFFFF"]}
+        style={{ borderRadius: 12, overflow: "hidden", borderWidth: 1, borderColor: "#F3F4F6" }}
+      >
+        <ShimmerImage
+          imageUrl={product.imagen_url}
+          fallbackCategory={product.categoria}
+          style={{ width: "100%", height: 120 }}
+          contentFit="contain"
+        />
+        <View style={{ padding: 12 }}>
+          <Text className="text-xs text-gray-500 mb-1" numberOfLines={1}>
+            {product.categoria}
           </Text>
-          <Pressable
-            onPress={(e) => {
-              e.stopPropagation?.();
-              handleAdd();
-            }}
-            className="bg-brand-700 rounded-lg px-3 py-1"
-          >
-            <Text className="text-white text-sm font-semibold">+</Text>
-          </Pressable>
+          <Text className="text-sm font-medium text-gray-800 mb-2" numberOfLines={2}>
+            {product.nombre}
+          </Text>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-base font-bold text-brand-800">
+              {formatCOP(product.precio_app)}
+            </Text>
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation?.();
+                handleAdd();
+              }}
+              className="bg-brand-700 rounded-lg px-3 py-1.5"
+            >
+              <Text className="text-white text-sm font-bold">+</Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </LinearGradient>
+    </AnimatedPressable>
   );
 }

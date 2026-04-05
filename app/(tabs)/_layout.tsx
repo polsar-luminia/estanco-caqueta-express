@@ -1,6 +1,7 @@
 import { Redirect, Tabs } from "expo-router";
 import { useAuthStore } from "../../src/stores/auth";
 import { useCartStore } from "../../src/stores/cart";
+import { HomeIcon, SearchIcon, CartIcon, OrdersIcon, ProfileIcon } from "../../src/components/icons/TabIcons";
 
 export default function TabLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -33,6 +34,7 @@ export default function TabLayout() {
         options={{
           title: "Inicio",
           headerTitle: "Estanco Caqueta Express",
+          tabBarIcon: ({ color, size }) => <HomeIcon color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -40,6 +42,7 @@ export default function TabLayout() {
         options={{
           title: "Buscar",
           headerTitle: "Buscar productos",
+          tabBarIcon: ({ color, size }) => <SearchIcon color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -49,6 +52,7 @@ export default function TabLayout() {
           headerTitle: "Tu carrito",
           tabBarBadge: itemCount > 0 ? itemCount : undefined,
           tabBarBadgeStyle: { backgroundColor: "#D33587" },
+          tabBarIcon: ({ color, size }) => <CartIcon color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -57,6 +61,7 @@ export default function TabLayout() {
           title: "Pedidos",
           headerTitle: "Mis pedidos",
           headerShown: false,
+          tabBarIcon: ({ color, size }) => <OrdersIcon color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -64,6 +69,7 @@ export default function TabLayout() {
         options={{
           title: "Perfil",
           headerTitle: "Mi perfil",
+          tabBarIcon: ({ color, size }) => <ProfileIcon color={color} size={size} />,
         }}
       />
     </Tabs>

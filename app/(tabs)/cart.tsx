@@ -1,13 +1,7 @@
 import { useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  TextInput,
-  Pressable,
-  Alert,
-} from "react-native";
+import { View, Text, FlatList, TextInput, Pressable } from "react-native";
 import { useRouter } from "expo-router";
+import Toast from "react-native-toast-message";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { crearPedido } from "../../src/lib/api";
@@ -32,11 +26,11 @@ export default function CartScreen() {
 
   const handlePedir = async () => {
     if (!direccion.trim()) {
-      Alert.alert("Error", "Ingresa tu direccion de entrega");
+      Toast.show({ type: "error", text1: "Falta direccion", text2: "Ingresa tu direccion de entrega" });
       return;
     }
     if (items.length === 0) {
-      Alert.alert("Error", "Tu carrito esta vacio");
+      Toast.show({ type: "error", text1: "Carrito vacio" });
       return;
     }
 
@@ -52,13 +46,15 @@ export default function CartScreen() {
         })),
       });
       clear();
-      Alert.alert(
-        "Pedido confirmado",
-        `Tu pedido #${pedido.id} fue recibido. Total: ${formatCOP(pedido.total)}`,
-        [{ text: "Ver pedidos", onPress: () => router.push("/(tabs)/orders") }]
-      );
+      Toast.show({
+        type: "success",
+        text1: "Pedido confirmado",
+        text2: `Pedido #${pedido.id} - ${formatCOP(pedido.total)}`,
+        visibilityTime: 3000,
+      });
+      router.push("/(tabs)/orders");
     } catch (err: any) {
-      Alert.alert("Error", err.message || "No se pudo crear el pedido");
+      Toast.show({ type: "error", text1: "Error", text2: err.message || "No se pudo crear el pedido" });
     } finally {
       setLoading(false);
     }
@@ -67,7 +63,8 @@ export default function CartScreen() {
   if (items.length === 0) {
     return (
       <View className="flex-1 bg-gray-50 items-center justify-center px-6">
-        <Text className="text-xl text-gray-400 mb-2">Carrito vacio</Text>
+        <Text className="text-5xl mb-4">🛒</Text>
+        <Text className="text-xl font-semibold text-gray-500 mb-2">Carrito vacio</Text>
         <Text className="text-gray-400 text-center">
           Agrega productos desde el catalogo para hacer tu pedido
         </Text>
@@ -87,21 +84,18 @@ export default function CartScreen() {
             <Text className="text-base font-semibold text-gray-800">
               Datos de entrega
             </Text>
-
             <TextInput
               className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-base"
               placeholder="Direccion de entrega *"
               value={direccion || cliente?.direccion || ""}
               onChangeText={setDireccion}
             />
-
             <TextInput
               className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-base"
               placeholder="Barrio"
               value={barrio || cliente?.barrio || ""}
               onChangeText={setBarrio}
             />
-
             <TextInput
               className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-base"
               placeholder="Notas (ej: tocar timbre, dejar en porteria)"
@@ -120,15 +114,11 @@ export default function CartScreen() {
             {formatCOP(total)}
           </Text>
         </View>
-        <Text className="text-xs text-gray-500 mb-3">
-          Pago contra entrega
-        </Text>
+        <Text className="text-xs text-gray-500 mb-3">Pago contra entrega</Text>
         <Pressable
           onPress={handlePedir}
           disabled={loading}
-          className={`rounded-xl py-4 items-center ${
-            loading ? "bg-gray-400" : "bg-brand-700"
-          }`}
+          className={`rounded-xl py-4 items-center ${loading ? "bg-gray-400" : "bg-brand-700"}`}
         >
           <Text className="text-white font-bold text-base">
             {loading ? "Enviando pedido..." : "Confirmar pedido"}

@@ -6,9 +6,9 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native";
 import { Link } from "expo-router";
+import Toast from "react-native-toast-message";
 import { useAuthStore } from "../../src/stores/auth";
 
 export default function RegisterScreen() {
@@ -20,18 +20,18 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!nombre || !telefono || !password) {
-      Alert.alert("Error", "Completa todos los campos");
+      Toast.show({ type: "error", text1: "Completa todos los campos" });
       return;
     }
     if (password.length < 6) {
-      Alert.alert("Error", "La contrasena debe tener al menos 6 caracteres");
+      Toast.show({ type: "error", text1: "Contrasena muy corta", text2: "Minimo 6 caracteres" });
       return;
     }
     setLoading(true);
     try {
       await register(telefono.trim(), nombre.trim(), password);
     } catch (err: any) {
-      Alert.alert("Error", err.message || "No se pudo crear la cuenta");
+      Toast.show({ type: "error", text1: "Error", text2: err.message || "No se pudo crear la cuenta" });
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { getPedidos } from "../../../src/lib/api";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
+import { OrderCardSkeleton } from "../../../src/components/skeletons/OrderCardSkeleton";
 
 const ESTADO_LABEL: Record<string, string> = {
   recibido: "Recibido",
@@ -32,7 +33,17 @@ export default function OrdersScreen() {
     queryFn: getPedidos,
   });
 
-  if (!isLoading && pedidos.length === 0) {
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-gray-50 p-4" style={{ gap: 12 }}>
+        <OrderCardSkeleton />
+        <OrderCardSkeleton />
+        <OrderCardSkeleton />
+      </View>
+    );
+  }
+
+  if (pedidos.length === 0) {
     return (
       <View className="flex-1 bg-gray-50 items-center justify-center px-6">
         <Text className="text-xl text-gray-400 mb-2">Sin pedidos</Text>
@@ -50,7 +61,7 @@ export default function OrdersScreen() {
       keyExtractor={(item) => String(item.id)}
       contentContainerStyle={{ padding: 16, gap: 12 }}
       refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+        <RefreshControl refreshing={false} onRefresh={refetch} colors={["#17994A"]} />
       }
       renderItem={({ item }) => (
         <Pressable

@@ -6,9 +6,9 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native";
 import { Link } from "expo-router";
+import Toast from "react-native-toast-message";
 import { useAuthStore } from "../../src/stores/auth";
 
 export default function LoginScreen() {
@@ -19,14 +19,14 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!telefono || !password) {
-      Alert.alert("Error", "Ingresa tu telefono y contrasena");
+      Toast.show({ type: "error", text1: "Ingresa tu telefono y contrasena" });
       return;
     }
     setLoading(true);
     try {
       await login(telefono.trim(), password);
     } catch (err: any) {
-      Alert.alert("Error", err.message || "No se pudo iniciar sesion");
+      Toast.show({ type: "error", text1: "Error", text2: err.message || "No se pudo iniciar sesion" });
     } finally {
       setLoading(false);
     }

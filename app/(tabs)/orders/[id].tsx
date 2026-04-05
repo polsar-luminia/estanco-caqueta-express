@@ -4,6 +4,28 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPedido, cancelarPedido } from "../../../src/lib/api";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline";
+import { SkeletonBox } from "../../../src/components/skeletons/SkeletonBox";
+
+function OrderDetailSkeleton() {
+  return (
+    <View className="flex-1 bg-gray-50 p-4" style={{ gap: 16 }}>
+      <View className="bg-white rounded-xl p-4">
+        <SkeletonBox style={{ width: "50%", height: 20 }} className="rounded mb-2" />
+        <SkeletonBox style={{ width: "35%", height: 12 }} className="rounded mb-4" />
+        <SkeletonBox style={{ width: "100%", height: 80 }} className="rounded" />
+      </View>
+      <View className="bg-white rounded-xl p-4">
+        <SkeletonBox style={{ width: "30%", height: 14 }} className="rounded mb-3" />
+        {[1, 2, 3].map((i) => (
+          <View key={i} className="flex-row justify-between py-2">
+            <SkeletonBox style={{ width: "60%", height: 12 }} className="rounded" />
+            <SkeletonBox style={{ width: "20%", height: 12 }} className="rounded" />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -12,7 +34,7 @@ export default function OrderDetailScreen() {
   const { data: pedido, isLoading } = useQuery({
     queryKey: ["pedido", id],
     queryFn: () => getPedido(Number(id)),
-    refetchInterval: 15000, // Refrescar cada 15s para ver cambios de estado
+    refetchInterval: 15000,
   });
 
   const cancelMutation = useMutation({
@@ -35,11 +57,7 @@ export default function OrderDetailScreen() {
   };
 
   if (isLoading || !pedido) {
-    return (
-      <View className="flex-1 bg-gray-50 items-center justify-center">
-        <Text className="text-gray-400">Cargando...</Text>
-      </View>
-    );
+    return <OrderDetailSkeleton />;
   }
 
   return (
@@ -57,14 +75,9 @@ export default function OrderDetailScreen() {
       <View className="bg-white rounded-xl p-4 mb-4">
         <Text className="font-semibold text-gray-800 mb-3">Productos</Text>
         {pedido.lineas?.map((linea) => (
-          <View
-            key={linea.id}
-            className="flex-row justify-between py-2 border-b border-gray-100"
-          >
+          <View key={linea.id} className="flex-row justify-between py-2 border-b border-gray-100">
             <View className="flex-1 mr-2">
-              <Text className="text-sm text-gray-800">
-                {linea.nombre_producto}
-              </Text>
+              <Text className="text-sm text-gray-800">{linea.nombre_producto}</Text>
               <Text className="text-xs text-gray-500">
                 x{linea.cantidad} - {formatCOP(linea.precio_unitario)} c/u
               </Text>
@@ -85,13 +98,9 @@ export default function OrderDetailScreen() {
       <View className="bg-white rounded-xl p-4 mb-4">
         <Text className="font-semibold text-gray-800 mb-2">Entrega</Text>
         <Text className="text-sm text-gray-600">{pedido.direccion}</Text>
-        {pedido.barrio && (
-          <Text className="text-sm text-gray-500">{pedido.barrio}</Text>
-        )}
+        {pedido.barrio && <Text className="text-sm text-gray-500">{pedido.barrio}</Text>}
         {pedido.notas_cliente && (
-          <Text className="text-sm text-gray-400 mt-1">
-            {pedido.notas_cliente}
-          </Text>
+          <Text className="text-sm text-gray-400 mt-1">{pedido.notas_cliente}</Text>
         )}
       </View>
 

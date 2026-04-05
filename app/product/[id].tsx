@@ -1,45 +1,81 @@
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, Pressable, Dimensions } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { Image } from "expo-image";
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  interpolate,
+  Extrapolation,
+} from "react-native-reanimated";
+import Toast from "react-native-toast-message";
 import { getProducto } from "../../src/lib/api";
 import { useCartStore } from "../../src/stores/cart";
 import { formatCOP } from "../../src/lib/format";
+import { ShimmerImage } from "../../src/components/ShimmerImage";
+import { SkeletonBox } from "../../src/components/skeletons/SkeletonBox";
 
-const CATEGORY_PLACEHOLDERS: Record<string, string> = {
-  Whisky: "https://placehold.co/400x400/1B5E20/white?text=Whisky",
-  Tequila: "https://placehold.co/400x400/FF6F00/white?text=Tequila",
-  Ron: "https://placehold.co/400x400/795548/white?text=Ron",
-  Vodka: "https://placehold.co/400x400/2196F3/white?text=Vodka",
-  Cerveza: "https://placehold.co/400x400/FFC107/333?text=Cerveza",
-  Vino: "https://placehold.co/400x400/880E4F/white?text=Vino",
-};
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+const HEADER_MAX = SCREEN_HEIGHT * 0.45;
 
-function getPlaceholder(categoria?: string): string {
+function ProductDetailSkeleton() {
   return (
-    CATEGORY_PLACEHOLDERS[categoria || ""] ||
-    "https://placehold.co/400x400/9E9E9E/white?text=Producto"
+    <View className="flex-1 bg-white">
+      <SkeletonBox style={{ width: "100%", height: HEADER_MAX }} className="rounded-none" />
+      <View className="p-4" style={{ gap: 8 }}>
+        <SkeletonBox style={{ width: "25%", height: 10 }} className="rounded" />
+        <SkeletonBox style={{ width: "70%", height: 18 }} className="rounded" />
+        <SkeletonBox style={{ width: "35%", height: 22 }} className="rounded" />
+        <SkeletonBox style={{ width: "100%", height: 60 }} className="rounded mt-2" />
+      </View>
+    </View>
   );
 }
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const addItem = useCartStore((s) => s.addItem);
+  const scrollY = useSharedValue(0);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["producto", id],
     queryFn: () => getProducto(Number(id)),
   });
 
-  if (isLoading || !product) {
-    return (
-      <View className="flex-1 bg-white items-center justify-center">
-        <Text className="text-gray-400">Cargando...</Text>
-      </View>
-    );
-  }
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
 
-  const imageUri = product.imagen_url || getPlaceholder(product.categoria);
+  const headerStyle = useAnimatedStyle(() => ({
+    height: interpolate(
+      scrollY.value,
+      [0, HEADER_MAX],
+      [HEADER_MAX, 0],
+      Extrapolation.CLAMP
+    ),
+    opacity: interpolate(
+      scrollY.value,
+      [0, HEADER_MAX * 0.6],
+      [1, 0],
+      Extrapolation.CLAMP
+    ),
+    transform: [
+      {
+        scale: interpolate(
+          scrollY.value,
+          [-100, 0],
+          [1.3, 1],
+          Extrapolation.CLAMP
+        ),
+      },
+    ],
+  }));
+
+  if (isLoading || !product) {
+    return <ProductDetailSkeleton />;
+  }
 
   const handleAdd = () => {
     addItem({
@@ -48,17 +84,26 @@ export default function ProductDetailScreen() {
       precioUnitario: product.precio_app,
       imagenUrl: product.imagen_url || undefined,
     });
+    Toast.show({
+      type: "success",
+      text1: "Agregado al carrito",
+      text2: product.nombre,
+      visibilityTime: 1500,
+    });
   };
 
   return (
     <View className="flex-1 bg-white">
-      <ScrollView>
-        <Image
-          source={{ uri: imageUri }}
-          style={{ width: "100%", height: 300 }}
-          contentFit="contain"
-          className="bg-gray-100"
-        />
+      <Animated.ScrollView onScroll={scrollHandler} scrollEventThrottle={16}>
+        <Animated.View style={[headerStyle, { overflow: "hidden" }]}>
+          <ShimmerImage
+            imageUrl={product.imagen_url}
+            fallbackCategory={product.categoria}
+            style={{ width: "100%", height: HEADER_MAX }}
+            contentFit="contain"
+          />
+        </Animated.View>
+
         <View className="p-4">
           <Text className="text-xs text-gray-500 uppercase mb-1">
             {product.categoria}
@@ -80,7 +125,7 @@ export default function ProductDetailScreen() {
             <Text className="text-sm text-red-600">Agotado</Text>
           )}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       <View className="border-t border-gray-200 px-4 py-4">
         <Pressable

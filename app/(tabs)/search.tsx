@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { buscarProductos } from "../../src/lib/api";
 import { ProductCard } from "../../src/components/ProductCard";
+import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -43,6 +44,12 @@ export default function SearchScreen() {
           autoFocus
         />
       </View>
+
+      {isLoading && debouncedQuery.length >= 2 && (
+        <View className="px-4 pt-2">
+          <ProductGridSkeleton count={4} />
+        </View>
+      )}
 
       {debouncedQuery.length >= 2 && resultados.length === 0 && !isLoading && (
         <View className="px-4 py-8 items-center">
