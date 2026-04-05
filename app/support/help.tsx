@@ -10,16 +10,12 @@ const FAQ = [
     a: "El pedido mínimo es de $30.000 COP para entregas a domicilio en Florencia.",
   },
   {
-    q: "¿Cuánto tarda la entrega?",
-    a: "Nuestro servicio express entrega en 15-20 minutos dentro de Florencia. En zonas más alejadas puede tomar hasta 45 minutos.",
-  },
-  {
     q: "¿Cuáles son los horarios de entrega?",
     a: "Lunes a Jueves: 8:00 a.m. – 7:00 p.m.\nViernes y Sábado: 8:00 a.m. – 12:00 a.m.\nDomingos: 9:00 a.m. – 4:30 p.m.\nFestivos: 9:30 a.m. – 5:00 p.m.\n\nPedidos después del cierre se despachan al siguiente día.",
   },
   {
     q: "¿Qué métodos de pago aceptan?",
-    a: "Actualmente aceptamos pago contra entrega en efectivo. Pronto habilitaremos pagos con tarjeta y transferencias.",
+    a: "Pago contra entrega. Nuestros domiciliarios aceptan efectivo, transferencias por código QR y datáfono (tarjeta débito/crédito).",
   },
   {
     q: "¿Puedo cancelar mi pedido?",
@@ -34,8 +30,8 @@ const FAQ = [
     a: "No. La venta de bebidas alcohólicas y tabaco está prohibida a menores de 18 años conforme a la ley colombiana. El domiciliario puede solicitar identificación.",
   },
   {
-    q: "¿Tienen servicio en municipios cercanos?",
-    a: "Por ahora solo operamos en el casco urbano de Florencia. Estamos trabajando para expandirnos a Morelia, Belén y otros municipios.",
+    q: "¿Dónde tienen cobertura?",
+    a: "Operamos en el casco urbano de Florencia, Caquetá.",
   },
 ];
 

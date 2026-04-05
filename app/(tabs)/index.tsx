@@ -104,7 +104,7 @@ export default function HomeScreen() {
                   Aguardiente{"\n"}en Descuento
                 </Text>
                 <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                  Llega en menos de 15 minutos
+                  Domicilio en Florencia
                 </Text>
                 <Pressable
                   className="self-start mt-1 px-5 py-2 rounded-xl"
@@ -161,10 +161,10 @@ export default function HomeScreen() {
                     Servicio Express
                   </Text>
                   <Text style={{ fontSize: 22, fontWeight: "900", color: "#fff", fontStyle: "italic", textTransform: "uppercase", lineHeight: 26 }}>
-                    Florencia{"\n"}En 15 Minutos
+                    Domicilio{"\n"}En Florencia
                   </Text>
                   <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", marginTop: 4 }}>
-                    Tarifa plana de envío $2.000
+                    Envío $5.000 • Gratis con puntos
                   </Text>
                 </View>
                 <Text style={{ fontSize: 50, opacity: 0.25 }}>🛵</Text>

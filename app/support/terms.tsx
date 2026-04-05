@@ -22,7 +22,7 @@ const SECTIONS = [
   },
   {
     title: "5. Pedidos y Entrega",
-    body: "• Pedido mínimo: $30.000 COP.\n• Horarios de entrega: Lunes a Jueves 8am-7pm, Viernes y Sábado 8am-12am, Domingos 9am-4:30pm, Festivos 9:30am-5pm.\n• Tiempo estimado de entrega: 15-20 minutos en zona urbana de Florencia.\n• Pedidos realizados después del horario se despachan al siguiente día hábil.\n• El método de pago es contra entrega en efectivo.",
+    body: "• Pedido mínimo: $30.000 COP.\n• Cobertura: casco urbano de Florencia, Caquetá.\n• Horarios de entrega: Lunes a Jueves 8am-7pm, Viernes y Sábado 8am-12am, Domingos 9am-4:30pm, Festivos 9:30am-5pm.\n• Pedidos realizados después del horario se despachan al siguiente día hábil.\n• Pago contra entrega: efectivo, transferencia por código QR o datáfono (tarjeta débito/crédito).\n• Costo de envío: $5.000 COP (puede canjearse con puntos del programa de fidelización).",
   },
   {
     title: "6. Cancelaciones y Devoluciones",

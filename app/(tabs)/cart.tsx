@@ -191,10 +191,10 @@ export default function CartScreen() {
                     Express Delivery
                   </Text>
                   <Text style={{ fontSize: 17, fontWeight: "700", color: "#fff", lineHeight: 22 }}>
-                    ¡Llegamos en menos de 20 minutos!
+                    Domicilio en Florencia
                   </Text>
                   <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 4 }}>
-                    Servicio ultra-rápido en tu zona.
+                    Efectivo, QR o datáfono contra entrega.
                   </Text>
                 </View>
                 <Text style={{ fontSize: 40, opacity: 0.2 }}>⚡</Text>
