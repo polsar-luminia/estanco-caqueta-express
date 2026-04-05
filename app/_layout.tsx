@@ -47,6 +47,14 @@ export default function RootLayout() {
               headerTintColor: "#17994A",
             }}
           />
+          <Stack.Screen
+            name="support/help"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="support/terms"
+            options={{ headerShown: false }}
+          />
         </Stack>
         <Toast config={toastConfig} />
       </QueryClientProvider>

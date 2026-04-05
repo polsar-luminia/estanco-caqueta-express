@@ -131,8 +131,16 @@ export default function ProfileScreen() {
             label="Soporte WhatsApp"
             onPress={() => Linking.openURL(WHATSAPP_SOPORTE)}
           />
-          <MenuItem icon="help_center" label="Centro de Ayuda" />
-          <MenuItem icon="policy" label="Términos y Condiciones" />
+          <MenuItem
+            icon="help_center"
+            label="Centro de Ayuda"
+            onPress={() => router.push("/support/help")}
+          />
+          <MenuItem
+            icon="policy"
+            label="Términos y Condiciones"
+            onPress={() => router.push("/support/terms")}
+          />
         </View>
       </View>
 
