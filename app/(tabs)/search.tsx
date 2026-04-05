@@ -92,7 +92,7 @@ export default function SearchScreen() {
             placeholderTextColor="#9E9E9E"
             value={query}
             onChangeText={handleChange}
-            autoFocus
+            autoFocus={false}
           />
           {query.length > 0 && (
             <Pressable onPress={() => { setQuery(""); setDebouncedQuery(""); }}>
