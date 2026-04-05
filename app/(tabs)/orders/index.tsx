@@ -151,6 +151,7 @@ function OrderCard({ item }: { item: Pedido }) {
         {/* Botones de accion */}
         <View className="flex-row mt-4" style={{ gap: 10 }}>
           <Pressable
+            onPress={() => router.push(`/(tabs)/orders/${item.id}`)}
             className={`flex-1 py-3 rounded-xl items-center ${
               isEnCamino ? "bg-brand-600" : "bg-surface-low"
             }`}
@@ -165,7 +166,13 @@ function OrderCard({ item }: { item: Pedido }) {
           </Pressable>
 
           {isDelivered && (
-            <Pressable className="flex-1 py-3 rounded-xl items-center bg-magenta-50">
+            <Pressable
+              onPress={() => {
+                // Reordenar: navegar a detalle donde pueden ver los productos
+                router.push(`/(tabs)/orders/${item.id}`);
+              }}
+              className="flex-1 py-3 rounded-xl items-center bg-magenta-50"
+            >
               <Text className="text-sm font-semibold text-magenta-600">
                 Reordenar
               </Text>
