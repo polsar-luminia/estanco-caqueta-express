@@ -161,8 +161,9 @@ export default function CartScreen() {
 
       {/* Sticky Bottom */}
       <View
-        className="bg-white px-6 py-5"
+        className="bg-white px-6 pt-4"
         style={{
+          paddingBottom: 80,
           borderTopWidth: 1,
           borderTopColor: "#E8E8E5",
           shadowColor: "#000",
