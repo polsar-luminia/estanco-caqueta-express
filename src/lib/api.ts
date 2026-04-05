@@ -219,6 +219,36 @@ export async function getPuntos() {
   return apiFetch<PuntosResponse>("/clientes/puntos");
 }
 
+// --- Direcciones ---
+
+export interface DireccionGuardada {
+  id: number;
+  etiqueta: string;
+  direccion: string;
+  barrio?: string;
+  notas?: string;
+  predeterminada: boolean;
+}
+
+export async function getDirecciones() {
+  return apiFetch<DireccionGuardada[]>("/clientes/direcciones");
+}
+
+export async function crearDireccion(data: { etiqueta?: string; direccion: string; barrio?: string; notas?: string; predeterminada?: boolean }) {
+  return apiFetch<DireccionGuardada>("/clientes/direcciones", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function setPredeterminada(id: number) {
+  return apiFetch<DireccionGuardada>(`/clientes/direcciones/${id}/predeterminada`, { method: "PUT" });
+}
+
+export async function eliminarDireccion(id: number) {
+  return apiFetch(`/clientes/direcciones/${id}`, { method: "DELETE" });
+}
+
 export interface Patrocinado {
   id: number;
   producto_id?: number;

@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { View, Text, FlatList, TextInput, Pressable, Switch } from "react-native";
 import { useRouter } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
+import { Feather } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
-import { crearPedido } from "../../src/lib/api";
+import { crearPedido, getDirecciones, crearDireccion, type DireccionGuardada } from "../../src/lib/api";
 import { formatCOP } from "../../src/lib/format";
 import { CartItem } from "../../src/components/CartItem";
 
@@ -24,14 +26,24 @@ export default function CartScreen() {
   const direccion = useCartStore((s) => s.direccion);
   const barrio = useCartStore((s) => s.barrio);
   const notas = useCartStore((s) => s.notas);
-  const setDireccion = useCartStore((s) => s.setDireccion);
-  const setBarrio = useCartStore((s) => s.setBarrio);
-  const setNotas = useCartStore((s) => s.setNotas);
   const getTotal = useCartStore((s) => s.getTotal);
   const clear = useCartStore((s) => s.clear);
   const cliente = useAuthStore((s) => s.cliente);
   const [loading, setLoading] = useState(false);
   const [usarPuntos, setUsarPuntos] = useState(false);
+  const [mostrarNueva, setMostrarNueva] = useState(false);
+  const [nuevaDireccion, setNuevaDireccion] = useState("");
+  const [nuevoBarrio, setNuevoBarrio] = useState("");
+  const [nuevasNotas, setNuevasNotas] = useState("");
+
+  const { data: direcciones = [], refetch: refetchDirs } = useQuery({
+    queryKey: ["direcciones"],
+    queryFn: getDirecciones,
+  });
+
+  const dirPredeterminada = direcciones.find((d) => d.predeterminada) || direcciones[0];
+  const [dirSeleccionada, setDirSeleccionada] = useState<DireccionGuardada | null>(null);
+  const dirActiva = dirSeleccionada || dirPredeterminada;
 
   const subtotal = getTotal();
   const puntos = cliente?.puntos || 0;
@@ -40,18 +52,36 @@ export default function CartScreen() {
   const total = subtotal + envio;
 
   const handlePedir = async () => {
-    if (!direccion.trim()) {
-      Toast.show({ type: "error", text1: "Falta direccion", text2: "Ingresa tu direccion de entrega" });
+    const dir = dirActiva?.direccion || direccion.trim();
+    const bar = dirActiva?.barrio || barrio.trim();
+    const not = dirActiva?.notas || notas.trim();
+
+    if (!dir && !mostrarNueva) {
+      Toast.show({ type: "error", text1: "Falta direccion", text2: "Selecciona o agrega una direccion" });
+      return;
+    }
+    if (mostrarNueva && !nuevaDireccion.trim()) {
+      Toast.show({ type: "error", text1: "Falta direccion", text2: "Ingresa la nueva direccion" });
       return;
     }
     if (items.length === 0) return;
 
+    const dirFinal = mostrarNueva ? nuevaDireccion.trim() : dir;
+    const barFinal = mostrarNueva ? nuevoBarrio.trim() : bar;
+    const notFinal = mostrarNueva ? nuevasNotas.trim() : not;
+
     setLoading(true);
     try {
+      // Guardar nueva dirección si la ingresó
+      if (mostrarNueva && dirFinal) {
+        await crearDireccion({ direccion: dirFinal, barrio: barFinal || undefined, notas: notFinal || undefined, predeterminada: true });
+        refetchDirs();
+      }
+
       const { pedido } = await crearPedido({
-        direccion: direccion.trim(),
-        barrio: barrio.trim() || undefined,
-        notas_cliente: notas.trim() || undefined,
+        direccion: dirFinal,
+        barrio: barFinal || undefined,
+        notas_cliente: notFinal || undefined,
         usar_puntos: usarPuntos && puedeUsarPuntos,
         lineas: items.map((i) => ({ producto_id: i.productoId, cantidad: i.cantidad })),
       });
@@ -103,46 +133,105 @@ export default function CartScreen() {
         renderItem={({ item }) => <CartItem item={item} />}
         ListFooterComponent={
           <View style={{ gap: 24, marginTop: 24 }}>
-            {/* Delivery Form */}
+            {/* Delivery - Direcciones Guardadas */}
             <View className="p-5 rounded-2xl" style={{ backgroundColor: "#F4F4F0" }}>
-              <View className="flex-row items-center mb-5">
-                <Text style={{ fontSize: 20, marginRight: 8 }}>🚚</Text>
-                <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Detalles de Entrega</Text>
+              <View className="flex-row items-center justify-between mb-4">
+                <View className="flex-row items-center">
+                  <Text style={{ fontSize: 20, marginRight: 8 }}>🚚</Text>
+                  <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Entrega</Text>
+                </View>
+                <Pressable onPress={() => setMostrarNueva(!mostrarNueva)}>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>
+                    {mostrarNueva ? "Usar guardada" : "+ Nueva"}
+                  </Text>
+                </Pressable>
               </View>
 
-              <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
-                Dirección Exacta
-              </Text>
-              <TextInput
-                style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: "#1A1C1A", marginBottom: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 1 }}
-                placeholder="Carrera 15 # 12-34"
-                placeholderTextColor="#BCCABA"
-                value={direccion || cliente?.direccion || ""}
-                onChangeText={setDireccion}
-              />
-
-              <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
-                Barrio
-              </Text>
-              <TextInput
-                style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: "#1A1C1A", marginBottom: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 1 }}
-                placeholder="El Prado"
-                placeholderTextColor="#BCCABA"
-                value={barrio || cliente?.barrio || ""}
-                onChangeText={setBarrio}
-              />
-
-              <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
-                Notas (Opcional)
-              </Text>
-              <TextInput
-                style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: "#1A1C1A", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 1 }}
-                placeholder="Ej: Portería, dejar con el vigilante..."
-                placeholderTextColor="#BCCABA"
-                value={notas}
-                onChangeText={setNotas}
-                multiline
-              />
+              {!mostrarNueva ? (
+                <>
+                  {/* Direcciones guardadas */}
+                  {direcciones.length > 0 ? (
+                    <View style={{ gap: 8 }}>
+                      {direcciones.map((d) => {
+                        const selected = dirActiva?.id === d.id;
+                        return (
+                          <Pressable
+                            key={d.id}
+                            onPress={() => setDirSeleccionada(d)}
+                            className="flex-row items-center p-3 rounded-xl"
+                            style={{
+                              backgroundColor: "#fff",
+                              borderWidth: 2,
+                              borderColor: selected ? "#1FAF55" : "transparent",
+                            }}
+                          >
+                            <Feather name="map-pin" size={16} color={selected ? "#1FAF55" : "#9E9E9E"} />
+                            <View className="flex-1 ml-3">
+                              <View className="flex-row items-center" style={{ gap: 6 }}>
+                                <Text style={{ fontSize: 13, fontWeight: "700", color: "#1A1C1A" }}>{d.etiqueta}</Text>
+                                {d.predeterminada && (
+                                  <View style={{ backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
+                                    <Text style={{ fontSize: 8, fontWeight: "700", color: "#1FAF55" }}>DEFAULT</Text>
+                                  </View>
+                                )}
+                              </View>
+                              <Text style={{ fontSize: 12, color: "#6D7B6C", marginTop: 2 }} numberOfLines={1}>
+                                {d.direccion}{d.barrio ? ` - ${d.barrio}` : ""}
+                              </Text>
+                            </View>
+                            {selected && <Feather name="check-circle" size={18} color="#1FAF55" />}
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  ) : (
+                    <Pressable
+                      onPress={() => setMostrarNueva(true)}
+                      className="items-center py-6 rounded-xl bg-white"
+                    >
+                      <Feather name="plus-circle" size={24} color="#1FAF55" />
+                      <Text style={{ fontSize: 13, fontWeight: "600", color: "#1FAF55", marginTop: 6 }}>
+                        Agregar dirección
+                      </Text>
+                    </Pressable>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* Nueva dirección */}
+                  <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
+                    Dirección
+                  </Text>
+                  <TextInput
+                    style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: "#1A1C1A", marginBottom: 12 }}
+                    placeholder="Carrera 15 # 12-34"
+                    placeholderTextColor="#BCCABA"
+                    value={nuevaDireccion}
+                    onChangeText={setNuevaDireccion}
+                  />
+                  <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
+                    Barrio
+                  </Text>
+                  <TextInput
+                    style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: "#1A1C1A", marginBottom: 12 }}
+                    placeholder="El Prado"
+                    placeholderTextColor="#BCCABA"
+                    value={nuevoBarrio}
+                    onChangeText={setNuevoBarrio}
+                  />
+                  <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
+                    Notas (Opcional)
+                  </Text>
+                  <TextInput
+                    style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: "#1A1C1A" }}
+                    placeholder="Portería, dejar con vigilante..."
+                    placeholderTextColor="#BCCABA"
+                    value={nuevasNotas}
+                    onChangeText={setNuevasNotas}
+                    multiline
+                  />
+                </>
+              )}
             </View>
 
             {/* Puntos + Envío */}
