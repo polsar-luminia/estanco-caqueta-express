@@ -1,9 +1,21 @@
-import { View, Text, FlatList, Pressable, RefreshControl } from "react-native";
+import { useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  Linking,
+  Animated,
+} from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { getPedidos } from "../../../src/lib/api";
+import type { Pedido } from "../../../src/lib/api";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderCardSkeleton } from "../../../src/components/skeletons/OrderCardSkeleton";
+
+/* ── Estado visual config ────────────────────────────────── */
 
 const ESTADO_LABEL: Record<string, string> = {
   recibido: "Recibido",
@@ -13,17 +25,184 @@ const ESTADO_LABEL: Record<string, string> = {
   cancelado: "Cancelado",
 };
 
-const ESTADO_COLOR: Record<string, string> = {
-  recibido: "bg-blue-100 text-blue-800",
-  en_preparacion: "bg-yellow-100 text-yellow-800",
-  en_camino: "bg-orange-100 text-orange-800",
-  entregado: "bg-green-100 text-green-800",
-  cancelado: "bg-red-100 text-red-800",
+const ESTADO_BADGE: Record<string, string> = {
+  recibido: "bg-blue-100",
+  en_preparacion: "bg-yellow-100",
+  en_camino: "bg-orange-100",
+  entregado: "bg-brand-500/10",
+  cancelado: "bg-red-100",
 };
 
-export default function OrdersScreen() {
-  const router = useRouter();
+const ESTADO_TEXT: Record<string, string> = {
+  recibido: "text-blue-700",
+  en_preparacion: "text-yellow-800",
+  en_camino: "text-orange-700",
+  entregado: "text-brand-500",
+  cancelado: "text-red-700",
+};
 
+/* ── Shadow reutilizable ─────────────────────────────────── */
+
+const CARD_SHADOW = {
+  shadowColor: "#1A1C1A",
+  shadowOffset: { width: 0, height: 12 },
+  shadowOpacity: 0.04,
+  shadowRadius: 32,
+  elevation: 2,
+};
+
+/* ── Punto pulsante para "En camino" ─────────────────────── */
+
+function PulsingDot() {
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [opacity]);
+
+  return (
+    <Animated.View
+      style={{ opacity }}
+      className="w-2 h-2 rounded-full bg-orange-500 mr-1.5"
+    />
+  );
+}
+
+/* ── Badge de estado ─────────────────────────────────────── */
+
+function StatusBadge({ estado }: { estado: string }) {
+  return (
+    <View
+      className={`flex-row items-center px-3 py-1.5 rounded-full ${ESTADO_BADGE[estado]}`}
+    >
+      {estado === "en_camino" && <PulsingDot />}
+      <Text className={`text-xs font-semibold ${ESTADO_TEXT[estado]}`}>
+        {ESTADO_LABEL[estado]}
+      </Text>
+    </View>
+  );
+}
+
+/* ── Tarjeta de pedido ───────────────────────────────────── */
+
+function OrderCard({ item }: { item: Pedido }) {
+  const router = useRouter();
+  const isActive = item.estado === "en_camino" || item.estado === "en_preparacion";
+  const isDelivered = item.estado === "entregado";
+  const isEnCamino = item.estado === "en_camino";
+
+  return (
+    <Pressable
+      onPress={() => router.push(`/(tabs)/orders/${item.id}`)}
+      className="bg-white rounded-2xl p-6"
+      style={CARD_SHADOW}
+    >
+      {/* Etiqueta "Pedido Activo" */}
+      {isActive && (
+        <Text className="text-xs font-bold uppercase tracking-widest text-brand-600 mb-3">
+          Pedido Activo
+        </Text>
+      )}
+
+      {/* Fila superior: info + badge */}
+      <View className="flex-row justify-between items-start">
+        <View className="flex-1 mr-3">
+          <Text className="text-xl font-bold text-on-surface">
+            Pedido #{item.id}
+          </Text>
+          <Text className="text-sm text-gray-500 mt-1">
+            {formatDate(item.created_at)} - {formatTime(item.created_at)}
+          </Text>
+        </View>
+        <StatusBadge estado={item.estado} />
+      </View>
+
+      {/* Separador */}
+      <View className="border-t border-gray-100 mt-4 pt-4">
+        {/* Total */}
+        <View className="flex-row justify-between items-center">
+          <Text className="text-xs text-gray-500 uppercase tracking-wide">
+            Total Pagado
+          </Text>
+          <Text
+            className={`text-xl font-extrabold ${
+              isActive ? "text-brand-500" : "text-on-surface"
+            }`}
+          >
+            {formatCOP(item.total)}
+          </Text>
+        </View>
+
+        {/* Botones de accion */}
+        <View className="flex-row mt-4" style={{ gap: 10 }}>
+          <Pressable
+            className={`flex-1 py-3 rounded-xl items-center ${
+              isEnCamino ? "bg-brand-600" : "bg-surface-low"
+            }`}
+          >
+            <Text
+              className={`text-sm font-semibold ${
+                isEnCamino ? "text-white" : "text-on-surface"
+              }`}
+            >
+              {isEnCamino ? "Rastrear" : "Ver detalles"}
+            </Text>
+          </Pressable>
+
+          {isDelivered && (
+            <Pressable className="flex-1 py-3 rounded-xl items-center bg-magenta-50">
+              <Text className="text-sm font-semibold text-magenta-600">
+                Reordenar
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+/* ── Seccion de ayuda (WhatsApp) ─────────────────────────── */
+
+function HelpSection() {
+  return (
+    <Pressable
+      onPress={() => Linking.openURL("https://wa.me/573155519216")}
+      className="bg-brand-900/5 p-6 rounded-2xl flex-row items-center"
+    >
+      <View className="w-12 h-12 rounded-full bg-brand-600 items-center justify-center mr-4">
+        <Text className="text-white text-lg">?</Text>
+      </View>
+      <View className="flex-1">
+        <Text className="text-base font-bold text-on-surface">
+          Problemas con un pedido?
+        </Text>
+        <Text className="text-sm text-gray-500 mt-0.5">
+          Estamos aqui para ayudarte 24/7
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+/* ── Pantalla principal ──────────────────────────────────── */
+
+export default function OrdersScreen() {
   const {
     data: pedidos = [],
     isLoading,
@@ -35,7 +214,11 @@ export default function OrdersScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-gray-50 p-4" style={{ gap: 12 }}>
+      <View className="flex-1 bg-surface-low px-4 pt-6" style={{ gap: 16 }}>
+        <View className="mb-2">
+          <View className="bg-gray-200 rounded-lg" style={{ width: "55%", height: 28 }} />
+          <View className="bg-gray-100 rounded mt-2" style={{ width: "75%", height: 14 }} />
+        </View>
         <OrderCardSkeleton />
         <OrderCardSkeleton />
         <OrderCardSkeleton />
@@ -45,7 +228,7 @@ export default function OrdersScreen() {
 
   if (pedidos.length === 0) {
     return (
-      <View className="flex-1 bg-gray-50 items-center justify-center px-6">
+      <View className="flex-1 bg-surface-low items-center justify-center px-6">
         <Text className="text-xl text-gray-400 mb-2">Sin pedidos</Text>
         <Text className="text-gray-400 text-center">
           Tus pedidos apareceran aqui cuando hagas tu primera compra
@@ -56,34 +239,34 @@ export default function OrdersScreen() {
 
   return (
     <FlatList
-      className="flex-1 bg-gray-50"
+      className="flex-1 bg-surface-low"
       data={pedidos}
       keyExtractor={(item) => String(item.id)}
-      contentContainerStyle={{ padding: 16, gap: 12 }}
+      contentContainerStyle={{ padding: 16, gap: 16 }}
       refreshControl={
-        <RefreshControl refreshing={false} onRefresh={refetch} colors={["#17994A"]} />
+        <RefreshControl
+          refreshing={false}
+          onRefresh={refetch}
+          colors={["#1FAF55"]}
+          tintColor="#1FAF55"
+        />
       }
-      renderItem={({ item }) => (
-        <Pressable
-          onPress={() => router.push(`/(tabs)/orders/${item.id}`)}
-          className="bg-white rounded-xl p-4 border border-gray-100"
-        >
-          <View className="flex-row justify-between items-center mb-2">
-            <Text className="font-bold text-gray-800">Pedido #{item.id}</Text>
-            <View className={`px-2 py-1 rounded-lg ${ESTADO_COLOR[item.estado]}`}>
-              <Text className="text-xs font-medium">
-                {ESTADO_LABEL[item.estado]}
-              </Text>
-            </View>
-          </View>
-          <Text className="text-sm text-gray-500 mb-1">
-            {formatDate(item.created_at)} - {formatTime(item.created_at)}
+      ListHeaderComponent={
+        <View className="mb-2">
+          <Text className="text-3xl font-extrabold text-on-surface">
+            Mis Pedidos
           </Text>
-          <Text className="text-base font-semibold text-brand-800">
-            {formatCOP(item.total)}
+          <Text className="text-gray-500 mt-1">
+            Historial reciente y seguimiento en vivo
           </Text>
-        </Pressable>
-      )}
+        </View>
+      }
+      renderItem={({ item }) => <OrderCard item={item} />}
+      ListFooterComponent={
+        <View className="mt-2 mb-8">
+          <HelpSection />
+        </View>
+      }
     />
   );
 }

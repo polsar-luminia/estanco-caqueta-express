@@ -4,6 +4,10 @@ module.exports = {
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
+      fontFamily: {
+        headline: ["PlusJakartaSans_700Bold"],
+        body: ["Inter_400Regular"],
+      },
       colors: {
         brand: {
           50: "#F0FFF4",
@@ -40,6 +44,20 @@ module.exports = {
           700: "#8A6B22",
           800: "#755B1C",
           900: "#614C16",
+        },
+        // Stitch design tokens
+        surface: {
+          DEFAULT: "#FAFAF6",
+          low: "#F4F4F0",
+          high: "#E8E8E5",
+          highest: "#E2E3DF",
+          container: "#EEEEEA",
+        },
+        "on-surface": "#1A1C1A",
+        "on-surface-variant": "#3D4A3E",
+        outline: {
+          DEFAULT: "#6D7B6C",
+          variant: "#BCCABA",
         },
       },
     },

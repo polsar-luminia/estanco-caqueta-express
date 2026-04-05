@@ -1,5 +1,4 @@
 import { View, Text, Pressable } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated from "react-native-reanimated";
 import Toast from "react-native-toast-message";
 import { formatCOP } from "../lib/format";
@@ -41,39 +40,68 @@ export function ProductCard({ product, onPress }: Props) {
       onPressOut={onPressOut}
       style={[animatedStyle, { flex: 1 }]}
     >
-      <LinearGradient
-        colors={["#F3F4F6", "#FFFFFF"]}
-        style={{ borderRadius: 12, overflow: "hidden", borderWidth: 1, borderColor: "#F3F4F6" }}
+      <View
+        className="bg-white rounded-2xl overflow-hidden"
+        style={{
+          padding: 12,
+          borderRadius: 16,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.04,
+          shadowRadius: 12,
+          elevation: 2,
+        }}
       >
-        <ShimmerImage
-          imageUrl={product.imagen_url}
-          fallbackCategory={product.categoria}
-          style={{ width: "100%", height: 120 }}
-          contentFit="contain"
-        />
-        <View style={{ padding: 12 }}>
-          <Text className="text-xs text-gray-500 mb-1" numberOfLines={1}>
-            {product.categoria}
-          </Text>
-          <Text className="text-sm font-medium text-gray-800 mb-2" numberOfLines={2}>
+        {/* Imagen del producto */}
+        <View
+          className="w-full overflow-hidden"
+          style={{ borderRadius: 12, backgroundColor: "#FAFAF6" }}
+        >
+          <ShimmerImage
+            imageUrl={product.imagen_url}
+            fallbackCategory={product.categoria}
+            style={{ width: "100%", aspectRatio: 1 }}
+            contentFit="contain"
+          />
+        </View>
+
+        {/* Info del producto */}
+        <View className="mt-3">
+          <Text
+            className="text-sm font-bold text-gray-900"
+            numberOfLines={2}
+          >
             {product.nombre}
           </Text>
-          <View className="flex-row items-center justify-between">
-            <Text className="text-base font-bold text-brand-800">
+
+          <View className="flex-row items-center justify-between mt-2">
+            <Text
+              className="font-bold text-lg"
+              style={{ color: "#D33587" }}
+            >
               {formatCOP(product.precio_app)}
             </Text>
+
             <Pressable
               onPress={(e) => {
                 e.stopPropagation?.();
                 handleAdd();
               }}
-              className="bg-brand-700 rounded-lg px-3 py-1.5"
+              className="items-center justify-center"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: "#1FAF55",
+              }}
             >
-              <Text className="text-white text-sm font-bold">+</Text>
+              <Text className="text-white text-xl font-bold" style={{ marginTop: -1 }}>
+                +
+              </Text>
             </Pressable>
           </View>
         </View>
-      </LinearGradient>
+      </View>
     </AnimatedPressable>
   );
 }

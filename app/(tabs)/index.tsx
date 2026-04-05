@@ -1,6 +1,7 @@
-import { View, Text, ScrollView, FlatList, RefreshControl } from "react-native";
+import { View, Text, ScrollView, FlatList, RefreshControl, Pressable } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 import { getCategorias, getDestacados, getPatrocinados } from "../../src/lib/api";
 import { ProductCard } from "../../src/components/ProductCard";
 import { CategoryStrip } from "../../src/components/CategoryStrip";
@@ -39,13 +40,21 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-gray-50"
+      className="flex-1"
+      style={{ backgroundColor: "#FAFAF6" }}
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={onRefresh} colors={["#17994A"]} />
       }
     >
       {isLoading ? (
         <>
+          {/* Skeleton para búsqueda */}
+          <View className="px-4 pt-4 pb-2">
+            <View
+              className="rounded-xl"
+              style={{ height: 52, backgroundColor: "#E2E3DF" }}
+            />
+          </View>
           <BannerSkeleton />
           <View className="px-4 py-4">
             <CategoryStripSkeleton />
@@ -56,11 +65,34 @@ export default function HomeScreen() {
         </>
       ) : (
         <>
+          {/* Barra de búsqueda */}
+          <Pressable
+            className="mx-4 mt-4 mb-2"
+            onPress={() => router.push("/(tabs)/search")}
+          >
+            <View
+              className="flex-row items-center rounded-xl"
+              style={{ backgroundColor: "#E2E3DF", paddingVertical: 14, paddingLeft: 48, paddingRight: 16 }}
+            >
+              <Feather
+                name="search"
+                size={20}
+                color="#6B7280"
+                style={{ position: "absolute", left: 16 }}
+              />
+              <Text className="text-gray-500 text-base">
+                ¿Qué te apetece hoy?
+              </Text>
+            </View>
+          </Pressable>
+
+          {/* Banner carousel */}
           {banners.length > 0 && <BannerCarousel banners={banners} />}
 
-          <View className="px-4 py-4">
+          {/* Categorías */}
+          <View className="px-4 pt-4 pb-2">
             <Text className="text-lg font-bold text-gray-800 mb-3">
-              Categorias
+              Explorar Categorías
             </Text>
             <CategoryStrip
               categorias={categorias}
@@ -68,10 +100,17 @@ export default function HomeScreen() {
             />
           </View>
 
-          <View className="px-4 pb-6">
-            <Text className="text-lg font-bold text-gray-800 mb-3">
-              Destacados
-            </Text>
+          {/* Destacados */}
+          <View className="px-4 pt-4 pb-6">
+            <View className="flex-row items-center mb-3">
+              <View
+                className="rounded-full mr-2"
+                style={{ width: 8, height: 8, backgroundColor: "#D33587" }}
+              />
+              <Text className="text-lg font-bold text-gray-800">
+                Destacados
+              </Text>
+            </View>
             <FlatList
               data={destacados}
               numColumns={2}
