@@ -15,43 +15,41 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#1FAF55",
-        tabBarInactiveTintColor: "#9E9E9E",
+        tabBarActiveTintColor: "#fff",
+        tabBarInactiveTintColor: "rgba(26,28,26,0.5)",
         tabBarStyle: {
           position: "absolute",
-          bottom: 12,
-          left: 16,
-          right: 16,
-          height: 64,
-          borderRadius: 32,
-          backgroundColor: "rgba(255,255,255,0.95)",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 72,
+          backgroundColor: "rgba(255,255,255,0.92)",
           borderTopWidth: 0,
-          paddingBottom: 0,
-          paddingTop: 4,
+          paddingBottom: 12,
+          paddingTop: 8,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 16,
-          elevation: 12,
+          shadowOpacity: 0.06,
+          shadowRadius: 12,
+          elevation: 10,
         },
         tabBarLabelStyle: {
           fontSize: 9,
-          fontWeight: "700",
-          textTransform: "uppercase",
-          letterSpacing: 0.5,
-          marginTop: -2,
+          fontWeight: "600",
+          marginTop: 2,
         },
-        headerStyle: { backgroundColor: "#fff", elevation: 2, shadowOpacity: 0.05 },
+        tabBarActiveBackgroundColor: "transparent",
+        headerStyle: { backgroundColor: "#fff", elevation: 1, shadowOpacity: 0.03 },
         headerTintColor: "#1A1C1A",
         headerTitle: () => (
           <View className="flex-row items-center">
-            <Text style={{ fontStyle: "italic", fontWeight: "900", fontSize: 18, color: "#D33587" }}>
+            <Text style={{ fontStyle: "italic", fontWeight: "900", fontSize: 17, color: "#D33587" }}>
               Estanco
             </Text>
-            <Text style={{ fontStyle: "italic", fontWeight: "900", fontSize: 18, color: "#1FAF55", marginLeft: 4 }}>
+            <Text style={{ fontStyle: "italic", fontWeight: "900", fontSize: 17, color: "#1FAF55", marginLeft: 3 }}>
               Caquetá
             </Text>
-            <Text style={{ fontStyle: "italic", fontWeight: "900", fontSize: 14, color: "#D33587", marginLeft: 4, textTransform: "uppercase" }}>
+            <Text style={{ fontStyle: "italic", fontWeight: "800", fontSize: 13, color: "#D33587", marginLeft: 3, textTransform: "uppercase" }}>
               EXPRESS
             </Text>
           </View>
@@ -62,19 +60,36 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Inicio",
-          tabBarIcon: ({ color, size }) => <HomeIcon color={color} size={size} />,
+          tabBarIcon: ({ focused, size }) => (
+            <View
+              style={focused ? {
+                width: 44, height: 44, borderRadius: 22,
+                backgroundColor: "#1FAF55",
+                alignItems: "center", justifyContent: "center",
+                marginTop: -4,
+              } : undefined}
+            >
+              <HomeIcon color={focused ? "#fff" : "rgba(26,28,26,0.5)"} size={focused ? 22 : size} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: "Buscar",
-          tabBarIcon: ({ color, size }) => <SearchIcon color={color} size={size} />,
-          tabBarItemStyle: {
-            backgroundColor: "rgba(31,175,85,0.1)",
-            borderRadius: 20,
-            marginHorizontal: 4,
-          },
+          tabBarIcon: ({ focused, size }) => (
+            <View
+              style={focused ? {
+                width: 44, height: 44, borderRadius: 22,
+                backgroundColor: "#1FAF55",
+                alignItems: "center", justifyContent: "center",
+                marginTop: -4,
+              } : undefined}
+            >
+              <SearchIcon color={focused ? "#fff" : "rgba(26,28,26,0.5)"} size={focused ? 22 : size} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -82,8 +97,19 @@ export default function TabLayout() {
         options={{
           title: "Carrito",
           tabBarBadge: itemCount > 0 ? itemCount : undefined,
-          tabBarBadgeStyle: { backgroundColor: "#D33587", fontSize: 10 },
-          tabBarIcon: ({ color, size }) => <CartIcon color={color} size={size} />,
+          tabBarBadgeStyle: { backgroundColor: "#D33587", fontSize: 9 },
+          tabBarIcon: ({ focused, size }) => (
+            <View
+              style={focused ? {
+                width: 44, height: 44, borderRadius: 22,
+                backgroundColor: "#1FAF55",
+                alignItems: "center", justifyContent: "center",
+                marginTop: -4,
+              } : undefined}
+            >
+              <CartIcon color={focused ? "#fff" : "rgba(26,28,26,0.5)"} size={focused ? 22 : size} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -91,14 +117,36 @@ export default function TabLayout() {
         options={{
           title: "Pedidos",
           headerShown: false,
-          tabBarIcon: ({ color, size }) => <OrdersIcon color={color} size={size} />,
+          tabBarIcon: ({ focused, size }) => (
+            <View
+              style={focused ? {
+                width: 44, height: 44, borderRadius: 22,
+                backgroundColor: "#1FAF55",
+                alignItems: "center", justifyContent: "center",
+                marginTop: -4,
+              } : undefined}
+            >
+              <OrdersIcon color={focused ? "#fff" : "rgba(26,28,26,0.5)"} size={focused ? 22 : size} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Perfil",
-          tabBarIcon: ({ color, size }) => <ProfileIcon color={color} size={size} />,
+          tabBarIcon: ({ focused, size }) => (
+            <View
+              style={focused ? {
+                width: 44, height: 44, borderRadius: 22,
+                backgroundColor: "#1FAF55",
+                alignItems: "center", justifyContent: "center",
+                marginTop: -4,
+              } : undefined}
+            >
+              <ProfileIcon color={focused ? "#fff" : "rgba(26,28,26,0.5)"} size={focused ? 22 : size} />
+            </View>
+          ),
         }}
       />
     </Tabs>
