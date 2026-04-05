@@ -126,33 +126,6 @@ export default function RegisterScreen() {
             </View>
           </View>
 
-          {/* Divider */}
-          <View className="flex-row items-center my-8">
-            <View className="flex-1" style={{ height: 1, backgroundColor: "rgba(188,202,186,0.2)" }} />
-            <Text style={{ color: "#6D7B6C", fontSize: 9, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase", marginHorizontal: 12 }}>
-              O continúa con
-            </Text>
-            <View className="flex-1" style={{ height: 1, backgroundColor: "rgba(188,202,186,0.2)" }} />
-          </View>
-
-          {/* Social */}
-          <View className="flex-row" style={{ gap: 12 }}>
-            <Pressable
-              className="flex-1 flex-row items-center justify-center py-3.5"
-              style={{ borderRadius: 999, borderWidth: 1, borderColor: "rgba(188,202,186,0.3)", backgroundColor: "#fff" }}
-            >
-              <Text style={{ fontSize: 14, marginRight: 8 }}>🔵</Text>
-              <Text style={{ fontSize: 13, fontWeight: "700", color: "#1A1C1A" }}>Google</Text>
-            </Pressable>
-            <Pressable
-              className="flex-1 flex-row items-center justify-center py-3.5"
-              style={{ borderRadius: 999, backgroundColor: "#1877F2" }}
-            >
-              <Text style={{ fontSize: 14, marginRight: 8 }}>📘</Text>
-              <Text style={{ fontSize: 13, fontWeight: "700", color: "#fff" }}>Facebook</Text>
-            </Pressable>
-          </View>
-
           {/* Terms */}
           <View className="items-center mt-8">
             <Text style={{ fontSize: 9, color: "#6D7B6C", textAlign: "center", letterSpacing: 1, textTransform: "uppercase", lineHeight: 14 }}>

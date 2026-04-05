@@ -140,33 +140,6 @@ export default function LoginScreen() {
               </Text>
             </Pressable>
 
-            {/* Divider */}
-            <View className="flex-row items-center my-6">
-              <View className="flex-1" style={{ height: 1, backgroundColor: "#E2E3DF" }} />
-              <Text style={{ color: "#6D7B6C", fontSize: 10, fontWeight: "700", letterSpacing: 1.5, textTransform: "uppercase", marginHorizontal: 12 }}>
-                O continúa con
-              </Text>
-              <View className="flex-1" style={{ height: 1, backgroundColor: "#E2E3DF" }} />
-            </View>
-
-            {/* Social */}
-            <View className="flex-row" style={{ gap: 12 }}>
-              <Pressable
-                className="flex-1 flex-row items-center justify-center rounded-2xl py-3"
-                style={{ backgroundColor: "#F4F4F0", borderWidth: 1, borderColor: "#E2E3DF" }}
-              >
-                <Text style={{ fontSize: 16, marginRight: 6 }}>🟦</Text>
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#3D4A3E" }}>Google</Text>
-              </Pressable>
-              <Pressable
-                className="flex-1 flex-row items-center justify-center rounded-2xl py-3"
-                style={{ backgroundColor: "#F4F4F0", borderWidth: 1, borderColor: "#E2E3DF" }}
-              >
-                <Text style={{ fontSize: 16, marginRight: 6 }}>📘</Text>
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#3D4A3E" }}>Facebook</Text>
-              </Pressable>
-            </View>
-
             {/* Footer */}
             <View className="items-center mt-8">
               <View className="flex-row">
