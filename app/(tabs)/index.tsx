@@ -119,9 +119,11 @@ export default function HomeScreen() {
             <View className="px-4 pt-5 pb-2">
               <View className="flex-row justify-between items-center mb-3">
                 <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Categorías</Text>
-                <Text style={{ fontSize: 11, fontWeight: "700", color: "#1FAF55", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                  Ver todas
-                </Text>
+                <Pressable onPress={() => router.push("/(tabs)/search")}>
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: "#1FAF55", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    Ver todas
+                  </Text>
+                </Pressable>
               </View>
               <CategoryStrip
                 categorias={categorias}

@@ -180,7 +180,9 @@ export default function SearchScreen() {
           <View className="px-4">
             <View className="flex-row justify-between items-center mb-3">
               <Text style={{ fontSize: 18, fontWeight: "800", color: "#1A1C1A" }}>Sugerencias de Hoy</Text>
-              <Text style={{ fontSize: 12, fontWeight: "700", color: "#D33587" }}>Ver Todo</Text>
+              <Pressable onPress={() => router.push("/(tabs)/search")}>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: "#D33587" }}>Ver Todo</Text>
+              </Pressable>
             </View>
           </View>
         </ScrollView>
