@@ -4,6 +4,22 @@ import { useCartStore, type CartItem as CartItemType } from "../stores/cart";
 import { formatCOP } from "../lib/format";
 import { ShimmerImage } from "./ShimmerImage";
 
+function MinusIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+      <Path d="M5 12h14" stroke="#1FAF55" strokeWidth={2.5} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 5v14M5 12h14" stroke="#1FAF55" strokeWidth={2.5} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 interface Props {
   item: CartItemType;
 }
@@ -13,66 +29,57 @@ export function CartItem({ item }: Props) {
 
   return (
     <View
-      className="bg-white p-3 rounded-xl border border-gray-100 flex-row items-center"
+      className="flex-row items-center bg-white p-4"
       style={{
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        elevation: 1,
+        borderRadius: 16,
+        shadowColor: "#1A1C1A",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 12,
+        elevation: 2,
+        gap: 14,
       }}
     >
-      {/* Imagen */}
-      <View className="w-20 h-20 rounded-lg bg-gray-50 overflow-hidden">
+      {/* Image */}
+      <View style={{ width: 76, height: 76, borderRadius: 12, overflow: "hidden", backgroundColor: "#F4F4F0" }}>
         <ShimmerImage
           imageUrl={item.imagenUrl}
+          style={{ width: 76, height: 76 }}
           contentFit="cover"
-          style={{ width: 80, height: 80 }}
         />
       </View>
 
-      {/* Contenido */}
-      <View className="flex-1 ml-3 mr-2">
-        <Text className="font-semibold text-sm text-gray-800" numberOfLines={2}>
+      {/* Info */}
+      <View className="flex-1">
+        <Text style={{ fontWeight: "700", fontSize: 14, color: "#1A1C1A", lineHeight: 18 }} numberOfLines={2}>
           {item.nombre}
         </Text>
-        <Text className="font-bold text-sm mt-1" style={{ color: "#D33587" }}>
+        <Text style={{ color: "#D33587", fontWeight: "700", fontSize: 17, marginTop: 4 }}>
           {formatCOP(item.precioUnitario)}
         </Text>
       </View>
 
-      {/* Controles de cantidad */}
-      <View className="bg-gray-100 rounded-full p-1 flex-row items-center">
+      {/* Quantity */}
+      <View
+        className="flex-row items-center"
+        style={{ backgroundColor: "#F4F4F0", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 8, gap: 10 }}
+      >
         <Pressable
           onPress={() => updateQuantity(item.productoId, item.cantidad - 1)}
-          className="w-7 h-7 rounded-full bg-white items-center justify-center"
+          className="items-center justify-center"
+          style={{ padding: 4 }}
         >
-          <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-            <Path
-              d="M5 12h14"
-              stroke="#6B7280"
-              strokeWidth={2}
-              strokeLinecap="round"
-            />
-          </Svg>
+          <MinusIcon />
         </Pressable>
-
-        <Text className="w-6 text-center font-bold text-sm">
+        <Text style={{ fontWeight: "700", fontSize: 14, minWidth: 16, textAlign: "center" }}>
           {item.cantidad}
         </Text>
-
         <Pressable
           onPress={() => updateQuantity(item.productoId, item.cantidad + 1)}
-          className="w-7 h-7 rounded-full bg-white items-center justify-center"
+          className="items-center justify-center"
+          style={{ padding: 4 }}
         >
-          <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-            <Path
-              d="M12 5v14M5 12h14"
-              stroke="#6B7280"
-              strokeWidth={2}
-              strokeLinecap="round"
-            />
-          </Svg>
+          <PlusIcon />
         </Pressable>
       </View>
     </View>
