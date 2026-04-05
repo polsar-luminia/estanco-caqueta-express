@@ -2,7 +2,7 @@ import { View, Text, Pressable } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { useCartStore, type CartItem as CartItemType } from "../stores/cart";
 import { formatCOP } from "../lib/format";
-import { ShimmerImage } from "../ShimmerImage";
+import { ShimmerImage } from "./ShimmerImage";
 
 interface Props {
   item: CartItemType;
