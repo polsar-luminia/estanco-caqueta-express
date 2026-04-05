@@ -316,9 +316,16 @@ export default function CartScreen() {
               {formatCOP(total)}
             </Text>
           </View>
-          <Text style={{ fontSize: 11, color: "#6D7B6C", fontStyle: "italic" }}>
-            {envio === 0 ? "Envío gratis con puntos 🎉" : `Incluye domicilio (${formatCOP(envio)})`}
-          </Text>
+          <View>
+            <Text style={{ fontSize: 11, color: "#6D7B6C", fontStyle: "italic" }}>
+              {envio === 0 ? "Envío gratis con puntos 🎉" : `Incluye domicilio (${formatCOP(envio)})`}
+            </Text>
+            {subtotal < 30000 && (
+              <Text style={{ fontSize: 11, color: "#D33587", fontWeight: "600", marginTop: 2 }}>
+                Pedido mínimo: {formatCOP(30000)} (faltan {formatCOP(30000 - subtotal)})
+              </Text>
+            )}
+          </View>
         </View>
 
         <Pressable
