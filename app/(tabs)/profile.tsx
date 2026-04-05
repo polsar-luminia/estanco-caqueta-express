@@ -78,8 +78,9 @@ export default function ProfileScreen() {
             Pedidos
           </Text>
           <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>
-            12
+            {cliente?.puntos != null ? Math.floor((cliente.puntos || 0) / 100) : 0}
           </Text>
+          <Text style={{ fontSize: 9, color: "#6D7B6C", marginTop: 2 }}>envíos gratis</Text>
         </View>
         <View
           className="flex-1 items-center py-4 rounded-2xl"
@@ -89,8 +90,9 @@ export default function ProfileScreen() {
             Puntos
           </Text>
           <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>
-            1.240 pts
+            {cliente?.puntos || 0} pts
           </Text>
+          <Text style={{ fontSize: 9, color: "#6D7B6C", marginTop: 2 }}>100 pts = envío gratis</Text>
         </View>
       </View>
 

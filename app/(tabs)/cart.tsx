@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, FlatList, TextInput, Pressable } from "react-native";
+import { View, Text, FlatList, TextInput, Pressable, Switch } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
@@ -31,8 +31,13 @@ export default function CartScreen() {
   const clear = useCartStore((s) => s.clear);
   const cliente = useAuthStore((s) => s.cliente);
   const [loading, setLoading] = useState(false);
+  const [usarPuntos, setUsarPuntos] = useState(false);
 
-  const total = getTotal();
+  const subtotal = getTotal();
+  const puntos = cliente?.puntos || 0;
+  const puedeUsarPuntos = puntos >= 100;
+  const envio = usarPuntos && puedeUsarPuntos ? 0 : 5000;
+  const total = subtotal + envio;
 
   const handlePedir = async () => {
     if (!direccion.trim()) {
@@ -47,12 +52,19 @@ export default function CartScreen() {
         direccion: direccion.trim(),
         barrio: barrio.trim() || undefined,
         notas_cliente: notas.trim() || undefined,
+        usar_puntos: usarPuntos && puedeUsarPuntos,
         lineas: items.map((i) => ({ producto_id: i.productoId, cantidad: i.cantidad })),
       });
       clear();
+      // Refrescar perfil para actualizar puntos
+      const { getPerfil } = await import("../../src/lib/api");
+      const clienteActualizado = await getPerfil();
+      useAuthStore.getState().setCliente(clienteActualizado);
+
+      const ptsMsg = (pedido as any).puntos_ganados ? ` (+${(pedido as any).puntos_ganados} pts)` : "";
       Toast.show({
         type: "success",
-        text1: "Pedido confirmado",
+        text1: "Pedido confirmado" + ptsMsg,
         text2: `Pedido #${pedido.id} - ${formatCOP(pedido.total)}`,
         visibilityTime: 3000,
       });
@@ -133,6 +145,39 @@ export default function CartScreen() {
               />
             </View>
 
+            {/* Puntos + Envío */}
+            <View className="rounded-2xl p-4 bg-white" style={{ borderWidth: 1, borderColor: "#F4F4F0", gap: 12 }}>
+              <View className="flex-row justify-between">
+                <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Subtotal</Text>
+                <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1C1A" }}>{formatCOP(subtotal)}</Text>
+              </View>
+              <View className="flex-row justify-between items-center">
+                <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Envío</Text>
+                <Text style={{ fontSize: 14, fontWeight: "600", color: envio === 0 ? "#1FAF55" : "#1A1C1A" }}>
+                  {envio === 0 ? "¡Gratis!" : formatCOP(envio)}
+                </Text>
+              </View>
+              {puedeUsarPuntos && (
+                <View className="flex-row justify-between items-center rounded-xl p-3" style={{ backgroundColor: "#F4F4F0" }}>
+                  <View className="flex-1">
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1C1A" }}>Usar 100 puntos</Text>
+                    <Text style={{ fontSize: 11, color: "#6D7B6C" }}>Envío gratis (tienes {puntos} pts)</Text>
+                  </View>
+                  <Switch
+                    value={usarPuntos}
+                    onValueChange={setUsarPuntos}
+                    trackColor={{ false: "#E2E3DF", true: "#1FAF55" }}
+                    thumbColor="#fff"
+                  />
+                </View>
+              )}
+              {!puedeUsarPuntos && puntos > 0 && (
+                <Text style={{ fontSize: 11, color: "#6D7B6C", fontStyle: "italic" }}>
+                  Tienes {puntos} pts. Necesitas 100 para envío gratis.
+                </Text>
+              )}
+            </View>
+
             {/* Express Banner */}
             <LinearGradient
               colors={["#1FAF55", "#006D30"]}
@@ -183,7 +228,7 @@ export default function CartScreen() {
             </Text>
           </View>
           <Text style={{ fontSize: 11, color: "#6D7B6C", fontStyle: "italic" }}>
-            Incluye domicilio ($0)
+            {envio === 0 ? "Envío gratis con puntos 🎉" : `Incluye domicilio (${formatCOP(envio)})`}
           </Text>
         </View>
 
