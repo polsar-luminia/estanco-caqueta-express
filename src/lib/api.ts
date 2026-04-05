@@ -157,6 +157,7 @@ export interface Cliente {
   direccion?: string;
   barrio?: string;
   notas_direccion?: string;
+  puntos: number;
 }
 
 export interface Producto {
@@ -205,7 +206,17 @@ export interface CrearPedidoInput {
   direccion: string;
   barrio?: string;
   notas_cliente?: string;
+  usar_puntos?: boolean;
   lineas: { producto_id: number; cantidad: number }[];
+}
+
+export interface PuntosResponse {
+  balance: number;
+  movimientos: { tipo: string; puntos: number; descripcion: string; created_at: string }[];
+}
+
+export async function getPuntos() {
+  return apiFetch<PuntosResponse>("/clientes/puntos");
 }
 
 export interface Patrocinado {
