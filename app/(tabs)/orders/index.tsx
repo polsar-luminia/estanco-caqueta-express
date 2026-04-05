@@ -10,8 +10,10 @@ import {
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { getPedidos } from "../../../src/lib/api";
+import Toast from "react-native-toast-message";
+import { getPedidos, getPedido } from "../../../src/lib/api";
 import type { Pedido } from "../../../src/lib/api";
+import { useCartStore } from "../../../src/stores/cart";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderCardSkeleton } from "../../../src/components/skeletons/OrderCardSkeleton";
 
@@ -102,9 +104,33 @@ function StatusBadge({ estado }: { estado: string }) {
 
 function OrderCard({ item }: { item: Pedido }) {
   const router = useRouter();
+  const addItem = useCartStore((s) => s.addItem);
   const isActive = item.estado === "en_camino" || item.estado === "en_preparacion";
   const isDelivered = item.estado === "entregado";
   const isEnCamino = item.estado === "en_camino";
+
+  const handleReordenar = async () => {
+    try {
+      const pedido = await getPedido(item.id);
+      if (!pedido.lineas?.length) {
+        Toast.show({ type: "error", text1: "No se pudo reordenar" });
+        return;
+      }
+      for (const linea of pedido.lineas) {
+        for (let i = 0; i < linea.cantidad; i++) {
+          addItem({
+            productoId: (linea as any).producto_id || 0,
+            nombre: linea.nombre_producto,
+            precioUnitario: linea.precio_unitario,
+          });
+        }
+      }
+      Toast.show({ type: "success", text1: "Productos agregados al carrito", text2: `${pedido.lineas.length} productos de pedido #${item.id}` });
+      router.push("/(tabs)/cart");
+    } catch {
+      Toast.show({ type: "error", text1: "Error al reordenar" });
+    }
+  };
 
   return (
     <Pressable
@@ -167,10 +193,7 @@ function OrderCard({ item }: { item: Pedido }) {
 
           {isDelivered && (
             <Pressable
-              onPress={() => {
-                // Reordenar: navegar a detalle donde pueden ver los productos
-                router.push(`/(tabs)/orders/${item.id}`);
-              }}
+              onPress={handleReordenar}
               className="flex-1 py-3 rounded-xl items-center bg-magenta-50"
             >
               <Text className="text-sm font-semibold text-magenta-600">
