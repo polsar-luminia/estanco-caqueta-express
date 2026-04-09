@@ -1,11 +1,13 @@
 import { View, Text, ScrollView, FlatList, RefreshControl, Pressable } from "react-native";
+import { useRef, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import { getCategorias, getDestacados, getPatrocinados } from "../../src/lib/api";
+import { getCategorias, getDestacados, getPatrocinados, getHeroModo } from "../../src/lib/api";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
+import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
 import { ProductCard } from "../../src/components/ProductCard";
 import { CategoryStrip } from "../../src/components/CategoryStrip";
 import { ShimmerImage } from "../../src/components/ShimmerImage";
@@ -13,15 +15,142 @@ import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridS
 import { CategoryStripSkeleton } from "../../src/components/skeletons/CategoryStripSkeleton";
 import { SkeletonBox } from "../../src/components/skeletons/SkeletonBox";
 import { formatCOP } from "../../src/lib/format";
+import type { Patrocinado } from "../../src/lib/api";
+import { Dimensions } from "react-native";
 
-const BADGES = ["Top Ventas", "Oferta", null, null, "Top Ventas", null];
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+const TIPO_CFG: Record<string, { label: string; color: string }> = {
+  banner:           { label: "Descuento",        color: "#6B7280" },
+  oferta:           { label: "Oferta",           color: "#D33587" },
+  oferta_relampago: { label: "Oferta Relámpago", color: "#DC2626" },
+  promocion:        { label: "Promoción",        color: "#7C3AED" },
+  imperdible:       { label: "Imperdible",       color: "#EA580C" },
+  irresistible:     { label: "Irresistible",     color: "#DC2626" },
+};
+
+const FALLBACK_IMG = "https://cdn.shopify.com/s/files/1/0906/3084/8816/collections/Diseno_sin_titulo_23.png";
+
+function HeroSlide({ banner, onPress }: { banner: Patrocinado | undefined; onPress: () => void }) {
+  const cfg = TIPO_CFG[banner?.tipo ?? "banner"] ?? TIPO_CFG["banner"];
+  const titulo = banner?.titulo ?? "Descuentos en\ndomicilio";
+  const imgUrl = banner?.imagen_url ?? FALLBACK_IMG;
+
+  return (
+    <View style={{ width: SCREEN_WIDTH - 32, height: 190, borderRadius: 12, overflow: "hidden" }}>
+      <ShimmerImage
+        imageUrl={imgUrl}
+        style={{ width: "100%", height: 190, position: "absolute" }}
+        contentFit="fill"
+      />
+      <LinearGradient
+        colors={["rgba(0,0,0,0.8)", "transparent"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={{ position: "absolute", width: "100%", height: "100%" }}
+      />
+      <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 20, gap: 6 }}>
+        <View style={{ width: "58%", gap: 6 }}>
+          <View style={{ alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, backgroundColor: cfg.color }}>
+            <Text style={{ color: "#fff", fontSize: 8, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" }}>
+              {cfg.label}
+            </Text>
+          </View>
+          <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800", lineHeight: 26 }}>
+            {titulo}
+          </Text>
+          <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 11 }}>
+            Domicilio en Florencia
+          </Text>
+          <Pressable
+            style={{ alignSelf: "flex-start", marginTop: 4, paddingHorizontal: 20, paddingVertical: 8, borderRadius: 12, backgroundColor: "#1FAF55" }}
+            onPress={onPress}
+          >
+            <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>Pedir ahora</Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function HeroCarousel({ banners, router }: { banners: Patrocinado[]; router: ReturnType<typeof useRouter> }) {
+  const flatRef = useRef<FlatList>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Clon del primer banner al final para scroll infinito hacia la derecha
+  const extended = banners.length > 1 ? [...banners, banners[0]] : banners;
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const timer = setInterval(() => {
+      const next = activeIndex + 1; // puede llegar hasta extended.length - 1 (el clon)
+      flatRef.current?.scrollToIndex({ index: next, animated: true });
+      setActiveIndex(next);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, [activeIndex, banners.length]);
+
+  const handleScrollEnd = (e: any) => {
+    const idx = Math.round(e.nativeEvent.contentOffset.x / (SCREEN_WIDTH - 32));
+    if (idx >= banners.length) {
+      // Llegamos al clon — jump silencioso al real sin animación
+      flatRef.current?.scrollToIndex({ index: 0, animated: false });
+      setActiveIndex(0);
+    } else {
+      setActiveIndex(idx);
+    }
+  };
+
+  const dotIndex = activeIndex % banners.length;
+
+  return (
+    <View>
+      <FlatList
+        ref={flatRef}
+        data={extended}
+        horizontal
+        pagingEnabled={false}
+        snapToInterval={SCREEN_WIDTH - 32}
+        decelerationRate="fast"
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
+        onMomentumScrollEnd={handleScrollEnd}
+        renderItem={({ item }) => (
+          <HeroSlide
+            banner={item}
+            onPress={() => item.producto?.id ? router.push(`/product/${item.producto.id}`) : null}
+          />
+        )}
+      />
+      {banners.length > 1 && (
+        <View style={{ flexDirection: "row", justifyContent: "center", paddingTop: 8, gap: 6 }}>
+          {banners.map((_, i) => (
+            <View
+              key={i}
+              style={{
+                width: dotIndex === i ? 20 : 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: dotIndex === i ? "#1FAF55" : "#D1D5DB",
+              }}
+            />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 
 export default function HomeScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const cliente = useAuthStore((s) => s.cliente);
-  const itemCount = useCartStore((s) => s.getItemCount());
-  const total = useCartStore((s) => s.getTotal());
+  const itemCount = useCartStore((s) => s.items.reduce((n, i) => n + i.cantidad, 0));
+  const total = useCartStore((s) => s.items.reduce((t, i) => t + i.precioUnitario * i.cantidad, 0));
+
+  const tienda = useTiendaAbierta();
 
   const { data: categorias = [], isLoading: loadCat } = useQuery({
     queryKey: ["categorias"],
@@ -36,6 +165,12 @@ export default function HomeScreen() {
   const { data: patrocinados = [], isLoading: loadPat } = useQuery({
     queryKey: ["patrocinados"],
     queryFn: getPatrocinados,
+  });
+
+  const { data: heroModo = "static" } = useQuery({
+    queryKey: ["hero-modo"],
+    queryFn: getHeroModo,
+    staleTime: 5 * 60 * 1000,
   });
 
   const isLoading = loadCat || loadDest || loadPat;
@@ -64,6 +199,26 @@ export default function HomeScreen() {
           </View>
         ) : (
           <>
+            {/* Banner cerrado */}
+            {!tienda.abierta && (
+              <View
+                className="mx-4 mt-3 flex-row items-center px-4 py-3 rounded-xl"
+                style={{ backgroundColor: "#1A1C1A" }}
+              >
+                <View
+                  style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#6B7280", marginRight: 10 }}
+                />
+                <View className="flex-1">
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: "#fff" }}>
+                    Estamos cerrados
+                  </Text>
+                  <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 1 }}>
+                    {tienda.proximaApertura} • Puedes explorar el catálogo
+                  </Text>
+                </View>
+              </View>
+            )}
+
             {/* Barra de dirección */}
             <View
               className="mx-4 mt-3 flex-row items-center p-4 rounded-xl"
@@ -78,41 +233,18 @@ export default function HomeScreen() {
                   {cliente?.direccion || "Florencia, Caquetá"}
                 </Text>
               </View>
-              <Feather name="chevron-down" size={18} color="#6D7B6C" />
             </View>
 
             {/* Hero Banner */}
-            <View className="mx-4 mt-4 rounded-xl overflow-hidden" style={{ height: 190 }}>
-              <ShimmerImage
-                imageUrl={patrocinados[0]?.imagen_url || "https://cdn.shopify.com/s/files/1/0906/3084/8816/collections/Diseno_sin_titulo_23.png"}
-                style={{ width: "100%", height: 190, position: "absolute" }}
-                contentFit="cover"
-              />
-              <LinearGradient
-                colors={["rgba(0,0,0,0.8)", "transparent"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{ position: "absolute", width: "100%", height: "100%" }}
-              />
-              <View className="flex-1 justify-center px-5" style={{ gap: 6 }}>
-                <View className="self-start px-2 py-1 rounded" style={{ backgroundColor: "#D33587" }}>
-                  <Text style={{ color: "#fff", fontSize: 8, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" }}>
-                    Oferta Relámpago
-                  </Text>
-                </View>
-                <Text style={{ color: "#fff", fontSize: 24, fontWeight: "800", lineHeight: 28 }}>
-                  Aguardiente{"\n"}en Descuento
-                </Text>
-                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                  Domicilio en Florencia
-                </Text>
-                <Pressable
-                  className="self-start mt-1 px-5 py-2 rounded-xl"
-                  style={{ backgroundColor: "#1FAF55" }}
-                >
-                  <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>Pedir ahora</Text>
-                </Pressable>
-              </View>
+            <View className="mx-4 mt-4">
+              {heroModo === "carousel" && patrocinados.length > 0 ? (
+                <HeroCarousel banners={patrocinados} router={router} />
+              ) : (
+                <HeroSlide
+                  banner={patrocinados[0]}
+                  onPress={() => patrocinados[0]?.producto?.id ? router.push(`/product/${patrocinados[0].producto.id}`) : null}
+                />
+              )}
             </View>
 
             {/* Categorías */}
@@ -143,11 +275,11 @@ export default function HomeScreen() {
                 columnWrapperStyle={{ gap: 10 }}
                 contentContainerStyle={{ gap: 10 }}
                 keyExtractor={(item) => String(item.id)}
-                renderItem={({ item, index }) => (
+                renderItem={({ item }) => (
                   <ProductCard
                     product={item}
                     onPress={() => router.push(`/product/${item.id}`)}
-                    badge={BADGES[index % BADGES.length] || undefined}
+                    badge={(item as any).badge || undefined}
                   />
                 )}
               />

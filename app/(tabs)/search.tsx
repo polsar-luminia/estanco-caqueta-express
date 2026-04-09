@@ -1,23 +1,37 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { View, TextInput, FlatList, Text, ScrollView, Pressable, Dimensions } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { buscarProductos, getCategorias, type Categoria } from "../../src/lib/api";
+import { tracker } from "../../src/lib/tracker";
 import { ProductCard } from "../../src/components/ProductCard";
 import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
 
-const RECENT_SEARCHES = ["Aguardiente", "Heineken", "Pringles", "Ron Viejo de Caldas"];
+const RECENT_SEARCHES = ["Jack Daniel's", "Olmeca Reposado", "Something Special", "Absolut", "Bacardi", "Casillero del Diablo"];
 const SCREEN_WIDTH = Dimensions.get("window").width;
-const COL_WIDTH = (SCREEN_WIDTH - 32 - 36) / 4; // px-4 padding + 3 gaps of 12
+const COL_WIDTH = (SCREEN_WIDTH - 32 - 12) / 2; // px-4 padding + 1 gap de 12
 
 function CategoryGridItem({ cat, onPress }: { cat: Categoria; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} className="items-center" style={{ width: COL_WIDTH, marginBottom: 20 }}>
+    <Pressable
+      onPress={onPress}
+      style={{
+        width: COL_WIDTH,
+        marginBottom: 12,
+        backgroundColor: "#F4F4F0",
+        borderRadius: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 14,
+        paddingVertical: 14,
+        gap: 12,
+      }}
+    >
       <View
         className="items-center justify-center overflow-hidden"
-        style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: "#F4F4F0" }}
+        style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: "#fff" }}
       >
         {cat.imagen_url ? (
           <Image source={{ uri: cat.imagen_url }} style={{ width: 36, height: 36 }} contentFit="contain" />
@@ -25,10 +39,7 @@ function CategoryGridItem({ cat, onPress }: { cat: Categoria; onPress: () => voi
           <Text style={{ fontSize: 22, color: "#6D7B6C" }}>{cat.nombre.charAt(0)}</Text>
         )}
       </View>
-      <Text
-        style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", marginTop: 6, textAlign: "center" }}
-        numberOfLines={1}
-      >
+      <Text style={{ flex: 1, fontSize: 12, fontWeight: "700", color: "#1A1C1A" }} numberOfLines={1} adjustsFontSizeToFit>
         {cat.nombre}
       </Text>
     </Pressable>
@@ -76,6 +87,16 @@ export default function SearchScreen() {
   const noResults = debouncedQuery.length >= 2 && resultados.length === 0 && !isLoading;
   const showExplore = debouncedQuery.length < 2;
 
+  useEffect(() => {
+    if (debouncedQuery.length >= 2 && !isLoading) {
+      if (resultados.length === 0) {
+        tracker.track('busqueda_sin_resultado', { q: debouncedQuery }, 'search');
+      } else {
+        tracker.track('busqueda', { q: debouncedQuery, resultados: resultados.length }, 'search');
+      }
+    }
+  }, [debouncedQuery, isLoading]);
+
   return (
     <View className="flex-1 bg-white">
       {/* Search Bar */}
@@ -112,6 +133,7 @@ export default function SearchScreen() {
       {/* Results */}
       {hasResults && (
         <FlatList
+          key="resultados-grid"
           data={resultados}
           numColumns={2}
           contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: 90 }}
@@ -165,11 +187,12 @@ export default function SearchScreen() {
               Explora Categorías
             </Text>
             <FlatList
+              key="categorias-grid"
               data={categorias}
-              numColumns={4}
+              numColumns={2}
               scrollEnabled={false}
               keyExtractor={(item) => String(item.id)}
-              columnWrapperStyle={{ justifyContent: "flex-start", gap: 12 }}
+              columnWrapperStyle={{ gap: 12 }}
               renderItem={({ item }) => (
                 <CategoryGridItem cat={item} onPress={() => router.push(`/category/${item.id}`)} />
               )}

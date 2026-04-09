@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import { getPedidos, getPedido } from "../../../src/lib/api";
+import { tracker } from "../../../src/lib/tracker";
 import type { Pedido } from "../../../src/lib/api";
 import { useCartStore } from "../../../src/stores/cart";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
@@ -43,15 +44,7 @@ const ESTADO_TEXT: Record<string, string> = {
   cancelado: "text-red-700",
 };
 
-/* ── Shadow reutilizable ─────────────────────────────────── */
-
-const CARD_SHADOW = {
-  shadowColor: "#1A1C1A",
-  shadowOffset: { width: 0, height: 12 },
-  shadowOpacity: 0.04,
-  shadowRadius: 32,
-  elevation: 2,
-};
+import { CARD_SHADOW } from "../../../src/constants/styles";
 
 /* ── Punto pulsante para "En camino" ─────────────────────── */
 
@@ -104,7 +97,7 @@ function StatusBadge({ estado }: { estado: string }) {
 
 function OrderCard({ item }: { item: Pedido }) {
   const router = useRouter();
-  const addItem = useCartStore((s) => s.addItem);
+  const addItemWithQuantity = useCartStore((s) => s.addItemWithQuantity);
   const isActive = item.estado === "en_camino" || item.estado === "en_preparacion";
   const isDelivered = item.estado === "entregado";
   const isEnCamino = item.estado === "en_camino";
@@ -117,14 +110,13 @@ function OrderCard({ item }: { item: Pedido }) {
         return;
       }
       for (const linea of pedido.lineas) {
-        for (let i = 0; i < linea.cantidad; i++) {
-          addItem({
-            productoId: (linea as any).producto_id || 0,
-            nombre: linea.nombre_producto,
-            precioUnitario: linea.precio_unitario,
-          });
-        }
+        addItemWithQuantity({
+          productoId: (linea as any).producto_id || 0,
+          nombre: linea.nombre_producto,
+          precioUnitario: linea.precio_unitario,
+        }, linea.cantidad);
       }
+      tracker.track('pedido_reordenado', { pedido_id: item.id }, 'orders');
       Toast.show({ type: "success", text1: "Productos agregados al carrito", text2: `${pedido.lineas.length} productos de pedido #${item.id}` });
       router.push("/(tabs)/cart");
     } catch {

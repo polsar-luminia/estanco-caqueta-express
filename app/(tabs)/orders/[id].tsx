@@ -2,19 +2,12 @@ import { View, Text, ScrollView, Pressable, Alert } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPedido, cancelarPedido } from "../../../src/lib/api";
+import { tracker } from "../../../src/lib/tracker";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline";
 import { SkeletonBox } from "../../../src/components/skeletons/SkeletonBox";
 
-/* ── Shadow reutilizable ─────────────────────────────────── */
-
-const CARD_SHADOW = {
-  shadowColor: "#1A1C1A",
-  shadowOffset: { width: 0, height: 12 },
-  shadowOpacity: 0.04,
-  shadowRadius: 32,
-  elevation: 2,
-};
+import { CARD_SHADOW } from "../../../src/constants/styles";
 
 /* ── Skeleton de carga ───────────────────────────────────── */
 
@@ -54,6 +47,7 @@ export default function OrderDetailScreen() {
   const cancelMutation = useMutation({
     mutationFn: () => cancelarPedido(Number(id)),
     onSuccess: () => {
+      tracker.track('pedido_cancelado', { pedido_id: Number(id) }, 'orders/[id]');
       queryClient.invalidateQueries({ queryKey: ["pedido", id] });
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });
     },

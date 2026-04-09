@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView, Linking, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView, Linking, Alert, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useAuthStore } from "../../src/stores/auth";
@@ -102,8 +102,8 @@ export default function ProfileScreen() {
           Información Personal
         </Text>
         <View className="bg-white rounded-2xl overflow-hidden" style={{ borderWidth: 1, borderColor: "#F4F4F0" }}>
-          <MenuItem icon="person" label="Mis Direcciones" />
-          <MenuItem icon="payments" label="Métodos de Pago" />
+          <MenuItem icon="person" label="Mis Direcciones" onPress={() => router.push("/profile/direcciones")} />
+          <MenuItem icon="payments" label="Métodos de Pago" onPress={() => router.push("/profile/metodos-pago")} />
         </View>
       </View>
 
@@ -118,7 +118,7 @@ export default function ProfileScreen() {
             label="Historial de Pedidos"
             onPress={() => router.push("/(tabs)/orders")}
           />
-          <MenuItem icon="confirmation_number" label="Cupones y Descuentos" badge="3 Nuevos" />
+          <MenuItem icon="confirmation_number" label="Cupones y Descuentos" badge="3 Nuevos" onPress={() => router.push("/profile/cupones")} />
         </View>
       </View>
 
@@ -167,8 +167,33 @@ export default function ProfileScreen() {
           </Text>
         </Pressable>
 
-        <Text style={{ textAlign: "center", fontSize: 9, color: "#9E9E9E", marginTop: 20, textTransform: "uppercase", letterSpacing: 2 }}>
-          Versión 1.0.0 (Caquetá Gold Edition)
+      </View>
+
+      {/* Branding Polo & Salazar */}
+      <View style={{ alignItems: "center", marginTop: 16, gap: 4 }}>
+        <Text style={{ fontSize: 10, color: "#BCCABA", textTransform: "uppercase", letterSpacing: 2 }}>
+          Un producto de
+        </Text>
+        <Image
+          source={require("../../assets/logo-polo-salazar.png")}
+          style={{ width: 180, height: 72 }}
+          resizeMode="contain"
+        />
+      </View>
+
+      {/* Versión y créditos */}
+      <View style={{ alignItems: "center", marginBottom: 24, gap: 2 }}>
+        <Text style={{ textAlign: "center", fontSize: 9, color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2 }}>
+          Versión 1.0.0
+        </Text>
+        <Text style={{ textAlign: "center", fontSize: 9, color: "#9E9E9E" }}>
+          Creado por{" "}
+          <Text
+            style={{ color: "#D33587", fontWeight: "700" }}
+            onPress={() => Linking.openURL("https://hola.luminiatech.digital")}
+          >
+            LuminIA
+          </Text>
         </Text>
       </View>
     </ScrollView>

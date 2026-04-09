@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { View, Text, Pressable, Dimensions } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useState, useEffect } from "react";
+import { View, Text, Pressable, Dimensions, ScrollView as RNScrollView } from "react-native";
+import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import Animated, {
   useSharedValue,
@@ -11,13 +11,15 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 import Toast from "react-native-toast-message";
-import { getProducto } from "../../src/lib/api";
+import { getProducto, getSugerencias } from "../../src/lib/api";
+import { ProductCard } from "../../src/components/ProductCard";
+import { tracker } from "../../src/lib/tracker";
 import { useCartStore } from "../../src/stores/cart";
 import { formatCOP } from "../../src/lib/format";
 import { ShimmerImage } from "../../src/components/ShimmerImage";
 import { SkeletonBox } from "../../src/components/skeletons/SkeletonBox";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const HEADER_MAX = SCREEN_HEIGHT * 0.45;
 
 /* ── Inline SVG icons (no icon lib installed) ─────────────── */
@@ -89,13 +91,20 @@ function ProductDetailSkeleton() {
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const addItem = useCartStore((s) => s.addItem);
+  const router = useRouter();
+  const addItemWithQuantity = useCartStore((s) => s.addItemWithQuantity);
   const scrollY = useSharedValue(0);
   const [quantity, setQuantity] = useState(1);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["producto", id],
     queryFn: () => getProducto(Number(id)),
+  });
+
+  const { data: sugerencias = [] } = useQuery({
+    queryKey: ["sugerencias", id],
+    queryFn: () => getSugerencias(Number(id)),
+    enabled: !!id,
   });
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -129,6 +138,16 @@ export default function ProductDetailScreen() {
     ],
   }));
 
+  useEffect(() => {
+    if (!product) return;
+    const entrada = Date.now();
+    tracker.track('producto_visto', { producto_id: product.id, nombre: product.nombre, categoria: product.categoria }, 'product/[id]');
+    return () => {
+      const segundos = Math.round((Date.now() - entrada) / 1000);
+      if (segundos > 2) tracker.track('tiempo_en_producto', { producto_id: product.id, segundos }, 'product/[id]');
+    };
+  }, [product?.id]);
+
   if (isLoading || !product) {
     return <ProductDetailSkeleton />;
   }
@@ -136,14 +155,12 @@ export default function ProductDetailScreen() {
   const inStock = product.stock_total > 0;
 
   const handleAdd = () => {
-    for (let i = 0; i < quantity; i++) {
-      addItem({
-        productoId: product.id,
-        nombre: product.nombre,
-        precioUnitario: product.precio_app,
-        imagenUrl: product.imagen_url || undefined,
-      });
-    }
+    addItemWithQuantity({
+      productoId: product.id,
+      nombre: product.nombre,
+      precioUnitario: product.precio_app,
+      imagenUrl: product.imagen_url || undefined,
+    }, quantity);
     Toast.show({
       type: "success",
       text1: "Agregado al carrito",
@@ -158,31 +175,45 @@ export default function ProductDetailScreen() {
 
   return (
     <View className="flex-1 bg-white">
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Header */}
+      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: 56, paddingBottom: 12, paddingHorizontal: 16, backgroundColor: "#fff" }}>
+        <Pressable onPress={() => router.back()} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+            <Path d="M15 18l-6-6 6-6" stroke="#1A1C1A" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+          </Svg>
+          <Text style={{ fontSize: 15, fontWeight: "600", color: "#1A1C1A" }}>Volver</Text>
+        </Pressable>
+      </View>
+
       {/* ── Scrollable content ───────────────────────────── */}
       <Animated.ScrollView
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
       >
         {/* Hero image */}
         <Animated.View
-          className="bg-surface-low items-center justify-center"
-          style={[headerStyle, { minHeight: 400, overflow: "hidden" }]}
+          style={[headerStyle, { overflow: "hidden", backgroundColor: "#FFFFFF" }]}
         >
-          <ShimmerImage
-            imageUrl={product.imagen_url}
-            fallbackCategory={product.categoria}
-            style={{
-              width: "80%",
-              height: 320,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 20 },
-              shadowOpacity: 0.3,
-              shadowRadius: 40,
-              elevation: 10,
-            }}
-            contentFit="contain"
-          />
+          <View style={{ width: SCREEN_WIDTH, height: HEADER_MAX, alignItems: "center", justifyContent: "center" }}>
+            <ShimmerImage
+              imageUrl={product.imagen_url}
+              fallbackCategory={product.categoria}
+              style={{
+                width: SCREEN_WIDTH * 0.75,
+                height: SCREEN_WIDTH * 0.75,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 20 },
+                shadowOpacity: 0.3,
+                shadowRadius: 40,
+                elevation: 10,
+              }}
+              contentFit="contain"
+            />
+          </View>
         </Animated.View>
 
         {/* Product details */}
@@ -215,11 +246,20 @@ export default function ProductDetailScreen() {
           </Text>
 
           {/* Price */}
-          <Text className="text-2xl font-extrabold text-brand-500">
-            {formatCOP(product.precio_app)}
-          </Text>
+          <View style={{ gap: 2 }}>
+            {product.precio_lista1 ? (
+              <Text style={{ fontSize: 14, color: "#9E9E9E", textDecorationLine: "line-through" }}>
+                {formatCOP(product.precio_lista1)}
+              </Text>
+            ) : null}
+            <Text className="text-2xl font-extrabold text-brand-500">
+              {formatCOP(product.precio_app)}
+            </Text>
+          </View>
 
-          {/* Description */}
+          {/* Description — muestra solo si existe. Shopify no tiene body_html a abr-2026;
+              ingresar vía admin.estancocaqueta.com o directamente en Shopify admin.
+              El sync-shopify-app.js la trae automáticamente en el próximo ciclo. */}
           {product.descripcion ? (
             <View style={{ gap: 6 }}>
               <Text className="text-base font-bold text-on-surface">
@@ -284,34 +324,45 @@ export default function ProductDetailScreen() {
               </Pressable>
             </View>
           </View>
+
+          {/* ── Botón agregar al carrito ───────────── */}
+          <View style={{ paddingTop: 16, paddingBottom: sugerencias.length > 0 ? 16 : 48 }}>
+            <Pressable
+              onPress={handleAdd}
+              disabled={!inStock}
+              className={`items-center rounded-xl py-4 ${
+                inStock ? "bg-brand-500" : "bg-gray-300"
+              }`}
+            >
+              <Text className="text-base font-bold text-white">
+                Agregar al carrito
+                {quantity > 1 ? ` (${quantity})` : ""}
+              </Text>
+            </Pressable>
+          </View>
+          {/* ── También te puede gustar ───────────── */}
+          {sugerencias.length > 0 && (
+            <View style={{ paddingBottom: 48 }}>
+              <Text style={{ fontSize: 16, fontWeight: "800", color: "#1A1C1A", marginBottom: 12 }}>
+                También te puede gustar
+              </Text>
+              <RNScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+                {sugerencias.map((item) => (
+                  <View key={item.id} style={{ width: 160 }}>
+                    <ProductCard
+                      product={item}
+                      onPress={() => {
+                        tracker.track('sugerencia_clickeada', { desde_producto: product.id, producto_clickeado: item.id, nombre: item.nombre }, 'product/[id]');
+                        router.push(`/product/${item.id}`);
+                      }}
+                    />
+                  </View>
+                ))}
+              </RNScrollView>
+            </View>
+          )}
         </View>
       </Animated.ScrollView>
-
-      {/* ── Bottom CTA (fixed) ───────────────────────────── */}
-      <View
-        className="absolute bottom-0 left-0 right-0 px-5 pb-8 pt-4"
-        style={{
-          backgroundColor: "rgba(255,255,255,0.95)",
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          elevation: 8,
-        }}
-      >
-        <Pressable
-          onPress={handleAdd}
-          disabled={!inStock}
-          className={`items-center rounded-xl py-4 ${
-            inStock ? "bg-brand-500" : "bg-gray-300"
-          }`}
-        >
-          <Text className="text-base font-bold text-white">
-            Agregar al carrito
-            {quantity > 1 ? ` (${quantity})` : ""}
-          </Text>
-        </Pressable>
-      </View>
     </View>
   );
 }
