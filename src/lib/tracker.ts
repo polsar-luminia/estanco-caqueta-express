@@ -1,8 +1,12 @@
 /**
  * Tracker de eventos — cola en memoria con flush periódico.
  * Uso: tracker.track('producto_visto', { producto_id: 1 }, 'product/[id]')
+ *
+ * El interval se pausa cuando la app va a background para no consumir
+ * batería ni red innecesariamente (AppState listener).
  */
 
+import { AppState, AppStateStatus } from 'react-native';
 import { getToken } from './api';
 import { API_URL } from '../constants/config';
 
@@ -22,7 +26,29 @@ class Tracker {
   private timer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
+    this.startTimer();
+    AppState.addEventListener('change', this.handleAppStateChange);
+  }
+
+  private handleAppStateChange = (nextState: AppStateStatus) => {
+    if (nextState === 'active') {
+      this.startTimer();
+      // Flush inmediato al volver al frente — procesa eventos acumulados
+      this.flush();
+    } else {
+      this.stopTimer();
+    }
+  };
+
+  private startTimer() {
+    if (this.timer !== null) return;
     this.timer = setInterval(() => this.flush(), FLUSH_INTERVAL_MS);
+  }
+
+  private stopTimer() {
+    if (this.timer === null) return;
+    clearInterval(this.timer);
+    this.timer = null;
   }
 
   track(tipo: string, payload?: Record<string, unknown>, pantalla?: string) {

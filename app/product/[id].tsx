@@ -199,20 +199,28 @@ export default function ProductDetailScreen() {
           style={[headerStyle, { overflow: "hidden", backgroundColor: "#FFFFFF" }]}
         >
           <View style={{ width: SCREEN_WIDTH, height: HEADER_MAX, alignItems: "center", justifyContent: "center" }}>
-            <ShimmerImage
-              imageUrl={product.imagen_url}
-              fallbackCategory={product.categoria}
+            <View
               style={{
                 width: SCREEN_WIDTH * 0.75,
                 height: SCREEN_WIDTH * 0.75,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 20 },
-                shadowOpacity: 0.3,
-                shadowRadius: 40,
                 elevation: 10,
+                backgroundColor: "transparent",
               }}
-              contentFit="contain"
-            />
+            >
+              <ShimmerImage
+                imageUrl={product.imagen_url}
+                fallbackCategory={product.categoria}
+                style={{
+                  width: SCREEN_WIDTH * 0.75,
+                  height: SCREEN_WIDTH * 0.75,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 20 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 40,
+                }}
+                contentFit="contain"
+              />
+            </View>
           </View>
         </Animated.View>
 

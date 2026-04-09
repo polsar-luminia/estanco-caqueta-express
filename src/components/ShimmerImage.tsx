@@ -26,11 +26,10 @@ export function ShimmerImage({ imageUrl, fallbackCategory, style, contentFit = "
   return (
     <Image
       source={{ uri }}
-      style={[{ backgroundColor: "#FFFFFF" }, style]}
+      style={[{ backgroundColor: "#F3F4F6" }, style]}
       contentFit={contentFit}
       contentPosition={contentPosition}
       transition={300}
-      placeholder={{ color: "#F3F4F6" }}
     />
   );
 }

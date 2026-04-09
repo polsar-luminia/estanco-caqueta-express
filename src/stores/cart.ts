@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { tracker } from "../lib/tracker";
 
 export interface CartItem {
@@ -29,78 +31,88 @@ interface CartState {
   getItemCount: () => number;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
-  items: [],
-  direccion: "",
-  barrio: "",
-  notas: "",
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      direccion: "",
+      barrio: "",
+      notas: "",
 
-  addItem: (product) => {
-    set((state) => {
-      const existing = state.items.find(
-        (i) => i.productoId === product.productoId
-      );
-      tracker.track('carrito_agregado', { producto_id: product.productoId, nombre: product.nombre, precio: product.precioUnitario });
-      if (existing) {
-        return {
-          items: state.items.map((i) =>
-            i.productoId === product.productoId
-              ? { ...i, cantidad: i.cantidad + 1 }
-              : i
-          ),
-        };
-      }
-      return { items: [...state.items, { ...product, cantidad: 1 }] };
-    });
-  },
+      addItem: (product) => {
+        set((state) => {
+          const existing = state.items.find(
+            (i) => i.productoId === product.productoId
+          );
+          tracker.track('carrito_agregado', { producto_id: product.productoId, nombre: product.nombre, precio: product.precioUnitario });
+          if (existing) {
+            return {
+              items: state.items.map((i) =>
+                i.productoId === product.productoId
+                  ? { ...i, cantidad: i.cantidad + 1 }
+                  : i
+              ),
+            };
+          }
+          return { items: [...state.items, { ...product, cantidad: 1 }] };
+        });
+      },
 
-  addItemWithQuantity: (product, cantidad) => {
-    set((state) => {
-      const existing = state.items.find((i) => i.productoId === product.productoId);
-      tracker.track('carrito_agregado', { producto_id: product.productoId, nombre: product.nombre, precio: product.precioUnitario, cantidad });
-      if (existing) {
-        return {
-          items: state.items.map((i) =>
-            i.productoId === product.productoId
-              ? { ...i, cantidad: i.cantidad + cantidad }
-              : i
-          ),
-        };
-      }
-      return { items: [...state.items, { ...product, cantidad }] };
-    });
-  },
+      addItemWithQuantity: (product, cantidad) => {
+        set((state) => {
+          const existing = state.items.find((i) => i.productoId === product.productoId);
+          tracker.track('carrito_agregado', { producto_id: product.productoId, nombre: product.nombre, precio: product.precioUnitario, cantidad });
+          if (existing) {
+            return {
+              items: state.items.map((i) =>
+                i.productoId === product.productoId
+                  ? { ...i, cantidad: i.cantidad + cantidad }
+                  : i
+              ),
+            };
+          }
+          return { items: [...state.items, { ...product, cantidad }] };
+        });
+      },
 
-  updateQuantity: (productoId, cantidad) => {
-    set((state) => {
-      if (cantidad <= 0) {
+      updateQuantity: (productoId, cantidad) => {
+        set((state) => {
+          if (cantidad <= 0) {
+            tracker.track('carrito_eliminado', { producto_id: productoId });
+            return { items: state.items.filter((i) => i.productoId !== productoId) };
+          }
+          tracker.track('carrito_cantidad_cambiada', { producto_id: productoId, cantidad_nueva: cantidad });
+          return {
+            items: state.items.map((i) =>
+              i.productoId === productoId ? { ...i, cantidad } : i
+            ),
+          };
+        });
+      },
+
+      removeItem: (productoId) => {
         tracker.track('carrito_eliminado', { producto_id: productoId });
-        return { items: state.items.filter((i) => i.productoId !== productoId) };
-      }
-      tracker.track('carrito_cantidad_cambiada', { producto_id: productoId, cantidad_nueva: cantidad });
-      return {
-        items: state.items.map((i) =>
-          i.productoId === productoId ? { ...i, cantidad } : i
-        ),
-      };
-    });
-  },
+        set((state) => ({
+          items: state.items.filter((i) => i.productoId !== productoId),
+        }));
+      },
 
-  removeItem: (productoId) => {
-    tracker.track('carrito_eliminado', { producto_id: productoId });
-    set((state) => ({
-      items: state.items.filter((i) => i.productoId !== productoId),
-    }));
-  },
+      clear: () => set({ items: [], notas: "", direccion: "", barrio: "" }),
 
-  clear: () => set({ items: [], notas: "", direccion: "", barrio: "" }),
+      setDireccion: (direccion) => set({ direccion }),
+      setBarrio: (barrio) => set({ barrio }),
+      setNotas: (notas) => set({ notas }),
 
-  setDireccion: (direccion) => set({ direccion }),
-  setBarrio: (barrio) => set({ barrio }),
-  setNotas: (notas) => set({ notas }),
+      getTotal: () =>
+        get().items.reduce((sum, i) => sum + i.precioUnitario * i.cantidad, 0),
 
-  getTotal: () =>
-    get().items.reduce((sum, i) => sum + i.precioUnitario * i.cantidad, 0),
-
-  getItemCount: () => get().items.reduce((sum, i) => sum + i.cantidad, 0),
-}));
+      getItemCount: () => get().items.reduce((sum, i) => sum + i.cantidad, 0),
+    }),
+    {
+      name: "cart-storage",
+      storage: createJSONStorage(() => AsyncStorage),
+      // Solo persistir items y dirección — barrio/notas son contextuales
+      partialize: (state) => ({ items: state.items, direccion: state.direccion }),
+    }
+  )
+);
