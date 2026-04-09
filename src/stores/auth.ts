@@ -6,6 +6,7 @@ import {
   loginCliente,
   registrarCliente,
   getPerfil,
+  registerUnauthorizedHandler,
   type Cliente,
 } from "../lib/api";
 
@@ -20,7 +21,8 @@ interface AuthState {
   register: (
     telefono: string,
     nombre: string,
-    password: string
+    password: string,
+    mayor_edad: boolean
   ) => Promise<void>;
   logout: () => Promise<void>;
   setCliente: (cliente: Cliente) => void;
@@ -41,8 +43,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
       const cliente = await getPerfil();
       set({ token, cliente, isLoading: false, isAuthenticated: true });
-    } catch {
-      await removeToken();
+    } catch (err: any) {
+      // Solo borrar token si fue rechazado explícitamente (no por error de red)
+      if (err?.message === 'UNAUTHORIZED') await removeToken();
       set({ token: null, cliente: null, isLoading: false, isAuthenticated: false });
     }
   },
@@ -53,8 +56,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ token, cliente, isAuthenticated: true });
   },
 
-  register: async (telefono, nombre, password) => {
-    const { token, cliente } = await registrarCliente(telefono, nombre, password);
+  register: async (telefono, nombre, password, mayor_edad) => {
+    const { token, cliente } = await registrarCliente(telefono, nombre, password, mayor_edad);
     await setToken(token);
     set({ token, cliente, isAuthenticated: true });
   },
@@ -66,3 +69,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setCliente: (cliente) => set({ cliente }),
 }));
+
+// Cuando apiFetch recibe un 401, resetea el store sin dep circular
+registerUnauthorizedHandler(() => {
+  useAuthStore.setState({ token: null, cliente: null, isAuthenticated: false });
+});
