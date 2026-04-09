@@ -3,6 +3,12 @@ import { API_URL } from "../constants/config";
 
 const TOKEN_KEY = "auth_token";
 
+// Callback registrado por auth.ts para resetear el store sin dep circular
+let _onUnauthorized: (() => void) | null = null;
+export function registerUnauthorizedHandler(fn: () => void) {
+  _onUnauthorized = fn;
+}
+
 export async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync(TOKEN_KEY);
 }
@@ -37,12 +43,23 @@ export async function apiFetch<T = any>(
 
   if (res.status === 401) {
     await removeToken();
+    _onUnauthorized?.();
     throw new Error("UNAUTHORIZED");
   }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Error ${res.status}`);
+    const ERRORES_USUARIO: Record<string, string> = {
+      'telefono already exists': 'Este teléfono ya está registrado',
+      'Teléfono inválido': 'Teléfono inválido',
+      'Nombre inválido': 'Nombre inválido',
+      'Contraseña muy corta (mín 8)': 'Contraseña muy corta (mínimo 8 caracteres)',
+      'Cantidad inválida': 'Cantidad inválida en el pedido',
+      'Cupón no válido': 'Cupón no válido',
+      'Stock insuficiente': 'Producto sin stock suficiente',
+    };
+    const msg = ERRORES_USUARIO[body.error] ?? (res.status >= 500 ? 'Error del servidor, intenta de nuevo' : (body.error || `Error ${res.status}`));
+    throw new Error(msg);
   }
 
   return res.json();
@@ -60,11 +77,12 @@ export async function loginCliente(telefono: string, password: string) {
 export async function registrarCliente(
   telefono: string,
   nombre: string,
-  password: string
+  password: string,
+  mayor_edad: boolean
 ) {
   return apiFetch<{ token: string; cliente: Cliente }>("/clientes/registrar", {
     method: "POST",
-    body: JSON.stringify({ telefono, nombre, password }),
+    body: JSON.stringify({ telefono, nombre, password, mayor_edad }),
   });
 }
 
@@ -95,10 +113,10 @@ export async function getProductos(params: {
   limite?: number;
 }) {
   const qs = new URLSearchParams();
-  if (params.categoria) qs.set("categoria", String(params.categoria));
+  if (params.categoria != null) qs.set("categoria", String(params.categoria));
   if (params.buscar) qs.set("buscar", params.buscar);
-  if (params.pagina) qs.set("pagina", String(params.pagina));
-  if (params.limite) qs.set("limite", String(params.limite));
+  if (params.pagina != null) qs.set("pagina", String(params.pagina));
+  if (params.limite != null) qs.set("limite", String(params.limite));
   return apiFetch<{ productos: Producto[]; total: number; paginas: number }>(
     `/catalogo/productos?${qs}`
   );
@@ -116,6 +134,16 @@ export async function getDestacados() {
   return apiFetch<Producto[]>("/catalogo/destacados");
 }
 
+export async function getSugerencias(productoId: number) {
+  return apiFetch<Producto[]>(`/catalogo/sugerencias/${productoId}`);
+}
+
+export interface EventoInput {
+  tipo: string;
+  payload?: Record<string, unknown>;
+  pantalla?: string;
+}
+
 export async function buscarProductos(q: string) {
   return apiFetch<Producto[]>(`/catalogo/buscar?q=${encodeURIComponent(q)}`);
 }
@@ -123,7 +151,7 @@ export async function buscarProductos(q: string) {
 // --- Pedidos ---
 
 export async function crearPedido(pedido: CrearPedidoInput) {
-  return apiFetch<{ pedido: Pedido }>("/pedidos", {
+  return apiFetch<{ pedido: Pedido; puntos_ganados: number; puntos_usados: number; envio: number; descuento: number }>("/pedidos", {
     method: "POST",
     body: JSON.stringify(pedido),
   });
@@ -147,6 +175,11 @@ export async function getPatrocinados() {
   return apiFetch<Patrocinado[]>("/patrocinados");
 }
 
+export async function getHeroModo(): Promise<"static" | "carousel"> {
+  const data = await apiFetch<{ hero_modo: string }>("/patrocinados/config");
+  return (data.hero_modo === "carousel" ? "carousel" : "static");
+}
+
 // --- Tipos ---
 
 export interface Cliente {
@@ -166,10 +199,12 @@ export interface Producto {
   codigo?: string;
   imagen_url?: string;
   precio_app: number;
+  precio_lista1?: number;
   descripcion?: string;
   categoria: string;
   categoria_id?: number;
   stock_total: number;
+  badge?: string;
 }
 
 export interface Categoria {
@@ -196,6 +231,7 @@ export interface Pedido {
 
 export interface LineaPedido {
   id: number;
+  producto_id: number;
   nombre_producto: string;
   cantidad: number;
   precio_unitario: number;
@@ -205,9 +241,32 @@ export interface LineaPedido {
 export interface CrearPedidoInput {
   direccion: string;
   barrio?: string;
+  barrio_id?: number;
   notas_cliente?: string;
   usar_puntos?: boolean;
+  cupon_codigo?: string;
   lineas: { producto_id: number; cantidad: number }[];
+}
+
+// --- Cupones ---
+
+export interface CuponValidado {
+  valido: boolean;
+  cupon: {
+    id: number;
+    codigo: string;
+    descripcion: string;
+    tipo: 'porcentaje' | 'fijo';
+    valor: number;
+  };
+  descuento: number;
+}
+
+export async function validarCupon(codigo: string, subtotal: number) {
+  return apiFetch<CuponValidado>("/cupones/validar", {
+    method: "POST",
+    body: JSON.stringify({ codigo, subtotal }),
+  });
 }
 
 export interface PuntosResponse {
@@ -226,6 +285,7 @@ export interface DireccionGuardada {
   etiqueta: string;
   direccion: string;
   barrio?: string;
+  barrio_id?: number;
   notas?: string;
   predeterminada: boolean;
 }
@@ -234,7 +294,7 @@ export async function getDirecciones() {
   return apiFetch<DireccionGuardada[]>("/clientes/direcciones");
 }
 
-export async function crearDireccion(data: { etiqueta?: string; direccion: string; barrio?: string; notas?: string; predeterminada?: boolean }) {
+export async function crearDireccion(data: { etiqueta?: string; direccion: string; barrio?: string; barrio_id?: number; notas?: string; predeterminada?: boolean }) {
   return apiFetch<DireccionGuardada>("/clientes/direcciones", {
     method: "POST",
     body: JSON.stringify(data),
@@ -249,11 +309,26 @@ export async function eliminarDireccion(id: number) {
   return apiFetch(`/clientes/direcciones/${id}`, { method: "DELETE" });
 }
 
+// --- Barrios ---
+
+export interface Barrio {
+  id: number;
+  nombre: string;
+  comuna: string;
+}
+
+export async function getBarrios() {
+  return apiFetch<Barrio[]>("/barrios");
+}
+
 export interface Patrocinado {
   id: number;
   producto_id?: number;
-  tipo: "banner" | "carousel" | "destacado";
+  tipo: "banner" | "oferta" | "oferta_relampago" | "promocion" | "imperdible" | "irresistible";
   titulo?: string;
   imagen_url?: string;
   producto?: Producto;
+  activo?: boolean;
+  fecha_inicio?: string;
+  fecha_fin?: string;
 }
