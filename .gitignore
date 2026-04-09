@@ -44,3 +44,6 @@ yarn-error.*
 google-services.json
 GoogleService-Info.plist
 code-signing/private-key.pem
+
+# gstack — reportes de seguridad internos
+.gstack/
