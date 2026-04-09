@@ -332,3 +332,13 @@ export interface Patrocinado {
   fecha_inicio?: string;
   fecha_fin?: string;
 }
+
+
+export interface EstadoTienda {
+  abierta: boolean;
+  proximaApertura: string;
+}
+
+export async function getEstadoTienda(): Promise<EstadoTienda> {
+  return apiFetch<EstadoTienda>("/tienda/estado");
+}
