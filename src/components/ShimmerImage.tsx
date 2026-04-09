@@ -1,4 +1,4 @@
-import { Image, type ImageStyle, type ImageContentFit } from "expo-image";
+import { Image, type ImageStyle, type ImageContentFit, type ImageContentPosition } from "expo-image";
 
 const CATEGORY_PLACEHOLDERS: Record<string, string> = {
   Whisky: "https://placehold.co/400x400/1B5E20/white?text=Whisky",
@@ -14,9 +14,10 @@ interface Props {
   fallbackCategory?: string;
   style?: ImageStyle;
   contentFit?: ImageContentFit;
+  contentPosition?: ImageContentPosition;
 }
 
-export function ShimmerImage({ imageUrl, fallbackCategory, style, contentFit = "contain" }: Props) {
+export function ShimmerImage({ imageUrl, fallbackCategory, style, contentFit = "contain", contentPosition }: Props) {
   const uri =
     imageUrl ||
     CATEGORY_PLACEHOLDERS[fallbackCategory || ""] ||
@@ -25,10 +26,11 @@ export function ShimmerImage({ imageUrl, fallbackCategory, style, contentFit = "
   return (
     <Image
       source={{ uri }}
-      style={[{ backgroundColor: "#F3F4F6" }, style]}
+      style={[{ backgroundColor: "#FFFFFF" }, style]}
       contentFit={contentFit}
+      contentPosition={contentPosition}
       transition={300}
-      placeholder={{ color: "#E5E7EB" }}
+      placeholder={{ color: "#F3F4F6" }}
     />
   );
 }

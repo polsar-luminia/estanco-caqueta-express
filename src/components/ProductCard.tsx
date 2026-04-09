@@ -19,7 +19,10 @@ export function ProductCard({ product, onPress, badge }: Props) {
   const addItem = useCartStore((s) => s.addItem);
   const { animatedStyle, onPressIn, onPressOut } = useScalePress();
 
+  const agotado = (product.stock_total ?? 0) <= 0;
+
   const handleAdd = () => {
+    if (agotado) return;
     addItem({
       productoId: product.id,
       nombre: product.nombre,
@@ -39,7 +42,7 @@ export function ProductCard({ product, onPress, badge }: Props) {
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[animatedStyle, { flex: 1 }]}
+      style={[animatedStyle, { flex: 1, opacity: agotado ? 0.6 : 1 }]}
     >
       <View
         className="bg-white overflow-hidden"
@@ -56,18 +59,27 @@ export function ProductCard({ product, onPress, badge }: Props) {
         {/* Imagen con badge */}
         <View
           className="w-full overflow-hidden"
-          style={{ borderRadius: 12, backgroundColor: "#FAFAF6" }}
+          style={{ borderRadius: 12, backgroundColor: "#FFFFFF" }}
         >
-          {badge && (
+          {agotado ? (
             <View
               className="absolute top-2 left-2 z-10 px-2 py-1 rounded"
-              style={{ backgroundColor: "#D33587" }}
+              style={{ backgroundColor: "#6B7280" }}
             >
               <Text className="text-white font-bold" style={{ fontSize: 8, letterSpacing: 0.5, textTransform: "uppercase" }}>
-                {badge}
+                Agotado
               </Text>
             </View>
-          )}
+          ) : badge ? (
+            <View
+              className="absolute top-2 left-2 z-10 px-2 py-1 rounded"
+              style={{ backgroundColor: badge === "top_ventas" ? "#D33587" : "#1FAF55" }}
+            >
+              <Text className="text-white font-bold" style={{ fontSize: 8, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                {badge === "top_ventas" ? "Top Ventas" : "Oferta"}
+              </Text>
+            </View>
+          ) : null}
           <ShimmerImage
             imageUrl={product.imagen_url}
             fallbackCategory={product.categoria}
@@ -86,24 +98,32 @@ export function ProductCard({ product, onPress, badge }: Props) {
           </Text>
 
           <View className="flex-row items-center justify-between mt-2">
-            <Text
-              className="font-bold text-lg"
-              style={{ color: "#D33587" }}
-            >
-              {formatCOP(product.precio_app)}
-            </Text>
+            <View style={{ gap: 1 }}>
+              {product.precio_lista1 ? (
+                <Text style={{ fontSize: 11, color: "#9E9E9E", textDecorationLine: "line-through" }}>
+                  {formatCOP(product.precio_lista1)}
+                </Text>
+              ) : null}
+              <Text
+                className="font-bold text-lg"
+                style={{ color: agotado ? "#9CA3AF" : "#D33587" }}
+              >
+                {formatCOP(product.precio_app)}
+              </Text>
+            </View>
 
             <Pressable
               onPress={(e) => {
                 e.stopPropagation?.();
                 handleAdd();
               }}
+              disabled={agotado}
               className="items-center justify-center"
               style={{
                 width: 36,
                 height: 36,
                 borderRadius: 18,
-                backgroundColor: "#1FAF55",
+                backgroundColor: agotado ? "#D1D5DB" : "#1FAF55",
               }}
             >
               <Text className="text-white text-lg font-bold" style={{ marginTop: -1 }}>

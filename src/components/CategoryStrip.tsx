@@ -24,9 +24,9 @@ export function CategoryStrip({ categorias, onSelect }: Props) {
           <View
             className="items-center justify-center overflow-hidden"
             style={{
-              width: 60,
-              height: 60,
-              borderRadius: 30,
+              width: 80,
+              height: 80,
+              borderRadius: 40,
               backgroundColor: "#E8E8E5",
               padding: 10,
             }}
@@ -34,12 +34,12 @@ export function CategoryStrip({ categorias, onSelect }: Props) {
             {cat.imagen_url ? (
               <Image
                 source={{ uri: cat.imagen_url }}
-                style={{ width: 40, height: 40 }}
+                style={{ width: 58, height: 58 }}
                 contentFit="contain"
                 transition={200}
               />
             ) : (
-              <Text className="font-bold text-gray-500" style={{ fontSize: 20 }}>
+              <Text className="font-bold text-gray-500" style={{ fontSize: 26 }}>
                 {cat.nombre.charAt(0)}
               </Text>
             )}

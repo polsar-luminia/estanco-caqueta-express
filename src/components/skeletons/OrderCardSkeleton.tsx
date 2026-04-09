@@ -1,13 +1,6 @@
 import { View } from "react-native";
 import { SkeletonBox } from "./SkeletonBox";
-
-const CARD_SHADOW = {
-  shadowColor: "#1A1C1A",
-  shadowOffset: { width: 0, height: 12 },
-  shadowOpacity: 0.04,
-  shadowRadius: 32,
-  elevation: 2,
-};
+import { CARD_SHADOW } from "../../constants/styles";
 
 export function OrderCardSkeleton() {
   return (
