@@ -37,11 +37,11 @@ function HeroSlide({ banner, onPress }: { banner: Patrocinado | undefined; onPre
   const imgUrl = banner?.imagen_url ?? FALLBACK_IMG;
 
   return (
-    <View style={{ width: SCREEN_WIDTH - 32, height: 190, borderRadius: 12, overflow: "hidden" }}>
+    <View style={{ width: SCREEN_WIDTH - 32, height: 220, borderRadius: 12, overflow: "hidden" }}>
       <ShimmerImage
         imageUrl={imgUrl}
-        style={{ width: "100%", height: 190, position: "absolute" }}
-        contentFit="fill"
+        style={{ width: "100%", height: 220, position: "absolute" }}
+        contentFit="cover"
       />
       <LinearGradient
         colors={["rgba(0,0,0,0.8)", "transparent"]}

@@ -202,9 +202,15 @@ function OrderCard({ item }: { item: Pedido }) {
 /* ── Seccion de ayuda (WhatsApp) ─────────────────────────── */
 
 function HelpSection() {
+  const handleWhatsApp = () => {
+    Linking.openURL("https://wa.me/573155519216").catch(() => {
+      Linking.openURL("https://api.whatsapp.com/send?phone=573155519216");
+    });
+  };
+
   return (
     <Pressable
-      onPress={() => Linking.openURL("https://wa.me/573155519216")}
+      onPress={handleWhatsApp}
       className="bg-brand-900/5 p-6 rounded-2xl flex-row items-center"
     >
       <View className="w-12 h-12 rounded-full bg-brand-600 items-center justify-center mr-4">
@@ -285,7 +291,7 @@ export default function OrdersScreen() {
       }
       renderItem={({ item }) => <OrderCard item={item} />}
       ListFooterComponent={
-        <View className="mt-2 mb-8">
+        <View className="mt-2 mb-24">
           <HelpSection />
         </View>
       }
