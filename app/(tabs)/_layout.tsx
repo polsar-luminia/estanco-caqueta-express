@@ -1,5 +1,5 @@
 import { Redirect, Tabs } from "expo-router";
-import { View, Text } from "react-native";
+import { View, Image } from "react-native";
 import { useAuthStore } from "../../src/stores/auth";
 import { useCartStore } from "../../src/stores/cart";
 import { HomeIcon, SearchIcon, CartIcon, OrdersIcon, ProfileIcon } from "../../src/components/icons/TabIcons";
@@ -39,20 +39,14 @@ export default function TabLayout() {
           marginTop: 2,
         },
         tabBarActiveBackgroundColor: "transparent",
-        headerStyle: { backgroundColor: "#fff", elevation: 1, shadowOpacity: 0.03 },
+        headerStyle: { backgroundColor: "#fff", elevation: 1, shadowOpacity: 0.03, height: 100 },
         headerTintColor: "#1A1C1A",
         headerTitle: () => (
-          <View className="flex-row items-center">
-            <Text style={{ fontStyle: "italic", fontWeight: "900", fontSize: 17, color: "#D33587" }}>
-              Estanco
-            </Text>
-            <Text style={{ fontStyle: "italic", fontWeight: "900", fontSize: 17, color: "#1FAF55", marginLeft: 3 }}>
-              Caquetá
-            </Text>
-            <Text style={{ fontStyle: "italic", fontWeight: "800", fontSize: 13, color: "#D33587", marginLeft: 3, textTransform: "uppercase" }}>
-              EXPRESS
-            </Text>
-          </View>
+          <Image
+            source={require("../../assets/logo-estanco.png")}
+            style={{ width: 240, height: 54 }}
+            resizeMode="contain"
+          />
         ),
       }}
     >

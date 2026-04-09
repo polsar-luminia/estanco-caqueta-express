@@ -8,7 +8,10 @@ import { Feather } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
-import { crearPedido, getDirecciones, crearDireccion, type DireccionGuardada } from "../../src/lib/api";
+import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
+import { crearPedido, getDirecciones, crearDireccion, validarCupon, type DireccionGuardada, type CuponValidado } from "../../src/lib/api";
+import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
+import { tracker } from "../../src/lib/tracker";
 import { formatCOP } from "../../src/lib/format";
 import { CartItem } from "../../src/components/CartItem";
 
@@ -33,8 +36,15 @@ export default function CartScreen() {
   const [usarPuntos, setUsarPuntos] = useState(false);
   const [mostrarNueva, setMostrarNueva] = useState(false);
   const [nuevaDireccion, setNuevaDireccion] = useState("");
-  const [nuevoBarrio, setNuevoBarrio] = useState("");
+  const [nuevoBarrioObj, setNuevoBarrioObj] = useState<BarrioSeleccionado | null>(null);
+  const [nuevoBarrioTexto, setNuevoBarrioTexto] = useState("");
   const [nuevasNotas, setNuevasNotas] = useState("");
+  const [codigoCupon, setCodigoCupon] = useState("");
+  const [cuponValidado, setCuponValidado] = useState<CuponValidado | null>(null);
+  const [cuponError, setCuponError] = useState("");
+  const [validandoCupon, setValidandoCupon] = useState(false);
+
+  const tienda = useTiendaAbierta();
 
   const { data: direcciones = [], refetch: refetchDirs } = useQuery({
     queryKey: ["direcciones"],
@@ -49,7 +59,32 @@ export default function CartScreen() {
   const puntos = cliente?.puntos || 0;
   const puedeUsarPuntos = puntos >= 100;
   const envio = usarPuntos && puedeUsarPuntos ? 0 : 5000;
-  const total = subtotal + envio;
+  const descuentoCupon = cuponValidado?.descuento || 0;
+  const total = subtotal - descuentoCupon + envio;
+
+  const handleValidarCupon = async () => {
+    if (!codigoCupon.trim()) return;
+    setValidandoCupon(true);
+    setCuponError("");
+    setCuponValidado(null);
+    try {
+      const result = await validarCupon(codigoCupon.trim(), subtotal);
+      setCuponValidado(result);
+      tracker.track('cupon_aplicado', { cupon_codigo: result.cupon.codigo, descuento: result.descuento }, 'cart');
+      Toast.show({ type: "success", text1: "Cupon aplicado", text2: `-${formatCOP(result.descuento)} de descuento` });
+    } catch (err: any) {
+      setCuponError(err.message || "Cupon no valido");
+      Toast.show({ type: "error", text1: "Cupon no valido", text2: err.message });
+    } finally {
+      setValidandoCupon(false);
+    }
+  };
+
+  const handleQuitarCupon = () => {
+    setCuponValidado(null);
+    setCodigoCupon("");
+    setCuponError("");
+  };
 
   const handlePedir = async () => {
     const dir = dirActiva?.direccion || direccion.trim();
@@ -67,24 +102,30 @@ export default function CartScreen() {
     if (items.length === 0) return;
 
     const dirFinal = mostrarNueva ? nuevaDireccion.trim() : dir;
-    const barFinal = mostrarNueva ? nuevoBarrio.trim() : bar;
+    const nuevoBarrioNombre = nuevoBarrioObj?.nombre || nuevoBarrioTexto.trim();
+    const nuevoBarrioId = nuevoBarrioObj?.id || undefined;
+    const barFinal = mostrarNueva ? nuevoBarrioNombre : bar;
+    const barIdFinal = mostrarNueva ? nuevoBarrioId : (dirActiva as any)?.barrio_id || undefined;
     const notFinal = mostrarNueva ? nuevasNotas.trim() : not;
 
     setLoading(true);
     try {
       // Guardar nueva dirección si la ingresó
       if (mostrarNueva && dirFinal) {
-        await crearDireccion({ direccion: dirFinal, barrio: barFinal || undefined, notas: notFinal || undefined, predeterminada: true });
+        await crearDireccion({ direccion: dirFinal, barrio: barFinal || undefined, barrio_id: barIdFinal, notas: notFinal || undefined, predeterminada: true });
         refetchDirs();
       }
 
       const { pedido } = await crearPedido({
         direccion: dirFinal,
         barrio: barFinal || undefined,
+        barrio_id: barIdFinal,
         notas_cliente: notFinal || undefined,
         usar_puntos: usarPuntos && puedeUsarPuntos,
+        cupon_codigo: cuponValidado?.cupon.codigo || undefined,
         lineas: items.map((i) => ({ producto_id: i.productoId, cantidad: i.cantidad })),
       });
+      tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos }, 'cart');
       clear();
       // Refrescar perfil para actualizar puntos
       const { getPerfil } = await import("../../src/lib/api");
@@ -212,12 +253,11 @@ export default function CartScreen() {
                   <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
                     Barrio
                   </Text>
-                  <TextInput
-                    style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: "#1A1C1A", marginBottom: 12 }}
-                    placeholder="El Prado"
-                    placeholderTextColor="#BCCABA"
-                    value={nuevoBarrio}
-                    onChangeText={setNuevoBarrio}
+                  <BarrioSelector
+                    value={nuevoBarrioObj}
+                    onSelect={setNuevoBarrioObj}
+                    textoLibre={nuevoBarrioTexto}
+                    onTextoLibreChange={setNuevoBarrioTexto}
                   />
                   <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
                     Notas (Opcional)
@@ -234,14 +274,85 @@ export default function CartScreen() {
               )}
             </View>
 
-            {/* Puntos + Envío */}
+            {/* Cupon de descuento */}
+            <View className="p-5 rounded-2xl" style={{ backgroundColor: "#F4F4F0" }}>
+              <View className="flex-row items-center mb-3">
+                <Text style={{ fontSize: 20, marginRight: 8 }}>🏷️</Text>
+                <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Cupon</Text>
+              </View>
+
+              {cuponValidado ? (
+                <View className="flex-row items-center p-3 rounded-xl bg-white" style={{ borderWidth: 2, borderColor: "#1FAF55" }}>
+                  <Feather name="check-circle" size={18} color="#1FAF55" />
+                  <View className="flex-1 ml-3">
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: "#1FAF55" }}>
+                      {cuponValidado.cupon.codigo}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: "#6D7B6C" }}>
+                      {cuponValidado.cupon.descripcion || (cuponValidado.cupon.tipo === "porcentaje" ? `${cuponValidado.cupon.valor}% de descuento` : `${formatCOP(cuponValidado.cupon.valor)} de descuento`)}
+                    </Text>
+                  </View>
+                  <Pressable onPress={handleQuitarCupon}>
+                    <Feather name="x-circle" size={18} color="#9E9E9E" />
+                  </Pressable>
+                </View>
+              ) : (
+                <View className="flex-row" style={{ gap: 8 }}>
+                  <TextInput
+                    style={{
+                      flex: 1,
+                      backgroundColor: "#fff",
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      fontSize: 14,
+                      color: "#1A1C1A",
+                      fontFamily: "monospace",
+                      textTransform: "uppercase",
+                      letterSpacing: 2,
+                    }}
+                    placeholder="CODIGO"
+                    placeholderTextColor="#BCCABA"
+                    value={codigoCupon}
+                    onChangeText={(t) => { setCodigoCupon(t.toUpperCase()); setCuponError(""); }}
+                    autoCapitalize="characters"
+                  />
+                  <Pressable
+                    onPress={handleValidarCupon}
+                    disabled={validandoCupon || !codigoCupon.trim()}
+                    style={{
+                      backgroundColor: codigoCupon.trim() ? "#1FAF55" : "#E2E3DF",
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>
+                      {validandoCupon ? "..." : "Aplicar"}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {cuponError ? (
+                <Text style={{ fontSize: 11, color: "#D33587", marginTop: 6, marginLeft: 4 }}>{cuponError}</Text>
+              ) : null}
+            </View>
+
+            {/* Puntos + Envio */}
             <View className="rounded-2xl p-4 bg-white" style={{ borderWidth: 1, borderColor: "#F4F4F0", gap: 12 }}>
               <View className="flex-row justify-between">
                 <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Subtotal</Text>
                 <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1C1A" }}>{formatCOP(subtotal)}</Text>
               </View>
+              {descuentoCupon > 0 && (
+                <View className="flex-row justify-between">
+                  <Text style={{ fontSize: 14, color: "#1FAF55" }}>Descuento cupon</Text>
+                  <Text style={{ fontSize: 14, fontWeight: "600", color: "#1FAF55" }}>-{formatCOP(descuentoCupon)}</Text>
+                </View>
+              )}
               <View className="flex-row justify-between items-center">
-                <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Envío</Text>
+                <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Envio</Text>
                 <Text style={{ fontSize: 14, fontWeight: "600", color: envio === 0 ? "#1FAF55" : "#1A1C1A" }}>
                   {envio === 0 ? "¡Gratis!" : formatCOP(envio)}
                 </Text>
@@ -307,6 +418,22 @@ export default function CartScreen() {
           elevation: 10,
         }}
       >
+        {/* Banner cerrado */}
+        {!tienda.abierta && (
+          <View
+            className="flex-row items-center px-4 py-3 rounded-xl mb-3"
+            style={{ backgroundColor: "#1A1C1A" }}
+          >
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#6B7280", marginRight: 10 }} />
+            <View className="flex-1">
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#fff" }}>Estamos cerrados ahora</Text>
+              <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 1 }}>
+                {tienda.proximaApertura}
+              </Text>
+            </View>
+          </View>
+        )}
+
         <View className="flex-row justify-between items-end mb-4">
           <View>
             <Text style={{ fontSize: 10, fontWeight: "600", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5 }}>
@@ -330,10 +457,14 @@ export default function CartScreen() {
 
         <Pressable
           onPress={handlePedir}
-          disabled={loading}
+          disabled={loading || !tienda.abierta}
         >
           <LinearGradient
-            colors={loading ? ["#9E9E9E", "#757575"] : ["#1FAF55", "#006D30"]}
+            colors={
+              !tienda.abierta ? ["#3D3D3D", "#2A2A2A"] :
+              loading ? ["#9E9E9E", "#757575"] :
+              ["#1FAF55", "#006D30"]
+            }
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={{
@@ -342,17 +473,17 @@ export default function CartScreen() {
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
-              shadowColor: "#1FAF55",
+              shadowColor: tienda.abierta ? "#1FAF55" : "#000",
               shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.3,
+              shadowOpacity: tienda.abierta ? 0.3 : 0.1,
               shadowRadius: 16,
               elevation: 6,
             }}
           >
             <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17, marginRight: 8 }}>
-              {loading ? "Enviando..." : "Confirmar pedido"}
+              {loading ? "Enviando..." : !tienda.abierta ? "Tienda cerrada" : "Confirmar pedido"}
             </Text>
-            {!loading && <ChevronRightIcon />}
+            {!loading && tienda.abierta && <ChevronRightIcon />}
           </LinearGradient>
         </Pressable>
       </View>
