@@ -39,3 +39,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Secrets — never commit
+google-services.json
+GoogleService-Info.plist
+code-signing/private-key.pem

@@ -42,6 +42,12 @@
         "projectId": "669996b7-c230-4933-b487-ee4fadf0b90d"
       }
     },
-    "owner": "luminia.agencia"
+    "owner": "luminia.agencia",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/669996b7-c230-4933-b487-ee4fadf0b90d"
+    }
   }
 }
