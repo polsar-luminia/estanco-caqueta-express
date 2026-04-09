@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
 import { Link } from "expo-router";
 import Toast from "react-native-toast-message";
 import { useAuthStore } from "../../src/stores/auth";
+import { tracker } from "../../src/lib/tracker";
 
 export default function RegisterScreen() {
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
+  const [mayorEdad, setMayorEdad] = useState(false);
   const [loading, setLoading] = useState(false);
   const register = useAuthStore((s) => s.register);
 
@@ -17,13 +19,22 @@ export default function RegisterScreen() {
       Toast.show({ type: "error", text1: "Completa todos los campos" });
       return;
     }
-    if (password.length < 6) {
-      Toast.show({ type: "error", text1: "Contrasena muy corta", text2: "Minimo 6 caracteres" });
+    if (!/^\d{7,15}$/.test(telefono.trim())) {
+      Toast.show({ type: "error", text1: "Teléfono inválido", text2: "Solo números, entre 7 y 15 dígitos" });
+      return;
+    }
+    if (password.length < 8) {
+      Toast.show({ type: "error", text1: "Contraseña muy corta", text2: "Mínimo 8 caracteres" });
+      return;
+    }
+    if (!mayorEdad) {
+      Toast.show({ type: "error", text1: "Debes confirmar que eres mayor de 18 años" });
       return;
     }
     setLoading(true);
     try {
-      await register(telefono.trim(), nombre.trim(), password);
+      await register(telefono.trim(), nombre.trim(), password, mayorEdad);
+      tracker.track('registro_completado', {}, 'register');
     } catch (err: any) {
       Toast.show({ type: "error", text1: "Error", text2: err.message || "No se pudo crear la cuenta" });
     } finally {
@@ -70,19 +81,11 @@ export default function RegisterScreen() {
         >
           {/* Logo */}
           <View className="items-center mb-8">
-            <View
-              className="items-center justify-center mb-4"
-              style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: "#F4F4F0" }}
-            >
-              <Text style={{ fontSize: 28 }}>🍾</Text>
-            </View>
-            <View className="flex-row items-baseline">
-              <Text style={{ fontWeight: "800", fontSize: 28, color: "#D33587" }}>Estanco</Text>
-              <Text style={{ fontWeight: "800", fontSize: 28, color: "#1FAF55", marginLeft: 4 }}>Caquetá</Text>
-            </View>
-            <Text style={{ fontWeight: "900", fontSize: 18, color: "#D33587", letterSpacing: 4, fontStyle: "italic", marginTop: -2 }}>
-              EXPRESS
-            </Text>
+            <Image
+              source={require("../../assets/logo-estanco.png")}
+              style={{ width: 260, height: 104 }}
+              resizeMode="contain"
+            />
             <Text style={{ color: "#6D7B6C", fontSize: 13, marginTop: 12 }}>
               Tu licorera favorita en minutos
             </Text>
@@ -92,6 +95,35 @@ export default function RegisterScreen() {
           <InputField label="Nombre Completo" icon="👤" placeholder="Ej. Juan Pérez" value={nombre} onChangeText={setNombre} />
           <InputField label="Número de Teléfono" icon="📱" placeholder="+57 300 000 0000" value={telefono} onChangeText={setTelefono} keyboardType="phone-pad" />
           <InputField label="Contraseña" icon="🔒" placeholder="••••••••" value={password} onChangeText={setPassword} secureTextEntry={!showPass} showToggle />
+
+          {/* Age gate */}
+          <Pressable
+            onPress={() => setMayorEdad(!mayorEdad)}
+            className="flex-row items-center mt-2 mb-4"
+            style={{ gap: 12 }}
+          >
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 6,
+                borderWidth: 2,
+                borderColor: mayorEdad ? "#1FAF55" : "#BCCABA",
+                backgroundColor: mayorEdad ? "#1FAF55" : "transparent",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {mayorEdad && (
+                <Text style={{ color: "#fff", fontSize: 13, fontWeight: "800", marginTop: -1 }}>✓</Text>
+              )}
+            </View>
+            <Text style={{ flex: 1, fontSize: 13, color: "#1A1C1A", lineHeight: 18 }}>
+              Confirmo que tengo{" "}
+              <Text style={{ fontWeight: "700" }}>18 años o más</Text>
+              {" "}y que el consumo de alcohol está permitido en mi municipio
+            </Text>
+          </Pressable>
 
           {/* Button */}
           <Pressable

@@ -8,6 +8,7 @@ import Toast from "react-native-toast-message";
 import { queryClient } from "../src/lib/query-client";
 import { useAuthStore } from "../src/stores/auth";
 import { usePushNotifications } from "../src/hooks/usePushNotifications";
+import { tracker } from "../src/lib/tracker";
 import { toastConfig } from "../src/components/ToastConfig";
 
 export default function RootLayout() {
@@ -16,6 +17,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     hydrate();
+    tracker.track('app_abierta');
   }, []);
 
   usePushNotifications();

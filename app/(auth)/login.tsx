@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
 import { Link } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import Toast from "react-native-toast-message";
 import { useAuthStore } from "../../src/stores/auth";
+import { tracker } from "../../src/lib/tracker";
 
 export default function LoginScreen() {
   const [telefono, setTelefono] = useState("");
@@ -20,6 +21,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login(telefono.trim(), password);
+      tracker.track('sesion_iniciada', {}, 'login');
     } catch (err: any) {
       Toast.show({ type: "error", text1: "Error", text2: err.message || "No se pudo iniciar sesion" });
     } finally {
@@ -57,19 +59,11 @@ export default function LoginScreen() {
           >
             {/* Logo */}
             <View className="items-center mb-8">
-              <View
-                className="items-center justify-center mb-4"
-                style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: "#F4F4F0" }}
-              >
-                <Text style={{ fontSize: 28 }}>🍸</Text>
-              </View>
-              <View className="flex-row items-baseline">
-                <Text style={{ fontWeight: "800", fontSize: 26, color: "#D33587" }}>Estanco</Text>
-                <Text style={{ fontWeight: "800", fontSize: 26, color: "#1FAF55", marginLeft: 4 }}>Caquetá</Text>
-              </View>
-              <Text style={{ fontWeight: "800", fontSize: 18, color: "#D33587", letterSpacing: 4, marginTop: 2 }}>
-                EXPRESS
-              </Text>
+              <Image
+                source={require("../../assets/logo-estanco.png")}
+                style={{ width: 260, height: 104 }}
+                resizeMode="contain"
+              />
               <Text style={{ color: "#6D7B6C", fontSize: 13, marginTop: 12 }}>
                 Tus licores favoritos en minutos.
               </Text>
