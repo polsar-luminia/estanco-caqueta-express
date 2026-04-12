@@ -9,7 +9,7 @@ import Toast from "react-native-toast-message";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
-import { crearPedido, getDirecciones, crearDireccion, validarCupon, type DireccionGuardada, type CuponValidado } from "../../src/lib/api";
+import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, type DireccionGuardada, type CuponValidado } from "../../src/lib/api";
 import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
 import { tracker } from "../../src/lib/tracker";
 import { formatCOP } from "../../src/lib/format";
@@ -46,6 +46,12 @@ export default function CartScreen() {
 
   const tienda = useTiendaAbierta();
 
+  const { data: configApp } = useQuery({
+    queryKey: ['config-app'],
+    queryFn: getConfigApp,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: direcciones = [], refetch: refetchDirs } = useQuery({
     queryKey: ["direcciones"],
     queryFn: getDirecciones,
@@ -58,7 +64,9 @@ export default function CartScreen() {
   const subtotal = getTotal();
   const puntos = cliente?.puntos || 0;
   const puedeUsarPuntos = puntos >= 100;
-  const envio = usarPuntos && puedeUsarPuntos ? 0 : 5000;
+  const envioGratisMinimo = configApp?.envio_gratis_minimo ?? 150000;
+  const envioCosto = configApp?.envio_costo ?? 5000;
+  const envio = (usarPuntos && puedeUsarPuntos) ? 0 : (subtotal >= envioGratisMinimo ? 0 : envioCosto);
   const descuentoCupon = cuponValidado?.descuento || 0;
   const total = subtotal - descuentoCupon + envio;
 
@@ -338,6 +346,23 @@ export default function CartScreen() {
                 <Text style={{ fontSize: 11, color: "#D33587", marginTop: 6, marginLeft: 4 }}>{cuponError}</Text>
               ) : null}
             </View>
+
+            {/* Barra progreso envio gratis */}
+            {subtotal < envioGratisMinimo && envio > 0 ? (
+              <View style={{ backgroundColor: '#F4F4F0', borderRadius: 12, padding: 12, marginBottom: 0 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <Text style={{ fontSize: 12, color: '#6D7B6C' }}>Faltan {formatCOP(envioGratisMinimo - subtotal)} para envío gratis</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#1FAF55' }}>{formatCOP(envioGratisMinimo)}</Text>
+                </View>
+                <View style={{ height: 4, borderRadius: 2, backgroundColor: '#E2E3DF' }}>
+                  <View style={{ height: 4, borderRadius: 2, backgroundColor: '#1FAF55', width: `${Math.min(100, (subtotal / envioGratisMinimo) * 100)}%` }} />
+                </View>
+              </View>
+            ) : subtotal >= envioGratisMinimo ? (
+              <View style={{ backgroundColor: '#F4F4F0', borderRadius: 12, padding: 12, alignItems: 'center' }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#1FAF55' }}>🎉 ¡Envío gratis!</Text>
+              </View>
+            ) : null}
 
             {/* Puntos + Envio */}
             <View className="rounded-2xl p-4 bg-white" style={{ borderWidth: 1, borderColor: "#F4F4F0", gap: 12 }}>
