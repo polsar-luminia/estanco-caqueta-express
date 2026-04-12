@@ -38,8 +38,9 @@
       [
         "@sentry/react-native/expo",
         {
+          "url": "https://sentry.io/",
           "organization": "luminia-tech-solutions",
-          "project": "estanco-caqueta-express"
+          "project": "react-native"
         }
       ]
     ],

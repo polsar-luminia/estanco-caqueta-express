@@ -47,3 +47,5 @@ code-signing/private-key.pem
 
 # gstack — reportes de seguridad internos
 .gstack/
+
+.env.local
