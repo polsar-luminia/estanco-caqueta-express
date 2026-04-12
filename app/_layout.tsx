@@ -27,6 +27,7 @@ export default Sentry.wrap(function RootLayout() {
   useEffect(() => {
     hydrate();
     tracker.track('app_abierta');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate es un selector estable de Zustand
   }, []);
 
   usePushNotifications();

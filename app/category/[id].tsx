@@ -32,7 +32,7 @@ export default function CategoryScreen() {
     if (!isLoading && nombreCategoria !== "Categoría") {
       tracker.track('categoria_abierta', { categoria_id: Number(id), nombre: nombreCategoria }, 'category/[id]');
     }
-  }, [isLoading]);
+  }, [isLoading, id, nombreCategoria]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>

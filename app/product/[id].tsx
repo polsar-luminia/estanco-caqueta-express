@@ -146,6 +146,7 @@ export default function ProductDetailScreen() {
       const segundos = Math.round((Date.now() - entrada) / 1000);
       if (segundos > 2) tracker.track('tiempo_en_producto', { producto_id: product.id, segundos }, 'product/[id]');
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- product completo causaría refetch spam; solo re-track cuando cambia el id
   }, [product?.id]);
 
   if (isLoading) {

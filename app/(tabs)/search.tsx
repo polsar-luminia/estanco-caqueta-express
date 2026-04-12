@@ -52,6 +52,7 @@ export default function SearchScreen() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- debouncer IIFE con closure intencional
   const debounceRef = useCallback(
     (() => {
       let timeout: ReturnType<typeof setTimeout>;
@@ -96,6 +97,7 @@ export default function SearchScreen() {
         tracker.track('busqueda', { q: debouncedQuery, resultados: resultados.length }, 'search');
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resultados.length se lee vía isLoading=false gate
   }, [debouncedQuery, isLoading]);
 
   return (
