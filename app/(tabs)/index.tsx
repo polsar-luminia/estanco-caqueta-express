@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import { getCategorias, getDestacados, getPatrocinados, getHeroModo } from "../../src/lib/api";
+import { getCategorias, getDestacados, getPatrocinados, getHeroModo, getCombos, type Combo } from "../../src/lib/api";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
@@ -14,6 +14,7 @@ import { ShimmerImage } from "../../src/components/ShimmerImage";
 import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
 import { CategoryStripSkeleton } from "../../src/components/skeletons/CategoryStripSkeleton";
 import { SkeletonBox } from "../../src/components/skeletons/SkeletonBox";
+import { ErrorState } from "../../src/components/ErrorState";
 import { formatCOP } from "../../src/lib/format";
 import type { Patrocinado } from "../../src/lib/api";
 import { Dimensions } from "react-native";
@@ -152,12 +153,12 @@ export default function HomeScreen() {
 
   const tienda = useTiendaAbierta();
 
-  const { data: categorias = [], isLoading: loadCat } = useQuery({
+  const { data: categorias = [], isLoading: loadCat, isError: errorCat } = useQuery({
     queryKey: ["categorias"],
     queryFn: getCategorias,
   });
 
-  const { data: destacados = [], isLoading: loadDest } = useQuery({
+  const { data: destacados = [], isLoading: loadDest, isError: errorDest } = useQuery({
     queryKey: ["destacados"],
     queryFn: getDestacados,
   });
@@ -173,7 +174,15 @@ export default function HomeScreen() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: combos = [] } = useQuery({
+    queryKey: ['combos'],
+    queryFn: getCombos,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const isLoading = loadCat || loadDest || loadPat;
+  // Error total: ambas queries principales fallaron y no hay datos cacheados
+  const isError = (errorCat || errorDest) && !isLoading && categorias.length === 0 && destacados.length === 0;
 
   const onRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["categorias"] });
@@ -196,6 +205,10 @@ export default function HomeScreen() {
             <SkeletonBox style={{ height: 180 }} className="rounded-xl" />
             <CategoryStripSkeleton />
             <ProductGridSkeleton count={4} />
+          </View>
+        ) : isError ? (
+          <View style={{ flex: 1, paddingTop: 80 }}>
+            <ErrorState mensaje="No pudimos cargar el catálogo" onRetry={onRefresh} />
           </View>
         ) : (
           <>
@@ -280,6 +293,27 @@ export default function HomeScreen() {
                 onSelect={(id) => router.push(`/category/${id}`)}
               />
             </View>
+
+            {/* Combos */}
+            {combos.length > 0 && (
+              <View className="px-4 pt-3 pb-2">
+                <Text style={{ fontSize: 18, fontWeight: '700', color: '#1A1C1A', marginBottom: 12 }}>Combos</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, paddingHorizontal: 16 }}>
+                  <View style={{ flexDirection: 'row', gap: 12 }}>
+                    {combos.map((combo: Combo) => (
+                      <View key={combo.id} style={{ width: 180, backgroundColor: '#fff', borderRadius: 16, padding: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}>
+                        {combo.precio_original && (
+                          <Text style={{ fontSize: 10, color: '#9E9E9E', textDecorationLine: 'line-through', marginBottom: 2 }}>{formatCOP(combo.precio_original)}</Text>
+                        )}
+                        <Text style={{ fontSize: 18, fontWeight: '800', color: '#D33587', marginBottom: 4 }}>{formatCOP(combo.precio_combo)}</Text>
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1C1A', marginBottom: 4 }} numberOfLines={2}>{combo.nombre}</Text>
+                        {combo.descripcion && <Text style={{ fontSize: 11, color: '#6D7B6C' }} numberOfLines={2}>{combo.descripcion}</Text>}
+                      </View>
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
+            )}
 
             {/* Destacados */}
             <View className="px-4 pt-3 pb-4">

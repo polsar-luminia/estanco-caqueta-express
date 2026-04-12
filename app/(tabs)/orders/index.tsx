@@ -17,6 +17,7 @@ import type { Pedido } from "../../../src/lib/api";
 import { useCartStore } from "../../../src/stores/cart";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderCardSkeleton } from "../../../src/components/skeletons/OrderCardSkeleton";
+import { ErrorState } from "../../../src/components/ErrorState";
 
 /* ── Estado visual config ────────────────────────────────── */
 
@@ -234,6 +235,7 @@ export default function OrdersScreen() {
   const {
     data: pedidos = [],
     isLoading,
+    isError,
     refetch,
   } = useQuery({
     queryKey: ["pedidos"],
@@ -250,6 +252,14 @@ export default function OrdersScreen() {
         <OrderCardSkeleton />
         <OrderCardSkeleton />
         <OrderCardSkeleton />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View className="flex-1 bg-surface-low items-center justify-center">
+        <ErrorState mensaje="No pudimos cargar tus pedidos" onRetry={refetch} />
       </View>
     );
   }

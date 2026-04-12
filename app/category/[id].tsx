@@ -7,6 +7,7 @@ import { getProductos } from "../../src/lib/api";
 import { tracker } from "../../src/lib/tracker";
 import { ProductCard } from "../../src/components/ProductCard";
 import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
+import { ErrorState } from "../../src/components/ErrorState";
 
 function ChevronLeftIcon() {
   return (
@@ -20,7 +21,7 @@ export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["productos", "categoria", id],
     queryFn: () => getProductos({ categoria: Number(id), limite: 50 }),
   });
@@ -83,6 +84,10 @@ export default function CategoryScreen() {
       {isLoading ? (
         <View className="p-4">
           <ProductGridSkeleton count={8} />
+        </View>
+      ) : isError ? (
+        <View style={{ flex: 1, justifyContent: "center" }}>
+          <ErrorState mensaje="No pudimos cargar esta categoría" onRetry={refetch} />
         </View>
       ) : (
         <FlatList

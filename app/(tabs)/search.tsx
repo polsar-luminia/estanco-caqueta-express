@@ -8,6 +8,7 @@ import { buscarProductos, getCategorias, type Categoria } from "../../src/lib/ap
 import { tracker } from "../../src/lib/tracker";
 import { ProductCard } from "../../src/components/ProductCard";
 import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
+import { ErrorState } from "../../src/components/ErrorState";
 
 const RECENT_SEARCHES = ["Jack Daniel's", "Olmeca Reposado", "Something Special", "Absolut", "Bacardi", "Casillero del Diablo"];
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -72,7 +73,7 @@ export default function SearchScreen() {
     setDebouncedQuery(term);
   };
 
-  const { data: resultados = [], isLoading } = useQuery({
+  const { data: resultados = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["buscar", debouncedQuery],
     queryFn: () => buscarProductos(debouncedQuery),
     enabled: debouncedQuery.length >= 2,
@@ -83,8 +84,8 @@ export default function SearchScreen() {
     queryFn: getCategorias,
   });
 
-  const hasResults = debouncedQuery.length >= 2 && resultados.length > 0;
-  const noResults = debouncedQuery.length >= 2 && resultados.length === 0 && !isLoading;
+  const hasResults = debouncedQuery.length >= 2 && resultados.length > 0 && !isError;
+  const noResults = debouncedQuery.length >= 2 && resultados.length === 0 && !isLoading && !isError;
   const showExplore = debouncedQuery.length < 2;
 
   useEffect(() => {
@@ -149,6 +150,13 @@ export default function SearchScreen() {
             <ProductCard product={item} onPress={() => router.push(`/product/${item.id}`)} />
           )}
         />
+      )}
+
+      {/* Error al buscar */}
+      {isError && debouncedQuery.length >= 2 && (
+        <View style={{ paddingTop: 40 }}>
+          <ErrorState mensaje="Error al buscar" onRetry={() => refetch()} />
+        </View>
       )}
 
       {/* No Results */}
