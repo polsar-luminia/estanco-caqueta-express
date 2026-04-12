@@ -18,6 +18,7 @@ import { useAuthStore } from "../src/stores/auth";
 import { usePushNotifications } from "../src/hooks/usePushNotifications";
 import { tracker } from "../src/lib/tracker";
 import { toastConfig } from "../src/components/ToastConfig";
+import { OfflineBanner } from "../src/components/OfflineBanner";
 
 export default Sentry.wrap(function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
@@ -71,6 +72,7 @@ export default Sentry.wrap(function RootLayout() {
           />
         </Stack>
         <Toast config={toastConfig} />
+        <OfflineBanner />
       </QueryClientProvider>
     </GestureHandlerRootView>
   );
