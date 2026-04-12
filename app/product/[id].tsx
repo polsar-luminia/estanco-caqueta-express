@@ -96,7 +96,7 @@ export default function ProductDetailScreen() {
   const scrollY = useSharedValue(0);
   const [quantity, setQuantity] = useState(1);
 
-  const { data: product, isLoading } = useQuery({
+  const { data: product, isLoading, isError, refetch } = useQuery({
     queryKey: ["producto", id],
     queryFn: () => getProducto(Number(id)),
   });
@@ -148,8 +148,28 @@ export default function ProductDetailScreen() {
     };
   }, [product?.id]);
 
-  if (isLoading || !product) {
+  if (isLoading) {
     return <ProductDetailSkeleton />;
+  }
+
+  if (isError || !product) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>
+        <Text style={{ fontSize: 18, fontWeight: "600", color: "#1F1F1F", marginBottom: 8 }}>
+          No pudimos cargar este producto
+        </Text>
+        <Text style={{ fontSize: 14, color: "#6B6B6B", textAlign: "center", marginBottom: 24 }}>
+          Verifica tu conexión e intenta de nuevo
+        </Text>
+        <Pressable
+          onPress={() => refetch()}
+          style={{ backgroundColor: "#1FAF55", paddingHorizontal: 32, paddingVertical: 12, borderRadius: 999 }}
+        >
+          <Text style={{ color: "white", fontWeight: "600" }}>Reintentar</Text>
+        </Pressable>
+      </View>
+    );
   }
 
   const inStock = product.stock_total > 0;
