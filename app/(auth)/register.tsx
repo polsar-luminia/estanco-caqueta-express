@@ -1,17 +1,23 @@
 import { useState } from "react";
 import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import { useAuthStore } from "../../src/stores/auth";
 import { tracker } from "../../src/lib/tracker";
+import { DateSelector, DateValue, toISODate, calcularEdad } from "../../src/components/DateSelector";
 
 export default function RegisterScreen() {
+  const router = useRouter();
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
-  const [mayorEdad, setMayorEdad] = useState(false);
+  const [fecha, setFecha] = useState<DateValue>({});
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  const [aceptaDatos, setAceptaDatos] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [codigoReferido, setCodigoReferido] = useState("");
+  const [mostrarReferido, setMostrarReferido] = useState(false);
   const register = useAuthStore((s) => s.register);
 
   const handleRegister = async () => {
@@ -27,13 +33,27 @@ export default function RegisterScreen() {
       Toast.show({ type: "error", text1: "Contraseña muy corta", text2: "Mínimo 8 caracteres" });
       return;
     }
-    if (!mayorEdad) {
-      Toast.show({ type: "error", text1: "Debes confirmar que eres mayor de 18 años" });
+    const iso = toISODate(fecha);
+    if (!iso) {
+      Toast.show({ type: "error", text1: "Fecha de nacimiento incompleta o inválida" });
+      return;
+    }
+    const edad = calcularEdad(fecha);
+    if (edad === null || edad < 18) {
+      Toast.show({ type: "error", text1: "Debes tener 18 años o más para registrarte" });
+      return;
+    }
+    if (!aceptaTerminos) {
+      Toast.show({ type: "error", text1: "Debes aceptar los Términos y Condiciones" });
+      return;
+    }
+    if (!aceptaDatos) {
+      Toast.show({ type: "error", text1: "Debes autorizar el tratamiento de datos personales" });
       return;
     }
     setLoading(true);
     try {
-      await register(telefono.trim(), nombre.trim(), password, mayorEdad);
+      await register(telefono.trim(), nombre.trim(), password, iso, codigoReferido || undefined);
       tracker.track('registro_completado', {}, 'register');
     } catch (err: any) {
       Toast.show({ type: "error", text1: "Error", text2: err.message || "No se pudo crear la cuenta" });
@@ -69,6 +89,43 @@ export default function RegisterScreen() {
     </View>
   );
 
+  const CheckboxRow = ({
+    checked,
+    onToggle,
+    children,
+  }: {
+    checked: boolean;
+    onToggle: () => void;
+    children: React.ReactNode;
+  }) => (
+    <Pressable
+      onPress={onToggle}
+      className="flex-row items-center mt-3"
+      style={{ gap: 12 }}
+    >
+      <View
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 6,
+          borderWidth: 2,
+          borderColor: checked ? "#1FAF55" : "#BCCABA",
+          backgroundColor: checked ? "#1FAF55" : "transparent",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        {checked && (
+          <Text style={{ color: "#fff", fontSize: 13, fontWeight: "800", marginTop: -1 }}>✓</Text>
+        )}
+      </View>
+      <Text style={{ flex: 1, fontSize: 13, color: "#1A1C1A", lineHeight: 18 }}>
+        {children}
+      </Text>
+    </Pressable>
+  );
+
   return (
     <View className="flex-1" style={{ backgroundColor: "#FFFFFF" }}>
       <KeyboardAvoidingView
@@ -96,40 +153,67 @@ export default function RegisterScreen() {
           <InputField label="Número de Teléfono" icon="📱" placeholder="+57 300 000 0000" value={telefono} onChangeText={setTelefono} keyboardType="phone-pad" />
           <InputField label="Contraseña" icon="🔒" placeholder="••••••••" value={password} onChangeText={setPassword} secureTextEntry={!showPass} showToggle />
 
-          {/* Age gate */}
-          <Pressable
-            onPress={() => setMayorEdad(!mayorEdad)}
-            className="flex-row items-center mt-2 mb-4"
-            style={{ gap: 12 }}
-          >
-            <View
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: 6,
-                borderWidth: 2,
-                borderColor: mayorEdad ? "#1FAF55" : "#BCCABA",
-                backgroundColor: mayorEdad ? "#1FAF55" : "transparent",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {mayorEdad && (
-                <Text style={{ color: "#fff", fontSize: 13, fontWeight: "800", marginTop: -1 }}>✓</Text>
-              )}
+          {/* Fecha de nacimiento */}
+          <View style={{ marginBottom: 12 }}>
+            <DateSelector value={fecha} onChange={setFecha} />
+          </View>
+
+          {/* Codigo de referido */}
+          {!mostrarReferido ? (
+            <Pressable onPress={() => setMostrarReferido(true)} style={{ marginBottom: 12 }}>
+              <Text style={{ fontSize: 13, color: "#1FAF55", fontWeight: "600", textAlign: "center" }}>
+                ¿Tienes código de invitación?
+              </Text>
+            </Pressable>
+          ) : (
+            <View style={{ gap: 4, marginBottom: 12 }}>
+              <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginLeft: 16 }}>
+                Código de referido (opcional)
+              </Text>
+              <View className="flex-row items-center" style={{ backgroundColor: "#F4F4F0", borderRadius: 999, paddingHorizontal: 20, paddingVertical: 14 }}>
+                <Text style={{ fontSize: 18, marginRight: 12, color: "#6D7B6C" }}>🎁</Text>
+                <TextInput
+                  className="flex-1 text-base"
+                  style={{ color: "#1A1C1A", fontFamily: "monospace", letterSpacing: 2 }}
+                  placeholder="XXXXXX"
+                  placeholderTextColor="#BCCABA"
+                  value={codigoReferido}
+                  onChangeText={(t) => setCodigoReferido(t.toUpperCase())}
+                  autoCapitalize="characters"
+                  maxLength={6}
+                />
+              </View>
             </View>
-            <Text style={{ flex: 1, fontSize: 13, color: "#1A1C1A", lineHeight: 18 }}>
-              Confirmo que tengo{" "}
-              <Text style={{ fontWeight: "700" }}>18 años o más</Text>
-              {" "}y que el consumo de alcohol está permitido en mi municipio
-            </Text>
-          </Pressable>
+          )}
+
+          {/* Checkboxes de políticas */}
+          <View style={{ marginTop: 8, marginBottom: 4 }}>
+            <CheckboxRow checked={aceptaTerminos} onToggle={() => setAceptaTerminos(!aceptaTerminos)}>
+              Acepto los{" "}
+              <Text
+                style={{ color: "#1FAF55", fontWeight: "700" }}
+                onPress={(e) => { e.stopPropagation(); router.push("/support/terms"); }}
+              >
+                Términos y Condiciones
+              </Text>
+            </CheckboxRow>
+
+            <CheckboxRow checked={aceptaDatos} onToggle={() => setAceptaDatos(!aceptaDatos)}>
+              Autorizo el tratamiento de mis{" "}
+              <Text
+                style={{ color: "#1FAF55", fontWeight: "700" }}
+                onPress={(e) => { e.stopPropagation(); router.push("/support/privacy"); }}
+              >
+                Datos Personales
+              </Text>
+            </CheckboxRow>
+          </View>
 
           {/* Button */}
           <Pressable
             onPress={handleRegister}
             disabled={loading}
-            className="items-center mt-4"
+            className="items-center mt-6"
             style={{
               backgroundColor: loading ? "#9E9E9E" : "#1FAF55",
               paddingVertical: 16,
@@ -158,11 +242,8 @@ export default function RegisterScreen() {
             </View>
           </View>
 
-          {/* Terms */}
+          {/* Decoración */}
           <View className="items-center mt-8">
-            <Text style={{ fontSize: 9, color: "#6D7B6C", textAlign: "center", letterSpacing: 1, textTransform: "uppercase", lineHeight: 14 }}>
-              Al registrarte, aceptas nuestros Términos de Servicio y Política de Privacidad.
-            </Text>
             <View className="flex-row mt-4" style={{ gap: 6 }}>
               <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#1FAF55" }} />
               <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#D33587" }} />

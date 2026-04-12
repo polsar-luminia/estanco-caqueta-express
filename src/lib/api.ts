@@ -54,6 +54,8 @@ export async function apiFetch<T = any>(
       'Teléfono inválido': 'Teléfono inválido',
       'Nombre inválido': 'Nombre inválido',
       'Contraseña muy corta (mín 8)': 'Contraseña muy corta (mínimo 8 caracteres)',
+      'Fecha de nacimiento inválida': 'Fecha de nacimiento inválida',
+      'Debes ser mayor de 18 años': 'Debes tener 18 años o más',
       'Cantidad inválida': 'Cantidad inválida en el pedido',
       'Cupón no válido': 'Cupón no válido',
       'Stock insuficiente': 'Producto sin stock suficiente',
@@ -78,11 +80,12 @@ export async function registrarCliente(
   telefono: string,
   nombre: string,
   password: string,
-  mayor_edad: boolean
+  fecha_nacimiento: string,
+  codigo_referido_invitador?: string
 ) {
   return apiFetch<{ token: string; cliente: Cliente }>("/clientes/registrar", {
     method: "POST",
-    body: JSON.stringify({ telefono, nombre, password, mayor_edad }),
+    body: JSON.stringify({ telefono, nombre, password, fecha_nacimiento, codigo_referido_invitador }),
   });
 }
 
@@ -191,6 +194,9 @@ export interface Cliente {
   barrio?: string;
   notas_direccion?: string;
   puntos: number;
+  codigo_referido?: string;
+  ahorro_total?: number;
+  total_pedidos?: number;
 }
 
 export interface Producto {
@@ -341,4 +347,24 @@ export interface EstadoTienda {
 
 export async function getEstadoTienda(): Promise<EstadoTienda> {
   return apiFetch<EstadoTienda>("/tienda/estado");
+}
+
+export async function getConfigApp(): Promise<{ envio_gratis_minimo: number; envio_costo: number }> {
+  return apiFetch('/configuracion-app');
+}
+
+export interface Combo {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  imagen_url?: string;
+  precio_combo: number;
+  precio_original?: number;
+  productos: any[];
+  activo: boolean;
+  orden: number;
+}
+
+export async function getCombos(): Promise<Combo[]> {
+  return apiFetch('/combos');
 }
