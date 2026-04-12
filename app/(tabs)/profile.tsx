@@ -1,8 +1,11 @@
 import { View, Text, Pressable, ScrollView, Linking, Alert, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
+import Toast from "react-native-toast-message";
 import { useAuthStore } from "../../src/stores/auth";
 import { WHATSAPP_SOPORTE } from "../../src/constants/config";
+import { formatCOP } from "../../src/lib/format";
 
 function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string; badge?: string; onPress?: () => void }) {
   const iconMap: Record<string, keyof typeof Feather.glyphMap> = {
@@ -72,7 +75,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* Stats */}
-      <View className="flex-row mx-6 mb-8" style={{ gap: 12 }}>
+      <View className="flex-row mx-6" style={{ gap: 12, marginBottom: 12 }}>
         <View className="flex-1 items-center py-4 rounded-2xl" style={{ backgroundColor: "#F4F4F0" }}>
           <Text style={{ fontSize: 10, fontWeight: "700", color: "#1FAF55", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>
             Pedidos
@@ -95,6 +98,36 @@ export default function ProfileScreen() {
           <Text style={{ fontSize: 9, color: "#6D7B6C", marginTop: 2 }}>100 pts = envío gratis</Text>
         </View>
       </View>
+      <View className="mx-6 mb-8 items-center py-4 rounded-2xl" style={{ backgroundColor: "#F4F4F0" }}>
+        <Text style={{ fontSize: 10, fontWeight: "700", color: "#D33587", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>
+          Ahorro Total
+        </Text>
+        <Text style={{ fontSize: 18, fontWeight: "700", color: "#D33587" }}>
+          {formatCOP(cliente?.ahorro_total ?? 0)}
+        </Text>
+        <Text style={{ fontSize: 9, color: "#6D7B6C", marginTop: 2 }}>en todos tus pedidos</Text>
+      </View>
+
+      {/* Codigo de referido */}
+      {cliente?.codigo_referido ? (
+        <View style={{ marginHorizontal: 24, marginBottom: 24, backgroundColor: '#F4F4F0', borderRadius: 16, padding: 16 }}>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: '#6D7B6C', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>
+            Tu código de referido
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Text style={{ fontSize: 22, fontWeight: '800', color: '#1A1C1A', letterSpacing: 3, fontFamily: 'monospace', flex: 1 }}>
+              {cliente.codigo_referido}
+            </Text>
+            <Pressable
+              onPress={() => { Clipboard.setStringAsync(cliente.codigo_referido!); Toast.show({ type: 'success', text1: 'Código copiado', visibilityTime: 1500 }); }}
+              style={{ backgroundColor: '#1FAF55', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 }}
+            >
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Copiar</Text>
+            </Pressable>
+          </View>
+          <Text style={{ fontSize: 11, color: '#6D7B6C', marginTop: 8 }}>Comparte tu código con amigos</Text>
+        </View>
+      ) : null}
 
       {/* Información Personal */}
       <View className="mx-6 mb-6">
