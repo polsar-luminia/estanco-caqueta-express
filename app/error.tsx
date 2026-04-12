@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { ErrorBoundaryProps } from "expo-router";
 import { tracker } from "../src/lib/tracker";
 import { useEffect } from "react";
+import * as Sentry from "@sentry/react-native";
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   const router = useRouter();
@@ -12,6 +13,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
       message: error.message,
       stack: error.stack?.slice(0, 500),
     });
+    Sentry.captureException(error);
   }, [error]);
 
   return (

@@ -1,6 +1,14 @@
 import "../global.css";
 import { useEffect } from "react";
 import { Stack } from "expo-router";
+import * as Sentry from "@sentry/react-native";
+
+Sentry.init({
+  dsn: "REEMPLAZAR_CON_DSN_DE_SENTRY",
+  tracesSampleRate: 0.1,
+  enableAutoSessionTracking: true,
+  sessionTrackingIntervalMillis: 30000,
+});
 import { StatusBar } from "expo-status-bar";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -11,7 +19,7 @@ import { usePushNotifications } from "../src/hooks/usePushNotifications";
 import { tracker } from "../src/lib/tracker";
 import { toastConfig } from "../src/components/ToastConfig";
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
   const isLoading = useAuthStore((s) => s.isLoading);
 
@@ -57,9 +65,13 @@ export default function RootLayout() {
             name="support/terms"
             options={{ headerShown: false }}
           />
+          <Stack.Screen
+            name="support/privacy"
+            options={{ headerShown: false }}
+          />
         </Stack>
         <Toast config={toastConfig} />
       </QueryClientProvider>
     </GestureHandlerRootView>
   );
-}
+});

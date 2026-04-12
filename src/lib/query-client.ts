@@ -1,17 +1,23 @@
 import { QueryClient, QueryCache, MutationCache } from "@tanstack/react-query";
 import Toast from "react-native-toast-message";
+import * as Sentry from "@sentry/react-native";
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
-      // Solo mostrar Toast si la query ya habia cargado datos antes
-      // (evita spam al arrancar sin conexion: no dispara 5 Toasts simultaneos)
-      if (query.state.data !== undefined && error.message !== "UNAUTHORIZED") {
-        Toast.show({
-          type: "error",
-          text1: "Error de conexión",
-          text2: "No pudimos actualizar la información",
+      if (error.message !== "UNAUTHORIZED") {
+        Sentry.captureException(error, {
+          tags: { source: "react_query", queryKey: String(query.queryKey) },
         });
+        // Solo mostrar Toast si la query ya habia cargado datos antes
+        // (evita spam al arrancar sin conexion: no dispara 5 Toasts simultaneos)
+        if (query.state.data !== undefined) {
+          Toast.show({
+            type: "error",
+            text1: "Error de conexión",
+            text2: "No pudimos actualizar la información",
+          });
+        }
       }
     },
   }),

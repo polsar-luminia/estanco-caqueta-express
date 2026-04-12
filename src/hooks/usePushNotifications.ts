@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
+import * as Sentry from "@sentry/react-native";
 import { registrarPushToken } from "../lib/api";
 import { useAuthStore } from "../stores/auth";
 
@@ -67,6 +68,7 @@ export function usePushNotifications() {
         console.log("[push] Token registrado:", token.substring(0, 30) + "...");
       } catch (err: any) {
         console.error("[push] Error registrando token:", err.message);
+        Sentry.captureException(err, { tags: { feature: "push_notifications" } });
       }
     })();
   }, [isAuthenticated]);

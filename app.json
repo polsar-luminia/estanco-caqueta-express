@@ -34,6 +34,13 @@
           "icon": "./assets/icon.png",
           "color": "#1FAF55"
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "luminia-tech-solutions",
+          "project": "estanco-caqueta-express"
+        }
       ]
     ],
     "extra": {
