@@ -17,7 +17,8 @@
     },
     "production": {
       "env": {
-        "SENTRY_AUTH_TOKEN": "$SENTRY_AUTH_TOKEN"
+        "SENTRY_AUTH_TOKEN": "$SENTRY_AUTH_TOKEN",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://fb7edd7b743b98e70dd924acc3eb6134@o4511209580199936.ingest.us.sentry.io/4511209582362624"
       },
       "android": {
         "buildType": "app-bundle"
