@@ -6,7 +6,10 @@ import { HomeIcon, SearchIcon, CartIcon, OrdersIcon, ProfileIcon } from "../../s
 
 export default function TabLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const itemCount = useCartStore((s) => s.getItemCount());
+
+  if (isLoading) return null;
 
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;

@@ -42,7 +42,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ isLoading: false, isAuthenticated: false });
         return;
       }
-      const cliente = await getPerfil();
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('TIMEOUT')), 7_000)
+      );
+      const cliente = await Promise.race([getPerfil(), timeoutPromise]);
       set({ token, cliente, isLoading: false, isAuthenticated: true });
     } catch (err: any) {
       // Solo borrar token si fue rechazado explícitamente (no por error de red)

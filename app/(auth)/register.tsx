@@ -5,6 +5,8 @@ import Toast from "react-native-toast-message";
 import { useAuthStore } from "../../src/stores/auth";
 import { tracker } from "../../src/lib/tracker";
 import { DateSelector, DateValue, toISODate, calcularEdad } from "../../src/components/DateSelector";
+import { InputField } from "../../src/components/InputField";
+import { CheckboxRow } from "../../src/components/CheckboxRow";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -20,13 +22,50 @@ export default function RegisterScreen() {
   const [mostrarReferido, setMostrarReferido] = useState(false);
   const register = useAuthStore((s) => s.register);
 
+  // Errores de validación en tiempo real (onBlur)
+  const [errorNombre, setErrorNombre] = useState("");
+  const [errorTelefono, setErrorTelefono] = useState("");
+  const [errorPassword, setErrorPassword] = useState("");
+
+  const validarNombre = () => {
+    if (nombre.trim().length < 2) {
+      setErrorNombre("Ingresa tu nombre completo");
+    } else {
+      setErrorNombre("");
+    }
+  };
+
+  const validarTelefono = () => {
+    if (!telefono.trim()) {
+      setErrorTelefono("");
+      return;
+    }
+    if (!/^\d{10}$/.test(telefono.trim())) {
+      setErrorTelefono("10 dígitos sin +57");
+    } else {
+      setErrorTelefono("");
+    }
+  };
+
+  const validarPassword = () => {
+    if (!password) {
+      setErrorPassword("");
+      return;
+    }
+    if (password.length < 8) {
+      setErrorPassword("Mínimo 8 caracteres");
+    } else {
+      setErrorPassword("");
+    }
+  };
+
   const handleRegister = async () => {
     if (!nombre || !telefono || !password) {
       Toast.show({ type: "error", text1: "Completa todos los campos" });
       return;
     }
-    if (!/^\d{7,15}$/.test(telefono.trim())) {
-      Toast.show({ type: "error", text1: "Teléfono inválido", text2: "Solo números, entre 7 y 15 dígitos" });
+    if (!/^\d{10}$/.test(telefono.trim())) {
+      Toast.show({ type: "error", text1: "Teléfono inválido", text2: "10 dígitos sin +57 (ej: 3001234567)" });
       return;
     }
     if (password.length < 8) {
@@ -43,6 +82,10 @@ export default function RegisterScreen() {
       Toast.show({ type: "error", text1: "Debes tener 18 años o más para registrarte" });
       return;
     }
+    if (codigoReferido && !/^[A-Z0-9]{6}$/.test(codigoReferido)) {
+      Toast.show({ type: "error", text1: "Código de referido inválido", text2: "Debe tener exactamente 6 caracteres" });
+      return;
+    }
     if (!aceptaTerminos) {
       Toast.show({ type: "error", text1: "Debes aceptar los Términos y Condiciones" });
       return;
@@ -55,76 +98,13 @@ export default function RegisterScreen() {
     try {
       await register(telefono.trim(), nombre.trim(), password, iso, codigoReferido || undefined);
       tracker.track('registro_completado', {}, 'register');
-    } catch (err: any) {
-      Toast.show({ type: "error", text1: "Error", text2: err.message || "No se pudo crear la cuenta" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "No se pudo crear la cuenta";
+      Toast.show({ type: "error", text1: "Error", text2: msg });
     } finally {
       setLoading(false);
     }
   };
-
-  const InputField = ({ label, icon, placeholder, value, onChangeText, keyboardType, secureTextEntry, showToggle }: any) => (
-    <View style={{ gap: 4, marginBottom: 12 }}>
-      <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginLeft: 16 }}>
-        {label}
-      </Text>
-      <View className="flex-row items-center" style={{ backgroundColor: "#F4F4F0", borderRadius: 999, paddingHorizontal: 20, paddingVertical: 14 }}>
-        <Text style={{ fontSize: 18, marginRight: 12, color: "#6D7B6C" }}>{icon}</Text>
-        <TextInput
-          className="flex-1 text-base"
-          style={{ color: "#1A1C1A" }}
-          placeholder={placeholder}
-          placeholderTextColor="#BCCABA"
-          keyboardType={keyboardType || "default"}
-          secureTextEntry={secureTextEntry}
-          value={value}
-          onChangeText={onChangeText}
-          autoCapitalize={keyboardType === "phone-pad" || keyboardType === "email-address" ? "none" : "words"}
-        />
-        {showToggle && (
-          <Pressable onPress={() => setShowPass(!showPass)}>
-            <Text style={{ fontSize: 18, color: "#6D7B6C" }}>{showPass ? "🙈" : "👁️"}</Text>
-          </Pressable>
-        )}
-      </View>
-    </View>
-  );
-
-  const CheckboxRow = ({
-    checked,
-    onToggle,
-    children,
-  }: {
-    checked: boolean;
-    onToggle: () => void;
-    children: React.ReactNode;
-  }) => (
-    <Pressable
-      onPress={onToggle}
-      className="flex-row items-center mt-3"
-      style={{ gap: 12 }}
-    >
-      <View
-        style={{
-          width: 22,
-          height: 22,
-          borderRadius: 6,
-          borderWidth: 2,
-          borderColor: checked ? "#1FAF55" : "#BCCABA",
-          backgroundColor: checked ? "#1FAF55" : "transparent",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
-        {checked && (
-          <Text style={{ color: "#fff", fontSize: 13, fontWeight: "800", marginTop: -1 }}>✓</Text>
-        )}
-      </View>
-      <Text style={{ flex: 1, fontSize: 13, color: "#1A1C1A", lineHeight: 18 }}>
-        {children}
-      </Text>
-    </Pressable>
-  );
 
   return (
     <View className="flex-1" style={{ backgroundColor: "#FFFFFF" }}>
@@ -149,9 +129,37 @@ export default function RegisterScreen() {
           </View>
 
           {/* Form */}
-          <InputField label="Nombre Completo" icon="👤" placeholder="Ej. Juan Pérez" value={nombre} onChangeText={setNombre} />
-          <InputField label="Número de Teléfono" icon="📱" placeholder="+57 300 000 0000" value={telefono} onChangeText={setTelefono} keyboardType="phone-pad" />
-          <InputField label="Contraseña" icon="🔒" placeholder="••••••••" value={password} onChangeText={setPassword} secureTextEntry={!showPass} showToggle />
+          <InputField
+            label="Nombre Completo"
+            icon="👤"
+            placeholder="Ej. Juan Pérez"
+            value={nombre}
+            onChangeText={setNombre}
+            onBlur={validarNombre}
+            error={errorNombre}
+          />
+          <InputField
+            label="Número de Teléfono"
+            icon="📱"
+            placeholder="+57 300 000 0000"
+            value={telefono}
+            onChangeText={setTelefono}
+            keyboardType="phone-pad"
+            onBlur={validarTelefono}
+            error={errorTelefono}
+          />
+          <InputField
+            label="Contraseña"
+            icon="🔒"
+            placeholder="••••••••"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPass}
+            showToggle
+            onToggleSecure={() => setShowPass(!showPass)}
+            onBlur={validarPassword}
+            error={errorPassword}
+          />
 
           {/* Fecha de nacimiento */}
           <View style={{ marginBottom: 12 }}>

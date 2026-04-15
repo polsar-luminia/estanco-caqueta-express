@@ -37,9 +37,14 @@ export function calcularEdad(v: DateValue): number | null {
   return edad;
 }
 
-function getOptions(field: Field): { label: string; value: number }[] {
+function getOptions(field: Field, value: DateValue): { label: string; value: number }[] {
   const currentYear = new Date().getFullYear();
-  if (field === "day") return range(1, 31).map((d) => ({ label: String(d), value: d }));
+  if (field === "day") {
+    const maxDay = value.month
+      ? new Date(value.year || 2000, value.month, 0).getDate()
+      : 31;
+    return range(1, maxDay).map((d) => ({ label: String(d), value: d }));
+  }
   if (field === "month") return MESES.map((m, i) => ({ label: m, value: i + 1 }));
   return range(currentYear - 18, 1920)
     .map((y) => ({ label: String(y), value: y }));
@@ -60,7 +65,13 @@ export function DateSelector({ value, onChange }: Props) {
   const [openField, setOpenField] = useState<Field | null>(null);
 
   const handleSelect = (field: Field, selected: number) => {
-    onChange({ ...value, [field]: selected });
+    const newValue: DateValue = { ...value, [field]: selected };
+    // Si cambia mes o año, verificar que el día siga siendo válido
+    if ((field === 'month' || field === 'year') && newValue.day) {
+      const maxDay = new Date(newValue.year || 2000, newValue.month || 1, 0).getDate();
+      if (newValue.day > maxDay) newValue.day = undefined;
+    }
+    onChange(newValue);
     setOpenField(null);
   };
 
@@ -128,7 +139,7 @@ export function DateSelector({ value, onChange }: Props) {
           </View>
           <ScrollView keyboardShouldPersistTaps="handled">
             {openField &&
-              getOptions(openField).map((opt) => {
+              getOptions(openField, value).map((opt) => {
                 const isSelected =
                   openField === "day"
                     ? value.day === opt.value

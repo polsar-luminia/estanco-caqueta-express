@@ -16,6 +16,7 @@ interface CartState {
   direccion: string;
   barrio: string;
   notas: string;
+  direccionId: number | null;
 
   addItem: (product: Omit<CartItem, "cantidad">) => void;
   addItemWithQuantity: (product: Omit<CartItem, "cantidad">, cantidad: number) => void;
@@ -25,6 +26,7 @@ interface CartState {
   setDireccion: (direccion: string) => void;
   setBarrio: (barrio: string) => void;
   setNotas: (notas: string) => void;
+  setDireccionId: (id: number | null) => void;
 
   // Computed
   getTotal: () => number;
@@ -38,6 +40,7 @@ export const useCartStore = create<CartState>()(
       direccion: "",
       barrio: "",
       notas: "",
+      direccionId: null,
 
       addItem: (product) => {
         set((state) => {
@@ -97,11 +100,12 @@ export const useCartStore = create<CartState>()(
         }));
       },
 
-      clear: () => set({ items: [], notas: "", direccion: "", barrio: "" }),
+      clear: () => set({ items: [], notas: "", direccion: "", barrio: "", direccionId: null }),
 
       setDireccion: (direccion) => set({ direccion }),
       setBarrio: (barrio) => set({ barrio }),
       setNotas: (notas) => set({ notas }),
+      setDireccionId: (id) => set({ direccionId: id }),
 
       getTotal: () =>
         get().items.reduce((sum, i) => sum + i.precioUnitario * i.cantidad, 0),
@@ -111,8 +115,8 @@ export const useCartStore = create<CartState>()(
     {
       name: "cart-storage",
       storage: createJSONStorage(() => AsyncStorage),
-      // Solo persistir items y dirección — barrio/notas son contextuales
-      partialize: (state) => ({ items: state.items, direccion: state.direccion }),
+      // Solo persistir items, dirección y la selección activa — barrio/notas son contextuales
+      partialize: (state) => ({ items: state.items, direccion: state.direccion, direccionId: state.direccionId }),
     }
   )
 );

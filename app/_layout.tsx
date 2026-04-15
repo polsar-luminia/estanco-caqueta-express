@@ -1,8 +1,9 @@
 import "../global.css";
 import { useEffect } from "react";
+import { AppState } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
@@ -13,12 +14,24 @@ import { tracker } from "../src/lib/tracker";
 import { toastConfig } from "../src/components/ToastConfig";
 import { OfflineBanner } from "../src/components/OfflineBanner";
 
-Sentry.init({
-  dsn: "https://fb7edd7b743b98e70dd924acc3eb6134@o4511209580199936.ingest.us.sentry.io/4511209582362624",
-  tracesSampleRate: 0.1,
-  enableAutoSessionTracking: true,
-  sessionTrackingIntervalMillis: 30000,
-});
+if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+    tracesSampleRate: 0.1,
+    enableAutoSessionTracking: true,
+    sessionTrackingIntervalMillis: 30000,
+    beforeSend: (event) => {
+      if (event.request?.headers) {
+        delete (event.request.headers as Record<string, unknown>)['Authorization'];
+        delete (event.request.headers as Record<string, unknown>)['Cookie'];
+      }
+      if (event.request?.data) {
+        delete event.request.data;
+      }
+      return event;
+    },
+  });
+}
 
 export default Sentry.wrap(function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
@@ -28,6 +41,16 @@ export default Sentry.wrap(function RootLayout() {
     hydrate();
     tracker.track('app_abierta');
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate es un selector estable de Zustand
+  }, []);
+
+  // Sincronizar React Query con AppState para refetch al volver de background
+  useEffect(() => {
+    focusManager.setEventListener((handleFocus) => {
+      const sub = AppState.addEventListener('change', (state) => {
+        handleFocus(state === 'active');
+      });
+      return () => sub.remove();
+    });
   }, []);
 
   usePushNotifications();

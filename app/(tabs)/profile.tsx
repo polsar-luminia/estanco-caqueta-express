@@ -48,7 +48,7 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     Alert.alert("Cerrar sesión", "¿Quieres salir de tu cuenta?", [
       { text: "No" },
-      { text: "Sí", style: "destructive", onPress: logout },
+      { text: "Sí", style: "destructive", onPress: () => { Toast.show({ type: "success", text1: "Sesión cerrada" }); logout(); } },
     ]);
   };
 

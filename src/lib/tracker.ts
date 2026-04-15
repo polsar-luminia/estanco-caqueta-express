@@ -15,6 +15,14 @@ const FLUSH_INTERVAL_MS = 30_000;
 const MAX_QUEUE = 20;
 const MAX_QUEUE_SIZE = 200;
 
+const SENSITIVE_KEYS = /token|password|telefono|phone|secret|auth/i;
+function sanitizarPayload(payload?: Record<string, unknown>): Record<string, unknown> | undefined {
+  if (!payload) return undefined;
+  return Object.fromEntries(
+    Object.entries(payload).filter(([key]) => !SENSITIVE_KEYS.test(key))
+  );
+}
+
 interface EventoInput {
   tipo: string;
   payload?: Record<string, unknown>;
@@ -52,7 +60,7 @@ class Tracker {
   }
 
   track(tipo: string, payload?: Record<string, unknown>, pantalla?: string) {
-    this.queue.push({ tipo, payload, pantalla });
+    this.queue.push({ tipo, payload: sanitizarPayload(payload), pantalla });
     if (this.queue.length >= MAX_QUEUE) {
       this.flush();
     }
@@ -61,6 +69,13 @@ class Tracker {
   async flush() {
     if (this.queue.length === 0) return;
     const batch = this.queue.splice(0, this.queue.length);
+    let body: string;
+    try {
+      body = JSON.stringify({ eventos: batch });
+    } catch {
+      console.warn('[tracker] payload no serializable, descartando batch');
+      return;
+    }
     try {
       const token = await getToken();
       await fetch(`${API_BASE}/eventos`, {
@@ -69,7 +84,7 @@ class Tracker {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ eventos: batch }),
+        body,
       });
     } catch {
       // Si falla, devolver los eventos a la cola para reintentar (con límite)

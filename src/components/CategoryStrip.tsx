@@ -36,6 +36,7 @@ export function CategoryStrip({ categorias, onSelect }: Props) {
                 source={{ uri: cat.imagen_url }}
                 style={{ width: 58, height: 58 }}
                 contentFit="contain"
+                cachePolicy="memory-disk"
                 transition={200}
               />
             ) : (

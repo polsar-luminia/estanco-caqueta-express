@@ -1,11 +1,13 @@
 import { View, Text, ScrollView, Pressable, Alert } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import Toast from "react-native-toast-message";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPedido, cancelarPedido } from "../../../src/lib/api";
 import { tracker } from "../../../src/lib/tracker";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline";
 import { SkeletonBox } from "../../../src/components/skeletons/SkeletonBox";
+import { ErrorState } from "../../../src/components/ErrorState";
 
 import { CARD_SHADOW } from "../../../src/constants/styles";
 
@@ -36,20 +38,26 @@ function OrderDetailSkeleton() {
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const pedidoId = id && id.trim() ? Number(id) : NaN;
   const queryClient = useQueryClient();
 
-  const { data: pedido, isLoading } = useQuery({
-    queryKey: ["pedido", id],
-    queryFn: () => getPedido(Number(id)),
+  const { data: pedido, isLoading, isError, refetch } = useQuery({
+    queryKey: ["pedido", pedidoId],
+    queryFn: () => getPedido(pedidoId),
     refetchInterval: 15000,
+    enabled: Number.isFinite(pedidoId) && pedidoId > 0,
   });
 
   const cancelMutation = useMutation({
-    mutationFn: () => cancelarPedido(Number(id)),
+    mutationFn: () => cancelarPedido(pedidoId),
     onSuccess: () => {
-      tracker.track('pedido_cancelado', { pedido_id: Number(id) }, 'orders/[id]');
-      queryClient.invalidateQueries({ queryKey: ["pedido", id] });
+      tracker.track('pedido_cancelado', { pedido_id: pedidoId }, 'orders/[id]');
+      queryClient.invalidateQueries({ queryKey: ["pedido", pedidoId] });
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });
+      Toast.show({ type: "success", text1: "Pedido cancelado" });
+    },
+    onError: (err: Error) => {
+      Toast.show({ type: "error", text1: "No se pudo cancelar", text2: err.message });
     },
   });
 
@@ -63,6 +71,22 @@ export default function OrderDetailScreen() {
       },
     ]);
   };
+
+  if (!Number.isFinite(pedidoId) || pedidoId <= 0) {
+    return (
+      <View className="flex-1 items-center justify-center bg-surface-low">
+        <ErrorState mensaje="Pedido no encontrado" />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View className="flex-1 items-center justify-center bg-surface-low">
+        <ErrorState mensaje="No se pudo cargar el pedido" onRetry={refetch} />
+      </View>
+    );
+  }
 
   if (isLoading || !pedido) {
     return <OrderDetailSkeleton />;

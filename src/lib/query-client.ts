@@ -32,7 +32,10 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutos
-      retry: 2,
+      retry: (failureCount: number, error: Error) =>
+        error.message !== 'UNAUTHORIZED' && failureCount < 1,
+      retryDelay: 1500,
+      refetchOnWindowFocus: true,
     },
   },
 });

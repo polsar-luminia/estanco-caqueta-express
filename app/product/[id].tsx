@@ -91,20 +91,22 @@ function ProductDetailSkeleton() {
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const productoId = id && id.trim() ? Number(id) : NaN;
   const router = useRouter();
   const addItemWithQuantity = useCartStore((s) => s.addItemWithQuantity);
   const scrollY = useSharedValue(0);
   const [quantity, setQuantity] = useState(1);
 
   const { data: product, isLoading, isError, refetch } = useQuery({
-    queryKey: ["producto", id],
-    queryFn: () => getProducto(Number(id)),
+    queryKey: ["producto", productoId],
+    queryFn: () => getProducto(productoId),
+    enabled: Number.isFinite(productoId) && productoId > 0,
   });
 
   const { data: sugerencias = [] } = useQuery({
-    queryKey: ["sugerencias", id],
-    queryFn: () => getSugerencias(Number(id)),
-    enabled: !!id,
+    queryKey: ["sugerencias", productoId],
+    queryFn: () => getSugerencias(productoId),
+    enabled: Number.isFinite(productoId) && productoId > 0,
   });
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -148,6 +150,17 @@ export default function ProductDetailScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- product completo causaría refetch spam; solo re-track cuando cambia el id
   }, [product?.id]);
+
+  if (!Number.isFinite(productoId) || productoId <= 0) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>
+        <Text style={{ fontSize: 18, fontWeight: "600", color: "#1F1F1F", textAlign: "center" }}>
+          Producto no encontrado
+        </Text>
+      </View>
+    );
+  }
 
   if (isLoading) {
     return <ProductDetailSkeleton />;

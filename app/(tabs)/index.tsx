@@ -77,6 +77,7 @@ function HeroSlide({ banner, onPress }: { banner: Patrocinado | undefined; onPre
 
 function HeroCarousel({ banners, router }: { banners: Patrocinado[]; router: ReturnType<typeof useRouter> }) {
   const flatRef = useRef<FlatList>(null);
+  const activeIndexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
 
   // Clon del primer banner al final para scroll infinito hacia la derecha
@@ -85,20 +86,23 @@ function HeroCarousel({ banners, router }: { banners: Patrocinado[]; router: Ret
   useEffect(() => {
     if (banners.length <= 1) return;
     const timer = setInterval(() => {
-      const next = activeIndex + 1; // puede llegar hasta extended.length - 1 (el clon)
+      const next = activeIndexRef.current + 1;
       flatRef.current?.scrollToIndex({ index: next, animated: true });
+      activeIndexRef.current = next;
       setActiveIndex(next);
     }, 7000);
     return () => clearInterval(timer);
-  }, [activeIndex, banners.length]);
+  }, [banners.length]);
 
   const handleScrollEnd = (e: any) => {
     const idx = Math.round(e.nativeEvent.contentOffset.x / (SCREEN_WIDTH - 32));
     if (idx >= banners.length) {
       // Llegamos al clon — jump silencioso al real sin animación
       flatRef.current?.scrollToIndex({ index: 0, animated: false });
+      activeIndexRef.current = 0;
       setActiveIndex(0);
     } else {
+      activeIndexRef.current = idx;
       setActiveIndex(idx);
     }
   };
@@ -148,22 +152,22 @@ export default function HomeScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const cliente = useAuthStore((s) => s.cliente);
-  const itemCount = useCartStore((s) => s.items.reduce((n, i) => n + i.cantidad, 0));
-  const total = useCartStore((s) => s.items.reduce((t, i) => t + i.precioUnitario * i.cantidad, 0));
+  const itemCount = useCartStore((s) => s.getItemCount());
+  const total = useCartStore((s) => s.getTotal());
 
   const tienda = useTiendaAbierta();
 
-  const { data: categorias = [], isLoading: loadCat, isError: errorCat } = useQuery({
+  const { data: categorias = [], isLoading: loadCat, isError: errorCat, isFetching: fetchCat } = useQuery({
     queryKey: ["categorias"],
     queryFn: getCategorias,
   });
 
-  const { data: destacados = [], isLoading: loadDest, isError: errorDest } = useQuery({
+  const { data: destacados = [], isLoading: loadDest, isError: errorDest, isFetching: fetchDest } = useQuery({
     queryKey: ["destacados"],
     queryFn: getDestacados,
   });
 
-  const { data: patrocinados = [], isLoading: loadPat } = useQuery({
+  const { data: patrocinados = [], isLoading: loadPat, isFetching: fetchPat } = useQuery({
     queryKey: ["patrocinados"],
     queryFn: getPatrocinados,
   });
@@ -183,6 +187,7 @@ export default function HomeScreen() {
   const isLoading = loadCat || loadDest || loadPat;
   // Error total: ambas queries principales fallaron y no hay datos cacheados
   const isError = (errorCat || errorDest) && !isLoading && categorias.length === 0 && destacados.length === 0;
+  const isFetching = fetchCat || fetchDest || fetchPat;
 
   const onRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["categorias"] });
@@ -196,7 +201,7 @@ export default function HomeScreen() {
         className="flex-1"
         contentContainerStyle={{ paddingBottom: itemCount > 0 ? 160 : 90 }}
         refreshControl={
-          <RefreshControl refreshing={false} onRefresh={onRefresh} colors={["#1FAF55"]} />
+          <RefreshControl refreshing={!isLoading && isFetching} onRefresh={onRefresh} colors={["#1FAF55"]} />
         }
       >
         {isLoading ? (
@@ -268,13 +273,15 @@ export default function HomeScreen() {
 
             {/* Hero Banner */}
             <View className="mx-4 mt-4">
-              {heroModo === "carousel" && patrocinados.length > 0 ? (
-                <HeroCarousel banners={patrocinados} router={router} />
-              ) : (
-                <HeroSlide
-                  banner={patrocinados[0]}
-                  onPress={() => patrocinados[0]?.producto?.id ? router.push(`/product/${patrocinados[0].producto.id}`) : null}
-                />
+              {patrocinados.length > 0 && (
+                heroModo === "carousel" ? (
+                  <HeroCarousel banners={patrocinados} router={router} />
+                ) : (
+                  <HeroSlide
+                    banner={patrocinados[0]}
+                    onPress={() => patrocinados[0]?.producto?.id ? router.push(`/product/${patrocinados[0].producto.id}`) : null}
+                  />
+                )
               )}
             </View>
 

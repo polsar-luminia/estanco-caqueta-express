@@ -8,6 +8,10 @@ export function OfflineBanner() {
   const [online, setOnline] = useState(true);
 
   useEffect(() => {
+    // Estado inicial real — no asumir online hasta verificar
+    NetInfo.fetch().then((state) => {
+      setOnline(state.isConnected === true && state.isInternetReachable !== false);
+    });
     const unsub = NetInfo.addEventListener((state) => {
       setOnline(state.isConnected === true && state.isInternetReachable !== false);
     });

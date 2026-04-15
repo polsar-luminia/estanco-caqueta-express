@@ -15,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "co.estancocaqueta.express"
+      "bundleIdentifier": "co.estancocaqueta.express",
+      "associatedDomains": ["applinks:estancocaqueta.com"]
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +24,21 @@
         "backgroundColor": "#1FAF55"
       },
       "edgeToEdgeEnabled": true,
-      "package": "co.estancocaqueta.express"
+      "package": "co.estancocaqueta.express",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "estancocaqueta.com",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "plugins": [
       "expo-router",

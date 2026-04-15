@@ -3,6 +3,7 @@ import Svg, { Path } from "react-native-svg";
 import { useCartStore, type CartItem as CartItemType } from "../stores/cart";
 import { formatCOP } from "../lib/format";
 import { ShimmerImage } from "./ShimmerImage";
+import Toast from "react-native-toast-message";
 
 function MinusIcon() {
   return (
@@ -65,9 +66,14 @@ export function CartItem({ item }: Props) {
         style={{ backgroundColor: "#F4F4F0", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 8, gap: 10 }}
       >
         <Pressable
-          onPress={() => updateQuantity(item.productoId, item.cantidad - 1)}
+          onPress={() => {
+            if (item.cantidad - 1 === 0) Toast.show({ type: "info", text1: "Producto eliminado del carrito" });
+            updateQuantity(item.productoId, item.cantidad - 1);
+          }}
           className="items-center justify-center"
           style={{ padding: 4 }}
+          accessibilityLabel="Reducir cantidad"
+          accessibilityRole="button"
         >
           <MinusIcon />
         </Pressable>
@@ -78,6 +84,8 @@ export function CartItem({ item }: Props) {
           onPress={() => updateQuantity(item.productoId, item.cantidad + 1)}
           className="items-center justify-center"
           style={{ padding: 4 }}
+          accessibilityLabel="Aumentar cantidad"
+          accessibilityRole="button"
         >
           <PlusIcon />
         </Pressable>

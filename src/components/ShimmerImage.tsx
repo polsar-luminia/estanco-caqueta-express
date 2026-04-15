@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Image, type ImageStyle, type ImageContentFit, type ImageContentPosition } from "expo-image";
 
 const CATEGORY_PLACEHOLDERS: Record<string, string> = {
@@ -18,10 +19,13 @@ interface Props {
 }
 
 export function ShimmerImage({ imageUrl, fallbackCategory, style, contentFit = "contain", contentPosition }: Props) {
-  const uri =
-    imageUrl ||
+  const [hasError, setHasError] = useState(false);
+
+  const fallback =
     CATEGORY_PLACEHOLDERS[fallbackCategory || ""] ||
     "https://placehold.co/400x400/9E9E9E/white?text=Producto";
+
+  const uri = hasError ? fallback : (imageUrl || fallback);
 
   return (
     <Image
@@ -29,7 +33,9 @@ export function ShimmerImage({ imageUrl, fallbackCategory, style, contentFit = "
       style={[{ backgroundColor: "#F3F4F6" }, style]}
       contentFit={contentFit}
       contentPosition={contentPosition}
+      cachePolicy="memory-disk"
       transition={300}
+      onError={() => setHasError(true)}
     />
   );
 }

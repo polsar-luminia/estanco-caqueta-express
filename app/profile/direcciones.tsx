@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView, TextInput, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl } from "react-native";
 import { Stack } from "expo-router";
 import { BackButton } from "../../src/components/BackButton";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,7 +17,7 @@ export default function DireccionesScreen() {
   const [etiqueta, setEtiqueta] = useState("Casa");
   const [notas, setNotas] = useState("");
 
-  const { data: direcciones = [], isLoading } = useQuery({
+  const { data: direcciones = [], isLoading, isError, isFetching } = useQuery({
     queryKey: ["direcciones"],
     queryFn: getDirecciones,
   });
@@ -43,6 +43,7 @@ export default function DireccionesScreen() {
   const mutEliminar = useMutation({
     mutationFn: eliminarDireccion,
     onSuccess: () => { refetch(); Toast.show({ type: "success", text1: "Dirección eliminada" }); },
+    onError: (err: any) => Toast.show({ type: "error", text1: "No se pudo eliminar", text2: err.message }),
   });
 
   const handleGuardar = () => {
@@ -75,8 +76,19 @@ export default function DireccionesScreen() {
         </Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}>
-        {isLoading ? (
+      <ScrollView
+        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
+        refreshControl={<RefreshControl refreshing={!isLoading && isFetching} onRefresh={refetch} />}
+      >
+        {isError ? (
+          <View className="items-center py-12">
+            <Feather name="alert-circle" size={40} color="#D1D5DB" />
+            <Text style={{ fontSize: 16, fontWeight: "600", color: "#6D7B6C", marginTop: 12 }}>No pudimos cargar tus direcciones</Text>
+            <Pressable onPress={() => refetch()} style={{ marginTop: 12, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: "#1FAF55", borderRadius: 999 }}>
+              <Text style={{ color: "#fff", fontWeight: "600" }}>Reintentar</Text>
+            </Pressable>
+          </View>
+        ) : isLoading ? (
           <Text style={{ color: "#9E9E9E", textAlign: "center", marginTop: 32 }}>Cargando...</Text>
         ) : direcciones.length === 0 && !mostrarForm ? (
           <View className="items-center py-12">
@@ -104,7 +116,12 @@ export default function DireccionesScreen() {
                     {d.notas ? <Text style={{ fontSize: 11, color: "#9E9E9E", fontStyle: "italic", marginTop: 2 }}>{d.notas}</Text> : null}
                   </View>
                 </View>
-                <Pressable onPress={() => handleEliminar(d.id)} style={{ padding: 4 }}>
+                <Pressable
+                  onPress={() => handleEliminar(d.id)}
+                  style={{ padding: 4 }}
+                  accessibilityLabel="Eliminar dirección"
+                  accessibilityRole="button"
+                >
                   <Feather name="trash-2" size={16} color="#D33587" />
                 </Pressable>
               </View>

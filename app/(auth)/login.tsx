@@ -102,6 +102,9 @@ export default function LoginScreen() {
                   placeholder="••••••••"
                   placeholderTextColor="#BCCABA"
                   secureTextEntry={!showPass}
+                  autoCapitalize="none"
+                  textContentType="password"
+                  autoComplete="current-password"
                   value={password}
                   onChangeText={setPassword}
                 />

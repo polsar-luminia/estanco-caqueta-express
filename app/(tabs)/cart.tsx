@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, FlatList, TextInput, Pressable, Switch } from "react-native";
+import { View, Text, FlatList, TextInput, Pressable, Switch, KeyboardAvoidingView, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
@@ -9,7 +9,7 @@ import Toast from "react-native-toast-message";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
-import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, type DireccionGuardada, type CuponValidado } from "../../src/lib/api";
+import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, type DireccionGuardada, type CuponValidado } from "../../src/lib/api";
 import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
 import { tracker } from "../../src/lib/tracker";
 import { formatCOP } from "../../src/lib/format";
@@ -29,6 +29,8 @@ export default function CartScreen() {
   const direccion = useCartStore((s) => s.direccion);
   const barrio = useCartStore((s) => s.barrio);
   const notas = useCartStore((s) => s.notas);
+  const direccionId = useCartStore((s) => s.direccionId);
+  const setDireccionId = useCartStore((s) => s.setDireccionId);
   const getTotal = useCartStore((s) => s.getTotal);
   const clear = useCartStore((s) => s.clear);
   const cliente = useAuthStore((s) => s.cliente);
@@ -58,7 +60,7 @@ export default function CartScreen() {
   });
 
   const dirPredeterminada = direcciones.find((d) => d.predeterminada) || direcciones[0];
-  const [dirSeleccionada, setDirSeleccionada] = useState<DireccionGuardada | null>(null);
+  const dirSeleccionada = direccionId ? direcciones.find((d) => d.id === direccionId) ?? null : null;
   const dirActiva = dirSeleccionada || dirPredeterminada;
 
   const subtotal = getTotal();
@@ -72,6 +74,7 @@ export default function CartScreen() {
 
   const handleValidarCupon = async () => {
     if (!codigoCupon.trim()) return;
+    if (cuponValidado?.cupon.codigo === codigoCupon.trim()) return;
     setValidandoCupon(true);
     setCuponError("");
     setCuponValidado(null);
@@ -95,6 +98,11 @@ export default function CartScreen() {
   };
 
   const handlePedir = async () => {
+    if (subtotal < 30000) {
+      Toast.show({ type: "error", text1: "Pedido mínimo", text2: `Agrega ${formatCOP(30000 - subtotal)} más para continuar` });
+      return;
+    }
+
     const dir = dirActiva?.direccion || direccion.trim();
     const bar = dirActiva?.barrio || barrio.trim();
     const not = dirActiva?.notas || notas.trim();
@@ -116,12 +124,24 @@ export default function CartScreen() {
     const barIdFinal = mostrarNueva ? nuevoBarrioId : (dirActiva as any)?.barrio_id || undefined;
     const notFinal = mostrarNueva ? nuevasNotas.trim() : not;
 
+    if (!barFinal) {
+      Toast.show({ type: "error", text1: "Falta el barrio", text2: "Selecciona o escribe el barrio de entrega" });
+      return;
+    }
+
     setLoading(true);
     try {
+      // S10 - Verificar estado fresco de la tienda antes de crear pedido
+      const estadoTienda = await getEstadoTienda();
+      if (!estadoTienda.abierta) {
+        Toast.show({ type: "error", text1: "Tienda cerrada", text2: estadoTienda.proximaApertura || "Ya cerramos por hoy" });
+        return;
+      }
+
       // Guardar nueva dirección si la ingresó
       if (mostrarNueva && dirFinal) {
         await crearDireccion({ direccion: dirFinal, barrio: barFinal || undefined, barrio_id: barIdFinal, notas: notFinal || undefined, predeterminada: true });
-        refetchDirs();
+        try { await refetchDirs(); } catch {}
       }
 
       const { pedido } = await crearPedido({
@@ -134,11 +154,18 @@ export default function CartScreen() {
         lineas: items.map((i) => ({ producto_id: i.productoId, cantidad: i.cantidad })),
       });
       tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos }, 'cart');
-      clear();
-      // Refrescar perfil para actualizar puntos
+      // Refrescar perfil antes de limpiar carrito (si falla, no afecta el pedido)
       const { getPerfil } = await import("../../src/lib/api");
-      const clienteActualizado = await getPerfil();
-      useAuthStore.getState().setCliente(clienteActualizado);
+      let clienteActualizado;
+      try {
+        clienteActualizado = await getPerfil();
+      } catch {
+        // Pedido creado exitosamente; puntos se actualizarán al reabrir el perfil
+      }
+      clear();
+      if (clienteActualizado) {
+        useAuthStore.getState().setCliente(clienteActualizado);
+      }
 
       const ptsMsg = (pedido as any).puntos_ganados ? ` (+${(pedido as any).puntos_ganados} pts)` : "";
       Toast.show({
@@ -168,6 +195,11 @@ export default function CartScreen() {
   }
 
   return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={80}
+      style={{ flex: 1 }}
+    >
     <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>
       <FlatList
         data={items}
@@ -206,7 +238,7 @@ export default function CartScreen() {
                         return (
                           <Pressable
                             key={d.id}
-                            onPress={() => setDirSeleccionada(d)}
+                            onPress={() => setDireccionId(d.id)}
                             className="flex-row items-center p-3 rounded-xl"
                             style={{
                               backgroundColor: "#fff",
@@ -277,6 +309,7 @@ export default function CartScreen() {
                     value={nuevasNotas}
                     onChangeText={setNuevasNotas}
                     multiline
+                    maxLength={200}
                   />
                 </>
               )}
@@ -482,11 +515,12 @@ export default function CartScreen() {
 
         <Pressable
           onPress={handlePedir}
-          disabled={loading || !tienda.abierta}
+          disabled={loading || !tienda.abierta || subtotal < 30000}
         >
           <LinearGradient
             colors={
               !tienda.abierta ? ["#3D3D3D", "#2A2A2A"] :
+              subtotal < 30000 ? ["#BCCABA", "#9EA89D"] :
               loading ? ["#9E9E9E", "#757575"] :
               ["#1FAF55", "#006D30"]
             }
@@ -506,12 +540,13 @@ export default function CartScreen() {
             }}
           >
             <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17, marginRight: 8 }}>
-              {loading ? "Enviando..." : !tienda.abierta ? "Tienda cerrada" : "Confirmar pedido"}
+              {loading ? "Enviando..." : !tienda.abierta ? "Tienda cerrada" : subtotal < 30000 ? `Faltan ${formatCOP(30000 - subtotal)}` : "Confirmar pedido"}
             </Text>
             {!loading && tienda.abierta && <ChevronRightIcon />}
           </LinearGradient>
         </Pressable>
       </View>
     </View>
+    </KeyboardAvoidingView>
   );
 }

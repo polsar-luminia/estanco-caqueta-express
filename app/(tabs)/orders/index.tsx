@@ -237,9 +237,12 @@ export default function OrdersScreen() {
     isLoading,
     isError,
     refetch,
+    isFetching,
   } = useQuery({
     queryKey: ["pedidos"],
     queryFn: getPedidos,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
   });
 
   if (isLoading) {
@@ -283,7 +286,7 @@ export default function OrdersScreen() {
       contentContainerStyle={{ padding: 16, gap: 16 }}
       refreshControl={
         <RefreshControl
-          refreshing={false}
+          refreshing={!isLoading && isFetching}
           onRefresh={refetch}
           colors={["#1FAF55"]}
           tintColor="#1FAF55"

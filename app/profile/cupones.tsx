@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { View, Text, Pressable, ScrollView, RefreshControl } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -25,7 +25,7 @@ function getCuponLabel(c: CuponDisponible) {
 }
 
 export default function CuponesScreen() {
-  const { data: cupones = [], isLoading } = useQuery<CuponDisponible[]>({
+  const { data: cupones = [], isLoading, isError, isFetching, refetch } = useQuery<CuponDisponible[]>({
     queryKey: ["cupones-disponibles"],
     queryFn: () => apiFetch("/cupones/disponibles"),
   });
@@ -51,8 +51,19 @@ export default function CuponesScreen() {
         </Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}>
-        {isLoading ? (
+      <ScrollView
+        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
+        refreshControl={<RefreshControl refreshing={!isLoading && isFetching} onRefresh={refetch} />}
+      >
+        {isError ? (
+          <View className="items-center py-16">
+            <Feather name="alert-circle" size={40} color="#D1D5DB" />
+            <Text style={{ fontSize: 16, fontWeight: "600", color: "#6D7B6C", marginTop: 12 }}>No pudimos cargar los cupones</Text>
+            <Pressable onPress={() => refetch()} style={{ marginTop: 12, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: "#1FAF55", borderRadius: 999 }}>
+              <Text style={{ color: "#fff", fontWeight: "600" }}>Reintentar</Text>
+            </Pressable>
+          </View>
+        ) : isLoading ? (
           <Text style={{ color: "#9E9E9E", textAlign: "center", marginTop: 32 }}>Cargando cupones...</Text>
         ) : cupones.length === 0 ? (
           <View className="items-center py-16">
