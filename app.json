@@ -24,21 +24,7 @@
         "backgroundColor": "#1FAF55"
       },
       "edgeToEdgeEnabled": true,
-      "package": "co.estancocaqueta.express",
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "https",
-              "host": "estancocaqueta.com",
-              "pathPrefix": "/"
-            }
-          ],
-          "category": ["BROWSABLE", "DEFAULT"]
-        }
-      ]
+      "package": "co.estancocaqueta.express"
     },
     "plugins": [
       "expo-router",
