@@ -35,14 +35,6 @@
           "icon": "./assets/icon.png",
           "color": "#1FAF55"
         }
-      ],
-      [
-        "@sentry/react-native/expo",
-        {
-          "url": "https://sentry.io/",
-          "organization": "luminia-tech-solutions",
-          "project": "react-native"
-        }
       ]
     ],
     "extra": {
