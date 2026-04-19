@@ -46,7 +46,7 @@ function getOptions(field: Field, value: DateValue): { label: string; value: num
     return range(1, maxDay).map((d) => ({ label: String(d), value: d }));
   }
   if (field === "month") return MESES.map((m, i) => ({ label: m, value: i + 1 }));
-  return range(currentYear - 18, 1920)
+  return range(1920, currentYear - 18).reverse()
     .map((y) => ({ label: String(y), value: y }));
 }
 

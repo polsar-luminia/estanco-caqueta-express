@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { buscarProductos, getCategorias, type Categoria } from "../../src/lib/api";
+import { buscarProductos, getCategorias, getDestacados, type Categoria } from "../../src/lib/api";
 import { tracker } from "../../src/lib/tracker";
 import { ProductCard } from "../../src/components/ProductCard";
 import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
@@ -80,14 +80,20 @@ export default function SearchScreen() {
     enabled: debouncedQuery.length >= 2,
   });
 
+  const hasResults = debouncedQuery.length >= 2 && resultados.length > 0 && !isError;
+  const noResults = debouncedQuery.length >= 2 && resultados.length === 0 && !isLoading && !isError;
+  const showExplore = debouncedQuery.length < 2;
+
   const { data: categorias = [] } = useQuery({
     queryKey: ["categorias"],
     queryFn: getCategorias,
   });
 
-  const hasResults = debouncedQuery.length >= 2 && resultados.length > 0 && !isError;
-  const noResults = debouncedQuery.length >= 2 && resultados.length === 0 && !isLoading && !isError;
-  const showExplore = debouncedQuery.length < 2;
+  const { data: destacados = [] } = useQuery({
+    queryKey: ["destacados"],
+    queryFn: getDestacados,
+    enabled: showExplore,
+  });
 
   useEffect(() => {
     if (debouncedQuery.length >= 2 && !isLoading) {
@@ -209,15 +215,24 @@ export default function SearchScreen() {
             />
           </View>
 
-          {/* Suggestions header */}
-          <View className="px-4">
-            <View className="flex-row justify-between items-center mb-3">
-              <Text style={{ fontSize: 18, fontWeight: "800", color: "#1A1C1A" }}>Sugerencias de Hoy</Text>
-              <Pressable onPress={() => router.push("/(tabs)/search")}>
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#D33587" }}>Ver Todo</Text>
-              </Pressable>
+          {/* Suggestions */}
+          {destacados.length > 0 && (
+            <View className="px-4">
+              <View className="flex-row justify-between items-center mb-3">
+                <Text style={{ fontSize: 18, fontWeight: "800", color: "#1A1C1A" }}>Sugerencias de Hoy</Text>
+                <Pressable onPress={() => router.push("/(tabs)/")}>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#D33587" }}>Ver Todo</Text>
+                </Pressable>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingRight: 16 }}>
+                {destacados.map((item) => (
+                  <View key={item.id} style={{ width: COL_WIDTH }}>
+                    <ProductCard product={item} onPress={() => router.push(`/product/${item.id}`)} />
+                  </View>
+                ))}
+              </ScrollView>
             </View>
-          </View>
+          )}
         </ScrollView>
       )}
     </View>

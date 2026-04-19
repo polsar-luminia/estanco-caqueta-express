@@ -95,11 +95,10 @@ export async function registrarCliente(
   nombre: string,
   password: string,
   fecha_nacimiento: string,
-  codigo_referido_invitador?: string
 ) {
   return apiFetch<{ token: string; cliente: Cliente }>("/clientes/registrar", {
     method: "POST",
-    body: JSON.stringify({ telefono, nombre, password, fecha_nacimiento, codigo_referido_invitador }),
+    body: JSON.stringify({ telefono, nombre, password, fecha_nacimiento }),
   });
 }
 

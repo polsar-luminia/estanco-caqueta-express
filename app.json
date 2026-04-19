@@ -24,11 +24,22 @@
         "backgroundColor": "#1FAF55"
       },
       "edgeToEdgeEnabled": true,
-      "package": "co.estancocaqueta.express"
+      "package": "co.estancocaqueta.express",
+      "versionCode": 2
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraGradleProperties": {
+              "org.gradle.jvmargs": "-Xmx4g -XX:MaxMetaspaceSize=2g"
+            }
+          }
+        }
+      ],
       [
         "expo-notifications",
         {

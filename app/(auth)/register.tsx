@@ -18,8 +18,6 @@ export default function RegisterScreen() {
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [aceptaDatos, setAceptaDatos] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [codigoReferido, setCodigoReferido] = useState("");
-  const [mostrarReferido, setMostrarReferido] = useState(false);
   const register = useAuthStore((s) => s.register);
 
   // Errores de validación en tiempo real (onBlur)
@@ -82,10 +80,6 @@ export default function RegisterScreen() {
       Toast.show({ type: "error", text1: "Debes tener 18 años o más para registrarte" });
       return;
     }
-    if (codigoReferido && !/^[A-Z0-9]{6}$/.test(codigoReferido)) {
-      Toast.show({ type: "error", text1: "Código de referido inválido", text2: "Debe tener exactamente 6 caracteres" });
-      return;
-    }
     if (!aceptaTerminos) {
       Toast.show({ type: "error", text1: "Debes aceptar los Términos y Condiciones" });
       return;
@@ -96,7 +90,7 @@ export default function RegisterScreen() {
     }
     setLoading(true);
     try {
-      await register(telefono.trim(), nombre.trim(), password, iso, codigoReferido || undefined);
+      await register(telefono.trim(), nombre.trim(), password, iso);
       tracker.track('registro_completado', {}, 'register');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo crear la cuenta";
@@ -165,34 +159,6 @@ export default function RegisterScreen() {
           <View style={{ marginBottom: 12 }}>
             <DateSelector value={fecha} onChange={setFecha} />
           </View>
-
-          {/* Codigo de referido */}
-          {!mostrarReferido ? (
-            <Pressable onPress={() => setMostrarReferido(true)} style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 13, color: "#1FAF55", fontWeight: "600", textAlign: "center" }}>
-                ¿Tienes código de invitación?
-              </Text>
-            </Pressable>
-          ) : (
-            <View style={{ gap: 4, marginBottom: 12 }}>
-              <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginLeft: 16 }}>
-                Código de referido (opcional)
-              </Text>
-              <View className="flex-row items-center" style={{ backgroundColor: "#F4F4F0", borderRadius: 999, paddingHorizontal: 20, paddingVertical: 14 }}>
-                <Text style={{ fontSize: 18, marginRight: 12, color: "#6D7B6C" }}>🎁</Text>
-                <TextInput
-                  className="flex-1 text-base"
-                  style={{ color: "#1A1C1A", fontFamily: "monospace", letterSpacing: 2 }}
-                  placeholder="XXXXXX"
-                  placeholderTextColor="#BCCABA"
-                  value={codigoReferido}
-                  onChangeText={(t) => setCodigoReferido(t.toUpperCase())}
-                  autoCapitalize="characters"
-                  maxLength={6}
-                />
-              </View>
-            </View>
-          )}
 
           {/* Checkboxes de políticas */}
           <View style={{ marginTop: 8, marginBottom: 4 }}>

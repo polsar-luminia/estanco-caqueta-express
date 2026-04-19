@@ -100,24 +100,12 @@ describe("useAuthStore", () => {
         "3009876543", "Luis", "password123", "2000-01-15"
       );
       expect(api.registrarCliente).toHaveBeenCalledWith(
-        "3009876543", "Luis", "password123", "2000-01-15", undefined
+        "3009876543", "Luis", "password123", "2000-01-15"
       );
       expect(api.setToken).toHaveBeenCalledWith("reg-tok");
       expect(useAuthStore.getState().isAuthenticated).toBe(true);
     });
 
-    it("pasa codigo_referido si se incluye", async () => {
-      vi.mocked(api.registrarCliente).mockResolvedValue({
-        token: "t",
-        cliente: { id: 1, telefono: "x", nombre: "y" } as any,
-      });
-      await useAuthStore.getState().register(
-        "3009876543", "Luis", "password123", "2000-01-15", "REFERIDO123"
-      );
-      expect(api.registrarCliente).toHaveBeenCalledWith(
-        "3009876543", "Luis", "password123", "2000-01-15", "REFERIDO123"
-      );
-    });
   });
 
   describe("logout", () => {
