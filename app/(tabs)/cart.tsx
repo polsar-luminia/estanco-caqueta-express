@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { View, Text, FlatList, TextInput, Pressable, Switch, KeyboardAvoidingView, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -97,8 +97,14 @@ export default function CartScreen() {
     setCuponError("");
   };
 
+  const submitLockRef = useRef(false);
+
   const handlePedir = async () => {
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+
     if (subtotal < 30000) {
+      submitLockRef.current = false;
       Toast.show({ type: "error", text1: "Pedido mínimo", text2: `Agrega ${formatCOP(30000 - subtotal)} más para continuar` });
       return;
     }
@@ -125,6 +131,7 @@ export default function CartScreen() {
     const notFinal = mostrarNueva ? nuevasNotas.trim() : not;
 
     if (!barFinal) {
+      submitLockRef.current = false;
       Toast.show({ type: "error", text1: "Falta el barrio", text2: "Selecciona o escribe el barrio de entrega" });
       return;
     }
@@ -178,6 +185,7 @@ export default function CartScreen() {
     } catch (err: any) {
       Toast.show({ type: "error", text1: "Error", text2: err.message || "No se pudo crear el pedido" });
     } finally {
+      submitLockRef.current = false;
       setLoading(false);
     }
   };
