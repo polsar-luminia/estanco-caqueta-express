@@ -69,6 +69,7 @@ export default function CartScreen() {
   const puedeUsarPuntos = puntos >= 100;
   const envioGratisMinimo = configApp?.envio_gratis_minimo ?? 150000;
   const envioCosto = configApp?.envio_costo ?? 5000;
+  const pedidoMinimo = configApp?.pedido_minimo ?? 30000;
   const envio = (usarPuntos && puedeUsarPuntos) ? 0 : (subtotal >= envioGratisMinimo ? 0 : envioCosto);
   const descuentoCupon = cuponValidado?.descuento || 0;
   const total = subtotal - descuentoCupon + envio;
@@ -104,9 +105,9 @@ export default function CartScreen() {
     if (submitLockRef.current) return;
     submitLockRef.current = true;
 
-    if (subtotal < 30000) {
+    if (subtotal < pedidoMinimo) {
       submitLockRef.current = false;
-      Toast.show({ type: "error", text1: "Pedido mínimo", text2: `Agrega ${formatCOP(30000 - subtotal)} más para continuar` });
+      Toast.show({ type: "error", text1: "Pedido mínimo", text2: `Agrega ${formatCOP(pedidoMinimo - subtotal)} más para continuar` });
       return;
     }
 
@@ -525,9 +526,9 @@ export default function CartScreen() {
             <Text style={{ fontSize: 11, color: "#6D7B6C", fontStyle: "italic" }}>
               {envio === 0 ? "Envío gratis con puntos 🎉" : `Incluye domicilio (${formatCOP(envio)})`}
             </Text>
-            {subtotal < 30000 && (
+            {subtotal < pedidoMinimo && (
               <Text style={{ fontSize: 11, color: "#D33587", fontWeight: "600", marginTop: 2 }}>
-                Pedido mínimo: {formatCOP(30000)} (faltan {formatCOP(30000 - subtotal)})
+                Pedido mínimo: {formatCOP(pedidoMinimo)} (faltan {formatCOP(pedidoMinimo - subtotal)})
               </Text>
             )}
           </View>
@@ -535,12 +536,12 @@ export default function CartScreen() {
 
         <Pressable
           onPress={handlePedir}
-          disabled={loading || !tienda.abierta || subtotal < 30000}
+          disabled={loading || !tienda.abierta || subtotal < pedidoMinimo}
         >
           <LinearGradient
             colors={
               !tienda.abierta ? ["#3D3D3D", "#2A2A2A"] :
-              subtotal < 30000 ? ["#BCCABA", "#9EA89D"] :
+              subtotal < pedidoMinimo ? ["#BCCABA", "#9EA89D"] :
               loading ? ["#9E9E9E", "#757575"] :
               ["#1FAF55", "#006D30"]
             }
@@ -560,7 +561,7 @@ export default function CartScreen() {
             }}
           >
             <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17, marginRight: 8 }}>
-              {loading ? "Enviando..." : !tienda.abierta ? "Tienda cerrada" : subtotal < 30000 ? `Faltan ${formatCOP(30000 - subtotal)}` : "Confirmar pedido"}
+              {loading ? "Enviando..." : !tienda.abierta ? "Tienda cerrada" : subtotal < pedidoMinimo ? `Faltan ${formatCOP(pedidoMinimo - subtotal)}` : "Confirmar pedido"}
             </Text>
             {!loading && tienda.abierta && <ChevronRightIcon />}
           </LinearGradient>

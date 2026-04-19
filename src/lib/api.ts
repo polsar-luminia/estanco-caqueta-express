@@ -412,7 +412,7 @@ export async function getEstadoTienda(): Promise<EstadoTienda> {
   return apiFetch<EstadoTienda>("/tienda/estado");
 }
 
-export async function getConfigApp(): Promise<{ envio_gratis_minimo: number; envio_costo: number }> {
+export async function getConfigApp(): Promise<{ envio_gratis_minimo: number; envio_costo: number; pedido_minimo: number }> {
   return apiFetch('/configuracion-app');
 }
 
