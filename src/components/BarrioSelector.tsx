@@ -118,7 +118,7 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
 
       {/* Modal selector */}
       <Modal visible={abierto} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setAbierto(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: "#FAFAF6" }}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0} style={{ flex: 1, backgroundColor: "#FAFAF6" }}>
           {/* Header modal */}
           <View style={{ flexDirection: "row", alignItems: "center", paddingTop: 16, paddingBottom: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
             <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: "#1A1C1A" }}>Selecciona tu barrio</Text>

@@ -218,6 +218,7 @@ export function DateSelector({ value, onChange }: Props) {
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
         >
           <Pressable
             style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }}

@@ -81,9 +81,16 @@ export function CartItem({ item }: Props) {
           {item.cantidad}
         </Text>
         <Pressable
-          onPress={() => updateQuantity(item.productoId, item.cantidad + 1)}
+          onPress={() => {
+            if (item.stockMaximo != null && item.cantidad >= item.stockMaximo) {
+              Toast.show({ type: "info", text1: `Solo quedan ${item.stockMaximo} unidades` });
+              return;
+            }
+            updateQuantity(item.productoId, item.cantidad + 1);
+          }}
+          disabled={item.stockMaximo != null && item.cantidad >= item.stockMaximo}
           className="items-center justify-center"
-          style={{ padding: 4 }}
+          style={{ padding: 4, opacity: item.stockMaximo != null && item.cantidad >= item.stockMaximo ? 0.4 : 1 }}
           accessibilityLabel="Aumentar cantidad"
           accessibilityRole="button"
         >

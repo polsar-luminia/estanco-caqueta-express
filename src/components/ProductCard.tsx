@@ -28,6 +28,7 @@ export function ProductCard({ product, onPress, badge }: Props) {
       nombre: product.nombre,
       precioUnitario: product.precio_app,
       imagenUrl: product.imagen_url || undefined,
+      stockMaximo: product.stock_total,
     });
     Toast.show({
       type: "success",

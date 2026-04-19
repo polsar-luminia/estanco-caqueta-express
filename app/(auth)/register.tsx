@@ -104,6 +104,7 @@ export default function RegisterScreen() {
     <View className="flex-1" style={{ backgroundColor: "#FFFFFF" }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
         className="flex-1"
       >
         <ScrollView

@@ -194,6 +194,7 @@ export default function ProductDetailScreen() {
       nombre: product.nombre,
       precioUnitario: product.precio_app,
       imagenUrl: product.imagen_url || undefined,
+      stockMaximo: product.stock_total,
     }, quantity);
     Toast.show({
       type: "success",

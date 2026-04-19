@@ -9,6 +9,7 @@ export interface CartItem {
   precioUnitario: number;
   cantidad: number;
   imagenUrl?: string;
+  stockMaximo?: number;
 }
 
 interface CartState {
@@ -49,15 +50,19 @@ export const useCartStore = create<CartState>()(
           );
           tracker.track('carrito_agregado', { producto_id: product.productoId, nombre: product.nombre, precio: product.precioUnitario });
           if (existing) {
+            // Respetar stockMaximo si ya lo conocemos
+            const max = existing.stockMaximo ?? Infinity;
+            const nueva = Math.min(existing.cantidad + 1, max);
             return {
               items: state.items.map((i) =>
                 i.productoId === product.productoId
-                  ? { ...i, cantidad: i.cantidad + 1 }
+                  ? { ...i, cantidad: nueva, stockMaximo: product.stockMaximo ?? i.stockMaximo }
                   : i
               ),
             };
           }
-          return { items: [...state.items, { ...product, cantidad: 1 }] };
+          const max = product.stockMaximo ?? Infinity;
+          return { items: [...state.items, { ...product, cantidad: Math.min(1, max) }] };
         });
       },
 
@@ -66,15 +71,18 @@ export const useCartStore = create<CartState>()(
           const existing = state.items.find((i) => i.productoId === product.productoId);
           tracker.track('carrito_agregado', { producto_id: product.productoId, nombre: product.nombre, precio: product.precioUnitario, cantidad });
           if (existing) {
+            const max = existing.stockMaximo ?? product.stockMaximo ?? Infinity;
+            const nueva = Math.min(existing.cantidad + cantidad, max);
             return {
               items: state.items.map((i) =>
                 i.productoId === product.productoId
-                  ? { ...i, cantidad: i.cantidad + cantidad }
+                  ? { ...i, cantidad: nueva, stockMaximo: product.stockMaximo ?? i.stockMaximo }
                   : i
               ),
             };
           }
-          return { items: [...state.items, { ...product, cantidad }] };
+          const max = product.stockMaximo ?? Infinity;
+          return { items: [...state.items, { ...product, cantidad: Math.min(cantidad, max) }] };
         });
       },
 
@@ -86,9 +94,11 @@ export const useCartStore = create<CartState>()(
           }
           tracker.track('carrito_cantidad_cambiada', { producto_id: productoId, cantidad_nueva: cantidad });
           return {
-            items: state.items.map((i) =>
-              i.productoId === productoId ? { ...i, cantidad } : i
-            ),
+            items: state.items.map((i) => {
+              if (i.productoId !== productoId) return i;
+              const max = i.stockMaximo ?? Infinity;
+              return { ...i, cantidad: Math.min(cantidad, max) };
+            }),
           };
         });
       },
