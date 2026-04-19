@@ -415,7 +415,7 @@ export default function CartScreen() {
                   {envio === 0 ? "¡Gratis!" : formatCOP(envio)}
                 </Text>
               </View>
-              {puedeUsarPuntos && (
+              {puedeUsarPuntos && subtotal < envioGratisMinimo && (
                 <View className="flex-row justify-between items-center rounded-xl p-3" style={{ backgroundColor: "#F4F4F0" }}>
                   <View className="flex-1">
                     <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1C1A" }}>Usar 100 puntos</Text>
@@ -429,7 +429,7 @@ export default function CartScreen() {
                   />
                 </View>
               )}
-              {!puedeUsarPuntos && puntos > 0 && (
+              {!puedeUsarPuntos && puntos > 0 && subtotal < envioGratisMinimo && (
                 <Text style={{ fontSize: 11, color: "#6D7B6C", fontStyle: "italic" }}>
                   Tienes {puntos} pts. Necesitas 100 para envío gratis.
                 </Text>
@@ -500,6 +500,15 @@ export default function CartScreen() {
             <Text style={{ fontSize: 28, fontWeight: "800", color: "#D33587", letterSpacing: -1 }}>
               {formatCOP(total)}
             </Text>
+            {(() => {
+              const ahorroEnvio = envio === 0 ? envioCosto : 0;
+              const totalAhorro = descuentoCupon + ahorroEnvio;
+              return totalAhorro > 0 ? (
+                <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55", marginTop: 2 }}>
+                  Ahorras {formatCOP(totalAhorro)} 🎉
+                </Text>
+              ) : null;
+            })()}
           </View>
           <View>
             <Text style={{ fontSize: 11, color: "#6D7B6C", fontStyle: "italic" }}>

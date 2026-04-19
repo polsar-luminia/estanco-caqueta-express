@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { View, Text, Pressable, Modal, ScrollView, Platform } from "react-native";
+import { useState, useRef } from "react";
+import { View, Text, Pressable, Modal, ScrollView, TextInput, KeyboardAvoidingView, Platform } from "react-native";
 
 export type DateValue = { day?: number; month?: number; year?: number };
 
@@ -63,16 +63,42 @@ interface Props {
 
 export function DateSelector({ value, onChange }: Props) {
   const [openField, setOpenField] = useState<Field | null>(null);
+  const [yearText, setYearText] = useState(value.year ? String(value.year) : "");
+  const yearInputRef = useRef<TextInput>(null);
 
   const handleSelect = (field: Field, selected: number) => {
     const newValue: DateValue = { ...value, [field]: selected };
-    // Si cambia mes o año, verificar que el día siga siendo válido
     if ((field === 'month' || field === 'year') && newValue.day) {
       const maxDay = new Date(newValue.year || 2000, newValue.month || 1, 0).getDate();
       if (newValue.day > maxDay) newValue.day = undefined;
     }
     onChange(newValue);
     setOpenField(null);
+  };
+
+  const handleYearChange = (text: string) => {
+    const digits = text.replace(/\D/g, "").slice(0, 4);
+    setYearText(digits);
+    if (digits.length === 4) {
+      const yr = parseInt(digits, 10);
+      const currentYear = new Date().getFullYear();
+      if (yr >= 1920 && yr <= currentYear - 18) {
+        const newValue: DateValue = { ...value, year: yr };
+        if (newValue.day && newValue.month) {
+          const maxDay = new Date(yr, newValue.month, 0).getDate();
+          if (newValue.day > maxDay) newValue.day = undefined;
+        }
+        onChange(newValue);
+      }
+    } else {
+      onChange({ ...value, year: undefined });
+    }
+  };
+
+  const handleYearOpen = () => {
+    setYearText(value.year ? String(value.year) : "");
+    setOpenField("year");
+    setTimeout(() => yearInputRef.current?.focus(), 100);
   };
 
   const fields: Field[] = ["day", "month", "year"];
@@ -87,6 +113,29 @@ export function DateSelector({ value, onChange }: Props) {
       <View style={{ flexDirection: "row", gap: 8 }}>
         {fields.map((field) => {
           const selected = value[field] !== undefined;
+          if (field === "year") {
+            return (
+              <Pressable
+                key="year"
+                onPress={handleYearOpen}
+                style={{
+                  flex: flexMap.year,
+                  backgroundColor: "#F4F4F0",
+                  borderRadius: 999,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={{ fontSize: 15, color: selected ? "#1A1C1A" : "#BCCABA", flex: 1 }}>
+                  {value.year ? String(value.year) : "Año"}
+                </Text>
+                <Text style={{ fontSize: 10, color: "#6D7B6C", marginLeft: 4 }}>✏️</Text>
+              </Pressable>
+            );
+          }
           return (
             <Pressable
               key={field}
@@ -111,18 +160,17 @@ export function DateSelector({ value, onChange }: Props) {
         })}
       </View>
 
+      {/* Modal para día y mes */}
       <Modal
-        visible={openField !== null}
+        visible={openField === "day" || openField === "month"}
         transparent
         animationType="slide"
         onRequestClose={() => setOpenField(null)}
       >
-        {/* Backdrop */}
         <Pressable
           style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }}
           onPress={() => setOpenField(null)}
         />
-        {/* Sheet */}
         <View
           style={{
             backgroundColor: "#fff",
@@ -133,19 +181,13 @@ export function DateSelector({ value, onChange }: Props) {
             maxHeight: 340,
           }}
         >
-          {/* Handle */}
           <View style={{ alignItems: "center", marginBottom: 8 }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: "#E0E0E0" }} />
           </View>
           <ScrollView keyboardShouldPersistTaps="handled">
             {openField &&
               getOptions(openField, value).map((opt) => {
-                const isSelected =
-                  openField === "day"
-                    ? value.day === opt.value
-                    : openField === "month"
-                    ? value.month === opt.value
-                    : value.year === opt.value;
+                const isSelected = openField === "day" ? value.day === opt.value : value.month === opt.value;
                 return (
                   <Pressable
                     key={opt.value}
@@ -156,13 +198,7 @@ export function DateSelector({ value, onChange }: Props) {
                       backgroundColor: isSelected ? "#F0FBF4" : "transparent",
                     }}
                   >
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        color: isSelected ? "#1FAF55" : "#1A1C1A",
-                        fontWeight: isSelected ? "700" : "400",
-                      }}
-                    >
+                    <Text style={{ fontSize: 16, color: isSelected ? "#1FAF55" : "#1A1C1A", fontWeight: isSelected ? "700" : "400" }}>
                       {opt.label}
                     </Text>
                   </Pressable>
@@ -170,6 +206,79 @@ export function DateSelector({ value, onChange }: Props) {
               })}
           </ScrollView>
         </View>
+      </Modal>
+
+      {/* Modal para año — input directo */}
+      <Modal
+        visible={openField === "year"}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setOpenField(null)}
+      >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <Pressable
+            style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }}
+            onPress={() => setOpenField(null)}
+          />
+          <View
+            style={{
+              backgroundColor: "#fff",
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingTop: 12,
+              paddingBottom: Platform.OS === "ios" ? 34 : 16,
+              paddingHorizontal: 24,
+            }}
+          >
+            <View style={{ alignItems: "center", marginBottom: 16 }}>
+              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: "#E0E0E0" }} />
+            </View>
+            <Text style={{ fontSize: 13, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
+              Año de nacimiento
+            </Text>
+            <TextInput
+              ref={yearInputRef}
+              value={yearText}
+              onChangeText={handleYearChange}
+              keyboardType="number-pad"
+              maxLength={4}
+              placeholder="Ej. 1995"
+              placeholderTextColor="#BCCABA"
+              autoFocus
+              style={{
+                backgroundColor: "#F4F4F0",
+                borderRadius: 16,
+                paddingHorizontal: 20,
+                paddingVertical: 16,
+                fontSize: 28,
+                fontWeight: "700",
+                color: "#1A1C1A",
+                letterSpacing: 8,
+                textAlign: "center",
+              }}
+            />
+            <Text style={{ fontSize: 11, color: "#BCCABA", textAlign: "center", marginTop: 8 }}>
+              Entre 1920 y {new Date().getFullYear() - 18}
+            </Text>
+            <Pressable
+              onPress={() => setOpenField(null)}
+              style={{
+                marginTop: 16,
+                backgroundColor: value.year ? "#1FAF55" : "#E0E0E0",
+                borderRadius: 999,
+                paddingVertical: 14,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
+                Confirmar
+              </Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

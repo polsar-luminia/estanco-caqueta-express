@@ -112,9 +112,13 @@ export default function LoginScreen() {
                   <Text style={{ fontSize: 18, color: "#6D7B6C" }}>{showPass ? "🙈" : "👁️"}</Text>
                 </Pressable>
               </View>
-              <Text className="self-end mt-1" style={{ fontSize: 11, color: "#1FAF55", fontWeight: "500" }}>
-                ¿Olvidaste tu contraseña?
-              </Text>
+              <Link href="/(auth)/forgot-password" asChild>
+                <Pressable>
+                  <Text className="self-end mt-1" style={{ fontSize: 11, color: "#1FAF55", fontWeight: "500" }}>
+                    ¿Olvidaste tu contraseña?
+                  </Text>
+                </Pressable>
+              </Link>
             </View>
 
             {/* Button */}

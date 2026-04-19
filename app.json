@@ -16,7 +16,9 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "co.estancocaqueta.express",
-      "associatedDomains": ["applinks:estancocaqueta.com"],
+      "associatedDomains": [
+        "applinks:estancocaqueta.com"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -28,7 +30,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "co.estancocaqueta.express",
-      "versionCode": 2
+      "versionCode": 3
     },
     "plugins": [
       "expo-router",
@@ -49,7 +51,8 @@
           "icon": "./assets/icon.png",
           "color": "#1FAF55"
         }
-      ]
+      ],
+      "react-native-edge-to-edge"
     ],
     "extra": {
       "router": {},

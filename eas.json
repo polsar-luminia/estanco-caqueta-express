@@ -35,13 +35,25 @@
     }
   },
   "submit": {
+    "internal": {
+      "android": {
+        "serviceAccountKeyPath": "C:\\Users\\Santi\\.secrets\\polo-play-sa.json",
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    },
+    "alpha": {
+      "android": {
+        "serviceAccountKeyPath": "C:\\Users\\Santi\\.secrets\\polo-play-sa.json",
+        "track": "alpha"
+      }
+    },
     "production": {
       "android": {
-        "serviceAccountKeyPath": "./google-services.json",
-        "track": "internal"
+        "serviceAccountKeyPath": "C:\\Users\\Santi\\.secrets\\polo-play-sa.json",
+        "track": "production"
       },
       "ios": {}
-
     }
   }
 }

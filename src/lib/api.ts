@@ -288,6 +288,35 @@ export async function validarCupon(codigo: string, subtotal: number) {
   });
 }
 
+export interface CuponDisponible {
+  id: number;
+  codigo: string;
+  descripcion: string;
+  tipo: 'porcentaje' | 'fijo';
+  valor: number;
+  min_pedido: number;
+  expires_at: string | null;
+  ya_usado: boolean;
+}
+
+export async function getCuponesDisponibles() {
+  return apiFetch<CuponDisponible[]>("/cupones/disponibles");
+}
+
+export async function solicitarResetPassword(telefono: string) {
+  return apiFetch<{ mensaje: string }>("/clientes/reset-password/solicitar", {
+    method: "POST",
+    body: JSON.stringify({ telefono }),
+  });
+}
+
+export async function verificarResetPassword(telefono: string, codigo: string, nueva_password: string) {
+  return apiFetch<{ mensaje: string }>("/clientes/reset-password/verificar", {
+    method: "POST",
+    body: JSON.stringify({ telefono, codigo, nueva_password }),
+  });
+}
+
 export interface PuntosResponse {
   balance: number;
   movimientos: { tipo: string; puntos: number; descripcion: string; created_at: string }[];

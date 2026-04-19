@@ -3,9 +3,11 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import Toast from "react-native-toast-message";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../src/stores/auth";
 import { WHATSAPP_SOPORTE } from "../../src/constants/config";
 import { formatCOP } from "../../src/lib/format";
+import { getCuponesDisponibles } from "../../src/lib/api";
 
 function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string; badge?: string; onPress?: () => void }) {
   const iconMap: Record<string, keyof typeof Feather.glyphMap> = {
@@ -44,6 +46,13 @@ export default function ProfileScreen() {
   const router = useRouter();
   const cliente = useAuthStore((s) => s.cliente);
   const logout = useAuthStore((s) => s.logout);
+
+  const { data: cupones = [] } = useQuery({
+    queryKey: ["cupones-disponibles"],
+    queryFn: getCuponesDisponibles,
+    staleTime: 5 * 60 * 1000,
+  });
+  const cuponesNuevos = cupones.filter(c => !c.ya_usado).length;
 
   const handleLogout = () => {
     Alert.alert("Cerrar sesión", "¿Quieres salir de tu cuenta?", [
@@ -151,7 +160,12 @@ export default function ProfileScreen() {
             label="Historial de Pedidos"
             onPress={() => router.push("/(tabs)/orders")}
           />
-          <MenuItem icon="confirmation_number" label="Cupones y Descuentos" badge="3 Nuevos" onPress={() => router.push("/profile/cupones")} />
+          <MenuItem
+            icon="confirmation_number"
+            label="Cupones y Descuentos"
+            badge={cuponesNuevos > 0 ? `${cuponesNuevos} disponible${cuponesNuevos > 1 ? 's' : ''}` : undefined}
+            onPress={() => router.push("/profile/cupones")}
+          />
         </View>
       </View>
 
