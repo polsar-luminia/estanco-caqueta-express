@@ -62,7 +62,15 @@ export async function apiFetch<T = any>(
   }
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
+    let body: any = {};
+    let bodyParsed = false;
+    try {
+      body = await res.json();
+      bodyParsed = true;
+    } catch {
+      // Body no es JSON (HTML de error, texto plano, o vacío). Loguea para debug.
+      if (__DEV__) console.warn(`[apiFetch] ${res.status} ${path} — body no-JSON`);
+    }
     const ERRORES_USUARIO: Record<string, string> = {
       'telefono already exists': 'Este teléfono ya está registrado',
       'Teléfono inválido': 'Teléfono inválido',
@@ -74,7 +82,20 @@ export async function apiFetch<T = any>(
       'Cupón no válido': 'Cupón no válido',
       'Stock insuficiente': 'Producto sin stock suficiente',
     };
-    const msg = ERRORES_USUARIO[body.error] ?? (res.status >= 500 ? 'Error del servidor, intenta de nuevo' : (body.error || `Error ${res.status}`));
+    let msg: string;
+    if (bodyParsed && body.error && ERRORES_USUARIO[body.error]) {
+      msg = ERRORES_USUARIO[body.error];
+    } else if (bodyParsed && body.error) {
+      msg = body.error;
+    } else if (res.status === 404) {
+      msg = 'Servicio no disponible (404)';
+    } else if (res.status >= 500) {
+      msg = 'Error del servidor, intenta de nuevo';
+    } else if (res.status === 403) {
+      msg = 'No tienes permiso para hacer esto';
+    } else {
+      msg = `Error ${res.status}`;
+    }
     throw new Error(msg);
   }
 

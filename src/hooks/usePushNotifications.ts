@@ -101,7 +101,7 @@ export function usePushNotifications() {
   useEffect(() => {
     const subResponse = Notifications.addNotificationResponseReceivedListener((response) => {
       const pedidoId = response.notification.request.content.data?.pedidoId;
-      if (pedidoId) {
+      if (pedidoId && useAuthStore.getState().isAuthenticated) {
         router.push(`/(tabs)/orders/${pedidoId}` as any);
       }
     });

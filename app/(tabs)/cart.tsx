@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { View, Text, FlatList, TextInput, Pressable, Switch, KeyboardAvoidingView, Platform } from "react-native";
 import { useRouter } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { Feather } from "@expo/vector-icons";
@@ -45,6 +45,7 @@ export default function CartScreen() {
   const [cuponValidado, setCuponValidado] = useState<CuponValidado | null>(null);
   const [cuponError, setCuponError] = useState("");
   const [validandoCupon, setValidandoCupon] = useState(false);
+  const queryClient = useQueryClient();
 
   const tienda = useTiendaAbierta();
 
@@ -161,6 +162,8 @@ export default function CartScreen() {
         lineas: items.map((i) => ({ producto_id: i.productoId, cantidad: i.cantidad })),
       });
       tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos }, 'cart');
+      queryClient.invalidateQueries({ queryKey: ["pedidos"] });
+      queryClient.invalidateQueries({ queryKey: ["cupones-disponibles"] });
       // Refrescar perfil antes de limpiar carrito (si falla, no afecta el pedido)
       const { getPerfil } = await import("../../src/lib/api");
       let clienteActualizado;

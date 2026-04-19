@@ -3,8 +3,9 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import Toast from "react-native-toast-message";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../src/stores/auth";
+import { useCartStore } from "../../src/stores/cart";
 import { WHATSAPP_SOPORTE } from "../../src/constants/config";
 import { formatCOP } from "../../src/lib/format";
 import { getCuponesDisponibles } from "../../src/lib/api";
@@ -46,6 +47,8 @@ export default function ProfileScreen() {
   const router = useRouter();
   const cliente = useAuthStore((s) => s.cliente);
   const logout = useAuthStore((s) => s.logout);
+  const clearCart = useCartStore((s) => s.clear);
+  const queryClient = useQueryClient();
 
   const { data: cupones = [] } = useQuery({
     queryKey: ["cupones-disponibles"],
@@ -57,7 +60,13 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     Alert.alert("Cerrar sesión", "¿Quieres salir de tu cuenta?", [
       { text: "No" },
-      { text: "Sí", style: "destructive", onPress: () => { Toast.show({ type: "success", text1: "Sesión cerrada" }); logout(); } },
+      { text: "Sí", style: "destructive", onPress: async () => {
+          clearCart();
+          queryClient.clear();
+          await logout();
+          Toast.show({ type: "success", text1: "Sesión cerrada" });
+        }
+      },
     ]);
   };
 
