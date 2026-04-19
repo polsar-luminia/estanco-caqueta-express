@@ -15,6 +15,12 @@
         "gradleCommand": ":app:assembleRelease"
       }
     },
+    "preview-ios": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      }
+    },
     "production": {
       "env": {
         "SENTRY_AUTH_TOKEN": "$SENTRY_AUTH_TOKEN",
@@ -22,6 +28,9 @@
       },
       "android": {
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "buildConfiguration": "Release"
       }
     }
   },
@@ -30,7 +39,9 @@
       "android": {
         "serviceAccountKeyPath": "./google-services.json",
         "track": "internal"
-      }
+      },
+      "ios": {}
+
     }
   }
 }
