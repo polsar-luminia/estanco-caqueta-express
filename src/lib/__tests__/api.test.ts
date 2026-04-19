@@ -114,10 +114,22 @@ describe("apiFetch", () => {
     );
   });
 
-  it("error sin body.error y status <500 → 'Error {status}'", async () => {
+  it("404 sin body.error → 'Servicio no disponible' (UIAPI-001)", async () => {
     vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
     vi.mocked(fetch).mockResolvedValue(mockResponse(404, {}));
-    await expect(apiFetch("/x")).rejects.toThrow("Error 404");
+    await expect(apiFetch("/x")).rejects.toThrow(/Servicio no disponible/);
+  });
+
+  it("403 sin body.error → 'No tienes permiso'", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
+    vi.mocked(fetch).mockResolvedValue(mockResponse(403, {}));
+    await expect(apiFetch("/x")).rejects.toThrow(/No tienes permiso/);
+  });
+
+  it("400 sin body.error y sin match → 'Error {status}'", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
+    vi.mocked(fetch).mockResolvedValue(mockResponse(418, {}));
+    await expect(apiFetch("/x")).rejects.toThrow("Error 418");
   });
 
   it("response.json() rechaza → catch devuelve {} y mensaje genérico 500+", async () => {

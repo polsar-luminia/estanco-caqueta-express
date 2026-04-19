@@ -1,0 +1,53 @@
+# Flow end-to-end: login → agregar producto → carrito → confirmar pedido
+# Uso: maestro test .maestro/flow-pedido.yaml
+# Requiere cuenta test: 3001234567 / testpass
+appId: co.estancocaqueta.express
+---
+- launchApp:
+    clearState: true
+
+# Login
+- assertVisible: "Bienvenido"
+- tapOn:
+    id: "input-telefono"
+- inputText: "3001234567"
+- tapOn:
+    id: "input-password"
+- inputText: "testpass"
+- tapOn: "Iniciar sesión"
+- assertVisible:
+    text: "Hola"
+    timeout: 5000
+
+# Home → tocar primer producto destacado
+- tapOn:
+    below: "Destacados"
+    index: 0
+
+# Detalle de producto → agregar al carrito
+- assertVisible: "Agregar al carrito"
+- tapOn: "Agregar al carrito"
+- assertVisible:
+    text: "Agregado al carrito"
+    timeout: 3000
+
+# Ir al carrito
+- tapOn:
+    id: "tab-cart"
+- assertVisible: "Confirmar pedido"
+
+# Verificar dirección predeterminada y confirmar
+- assertVisible:
+    text: "Confirmar pedido"
+    enabled: true
+- tapOn: "Confirmar pedido"
+- assertVisible:
+    text: "Pedido confirmado"
+    timeout: 10000
+
+# Historial de pedidos
+- tapOn:
+    id: "tab-orders"
+- assertVisible:
+    text: "Pedido #"
+    timeout: 5000
