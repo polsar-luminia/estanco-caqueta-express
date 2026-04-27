@@ -112,7 +112,7 @@ function OrderCard({ item }: { item: Pedido }) {
       }
       for (const linea of pedido.lineas) {
         addItemWithQuantity({
-          productoId: (linea as any).producto_id || 0,
+          productoId: linea.producto_id || 0,
           nombre: linea.nombre_producto,
           precioUnitario: linea.precio_unitario,
         }, linea.cantidad);

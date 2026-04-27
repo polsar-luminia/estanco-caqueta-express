@@ -4,7 +4,7 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import * as Sentry from "@sentry/react-native";
 import Constants from "expo-constants";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import NetInfo from "@react-native-community/netinfo";
 import { registrarPushToken } from "../lib/api";
 import { useAuthStore, registerLogoutHandler } from "../stores/auth";
@@ -80,8 +80,9 @@ export function usePushNotifications() {
         if (__DEV__) {
           console.log("[push] Token registrado:", token.substring(0, 30) + "...");
         }
-      } catch (err: any) {
-        console.error("[push] Error registrando token:", err.message);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("[push] Error registrando token:", msg);
         Sentry.captureException(err, { tags: { feature: "push_notifications" } });
       }
     })();
@@ -110,7 +111,7 @@ export function usePushNotifications() {
     const subResponse = Notifications.addNotificationResponseReceivedListener((response) => {
       const pedidoId = response.notification.request.content.data?.pedidoId;
       if (pedidoId && useAuthStore.getState().isAuthenticated) {
-        router.push(`/(tabs)/orders/${pedidoId}` as any);
+        router.push(`/(tabs)/orders/${pedidoId}` as Href);
       }
     });
 

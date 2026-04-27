@@ -85,9 +85,10 @@ export default function CartScreen() {
       setCuponValidado(result);
       tracker.track('cupon_aplicado', { cupon_codigo: result.cupon.codigo, descuento: result.descuento }, 'cart');
       Toast.show({ type: "success", text1: "Cupon aplicado", text2: `-${formatCOP(result.descuento)} de descuento` });
-    } catch (err: any) {
-      setCuponError(err.message || "Cupon no valido");
-      Toast.show({ type: "error", text1: "Cupon no valido", text2: err.message });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Cupon no valido";
+      setCuponError(msg);
+      Toast.show({ type: "error", text1: "Cupon no valido", text2: msg });
     } finally {
       setValidandoCupon(false);
     }
@@ -127,7 +128,7 @@ export default function CartScreen() {
     const nuevoBarrioNombre = nuevoBarrioObj?.nombre || nuevoBarrioTexto.trim();
     const nuevoBarrioId = nuevoBarrioObj?.id || undefined;
     const barFinal = mostrarNueva ? nuevoBarrioNombre : bar;
-    const barIdFinal = mostrarNueva ? nuevoBarrioId : (dirActiva as any)?.barrio_id || undefined;
+    const barIdFinal = mostrarNueva ? nuevoBarrioId : dirActiva?.barrio_id || undefined;
     const notFinal = mostrarNueva ? nuevasNotas.trim() : not;
 
     if (!barFinal) {
@@ -188,8 +189,9 @@ export default function CartScreen() {
         visibilityTime: 3000,
       });
       router.push("/(tabs)/orders");
-    } catch (err: any) {
-      Toast.show({ type: "error", text1: "Error", text2: err.message || "No se pudo crear el pedido" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "No se pudo crear el pedido";
+      Toast.show({ type: "error", text1: "Error", text2: msg });
     } finally {
       submitLockRef.current = false;
       setLoading(false);

@@ -3,7 +3,9 @@ import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import Svg, { Path } from "react-native-svg";
-import { getProductos } from "../../src/lib/api";
+import { getProductos, type Producto } from "../../src/lib/api";
+
+type GridItem = Producto | { id: number; _spacer: true };
 import { tracker } from "../../src/lib/tracker";
 import { ProductCard } from "../../src/components/ProductCard";
 import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
@@ -90,10 +92,14 @@ export default function CategoryScreen() {
           <ErrorState mensaje="No pudimos cargar esta categoría" onRetry={refetch} />
         </View>
       ) : (
-        <FlatList
+        <FlatList<GridItem>
           data={(() => {
             const productos = data?.productos || [];
-            return productos.length % 2 !== 0 ? [...productos, { id: -1, _spacer: true } as any] : productos;
+            const gridData: GridItem[] =
+              productos.length % 2 !== 0
+                ? [...productos, { id: -1, _spacer: true }]
+                : productos;
+            return gridData;
           })()}
           numColumns={2}
           contentContainerStyle={{ padding: 16, gap: 12 }}
@@ -107,7 +113,7 @@ export default function CategoryScreen() {
             </View>
           }
           renderItem={({ item }) => {
-            if (item._spacer) return <View style={{ flex: 1 }} />;
+            if ("_spacer" in item) return <View style={{ flex: 1 }} />;
             return (
               <ProductCard
                 product={item}

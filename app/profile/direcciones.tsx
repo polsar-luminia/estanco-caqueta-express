@@ -32,7 +32,7 @@ export default function DireccionesScreen() {
       setDireccion(""); setBarrioObj(null); setBarrioTexto(""); setNotas(""); setEtiqueta("Casa");
       Toast.show({ type: "success", text1: "Dirección guardada" });
     },
-    onError: (err: any) => Toast.show({ type: "error", text1: err.message }),
+    onError: (err: Error) => Toast.show({ type: "error", text1: err.message }),
   });
 
   const mutPredeterminada = useMutation({
@@ -43,7 +43,7 @@ export default function DireccionesScreen() {
   const mutEliminar = useMutation({
     mutationFn: eliminarDireccion,
     onSuccess: () => { refetch(); Toast.show({ type: "success", text1: "Dirección eliminada" }); },
-    onError: (err: any) => Toast.show({ type: "error", text1: "No se pudo eliminar", text2: err.message }),
+    onError: (err: Error) => Toast.show({ type: "error", text1: "No se pudo eliminar", text2: err.message }),
   });
 
   const handleGuardar = () => {
