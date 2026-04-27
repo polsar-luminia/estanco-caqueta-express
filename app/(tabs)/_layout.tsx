@@ -18,7 +18,9 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#fff",
+        // Verde de marca en lugar de #fff: el label vivía debajo del círculo verde
+        // sobre el fondo blanco translúcido, así que blanco lo volvía invisible.
+        tabBarActiveTintColor: "#1FAF55",
         tabBarInactiveTintColor: "rgba(26,28,26,0.5)",
         tabBarStyle: {
           position: "absolute",

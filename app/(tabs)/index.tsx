@@ -87,12 +87,19 @@ function HeroCarousel({ banners, router }: { banners: Patrocinado[]; router: Ret
     if (banners.length <= 1) return;
     const timer = setInterval(() => {
       const next = activeIndexRef.current + 1;
+      // Si rebasamos el clon (último índice de extended), volvemos al real sin animación
+      if (next >= extended.length) {
+        flatRef.current?.scrollToIndex({ index: 0, animated: false });
+        activeIndexRef.current = 0;
+        setActiveIndex(0);
+        return;
+      }
       flatRef.current?.scrollToIndex({ index: next, animated: true });
       activeIndexRef.current = next;
       setActiveIndex(next);
     }, 7000);
     return () => clearInterval(timer);
-  }, [banners.length]);
+  }, [banners.length, extended.length]);
 
   const handleScrollEnd = (e: any) => {
     const idx = Math.round(e.nativeEvent.contentOffset.x / (SCREEN_WIDTH - 32));
@@ -121,6 +128,12 @@ function HeroCarousel({ banners, router }: { banners: Patrocinado[]; router: Ret
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item, index) => `${item.id}-${index}`}
         onMomentumScrollEnd={handleScrollEnd}
+        onScrollToIndexFailed={() => {
+          // Defensa: si el render aún no expone el índice solicitado, reseteamos al inicio.
+          flatRef.current?.scrollToIndex({ index: 0, animated: false });
+          activeIndexRef.current = 0;
+          setActiveIndex(0);
+        }}
         renderItem={({ item }) => (
           <HeroSlide
             banner={item}

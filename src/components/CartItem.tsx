@@ -67,8 +67,13 @@ export function CartItem({ item }: Props) {
       >
         <Pressable
           onPress={() => {
-            if (item.cantidad - 1 === 0) Toast.show({ type: "info", text1: "Producto eliminado del carrito" });
-            updateQuantity(item.productoId, item.cantidad - 1);
+            // Leemos la cantidad actual del store (no del prop) para que taps rápidos
+            // no compartan el mismo valor stale entre re-renders y se pierdan incrementos.
+            const current = useCartStore.getState().items.find((i) => i.productoId === item.productoId);
+            if (!current) return;
+            const next = current.cantidad - 1;
+            if (next === 0) Toast.show({ type: "info", text1: "Producto eliminado del carrito" });
+            updateQuantity(item.productoId, next);
           }}
           className="items-center justify-center"
           style={{ padding: 4 }}
@@ -82,11 +87,14 @@ export function CartItem({ item }: Props) {
         </Text>
         <Pressable
           onPress={() => {
-            if (item.stockMaximo != null && item.cantidad >= item.stockMaximo) {
-              Toast.show({ type: "info", text1: `Solo quedan ${item.stockMaximo} unidades` });
+            const current = useCartStore.getState().items.find((i) => i.productoId === item.productoId);
+            if (!current) return;
+            const max = current.stockMaximo ?? Infinity;
+            if (current.cantidad >= max) {
+              Toast.show({ type: "info", text1: `Solo quedan ${max} unidades` });
               return;
             }
-            updateQuantity(item.productoId, item.cantidad + 1);
+            updateQuantity(item.productoId, current.cantidad + 1);
           }}
           disabled={item.stockMaximo != null && item.cantidad >= item.stockMaximo}
           className="items-center justify-center"

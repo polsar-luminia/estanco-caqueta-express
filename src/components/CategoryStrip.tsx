@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ScrollView, Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import type { Categoria } from "../lib/api";
@@ -5,6 +6,30 @@ import type { Categoria } from "../lib/api";
 interface Props {
   categorias: Categoria[];
   onSelect: (id: number) => void;
+}
+
+function CategoryIcon({ cat }: { cat: Categoria }) {
+  const [errored, setErrored] = useState(false);
+  const showFallback = !cat.imagen_url || errored;
+
+  if (showFallback) {
+    return (
+      <Text className="font-bold text-gray-500" style={{ fontSize: 26 }}>
+        {cat.nombre.charAt(0).toUpperCase()}
+      </Text>
+    );
+  }
+
+  return (
+    <Image
+      source={{ uri: cat.imagen_url! }}
+      style={{ width: 58, height: 58 }}
+      contentFit="contain"
+      cachePolicy="memory-disk"
+      transition={200}
+      onError={() => setErrored(true)}
+    />
+  );
 }
 
 export function CategoryStrip({ categorias, onSelect }: Props) {
@@ -31,19 +56,7 @@ export function CategoryStrip({ categorias, onSelect }: Props) {
               padding: 10,
             }}
           >
-            {cat.imagen_url ? (
-              <Image
-                source={{ uri: cat.imagen_url }}
-                style={{ width: 58, height: 58 }}
-                contentFit="contain"
-                cachePolicy="memory-disk"
-                transition={200}
-              />
-            ) : (
-              <Text className="font-bold text-gray-500" style={{ fontSize: 26 }}>
-                {cat.nombre.charAt(0)}
-              </Text>
-            )}
+            <CategoryIcon cat={cat} />
           </View>
           <Text
             className="font-semibold text-center mt-1.5"

@@ -1,17 +1,10 @@
 import { useState } from "react";
+import { View, Text } from "react-native";
 import { Image, type ImageStyle, type ImageContentFit, type ImageContentPosition } from "expo-image";
-
-const CATEGORY_PLACEHOLDERS: Record<string, string> = {
-  Whisky: "https://placehold.co/400x400/1B5E20/white?text=Whisky",
-  Tequila: "https://placehold.co/400x400/FF6F00/white?text=Tequila",
-  Ron: "https://placehold.co/400x400/795548/white?text=Ron",
-  Vodka: "https://placehold.co/400x400/2196F3/white?text=Vodka",
-  Cerveza: "https://placehold.co/400x400/FFC107/333?text=Cerveza",
-  Vino: "https://placehold.co/400x400/880E4F/white?text=Vino",
-};
 
 interface Props {
   imageUrl?: string | null;
+  /** Texto/etiqueta de fallback cuando no hay imagen (ej. categoría o nombre del producto). Se muestra la inicial. */
   fallbackCategory?: string;
   style?: ImageStyle;
   contentFit?: ImageContentFit;
@@ -21,15 +14,29 @@ interface Props {
 export function ShimmerImage({ imageUrl, fallbackCategory, style, contentFit = "contain", contentPosition }: Props) {
   const [hasError, setHasError] = useState(false);
 
-  const fallback =
-    CATEGORY_PLACEHOLDERS[fallbackCategory || ""] ||
-    "https://placehold.co/400x400/9E9E9E/white?text=Producto";
-
-  const uri = hasError ? fallback : (imageUrl || fallback);
+  // Sin URL o falló la carga: placeholder local neutro (evita placehold.co y
+  // los rectángulos verdes con texto "Whisky" que se ven peor que estar vacío).
+  if (!imageUrl || hasError) {
+    const initial = (fallbackCategory ?? "").trim().charAt(0).toUpperCase();
+    return (
+      <View
+        style={[
+          { backgroundColor: "#F4F4F0", alignItems: "center", justifyContent: "center" },
+          style,
+        ]}
+      >
+        {initial ? (
+          <Text style={{ fontSize: 32, fontWeight: "700", color: "#C9C9C2" }}>
+            {initial}
+          </Text>
+        ) : null}
+      </View>
+    );
+  }
 
   return (
     <Image
-      source={{ uri }}
+      source={{ uri: imageUrl }}
       style={[{ backgroundColor: "#F3F4F6" }, style]}
       contentFit={contentFit}
       contentPosition={contentPosition}

@@ -95,7 +95,7 @@ export default Sentry.wrap(function RootLayout() {
             options={{ headerShown: false }}
           />
         </Stack>
-        <Toast config={toastConfig} />
+        <Toast config={toastConfig} position="bottom" bottomOffset={100} />
         <OfflineBanner />
       </QueryClientProvider>
     </GestureHandlerRootView>
