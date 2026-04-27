@@ -141,6 +141,10 @@ export async function registrarPushToken(token: string, plataforma: string) {
   });
 }
 
+export async function eliminarPushToken() {
+  return apiFetch("/clientes/push-token", { method: "DELETE" });
+}
+
 // --- Catalogo ---
 
 export async function getProductos(params: {

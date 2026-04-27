@@ -1,2 +1,2 @@
 // Globals que RN/Expo usan
-(globalThis as any).__DEV__ = true;
+(globalThis as { __DEV__?: boolean }).__DEV__ = true;

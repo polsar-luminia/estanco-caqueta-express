@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, Pressable, Alert } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import Toast from "react-native-toast-message";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPedido, cancelarPedido } from "../../../src/lib/api";

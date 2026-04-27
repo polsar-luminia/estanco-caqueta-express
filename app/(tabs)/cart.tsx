@@ -103,10 +103,8 @@ export default function CartScreen() {
 
   const handlePedir = async () => {
     if (submitLockRef.current) return;
-    submitLockRef.current = true;
 
     if (subtotal < pedidoMinimo) {
-      submitLockRef.current = false;
       Toast.show({ type: "error", text1: "Pedido mínimo", text2: `Agrega ${formatCOP(pedidoMinimo - subtotal)} más para continuar` });
       return;
     }
@@ -133,11 +131,11 @@ export default function CartScreen() {
     const notFinal = mostrarNueva ? nuevasNotas.trim() : not;
 
     if (!barFinal) {
-      submitLockRef.current = false;
       Toast.show({ type: "error", text1: "Falta el barrio", text2: "Selecciona o escribe el barrio de entrega" });
       return;
     }
 
+    submitLockRef.current = true;
     setLoading(true);
     try {
       // S10 - Verificar estado fresco de la tienda antes de crear pedido
@@ -150,10 +148,14 @@ export default function CartScreen() {
       // Guardar nueva dirección si la ingresó
       if (mostrarNueva && dirFinal) {
         await crearDireccion({ direccion: dirFinal, barrio: barFinal || undefined, barrio_id: barIdFinal, notas: notFinal || undefined, predeterminada: true });
-        try { await refetchDirs(); } catch {}
+        try {
+          await refetchDirs();
+        } catch {
+          // refetch best-effort: errores no bloquean el pedido
+        }
       }
 
-      const { pedido } = await crearPedido({
+      const { pedido, puntos_ganados } = await crearPedido({
         direccion: dirFinal,
         barrio: barFinal || undefined,
         barrio_id: barIdFinal,
@@ -178,7 +180,7 @@ export default function CartScreen() {
         useAuthStore.getState().setCliente(clienteActualizado);
       }
 
-      const ptsMsg = (pedido as any).puntos_ganados ? ` (+${(pedido as any).puntos_ganados} pts)` : "";
+      const ptsMsg = puntos_ganados ? ` (+${puntos_ganados} pts)` : "";
       Toast.show({
         type: "success",
         text1: "Pedido confirmado" + ptsMsg,

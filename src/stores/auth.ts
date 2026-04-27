@@ -7,8 +7,26 @@ import {
   registrarCliente,
   getPerfil,
   registerUnauthorizedHandler,
+  eliminarPushToken,
   type Cliente,
 } from "../lib/api";
+
+type LogoutHandler = () => void | Promise<void>;
+const logoutHandlers: LogoutHandler[] = [];
+
+export function registerLogoutHandler(handler: LogoutHandler) {
+  logoutHandlers.push(handler);
+}
+
+async function runLogoutHandlers() {
+  for (const handler of logoutHandlers) {
+    try {
+      await handler();
+    } catch {
+      // los handlers no deben romper el logout
+    }
+  }
+}
 
 interface AuthState {
   token: string | null;
@@ -66,7 +84,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
+    // Desactivar push tokens en backend ANTES de borrar el JWT (necesita auth).
+    // Best-effort: si falla por red, el frontend sigue cerrando sesión.
+    try {
+      await eliminarPushToken();
+    } catch {
+      // sin red u otro error — el frontend reseteará el ref local igualmente
+    }
     await removeToken();
+    await runLogoutHandlers();
     set({ token: null, cliente: null, isAuthenticated: false });
   },
 
@@ -75,5 +101,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
 // Cuando apiFetch recibe un 401, resetea el store sin dep circular
 registerUnauthorizedHandler(() => {
+  void runLogoutHandlers();
   useAuthStore.setState({ token: null, cliente: null, isAuthenticated: false });
 });

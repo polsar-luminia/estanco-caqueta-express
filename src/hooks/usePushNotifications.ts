@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
@@ -7,7 +7,16 @@ import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import NetInfo from "@react-native-community/netinfo";
 import { registrarPushToken } from "../lib/api";
-import { useAuthStore } from "../stores/auth";
+import { useAuthStore, registerLogoutHandler } from "../stores/auth";
+
+// Estado module-level: persiste entre montajes pero se puede resetear desde
+// fuera (logout). Usar useRef hacía que el ref quedara stale al cambiar de
+// cliente en el mismo proceso.
+let registered = false;
+
+registerLogoutHandler(() => {
+  registered = false;
+});
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -55,11 +64,10 @@ async function obtenerPushToken(): Promise<string | null> {
 
 export function usePushNotifications() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const registeredRef = useRef(false);
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAuthenticated || registeredRef.current) return;
+    if (!isAuthenticated || registered) return;
 
     (async () => {
       try {
@@ -68,7 +76,7 @@ export function usePushNotifications() {
 
         const plataforma = Platform.OS;
         await registrarPushToken(token, plataforma);
-        registeredRef.current = true;
+        registered = true;
         if (__DEV__) {
           console.log("[push] Token registrado:", token.substring(0, 30) + "...");
         }
@@ -83,12 +91,12 @@ export function usePushNotifications() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const unsub = NetInfo.addEventListener(async (state) => {
-      if (state.isConnected && !registeredRef.current) {
+      if (state.isConnected && !registered) {
         try {
           const token = await obtenerPushToken();
           if (!token) return;
           await registrarPushToken(token, Platform.OS);
-          registeredRef.current = true;
+          registered = true;
         } catch {
           // silencioso — se reintentará al próximo cambio de red
         }
