@@ -21,6 +21,7 @@ export async function removeToken(): Promise<void> {
   await SecureStore.deleteItemAsync(TOKEN_KEY);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- default any para callers que no especifican generic; los callers tipados pasan <T> explícito
 export async function apiFetch<T = any>(
   path: string,
   options: RequestInit = {}
@@ -46,9 +47,9 @@ export async function apiFetch<T = any>(
       headers,
       signal: controller.signal,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     clearTimeout(timeoutId);
-    if (err?.name === 'AbortError') {
+    if (err instanceof Error && err.name === 'AbortError') {
       throw new Error('Sin conexión, intenta de nuevo');
     }
     throw err;
@@ -62,7 +63,7 @@ export async function apiFetch<T = any>(
   }
 
   if (!res.ok) {
-    let body: any = {};
+    let body: Record<string, unknown> = {};
     let bodyParsed = false;
     try {
       body = await res.json();
@@ -83,10 +84,11 @@ export async function apiFetch<T = any>(
       'Stock insuficiente': 'Producto sin stock suficiente',
     };
     let msg: string;
-    if (bodyParsed && body.error && ERRORES_USUARIO[body.error]) {
-      msg = ERRORES_USUARIO[body.error];
-    } else if (bodyParsed && body.error) {
-      msg = body.error;
+    const errorField = bodyParsed && typeof body.error === 'string' ? body.error : undefined;
+    if (errorField && ERRORES_USUARIO[errorField]) {
+      msg = ERRORES_USUARIO[errorField];
+    } else if (errorField) {
+      msg = errorField;
     } else if (res.status === 404) {
       msg = 'Servicio no disponible (404)';
     } else if (res.status >= 500) {
@@ -420,6 +422,13 @@ export async function getConfigApp(): Promise<{ envio_gratis_minimo: number; env
   return apiFetch('/configuracion-app');
 }
 
+export interface ComboProducto {
+  producto_id: number;
+  cantidad: number;
+  nombre?: string;
+  imagen_url?: string;
+}
+
 export interface Combo {
   id: number;
   nombre: string;
@@ -427,7 +436,7 @@ export interface Combo {
   imagen_url?: string;
   precio_combo: number;
   precio_original?: number;
-  productos: any[];
+  productos: ComboProducto[];
   activo: boolean;
   orden: number;
 }

@@ -64,9 +64,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       );
       const cliente = await Promise.race([getPerfil(), timeoutPromise]);
       set({ token, cliente, isLoading: false, isAuthenticated: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Solo borrar token si fue rechazado explícitamente (no por error de red)
-      if (err?.message === 'UNAUTHORIZED') await removeToken();
+      const isUnauthorized = err instanceof Error && err.message === 'UNAUTHORIZED';
+      if (isUnauthorized) await removeToken();
       set({ token: null, cliente: null, isLoading: false, isAuthenticated: false });
     }
   },

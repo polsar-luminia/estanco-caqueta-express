@@ -22,8 +22,9 @@ export default function LoginScreen() {
     try {
       await login(telefono.trim(), password);
       tracker.track('sesion_iniciada', {}, 'login');
-    } catch (err: any) {
-      Toast.show({ type: "error", text1: "Error", text2: err.message || "No se pudo iniciar sesion" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "No se pudo iniciar sesion";
+      Toast.show({ type: "error", text1: "Error", text2: msg });
     } finally {
       setLoading(false);
     }

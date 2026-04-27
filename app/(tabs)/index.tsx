@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, FlatList, RefreshControl, Pressable } from "react-native";
+import { View, Text, ScrollView, FlatList, RefreshControl, Pressable, type NativeSyntheticEvent, type NativeScrollEvent } from "react-native";
 import { useRef, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -101,7 +101,7 @@ function HeroCarousel({ banners, router }: { banners: Patrocinado[]; router: Ret
     return () => clearInterval(timer);
   }, [banners.length, extended.length]);
 
-  const handleScrollEnd = (e: any) => {
+  const handleScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const idx = Math.round(e.nativeEvent.contentOffset.x / (SCREEN_WIDTH - 32));
     if (idx >= banners.length) {
       // Llegamos al clon — jump silencioso al real sin animación
@@ -351,7 +351,7 @@ export default function HomeScreen() {
                   <ProductCard
                     product={item}
                     onPress={() => router.push(`/product/${item.id}`)}
-                    badge={(item as any).badge || undefined}
+                    badge={item.badge || undefined}
                   />
                 )}
               />
