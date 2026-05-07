@@ -9,6 +9,7 @@ import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline
 import { SkeletonBox } from "../../../src/components/skeletons/SkeletonBox";
 import { ErrorState } from "../../../src/components/ErrorState";
 
+import * as Sentry from "@sentry/react-native";
 import { CARD_SHADOW } from "../../../src/constants/styles";
 
 /* ── Skeleton de carga ───────────────────────────────────── */
@@ -57,6 +58,10 @@ export default function OrderDetailScreen() {
       Toast.show({ type: "success", text1: "Pedido cancelado" });
     },
     onError: (err: Error) => {
+      Sentry.captureException(err, {
+        tags: { flow: "orders", action: "cancelar", screen: "orders/[id]" },
+        extra: { pedido_id: pedidoId },
+      });
       Toast.show({ type: "error", text1: "No se pudo cancelar", text2: err.message });
     },
   });
