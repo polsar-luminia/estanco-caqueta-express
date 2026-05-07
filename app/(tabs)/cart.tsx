@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { View, Text, FlatList, TextInput, Pressable, Switch, KeyboardAvoidingView, Platform } from "react-native";
 import { useRouter } from "expo-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import * as Sentry from "@sentry/react-native";
+import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { Feather } from "@expo/vector-icons";
@@ -9,7 +10,7 @@ import Toast from "react-native-toast-message";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
-import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, type DireccionGuardada, type CuponValidado } from "../../src/lib/api";
+import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, type DireccionGuardada, type CuponValidado } from "../../src/lib/api";
 import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
 import { tracker } from "../../src/lib/tracker";
 import { formatCOP } from "../../src/lib/format";
@@ -31,9 +32,38 @@ export default function CartScreen() {
   const notas = useCartStore((s) => s.notas);
   const direccionId = useCartStore((s) => s.direccionId);
   const setDireccionId = useCartStore((s) => s.setDireccionId);
-  const getTotal = useCartStore((s) => s.getTotal);
+  // Selector inline (no metodo): los metodos del store no son reactivos a cambios de items
+  const subtotalComputed = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad * i.precioUnitario, 0));
   const clear = useCartStore((s) => s.clear);
+  const updatePrices = useCartStore((s) => s.updatePrices);
   const cliente = useAuthStore((s) => s.cliente);
+
+  // Refetch precios al montar — detecta si cambiaron desde que se persistieron en AsyncStorage.
+  // El backend cobra el precio actual (lineas sin precio), así que es sólo corrección visual.
+  const productosCheck = useQueries({
+    queries: items.map((i) => ({
+      queryKey: ["producto", i.productoId] as const,
+      queryFn: () => getProducto(i.productoId),
+      staleTime: 0,
+    })),
+  });
+  useEffect(() => {
+    if (items.length === 0 || productosCheck.some((q) => q.isLoading)) return;
+    const map = new Map<number, number>();
+    let huboCambio = false;
+    productosCheck.forEach((q, idx) => {
+      if (q.data && items[idx]) {
+        const nuevo = q.data.precio_app;
+        if (nuevo !== items[idx].precioUnitario) huboCambio = true;
+        map.set(items[idx].productoId, nuevo);
+      }
+    });
+    if (huboCambio) {
+      updatePrices(map);
+      Toast.show({ type: "info", text1: "Precios actualizados", text2: "Algunos productos cambiaron de precio" });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productosCheck.map((q) => q.dataUpdatedAt).join(","), items.length]);
   const [loading, setLoading] = useState(false);
   const [usarPuntos, setUsarPuntos] = useState(false);
   const [mostrarNueva, setMostrarNueva] = useState(false);
@@ -64,7 +94,7 @@ export default function CartScreen() {
   const dirSeleccionada = direccionId ? direcciones.find((d) => d.id === direccionId) ?? null : null;
   const dirActiva = dirSeleccionada || dirPredeterminada;
 
-  const subtotal = getTotal();
+  const subtotal = subtotalComputed;
   const puntos = cliente?.puntos || 0;
   const puedeUsarPuntos = puntos >= 100;
   const envioGratisMinimo = configApp?.envio_gratis_minimo ?? 150000;
@@ -138,6 +168,7 @@ export default function CartScreen() {
 
     submitLockRef.current = true;
     setLoading(true);
+    let llegoACrearPedido = false;
     try {
       // S10 - Verificar estado fresco de la tienda antes de crear pedido
       const estadoTienda = await getEstadoTienda();
@@ -156,6 +187,7 @@ export default function CartScreen() {
         }
       }
 
+      llegoACrearPedido = true;
       const { pedido, puntos_ganados } = await crearPedido({
         direccion: dirFinal,
         barrio: barFinal || undefined,
@@ -188,10 +220,21 @@ export default function CartScreen() {
         text2: `Pedido #${pedido.id} - ${formatCOP(pedido.total)}`,
         visibilityTime: 3000,
       });
-      router.push("/(tabs)/orders");
+      // Replace cart con la lista de pedidos + push detalle encima:
+      // 1. replace borra cart del stack (carrito ya esta vacio, no tiene sentido volver)
+      // 2. push deja stack: orders/index -> orders/[id], lo que da back button automatico
+      //    en el detalle que retorna a "Mis pedidos"
+      router.replace("/(tabs)/orders");
+      router.push({ pathname: "/(tabs)/orders/[id]", params: { id: String(pedido.id) } });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo crear el pedido";
-      Toast.show({ type: "error", text1: "Error", text2: msg });
+      Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "checkout" } });
+      // Solo limpiar cupón si el pedido llegó a crearse en backend (podría haberse consumido)
+      if (llegoACrearPedido) {
+        setCuponValidado(null);
+        setCodigoCupon("");
+      }
+      Toast.show({ type: "error", text1: "Error al crear pedido", text2: msg });
     } finally {
       submitLockRef.current = false;
       setLoading(false);

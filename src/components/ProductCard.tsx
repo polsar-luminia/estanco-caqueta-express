@@ -9,24 +9,37 @@ import type { Producto } from "../lib/api";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+interface OfertaInfo {
+  titulo?: string | null;
+  precio_oferta?: number | null;
+}
+
 interface Props {
   product: Producto;
   onPress: () => void;
   badge?: string;
+  // Si la card representa un producto en oferta, le pasamos la info para
+  // pintar el badge custom y el precio tachado. Tiene prioridad sobre `badge`.
+  oferta?: OfertaInfo;
 }
 
-export function ProductCard({ product, onPress, badge }: Props) {
+export function ProductCard({ product, onPress, badge, oferta }: Props) {
   const addItem = useCartStore((s) => s.addItem);
   const { animatedStyle, onPressIn, onPressOut } = useScalePress();
 
   const agotado = (product.stock_total ?? 0) <= 0;
+
+  // Precio efectivo: precio_oferta tiene prioridad sobre precio_app si está
+  // definido. Para el carrito siempre usamos el efectivo (no doble cargo).
+  const precioEfectivo = oferta?.precio_oferta ?? product.precio_app;
+  const tienePrecioOferta = oferta?.precio_oferta != null && oferta.precio_oferta < product.precio_app;
 
   const handleAdd = () => {
     if (agotado) return;
     addItem({
       productoId: product.id,
       nombre: product.nombre,
-      precioUnitario: product.precio_app,
+      precioUnitario: precioEfectivo,
       imagenUrl: product.imagen_url || undefined,
       stockMaximo: product.stock_total,
     });
@@ -37,6 +50,17 @@ export function ProductCard({ product, onPress, badge }: Props) {
       visibilityTime: 1500,
     });
   };
+
+  // Badge: la oferta gana sobre badge legacy. Texto del badge: titulo de la
+  // oferta si lo trae, "OFERTA" por defecto.
+  const badgeText = oferta
+    ? (oferta.titulo && oferta.titulo.trim().length > 0 ? oferta.titulo : "Oferta")
+    : badge === "top_ventas"
+      ? "Top Ventas"
+      : badge
+        ? "Oferta"
+        : null;
+  const badgeColor = oferta || badge === "top_ventas" ? "#D33587" : "#1FAF55";
 
   return (
     <AnimatedPressable
@@ -71,13 +95,13 @@ export function ProductCard({ product, onPress, badge }: Props) {
                 Agotado
               </Text>
             </View>
-          ) : badge ? (
+          ) : badgeText ? (
             <View
               className="absolute top-2 left-2 z-10 px-2 py-1 rounded"
-              style={{ backgroundColor: badge === "top_ventas" ? "#D33587" : "#1FAF55" }}
+              style={{ backgroundColor: badgeColor }}
             >
               <Text className="text-white font-bold" style={{ fontSize: 8, letterSpacing: 0.5, textTransform: "uppercase" }}>
-                {badge === "top_ventas" ? "Top Ventas" : "Oferta"}
+                {badgeText}
               </Text>
             </View>
           ) : null}
@@ -100,17 +124,35 @@ export function ProductCard({ product, onPress, badge }: Props) {
 
           <View className="flex-row items-center justify-between mt-2">
             <View style={{ gap: 1 }}>
-              {product.precio_lista1 ? (
-                <Text style={{ fontSize: 11, color: "#9E9E9E", textDecorationLine: "line-through" }}>
-                  {formatCOP(product.precio_lista1)}
-                </Text>
-              ) : null}
-              <Text
-                className="font-bold text-lg"
-                style={{ color: agotado ? "#9CA3AF" : "#D33587" }}
-              >
-                {formatCOP(product.precio_app)}
-              </Text>
+              {tienePrecioOferta ? (
+                // Caso oferta con precio: tachamos precio_app, mostramos precio_oferta
+                <>
+                  <Text style={{ fontSize: 11, color: "#9E9E9E", textDecorationLine: "line-through" }}>
+                    {formatCOP(product.precio_app)}
+                  </Text>
+                  <Text
+                    className="font-bold text-lg"
+                    style={{ color: agotado ? "#9CA3AF" : "#D33587" }}
+                  >
+                    {formatCOP(precioEfectivo)}
+                  </Text>
+                </>
+              ) : (
+                // Comportamiento legacy: precio_lista1 tachado si existe
+                <>
+                  {product.precio_lista1 ? (
+                    <Text style={{ fontSize: 11, color: "#9E9E9E", textDecorationLine: "line-through" }}>
+                      {formatCOP(product.precio_lista1)}
+                    </Text>
+                  ) : null}
+                  <Text
+                    className="font-bold text-lg"
+                    style={{ color: agotado ? "#9CA3AF" : "#D33587" }}
+                  >
+                    {formatCOP(product.precio_app)}
+                  </Text>
+                </>
+              )}
             </View>
 
             <Pressable

@@ -29,11 +29,22 @@ export function toISODate(v: DateValue): string | null {
 export function calcularEdad(v: DateValue): number | null {
   const iso = toISODate(v);
   if (!iso) return null;
-  const d = new Date(iso + "T00:00:00Z");
-  const hoy = new Date();
-  let edad = hoy.getUTCFullYear() - d.getUTCFullYear();
-  const m = hoy.getUTCMonth() - d.getUTCMonth();
-  if (m < 0 || (m === 0 && hoy.getUTCDate() < d.getUTCDate())) edad--;
+
+  // Calcular "hoy" en America/Bogota para evitar off-by-one en cumpleaños
+  // cerca de medianoche (UTC-5: 11:30 PM Bogota = 04:30 AM UTC del día siguiente).
+  const partes = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const hoyY = Number(partes.find((p) => p.type === "year")!.value);
+  const hoyM = Number(partes.find((p) => p.type === "month")!.value);
+  const hoyD = Number(partes.find((p) => p.type === "day")!.value);
+
+  const [naY, naM, naD] = iso.split("-").map(Number);
+  let edad = hoyY - naY;
+  if (hoyM < naM || (hoyM === naM && hoyD < naD)) edad--;
   return edad;
 }
 

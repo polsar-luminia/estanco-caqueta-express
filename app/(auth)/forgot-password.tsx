@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image, Linking } from "react-native";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
+import * as Sentry from "@sentry/react-native";
 import { InputField } from "../../src/components/InputField";
 import { solicitarResetPassword } from "../../src/lib/api";
+import { WHATSAPP_NEGOCIO_LINK } from "../../src/constants/config";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -20,17 +22,38 @@ export default function ForgotPasswordScreen() {
     }
   };
 
+  // Flujo: abrir WhatsApp del negocio (abre ventana 24h en Meta) + disparar OTP en
+  // paralelo. Meta entrega el OTP UTILITY una vez la ventana este abierta.
+  // La pantalla verify-otp tiene un boton "Reenviar" que vuelve a abrir WhatsApp.
   const handleSolicitar = async () => {
-    if (!telefono.trim() || !/^\d{10}$/.test(telefono.trim())) {
+    const tel = telefono.trim();
+    if (!tel || !/^\d{10}$/.test(tel)) {
       setErrorTelefono("10 dígitos sin +57");
       return;
     }
     setLoading(true);
+
+    // 1. Abrir WhatsApp del negocio — Meta entrega OTP solo cuando la ventana 24h está abierta.
+    // Si Linking falla, el OTP llega huérfano (Meta no lo entrega sin ventana activa).
+    const wsAbierto = await Linking.openURL(WHATSAPP_NEGOCIO_LINK).then(() => true).catch(() => false);
+    if (!wsAbierto) {
+      Sentry.captureException(new Error('forgot_password_linking_failed'), { extra: { url: WHATSAPP_NEGOCIO_LINK }, tags: { flow: "auth", screen: "forgot-password" } });
+      Toast.show({
+        type: "error",
+        text1: "No se pudo abrir WhatsApp",
+        text2: "Verifica que tengas WhatsApp instalado",
+      });
+      setLoading(false);
+      return;
+    }
+
+    // 2. Disparar OTP (Meta lo entregará en la ventana recién abierta)
     try {
-      await solicitarResetPassword(telefono.trim());
-      router.push({ pathname: "/(auth)/verify-otp", params: { telefono: telefono.trim() } });
+      await solicitarResetPassword(tel);
+      router.push({ pathname: "/(auth)/verify-otp", params: { telefono: tel } });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo enviar el código";
+      Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "auth", screen: "forgot-password" } });
       Toast.show({ type: "error", text1: "Error", text2: msg });
     } finally {
       setLoading(false);
@@ -55,8 +78,13 @@ export default function ForgotPasswordScreen() {
             </Text>
           </View>
 
-          <Text style={{ fontSize: 20, fontWeight: "700", color: "#1A1C1A", marginBottom: 20, textAlign: "center" }}>
+          <Text style={{ fontSize: 20, fontWeight: "700", color: "#1A1C1A", marginBottom: 8, textAlign: "center" }}>
             Recuperar contraseña
+          </Text>
+
+          <Text style={{ fontSize: 13, color: "#6D7B6C", marginBottom: 20, textAlign: "center", lineHeight: 18 }}>
+            Te abriremos WhatsApp con un mensaje listo para enviar al negocio.{"\n"}
+            <Text style={{ fontWeight: "600", color: "#1A1C1A" }}>Mándalo y vuelve a la app</Text> — tu código llegará en segundos.
           </Text>
 
           <InputField
@@ -84,9 +112,11 @@ export default function ForgotPasswordScreen() {
               shadowRadius: 32,
               elevation: 6,
             }}
+            accessibilityRole="button"
+            accessibilityLabel="Abrir WhatsApp y enviar código"
           >
             <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>
-              {loading ? "Enviando..." : "Enviar código"}
+              {loading ? "Enviando..." : "Abrir WhatsApp y enviar código"}
             </Text>
           </Pressable>
 

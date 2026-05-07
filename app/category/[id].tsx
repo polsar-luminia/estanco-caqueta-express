@@ -22,19 +22,32 @@ function ChevronLeftIcon() {
 export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const categoriaId = id && id.trim() ? Number(id) : NaN;
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["productos", "categoria", id],
-    queryFn: () => getProductos({ categoria: Number(id), limite: 50 }),
+    queryKey: ["productos", "categoria", categoriaId],
+    queryFn: () => getProductos({ categoria: categoriaId, limite: 50 }),
+    enabled: Number.isFinite(categoriaId) && categoriaId > 0,
   });
 
   const nombreCategoria = data?.productos?.[0]?.categoria || "Categoría";
 
   useEffect(() => {
     if (!isLoading && nombreCategoria !== "Categoría") {
-      tracker.track('categoria_abierta', { categoria_id: Number(id), nombre: nombreCategoria }, 'category/[id]');
+      tracker.track('categoria_abierta', { categoria_id: categoriaId, nombre: nombreCategoria }, 'category/[id]');
     }
-  }, [isLoading, id, nombreCategoria]);
+  }, [isLoading, categoriaId, nombreCategoria]);
+
+  if (!Number.isFinite(categoriaId) || categoriaId <= 0) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>
+        <Text style={{ fontSize: 18, fontWeight: "600", color: "#1F1F1F", textAlign: "center" }}>
+          Categoría no encontrada
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>

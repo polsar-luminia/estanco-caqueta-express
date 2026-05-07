@@ -29,7 +29,9 @@ Notifications.setNotificationHandler({
 
 async function obtenerPushToken(): Promise<string | null> {
   if (!Device.isDevice) {
-    console.log("[push] No es dispositivo fisico, omitiendo");
+    if (__DEV__) {
+      console.log("[push] No es dispositivo fisico, omitiendo");
+    }
     return null;
   }
 
@@ -42,7 +44,9 @@ async function obtenerPushToken(): Promise<string | null> {
   }
 
   if (status !== "granted") {
-    console.log("[push] Permiso denegado");
+    if (__DEV__) {
+      console.log("[push] Permiso denegado");
+    }
     return null;
   }
 
@@ -82,7 +86,9 @@ export function usePushNotifications() {
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.error("[push] Error registrando token:", msg);
+        if (__DEV__) {
+          console.error("[push] Error registrando token:", msg);
+        }
         Sentry.captureException(err, { tags: { feature: "push_notifications" } });
       }
     })();

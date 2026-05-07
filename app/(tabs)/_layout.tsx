@@ -7,12 +7,22 @@ import { HomeIcon, SearchIcon, CartIcon, OrdersIcon, ProfileIcon } from "../../s
 export default function TabLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
-  const itemCount = useCartStore((s) => s.getItemCount());
+  const cliente = useAuthStore((s) => s.cliente);
+  // Selector inline (no método): los métodos del store no son reactivos a cambios
+  // del state — el badge no se actualizaba al limpiar carrito tras crear pedido.
+  const itemCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad, 0));
 
   if (isLoading) return null;
 
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
+  }
+
+  // Apple App Store §1.4.3 — bloquear acceso al catálogo hasta que el
+  // usuario confirme explícitamente que es mayor de 18. Se usa !falsy
+  // para cubrir false, null y undefined (respuesta de API que omite el campo).
+  if (cliente && !cliente.edad_confirmada) {
+    return <Redirect href="/(auth)/edad-confirmar" />;
   }
 
   return (

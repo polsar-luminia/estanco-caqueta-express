@@ -95,7 +95,9 @@ export default function OrderDetailScreen() {
   return (
     <ScrollView
       className="flex-1 bg-surface-low"
-      contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 40 }}
+      // paddingBottom 100 = tab bar absoluto (72) + margen (28) para que el boton
+      // "Cancelar pedido" no quede tapado por la barra de tabs flotante.
+      contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 100 }}
     >
       {/* Estado y timeline */}
       <View className="bg-white rounded-2xl p-6" style={CARD_SHADOW}>

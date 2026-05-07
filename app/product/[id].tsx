@@ -18,6 +18,7 @@ import { useCartStore } from "../../src/stores/cart";
 import { formatCOP } from "../../src/lib/format";
 import { ShimmerImage } from "../../src/components/ShimmerImage";
 import { SkeletonBox } from "../../src/components/skeletons/SkeletonBox";
+import { CartFloatingBar } from "../../src/components/CartFloatingBar";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const HEADER_MAX = SCREEN_HEIGHT * 0.45;
@@ -406,6 +407,10 @@ export default function ProductDetailScreen() {
           )}
         </View>
       </Animated.ScrollView>
+
+      {/* Barra flotante del carrito: emerge al agregar items, persiste mientras
+          haya carrito, da CTA rapido a /cart sin perder navegacion. */}
+      <CartFloatingBar />
     </View>
   );
 }

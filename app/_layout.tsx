@@ -1,7 +1,7 @@
 import "../global.css";
 import { useEffect } from "react";
 import { AppState } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -13,6 +13,9 @@ import { usePushNotifications } from "../src/hooks/usePushNotifications";
 import { tracker } from "../src/lib/tracker";
 import { toastConfig } from "../src/components/ToastConfig";
 import { OfflineBanner } from "../src/components/OfflineBanner";
+
+// Rutas exentas del age gate (autenticación pública). Todo lo demás requiere edad confirmada.
+const RUTAS_EXENTAS_EDAD = ["(auth)"];
 
 if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
   Sentry.init({
@@ -31,17 +34,54 @@ if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
       return event;
     },
   });
+} else if (!__DEV__) {
+  // En un build de producción sin DSN la cobertura de Sentry es cero y nadie se entera.
+  console.warn('[sentry] EXPO_PUBLIC_SENTRY_DSN no configurado — monitoreo deshabilitado');
 }
 
 export default Sentry.wrap(function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
+  const clearHydrateError = useAuthStore((s) => s.clearHydrateError);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const lastHydrateError = useAuthStore((s) => s.lastHydrateError);
+  const edadConfirmada = useAuthStore((s) => s.cliente?.edad_confirmada);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const router = useRouter();
+  const segments = useSegments();
 
   useEffect(() => {
     hydrate();
     tracker.track('app_abierta');
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate es un selector estable de Zustand
   }, []);
+
+  // Toast de red diferido: el provider de Toast no está montado durante hydrate
+  // (el componente retorna null mientras isLoading=true). Se dispara aquí,
+  // después del primer render con Toast disponible.
+  useEffect(() => {
+    if (!isLoading && lastHydrateError === 'network') {
+      Toast.show({
+        type: 'error',
+        text1: 'Sin conexión',
+        text2: 'Vuelve a ingresar cuando tengas señal',
+      });
+      clearHydrateError();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, lastHydrateError]);
+
+  // Guard Apple §1.4.3: cualquier deep link sin edad confirmada → redirigir.
+  // Allowlist: solo (auth) está exento. Cubre product, category, profile, support y cualquier ruta futura.
+  useEffect(() => {
+    if (isLoading || !isAuthenticated) return;
+    if (!edadConfirmada) {
+      const rutaActual = segments[0] as string | undefined;
+      if (rutaActual && !RUTAS_EXENTAS_EDAD.includes(rutaActual)) {
+        router.replace("/(auth)/edad-confirmar");
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [edadConfirmada, isAuthenticated, isLoading, segments]);
 
   // Sincronizar React Query con AppState para refetch al volver de background
   useEffect(() => {

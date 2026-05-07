@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import { getCategorias, getDestacados, getPatrocinados, getHeroModo, getCombos, type Combo } from "../../src/lib/api";
+import { getCategorias, getDestacados, getPatrocinados, getHeroModo, getCombos, getOfertas, type Combo } from "../../src/lib/api";
+import { OfertasSection } from "../../src/components/OfertasSection";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
@@ -165,8 +166,10 @@ export default function HomeScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const cliente = useAuthStore((s) => s.cliente);
-  const itemCount = useCartStore((s) => s.getItemCount());
-  const total = useCartStore((s) => s.getTotal());
+  // Selectores inline (no metodos): los metodos del store no son reactivos a cambios
+  // del state — el banner inferior no desaparecia al limpiar carrito tras crear pedido.
+  const itemCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad, 0));
+  const total = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad * i.precioUnitario, 0));
 
   const tienda = useTiendaAbierta();
 
@@ -191,6 +194,11 @@ export default function HomeScreen() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: ofertas = [] } = useQuery({
+    queryKey: ["ofertas"],
+    queryFn: getOfertas,
+  });
+
   const { data: combos = [] } = useQuery({
     queryKey: ['combos'],
     queryFn: getCombos,
@@ -206,6 +214,7 @@ export default function HomeScreen() {
     queryClient.invalidateQueries({ queryKey: ["categorias"] });
     queryClient.invalidateQueries({ queryKey: ["destacados"] });
     queryClient.invalidateQueries({ queryKey: ["patrocinados"] });
+    queryClient.invalidateQueries({ queryKey: ["ofertas"] });
   };
 
   return (
@@ -334,6 +343,9 @@ export default function HomeScreen() {
                 </ScrollView>
               </View>
             )}
+
+            {/* Ofertas (curado desde admin, badge magenta + precio tachado opcional) */}
+            <OfertasSection ofertas={ofertas} />
 
             {/* Destacados */}
             <View className="px-4 pt-3 pb-4">

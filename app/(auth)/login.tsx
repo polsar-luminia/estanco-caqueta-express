@@ -3,6 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Pla
 import { Link } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import Toast from "react-native-toast-message";
+import * as Sentry from "@sentry/react-native";
 import { useAuthStore } from "../../src/stores/auth";
 import { tracker } from "../../src/lib/tracker";
 
@@ -24,6 +25,7 @@ export default function LoginScreen() {
       tracker.track('sesion_iniciada', {}, 'login');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo iniciar sesion";
+      Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "auth", screen: "login" } });
       Toast.show({ type: "error", text1: "Error", text2: msg });
     } finally {
       setLoading(false);

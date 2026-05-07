@@ -8,7 +8,8 @@
       "distribution": "internal",
       "node": "20.20.2",
       "env": {
-        "SENTRY_AUTH_TOKEN": "$SENTRY_AUTH_TOKEN"
+        "SENTRY_AUTH_TOKEN": "$SENTRY_AUTH_TOKEN",
+        "EXPO_PUBLIC_API_URL": "https://poloysalazar.luminiatech.digital/api/v1"
       },
       "android": {
         "buildType": "apk",
@@ -17,6 +18,9 @@
     },
     "preview-ios": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://poloysalazar.luminiatech.digital/api/v1"
+      },
       "ios": {
         "simulator": true
       }
@@ -24,7 +28,9 @@
     "production": {
       "env": {
         "SENTRY_AUTH_TOKEN": "$SENTRY_AUTH_TOKEN",
-        "EXPO_PUBLIC_SENTRY_DSN": "https://fb7edd7b743b98e70dd924acc3eb6134@o4511209580199936.ingest.us.sentry.io/4511209582362624"
+        "EXPO_PUBLIC_SENTRY_DSN": "https://fb7edd7b743b98e70dd924acc3eb6134@o4511209580199936.ingest.us.sentry.io/4511209582362624",
+        "_NOTE_API_URL": "Cambiar a https://api.estancocaqueta.com/api/v1 cuando Team 3 confirme nginx + SSL activos",
+        "EXPO_PUBLIC_API_URL": "https://poloysalazar.luminiatech.digital/api/v1"
       },
       "android": {
         "buildType": "app-bundle"

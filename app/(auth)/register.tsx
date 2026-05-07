@@ -2,6 +2,7 @@ import { useState } from "react";
 import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
 import { Link, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
+import * as Sentry from "@sentry/react-native";
 import { useAuthStore } from "../../src/stores/auth";
 import { tracker } from "../../src/lib/tracker";
 import { DateSelector, DateValue, toISODate, calcularEdad } from "../../src/components/DateSelector";
@@ -94,6 +95,7 @@ export default function RegisterScreen() {
       tracker.track('registro_completado', {}, 'register');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo crear la cuenta";
+      Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "auth", screen: "register" } });
       Toast.show({ type: "error", text1: "Error", text2: msg });
     } finally {
       setLoading(false);

@@ -19,6 +19,7 @@ function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string
     "help_center": "help-circle",
     "policy": "shield",
     "chat": "message-circle",
+    "notifications": "bell",
   };
 
   return (
@@ -155,6 +156,7 @@ export default function ProfileScreen() {
         <View className="bg-white rounded-2xl overflow-hidden" style={{ borderWidth: 1, borderColor: "#F4F4F0" }}>
           <MenuItem icon="person" label="Mis Direcciones" onPress={() => router.push("/profile/direcciones")} />
           <MenuItem icon="payments" label="Métodos de Pago" onPress={() => router.push("/profile/metodos-pago")} />
+          <MenuItem icon="notifications" label="Notificaciones" onPress={() => router.push("/profile/notificaciones")} />
         </View>
       </View>
 

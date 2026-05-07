@@ -7,12 +7,22 @@ export default defineConfig({
     globals: false,
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
+    // RN usa require() para assets binarios (PNG/JPG). En vitest no hay
+    // transformer para binarios → los aliaseamos a un stub vacío.
+    server: {
+      deps: {
+        inline: [/\.(png|jpg|jpeg|gif|webp|svg)$/],
+      },
+    },
   },
   resolve: {
-    alias: {
-      "expo-secure-store": path.resolve(__dirname, "./src/__mocks__/expo-secure-store.ts"),
-      "@react-native-async-storage/async-storage": path.resolve(__dirname, "./src/__mocks__/async-storage.ts"),
-      "react-native": path.resolve(__dirname, "./src/__mocks__/react-native.ts"),
-    },
+    alias: [
+      { find: "expo-secure-store", replacement: path.resolve(__dirname, "./src/__mocks__/expo-secure-store.ts") },
+      { find: "@react-native-async-storage/async-storage", replacement: path.resolve(__dirname, "./src/__mocks__/async-storage.ts") },
+      { find: "@sentry/react-native", replacement: path.resolve(__dirname, "./src/__mocks__/sentry-react-native.ts") },
+      { find: "react-native", replacement: path.resolve(__dirname, "./src/__mocks__/react-native.ts") },
+      // Stub para assets de imagen (PNG/JPG/etc). RN usa require() en el código.
+      { find: /\.(png|jpg|jpeg|gif|webp|svg)$/, replacement: path.resolve(__dirname, "./src/__mocks__/image-asset.ts") },
+    ],
   },
 });

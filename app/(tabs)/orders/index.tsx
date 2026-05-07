@@ -7,14 +7,17 @@ import {
   RefreshControl,
   Linking,
   Animated,
+  Alert,
 } from "react-native";
+import * as Sentry from "@sentry/react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
-import { getPedidos, getPedido } from "../../../src/lib/api";
+import { getPedidos, getPedido, getProducto } from "../../../src/lib/api";
 import { tracker } from "../../../src/lib/tracker";
 import type { Pedido } from "../../../src/lib/api";
 import { useCartStore } from "../../../src/stores/cart";
+import { queryClient } from "../../../src/lib/query-client";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderCardSkeleton } from "../../../src/components/skeletons/OrderCardSkeleton";
 import { ErrorState } from "../../../src/components/ErrorState";
@@ -104,24 +107,82 @@ function OrderCard({ item }: { item: Pedido }) {
   const isEnCamino = item.estado === "en_camino";
 
   const handleReordenar = async () => {
+    const itemsActuales = useCartStore.getState().items.length;
+    if (itemsActuales > 0) {
+      const confirmar = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          "Tu carrito ya tiene productos",
+          `Reordenar agregará los productos del pedido #${item.id} a tu carrito actual (${itemsActuales} producto${itemsActuales === 1 ? "" : "s"}). ¿Continuar?`,
+          [
+            { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
+            { text: "Sí, agregar", onPress: () => resolve(true) },
+          ],
+          { cancelable: true, onDismiss: () => resolve(false) }
+        );
+      });
+      if (!confirmar) return;
+    }
     try {
       const pedido = await getPedido(item.id);
       if (!pedido.lineas?.length) {
         Toast.show({ type: "error", text1: "No se pudo reordenar" });
         return;
       }
-      for (const linea of pedido.lineas) {
+
+      // Refrescar precio actual de cada producto antes de agregar al carrito.
+      // Popula la cache de React Query que cart.tsx ya usa, evitando flash visual.
+      // Promise.allSettled filtra productos eliminados del catálogo sin abortar toda la operación.
+      const lineasConProductoId = pedido.lineas.filter((l) => l.producto_id);
+      const resultados = await Promise.allSettled(
+        lineasConProductoId.map((l) =>
+          queryClient.fetchQuery({
+            queryKey: ["producto", l.producto_id] as const,
+            queryFn: () => getProducto(l.producto_id),
+            staleTime: 0,
+          }).then((producto) => ({ linea: l, producto }))
+        )
+      );
+
+      const disponibles = resultados.flatMap((r) =>
+        r.status === "fulfilled" ? [r.value] : []
+      );
+      const omitidos = pedido.lineas.length - disponibles.length;
+
+      if (disponibles.length === 0) {
+        Toast.show({
+          type: "error",
+          text1: "Productos no disponibles",
+          text2: "Ninguno de los productos del pedido sigue en el catálogo",
+        });
+        return;
+      }
+
+      for (const { linea, producto } of disponibles) {
         addItemWithQuantity({
-          productoId: linea.producto_id || 0,
-          nombre: linea.nombre_producto,
-          precioUnitario: linea.precio_unitario,
+          productoId: producto.id,
+          nombre: producto.nombre,
+          precioUnitario: producto.precio_app,
+          imagenUrl: producto.imagen_url,
+          stockMaximo: producto.stock_total,
         }, linea.cantidad);
       }
-      tracker.track('pedido_reordenado', { pedido_id: item.id }, 'orders');
-      Toast.show({ type: "success", text1: "Productos agregados al carrito", text2: `${pedido.lineas.length} productos de pedido #${item.id}` });
+
+      tracker.track('pedido_reordenado', { pedido_id: item.id, omitidos }, 'orders');
+      Toast.show({
+        type: omitidos > 0 ? "info" : "success",
+        text1: omitidos > 0 ? "Algunos productos cambiaron" : "Productos agregados al carrito",
+        text2: omitidos > 0
+          ? `${omitidos} producto${omitidos > 1 ? 's' : ''} ya no disponible${omitidos > 1 ? 's' : ''}`
+          : `${disponibles.length} productos de pedido #${item.id}`,
+      });
       router.push("/(tabs)/cart");
-    } catch {
-      Toast.show({ type: "error", text1: "Error al reordenar" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error al reordenar";
+      Sentry.captureException(err instanceof Error ? err : new Error(msg), {
+        tags: { flow: "checkout", action: "reordenar" },
+        extra: { pedido_id: item.id },
+      });
+      Toast.show({ type: "error", text1: "Error al reordenar", text2: msg });
     }
   };
 

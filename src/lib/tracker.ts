@@ -7,6 +7,7 @@
  */
 
 import { AppState, AppStateStatus } from 'react-native';
+import * as Sentry from '@sentry/react-native';
 import { getToken } from './api';
 import { API_URL } from '../constants/config';
 
@@ -19,7 +20,14 @@ const SENSITIVE_KEYS = /token|password|telefono|phone|secret|auth/i;
 function sanitizarPayload(payload?: Record<string, unknown>): Record<string, unknown> | undefined {
   if (!payload) return undefined;
   return Object.fromEntries(
-    Object.entries(payload).filter(([key]) => !SENSITIVE_KEYS.test(key))
+    Object.entries(payload)
+      .filter(([key]) => !SENSITIVE_KEYS.test(key))
+      .map(([key, val]) => [
+        key,
+        val !== null && typeof val === 'object' && !Array.isArray(val)
+          ? sanitizarPayload(val as Record<string, unknown>)
+          : val,
+      ])
   );
 }
 
@@ -44,6 +52,9 @@ class Tracker {
       // Flush inmediato al volver al frente — procesa eventos acumulados
       this.flush();
     } else {
+      // Background: flush lo que tengamos antes de pausar el timer.
+      // Si el SO mata el proceso, los eventos ya están en vuelo (AbortController 5s los acota).
+      this.flush();
       this.stopTimer();
     }
   };
@@ -72,20 +83,31 @@ class Tracker {
     let body: string;
     try {
       body = JSON.stringify({ eventos: batch });
-    } catch {
+    } catch (err) {
       console.warn('[tracker] payload no serializable, descartando batch');
+      Sentry.captureException(err instanceof Error ? err : new Error('tracker_payload_no_serializable'), {
+        tags: { source: "tracker" },
+        extra: { batchSize: batch.length, tipos: batch.map((e) => e.tipo) },
+      });
       return;
     }
     try {
       const token = await getToken();
-      await fetch(`${API_BASE}/eventos`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body,
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5_000);
+      try {
+        await fetch(`${API_BASE}/eventos`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body,
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
     } catch {
       // Si falla, devolver los eventos a la cola para reintentar (con límite)
       if (this.queue.length < MAX_QUEUE_SIZE) {

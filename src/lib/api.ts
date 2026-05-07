@@ -147,6 +147,15 @@ export async function eliminarPushToken() {
   return apiFetch("/clientes/push-token", { method: "DELETE" });
 }
 
+// Apple App Store §1.4.3 — confirmación explícita de mayoría de edad.
+// El backend exige `{ confirmado: true }`; cualquier otra cosa es 400.
+export async function confirmarEdad() {
+  return apiFetch<{ ok: true; edad_confirmada: true; edad_confirmada_at: string }>(
+    "/clientes/me/confirmar-edad",
+    { method: "POST", body: JSON.stringify({ confirmado: true }) }
+  );
+}
+
 // --- Catalogo ---
 
 export async function getProductos(params: {
@@ -223,6 +232,12 @@ export async function getHeroModo(): Promise<"static" | "carousel"> {
   return (data.hero_modo === "carousel" ? "carousel" : "static");
 }
 
+// --- Ofertas ---
+
+export async function getOfertas() {
+  return apiFetch<Oferta[]>("/ofertas");
+}
+
 // --- Tipos ---
 
 export interface Cliente {
@@ -237,6 +252,9 @@ export interface Cliente {
   codigo_referido?: string;
   ahorro_total?: number;
   total_pedidos?: number;
+  // Apple App Store §1.4.3 — confirmación explícita de mayoría de edad (18+ COL)
+  edad_confirmada?: boolean;
+  edad_confirmada_at?: string | null;
 }
 
 export interface Producto {
@@ -406,6 +424,17 @@ export interface Patrocinado {
   activo?: boolean;
   fecha_inicio?: string;
   fecha_fin?: string;
+}
+
+export interface Oferta {
+  id: number;
+  producto_id: number;
+  titulo: string | null;
+  precio_oferta: number | null;
+  orden: number;
+  fecha_inicio?: string | null;
+  fecha_fin?: string | null;
+  producto: Producto;
 }
 
 

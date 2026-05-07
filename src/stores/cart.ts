@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { tracker } from "../lib/tracker";
+import { debouncedSyncCart } from "../lib/cartSync";
+import { registerLogoutHandler } from "./auth";
 
 export interface CartItem {
   productoId: number;
@@ -28,6 +30,7 @@ interface CartState {
   setBarrio: (barrio: string) => void;
   setNotas: (notas: string) => void;
   setDireccionId: (id: number | null) => void;
+  updatePrices: (map: Map<number, number>) => void;
 
   // Computed
   getTotal: () => number;
@@ -117,6 +120,14 @@ export const useCartStore = create<CartState>()(
       setNotas: (notas) => set({ notas }),
       setDireccionId: (id) => set({ direccionId: id }),
 
+      updatePrices: (map) =>
+        set((state) => ({
+          items: state.items.map((i) => {
+            const nuevo = map.get(i.productoId);
+            return nuevo != null && nuevo !== i.precioUnitario ? { ...i, precioUnitario: nuevo } : i;
+          }),
+        })),
+
       getTotal: () =>
         get().items.reduce((sum, i) => sum + i.precioUnitario * i.cantidad, 0),
 
@@ -125,8 +136,27 @@ export const useCartStore = create<CartState>()(
     {
       name: "cart-storage",
       storage: createJSONStorage(() => AsyncStorage),
-      // Solo persistir items, dirección y la selección activa — barrio/notas son contextuales
-      partialize: (state) => ({ items: state.items, direccion: state.direccion, direccionId: state.direccionId }),
+      version: 1,
+      migrate: (persistedState) => persistedState,
+      // Solo persistir items — direccion y direccionId no se persisten para evitar
+      // PII en AsyncStorage sin cifrar. El cliente reselecciona la dirección al abrir checkout.
+      partialize: (state) => ({ items: state.items }),
     }
   )
 );
+
+// Sync silencioso al server cada vez que items cambia. Debounce 2s en cartSync.
+// Si el cliente no tiene auth, apiFetch dispara el handler 401 (silent fail interno).
+// Listener registrado al import del store — vive durante toda la sesion.
+let _prevItemsRef: ReadonlyArray<CartItem> | null = null;
+useCartStore.subscribe((state) => {
+  if (state.items === _prevItemsRef) return;
+  _prevItemsRef = state.items;
+  debouncedSyncCart(state.items);
+});
+
+// Limpiar carrito en cualquier logout (manual o por 401) para evitar que
+// el carrito de un usuario quede visible al siguiente en dispositivos compartidos.
+registerLogoutHandler(() => {
+  useCartStore.getState().clear();
+});
