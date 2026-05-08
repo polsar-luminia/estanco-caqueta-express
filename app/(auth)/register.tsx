@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
@@ -22,6 +22,7 @@ export default function RegisterScreen() {
   const [aceptaDatos, setAceptaDatos] = useState(false);
   const [loading, setLoading] = useState(false);
   const register = useAuthStore((s) => s.register);
+  const submittingRef = useRef(false);
 
   // Errores de validación en tiempo real (onBlur)
   const [errorNombre, setErrorNombre] = useState("");
@@ -61,6 +62,7 @@ export default function RegisterScreen() {
   };
 
   const handleRegister = async () => {
+    if (submittingRef.current) return;
     if (!nombre || !telefono || !password) {
       Toast.show({ type: "error", text1: "Completa todos los campos" });
       return;
@@ -91,6 +93,7 @@ export default function RegisterScreen() {
       Toast.show({ type: "error", text1: "Debes autorizar el tratamiento de datos personales" });
       return;
     }
+    submittingRef.current = true;
     setLoading(true);
     try {
       await register(telefono.trim(), nombre.trim(), password, iso);
@@ -100,6 +103,7 @@ export default function RegisterScreen() {
       Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "auth", screen: "register" } });
       Toast.show({ type: "error", text1: "Error", text2: msg });
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };

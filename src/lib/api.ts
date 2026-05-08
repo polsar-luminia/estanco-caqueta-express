@@ -59,7 +59,18 @@ export async function apiFetch<T = any>(
   if (res.status === 401) {
     await removeToken();
     _onUnauthorized?.();
-    throw new Error("UNAUTHORIZED");
+    let errorMsg = "UNAUTHORIZED";
+    try {
+      const body401 = await res.json() as Record<string, unknown>;
+      const e401 = typeof body401.error === 'string' ? body401.error : null;
+      const ERRORES_401: Record<string, string> = {
+        'Credenciales invalidas': 'Teléfono o contraseña incorrectos',
+        'Token requerido': 'Sesión inválida, vuelve a iniciar sesión',
+        'Cliente no encontrado': 'No encontramos tu cuenta',
+      };
+      if (e401) errorMsg = ERRORES_401[e401] ?? e401;
+    } catch { /* body no-parseable, mantener fallback */ }
+    throw new Error(errorMsg);
   }
 
   if (!res.ok) {
@@ -74,21 +85,31 @@ export async function apiFetch<T = any>(
     }
     const ERRORES_USUARIO: Record<string, string> = {
       'telefono already exists': 'Este teléfono ya está registrado',
+      'Ya existe una cuenta con ese telefono': 'Este teléfono ya está registrado',
       'Teléfono inválido': 'Teléfono inválido',
+      'Telefono invalido': 'Teléfono inválido',
       'Nombre inválido': 'Nombre inválido',
       'Contraseña muy corta (mín 8)': 'Contraseña muy corta (mínimo 8 caracteres)',
+      'La contrasena debe tener al menos 8 caracteres': 'La contraseña debe tener al menos 8 caracteres',
       'Fecha de nacimiento inválida': 'Fecha de nacimiento inválida',
       'Debes ser mayor de 18 años': 'Debes tener 18 años o más',
       'Cantidad inválida': 'Cantidad inválida en el pedido',
       'Cupón no válido': 'Cupón no válido',
       'Stock insuficiente': 'Producto sin stock suficiente',
+      'Telefono y contrasena requeridos': 'Ingresa tu teléfono y contraseña',
+      'Telefono, nombre y contrasena requeridos': 'Completa todos los campos',
+      'Demasiados intentos fallidos, intente de nuevo en 15 minutos': 'Demasiados intentos. Intenta de nuevo en 15 minutos',
+      'Direccion requerida': 'Dirección requerida',
+      'Direccion no encontrada': 'Dirección no encontrada',
+      'confirmado debe ser true': 'Debes confirmar para continuar',
     };
     let msg: string;
     const errorField = bodyParsed && typeof body.error === 'string' ? body.error : undefined;
+    // Fail-closed: solo se muestran al usuario los mensajes whitelisteados.
+    // Cualquier otro body.error se loguea para debug pero se enmascara con un fallback
+    // genérico por status code (evita filtrar internals del backend al cliente).
     if (errorField && ERRORES_USUARIO[errorField]) {
       msg = ERRORES_USUARIO[errorField];
-    } else if (errorField) {
-      msg = errorField;
     } else if (res.status === 404) {
       msg = 'Servicio no disponible (404)';
     } else if (res.status >= 500) {
@@ -97,6 +118,9 @@ export async function apiFetch<T = any>(
       msg = 'No tienes permiso para hacer esto';
     } else {
       msg = `Error ${res.status}`;
+    }
+    if (__DEV__ && errorField && !ERRORES_USUARIO[errorField]) {
+      console.warn(`[apiFetch] body.error sin whitelist → enmascarado. status=${res.status} path=${path} error="${errorField}"`);
     }
     throw new Error(msg);
   }
@@ -429,6 +453,7 @@ export interface Patrocinado {
 export interface Oferta {
   id: number;
   producto_id: number;
+  tipo: "oferta" | "oferta_relampago" | "imperdible" | "promocion" | "irresistible";
   titulo: string | null;
   precio_oferta: number | null;
   orden: number;
@@ -451,23 +476,20 @@ export async function getConfigApp(): Promise<{ envio_gratis_minimo: number; env
   return apiFetch('/configuracion-app');
 }
 
-export interface ComboProducto {
-  producto_id: number;
-  cantidad: number;
-  nombre?: string;
-  imagen_url?: string;
-}
-
 export interface Combo {
   id: number;
+  producto_id: number;
   nombre: string;
-  descripcion?: string;
-  imagen_url?: string;
+  descripcion?: string | null;
+  imagen_url?: string | null;
   precio_combo: number;
-  precio_original?: number;
-  productos: ComboProducto[];
-  activo: boolean;
+  precio_original?: number | null;
   orden: number;
+  fecha_inicio?: string | null;
+  fecha_fin?: string | null;
+  // Producto principal del combo (FK joined). En la app, mostramos `producto.imagen_url`,
+  // `producto.categoria` y agregamos al carrito con `precio_combo`.
+  producto: Producto | null;
 }
 
 export async function getCombos(): Promise<Combo[]> {

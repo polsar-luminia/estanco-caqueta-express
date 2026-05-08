@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -105,8 +105,11 @@ function OrderCard({ item }: { item: Pedido }) {
   const isActive = item.estado === "en_camino" || item.estado === "en_preparacion";
   const isDelivered = item.estado === "entregado";
   const isEnCamino = item.estado === "en_camino";
+  const reordenandoRef = useRef(false);
+  const [reordenando, setReordenando] = useState(false);
 
   const handleReordenar = async () => {
+    if (reordenandoRef.current) return;
     const itemsActuales = useCartStore.getState().items.length;
     if (itemsActuales > 0) {
       const confirmar = await new Promise<boolean>((resolve) => {
@@ -122,6 +125,8 @@ function OrderCard({ item }: { item: Pedido }) {
       });
       if (!confirmar) return;
     }
+    reordenandoRef.current = true;
+    setReordenando(true);
     try {
       const pedido = await getPedido(item.id);
       if (!pedido.lineas?.length) {
@@ -183,6 +188,9 @@ function OrderCard({ item }: { item: Pedido }) {
         extra: { pedido_id: item.id },
       });
       Toast.show({ type: "error", text1: "Error al reordenar", text2: msg });
+    } finally {
+      reordenandoRef.current = false;
+      setReordenando(false);
     }
   };
 
@@ -248,6 +256,7 @@ function OrderCard({ item }: { item: Pedido }) {
           {isDelivered && (
             <Pressable
               onPress={handleReordenar}
+              disabled={reordenando}
               className="flex-1 py-3 rounded-xl items-center bg-magenta-50"
             >
               <Text className="text-sm font-semibold text-magenta-600">

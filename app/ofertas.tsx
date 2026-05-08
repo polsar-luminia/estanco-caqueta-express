@@ -136,14 +136,9 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
 }
 
 export default function OfertasScreen() {
-  // Guards de auth + edad (Apple §1.4.3 + Ley 124) — deben estar al tope del componente
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const cliente = useAuthStore((s) => s.cliente);
-
-  if (isAuthLoading) return null;
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
-  if (cliente && !cliente.edad_confirmada) return <Redirect href="/(auth)/edad-confirmar" />;
 
   const router = useRouter();
 
@@ -156,6 +151,11 @@ export default function OfertasScreen() {
     queryFn: getOfertas,
     staleTime: 2 * 60 * 1000,
   });
+
+  // Guards de auth + edad (Apple §1.4.3 + Ley 124) — deben ir después de todos los hooks
+  if (isAuthLoading) return null;
+  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
+  if (cliente && !cliente.edad_confirmada) return <Redirect href="/(auth)/edad-confirmar" />;
 
   // Separar flash vs regulares
   const flash = ofertas.filter((o) => o.tipo === "oferta_relampago");

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -16,13 +16,17 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<"phone" | "password" | null>(null);
   const [loginError, setLoginError] = useState(false);
+  const [loginErrorMsg, setLoginErrorMsg] = useState("");
   const login = useAuthStore((s) => s.login);
+  const submittingRef = useRef(false);
 
   const handleLogin = async () => {
+    if (submittingRef.current) return;
     if (!telefono || !password) {
       Toast.show({ type: "error", text1: "Ingresa tu teléfono y contraseña" });
       return;
     }
+    submittingRef.current = true;
     setLoading(true);
     setLoginError(false);
     try {
@@ -34,8 +38,10 @@ export default function LoginScreen() {
         tags: { flow: "auth", screen: "login" },
       });
       setLoginError(true);
-      Toast.show({ type: "error", text1: "Error", text2: msg });
+      setLoginErrorMsg(msg);
+      Toast.show({ type: "error", text1: "No pudimos iniciar sesión", text2: msg });
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };
@@ -95,10 +101,10 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Logo zone */}
-          <View style={{ alignItems: "center", paddingTop: 48, paddingBottom: 36 }}>
+          <View style={{ alignItems: "center", paddingTop: 32, paddingBottom: 24 }}>
             <Image
               source={require("../../assets/logo-estanco.png")}
-              style={{ width: 220, height: 52 }}
+              style={{ width: 320, height: 76 }}
               resizeMode="contain"
             />
             {/* Tagline con líneas decorativas */}
@@ -156,7 +162,7 @@ export default function LoginScreen() {
                 textContentType="password"
                 autoComplete="current-password"
                 value={password}
-                onChangeText={(t) => { setPassword(t); setLoginError(false); }}
+                onChangeText={(t) => { setPassword(t); setLoginError(false); setLoginErrorMsg(""); }}
                 onFocus={() => setFocusedField("password")}
                 onBlur={() => setFocusedField(null)}
               />
@@ -172,7 +178,7 @@ export default function LoginScreen() {
 
             {loginError && (
               <Text style={{ fontSize: 11, color: "#D33587", fontWeight: "500", marginTop: 4, marginLeft: 4 }}>
-                Teléfono o contraseña incorrectos
+                {loginErrorMsg || "Teléfono o contraseña incorrectos"}
               </Text>
             )}
 

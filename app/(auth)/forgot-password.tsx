@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image, Linking } from "react-native";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
@@ -13,6 +13,7 @@ export default function ForgotPasswordScreen() {
   const [telefono, setTelefono] = useState("");
   const [errorTelefono, setErrorTelefono] = useState("");
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
 
   const validarTelefono = () => {
     if (!telefono.trim()) { setErrorTelefono(""); return; }
@@ -27,29 +28,28 @@ export default function ForgotPasswordScreen() {
   // paralelo. Meta entrega el OTP UTILITY una vez la ventana este abierta.
   // La pantalla verify-otp tiene un boton "Reenviar" que vuelve a abrir WhatsApp.
   const handleSolicitar = async () => {
+    if (submittingRef.current) return;
     const tel = telefono.trim();
     if (!tel || !/^\d{10}$/.test(tel)) {
       setErrorTelefono("10 dígitos sin +57");
       return;
     }
+    submittingRef.current = true;
     setLoading(true);
-
-    // 1. Abrir WhatsApp del negocio — Meta entrega OTP solo cuando la ventana 24h está abierta.
-    // Si Linking falla, el OTP llega huérfano (Meta no lo entrega sin ventana activa).
-    const wsAbierto = await Linking.openURL(WHATSAPP_NEGOCIO_LINK).then(() => true).catch(() => false);
-    if (!wsAbierto) {
-      Sentry.captureException(new Error('forgot_password_linking_failed'), { extra: { url: WHATSAPP_NEGOCIO_LINK }, tags: { flow: "auth", screen: "forgot-password" } });
-      Toast.show({
-        type: "error",
-        text1: "No se pudo abrir WhatsApp",
-        text2: "Verifica que tengas WhatsApp instalado",
-      });
-      setLoading(false);
-      return;
-    }
-
-    // 2. Disparar OTP (Meta lo entregará en la ventana recién abierta)
     try {
+      // 1. Abrir WhatsApp del negocio — Meta entrega OTP solo cuando la ventana 24h está abierta.
+      // Si Linking falla, el OTP llega huérfano (Meta no lo entrega sin ventana activa).
+      const wsAbierto = await Linking.openURL(WHATSAPP_NEGOCIO_LINK).then(() => true).catch(() => false);
+      if (!wsAbierto) {
+        Sentry.captureException(new Error('forgot_password_linking_failed'), { extra: { url: WHATSAPP_NEGOCIO_LINK }, tags: { flow: "auth", screen: "forgot-password" } });
+        Toast.show({
+          type: "error",
+          text1: "No se pudo abrir WhatsApp",
+          text2: "Verifica que tengas WhatsApp instalado",
+        });
+        return;
+      }
+      // 2. Disparar OTP (Meta lo entregará en la ventana recién abierta)
       await solicitarResetPassword(tel);
       router.push({ pathname: "/(auth)/verify-otp", params: { telefono: tel } });
     } catch (err: unknown) {
@@ -57,6 +57,7 @@ export default function ForgotPasswordScreen() {
       Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "auth", screen: "forgot-password" } });
       Toast.show({ type: "error", text1: "Error", text2: msg });
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };

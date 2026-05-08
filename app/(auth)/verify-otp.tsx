@@ -24,6 +24,8 @@ export default function VerifyOtpScreen() {
   const [reenviando, setReenviando] = useState(false);
   const [cooldownSegundos, setCooldownSegundos] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const verificandoRef = useRef(false);
+  const reenviandoRef = useRef(false);
 
   useEffect(() => () => { if (cooldownRef.current) clearInterval(cooldownRef.current); }, []);
 
@@ -50,6 +52,7 @@ export default function VerifyOtpScreen() {
   };
 
   const handleVerificar = async () => {
+    if (verificandoRef.current) return;
     if (!/^\d{6}$/.test(codigo)) {
       setErrorCodigo("Debe ser exactamente 6 dígitos");
       return;
@@ -58,6 +61,7 @@ export default function VerifyOtpScreen() {
       setErrorPassword("Mínimo 8 caracteres");
       return;
     }
+    verificandoRef.current = true;
     setLoading(true);
     try {
       await verificarResetPassword(telefono, codigo, nuevaPassword);
@@ -68,6 +72,7 @@ export default function VerifyOtpScreen() {
       Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "auth", screen: "verify-otp" } });
       Toast.show({ type: "error", text1: "Error", text2: msg });
     } finally {
+      verificandoRef.current = false;
       setLoading(false);
     }
   };
@@ -76,6 +81,8 @@ export default function VerifyOtpScreen() {
   // y dispara nuevo OTP en paralelo. Si la primera vez Meta silencio el envio
   // por falta de ventana, esta vez si entrega.
   const handleReenviar = async () => {
+    if (reenviandoRef.current) return;
+    reenviandoRef.current = true;
     setReenviando(true);
     Linking.openURL(WHATSAPP_NEGOCIO_LINK).catch(() => {
       // Si WhatsApp no abre, igual seguimos: tal vez ya tiene ventana abierta
@@ -94,6 +101,7 @@ export default function VerifyOtpScreen() {
     } catch {
       Toast.show({ type: "error", text1: "No se pudo reenviar", text2: "Intenta de nuevo" });
     } finally {
+      reenviandoRef.current = false;
       setReenviando(false);
     }
   };

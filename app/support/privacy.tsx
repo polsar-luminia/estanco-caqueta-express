@@ -10,11 +10,11 @@ const SECTIONS = [
   },
   {
     title: "2. Datos que Recopilamos",
-    body: "Al registrarte y usar la aplicación, recopilamos los siguientes datos personales:\n\n• Nombre completo\n• Número de teléfono\n• Fecha de nacimiento\n• Dirección(es) de entrega\n• Historial de pedidos\n• Token de notificaciones push (para enviarte actualizaciones sobre tus pedidos)",
+    body: "Al registrarte y usar la aplicación, recopilamos los siguientes datos personales:\n\n• Nombre completo\n• Número de teléfono\n• Fecha de nacimiento\n• Dirección(es) de entrega\n• Historial de pedidos\n• Token de notificaciones push (para enviarte actualizaciones sobre tus pedidos y comunicaciones de marketing relacionadas con productos, promociones y recordatorios)\n• Comportamiento dentro de la aplicación (carritos abandonados, frecuencia de uso, productos vistos) para personalizar tus comunicaciones",
   },
   {
     title: "3. Finalidad del Tratamiento",
-    body: "Tus datos personales son utilizados exclusivamente para:\n\n• Gestionar y procesar tus pedidos\n• Coordinar las entregas a domicilio\n• Enviarte notificaciones push sobre el estado de tus pedidos\n• Mejorar la experiencia de la aplicación\n• Cumplir con las obligaciones legales aplicables, incluida la verificación de mayoría de edad conforme a la Ley 124 de 1994",
+    body: "Tus datos personales son utilizados para:\n\n• Gestionar y procesar tus pedidos\n• Coordinar las entregas a domicilio\n• Enviarte notificaciones push sobre el estado de tus pedidos\n• Enviarte notificaciones push de marketing, incluyendo: recordatorios de carritos con productos pendientes (carrito abandonado), recomendaciones cuando llevas tiempo sin abrir la app (re-engagement) y promociones programadas en horarios específicos (por ejemplo, ofertas de fin de semana)\n• Estas comunicaciones de marketing están sujetas a una frecuencia máxima de 2 mensajes por semana y puedes desactivarlas en cualquier momento desde la configuración de tu dispositivo o solicitándolo a zomacpolosalazar@gmail.com\n• Mejorar la experiencia de la aplicación\n• Cumplir con las obligaciones legales aplicables, incluida la verificación de mayoría de edad conforme a la Ley 124 de 1994",
   },
   {
     title: "4. Base Legal",
@@ -50,7 +50,7 @@ export default function PrivacyScreen() {
           <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>
             Última actualización
           </Text>
-          <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1C1A" }}>11 de abril de 2026</Text>
+          <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1C1A" }}>8 de mayo de 2026</Text>
           <Text style={{ fontSize: 12, color: "#6D7B6C", marginTop: 8, lineHeight: 18 }}>
             Conoce cómo Polo & Salazar ZOMAC S.A.S. trata y protege tus datos personales conforme a la Ley 1581 de 2012.
           </Text>

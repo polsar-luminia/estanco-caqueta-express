@@ -98,12 +98,28 @@ describe("apiFetch", () => {
     );
   });
 
-  it("error desconocido 400 → usa body.error tal cual", async () => {
+  it("error desconocido (no whitelisteado) → NO expone body.error crudo, usa fallback genérico por status", async () => {
     vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
     vi.mocked(fetch).mockResolvedValue(
-      mockResponse(400, { error: "Mensaje custom del backend" })
+      mockResponse(400, { error: "violates foreign key constraint pedido_cliente_fkey" })
     );
-    await expect(apiFetch("/x")).rejects.toThrow("Mensaje custom del backend");
+    await expect(apiFetch("/x")).rejects.toThrow(/^Error 400$/);
+  });
+
+  it("error desconocido en 500 → fallback 'Error del servidor', NO expone body.error crudo", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
+    vi.mocked(fetch).mockResolvedValue(
+      mockResponse(500, { error: "ECONNREFUSED 127.0.0.1:5432 — pool exhausted" })
+    );
+    await expect(apiFetch("/x")).rejects.toThrow("Error del servidor, intenta de nuevo");
+  });
+
+  it("error desconocido en 403 → fallback 'No tienes permiso', NO expone body.error", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
+    vi.mocked(fetch).mockResolvedValue(
+      mockResponse(403, { error: "RBAC: role 'cliente' missing permission analytics:read" })
+    );
+    await expect(apiFetch("/x")).rejects.toThrow("No tienes permiso para hacer esto");
   });
 
   it("error 500 → fallback genérico 'Error del servidor, intenta de nuevo'", async () => {

@@ -1,4 +1,4 @@
-export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://poloysalazar.luminiatech.digital/api/v1";
+export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://api.estancocaqueta.com/api/v1";
 
 export const WHATSAPP_SOPORTE = "https://wa.me/573155519216";
 

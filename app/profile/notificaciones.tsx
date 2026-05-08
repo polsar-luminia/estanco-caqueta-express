@@ -84,7 +84,7 @@ export default function NotificacionesScreen() {
       setPrefs(updated);
     } catch (err) {
       // Rollback
-      setPrefs(prefs);
+      setPrefs(curr => curr ? { ...curr, [key]: !value } : curr);
       Toast.show({
         type: "error",
         text1: "No se pudo guardar",
