@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { View, Text, TextInput, Pressable, KeyboardTypeOptions } from "react-native";
 import { EyeIcon, EyeOffIcon } from "./icons/AppIcons";
 
@@ -35,6 +35,8 @@ export function InputField({
   returnKeyType,
   onSubmitEditing,
 }: InputFieldProps) {
+  const [focused, setFocused] = useState(false);
+
   const autoCapitalizeFinal =
     autoCapitalize ??
     (keyboardType === "phone-pad" || keyboardType === "email-address" ? "none" : "words");
@@ -56,12 +58,17 @@ export function InputField({
       <View
         className="flex-row items-center"
         style={{
-          backgroundColor: "#F4F4F0",
+          backgroundColor: focused || error ? "#FFFFFF" : "#F4F4F0",
           borderRadius: 999,
           paddingHorizontal: 20,
           paddingVertical: 14,
-          borderWidth: error ? 1 : 0,
-          borderColor: error ? "#D33587" : "transparent",
+          borderWidth: error ? 1 : focused ? 1.5 : 0,
+          borderColor: error ? "#D33587" : focused ? "#1FAF55" : "transparent",
+          shadowColor: focused && !error ? "#1FAF55" : "transparent",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: focused && !error ? 0.10 : 0,
+          shadowRadius: 16,
+          elevation: focused && !error ? 3 : 0,
         }}
       >
         <View style={{ marginRight: 12 }}>{icon}</View>
@@ -74,7 +81,8 @@ export function InputField({
           secureTextEntry={secureTextEntry}
           value={value}
           onChangeText={onChangeText}
-          onBlur={onBlur}
+          onFocus={() => setFocused(true)}
+          onBlur={() => { setFocused(false); onBlur?.(); }}
           autoCapitalize={autoCapitalizeFinal}
           returnKeyType={returnKeyType ?? "next"}
           onSubmitEditing={onSubmitEditing}

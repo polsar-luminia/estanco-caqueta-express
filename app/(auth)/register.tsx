@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
@@ -104,26 +105,41 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: "#FFFFFF" }}>
+    <View style={{ flex: 1, backgroundColor: "#FAFAF6", position: "relative" }}>
+      {/* Glow verde — top left */}
+      <View style={{
+        position: "absolute", top: -80, left: -50,
+        width: 240, height: 240, borderRadius: 120,
+        backgroundColor: "rgba(31,175,85,0.07)",
+      }} />
+      {/* Glow pink — bottom right */}
+      <View style={{
+        position: "absolute", bottom: 60, right: -50,
+        width: 200, height: 200, borderRadius: 100,
+        backgroundColor: "rgba(211,53,135,0.05)",
+      }} />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
+          contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Logo */}
-          <View className="items-center mb-8">
+          {/* Logo zone */}
+          <View style={{ alignItems: "center", paddingTop: 40, paddingBottom: 24 }}>
             <Image
               source={require("../../assets/logo-estanco.png")}
-              style={{ width: 260, height: 104 }}
+              style={{ width: 200, height: 48 }}
               resizeMode="contain"
             />
-            <Text style={{ color: "#6D7B6C", fontSize: 13, marginTop: 12 }}>
-              Tu licorera favorita en minutos
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 }}>
+              <View style={{ width: 16, height: 1, backgroundColor: "#E2E3DF" }} />
+              <Text style={{ fontSize: 11, color: "#BCCABA" }}>Crea tu cuenta gratis</Text>
+              <View style={{ width: 16, height: 1, backgroundColor: "#E2E3DF" }} />
+            </View>
           </View>
 
           {/* Form */}
@@ -165,7 +181,7 @@ export default function RegisterScreen() {
           </View>
 
           {/* Checkboxes de políticas */}
-          <View style={{ marginTop: 8, marginBottom: 4 }}>
+          <View style={{ gap: 10, marginTop: 8 }}>
             <CheckboxRow checked={aceptaTerminos} onToggle={() => setAceptaTerminos(!aceptaTerminos)}>
               Acepto los{" "}
               <Text
@@ -187,45 +203,39 @@ export default function RegisterScreen() {
             </CheckboxRow>
           </View>
 
-          {/* Button */}
-          <Pressable
-            onPress={handleRegister}
-            disabled={loading}
-            className="items-center mt-6"
-            style={{
-              backgroundColor: loading ? "#9E9E9E" : "#1FAF55",
-              paddingVertical: 16,
-              borderRadius: 999,
-              shadowColor: "#1FAF55",
-              shadowOffset: { width: 0, height: 12 },
-              shadowOpacity: 0.2,
-              shadowRadius: 32,
-              elevation: 6,
-            }}
-          >
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>
-              {loading ? "Creando cuenta..." : "Crear Cuenta"}
-            </Text>
+          {/* CTA — Crear Cuenta */}
+          <Pressable onPress={handleRegister} disabled={loading} style={{ marginTop: 20 }}>
+            <LinearGradient
+              colors={loading ? ["#9E9E9E", "#757575"] : ["#1FAF55", "#006D30"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                borderRadius: 14,
+                paddingVertical: 16,
+                alignItems: "center",
+                justifyContent: "center",
+                shadowColor: "#1FAF55",
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: loading ? 0 : 0.28,
+                shadowRadius: 24,
+                elevation: loading ? 0 : 6,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>
+                {loading ? "Creando cuenta..." : "Crear Cuenta"}
+              </Text>
+            </LinearGradient>
           </Pressable>
 
-          {/* Login link */}
-          <View className="items-center mt-6">
-            <View className="flex-row">
+          {/* Footer — link a login */}
+          <View style={{ alignItems: "center", marginTop: 16 }}>
+            <View style={{ flexDirection: "row" }}>
               <Text style={{ color: "#6D7B6C", fontSize: 13 }}>¿Ya tienes una cuenta? </Text>
               <Link href="/(auth)/login" asChild>
                 <Pressable>
                   <Text style={{ color: "#D33587", fontSize: 13, fontWeight: "700" }}>Inicia sesión</Text>
                 </Pressable>
               </Link>
-            </View>
-          </View>
-
-          {/* Decoración */}
-          <View className="items-center mt-8">
-            <View className="flex-row mt-4" style={{ gap: 6 }}>
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#1FAF55" }} />
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#D33587" }} />
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#1FAF55" }} />
             </View>
           </View>
         </ScrollView>
