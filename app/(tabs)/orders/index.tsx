@@ -344,7 +344,7 @@ export default function OrdersScreen() {
       className="flex-1 bg-surface-low"
       data={pedidos}
       keyExtractor={(item) => String(item.id)}
-      contentContainerStyle={{ padding: 16, gap: 16 }}
+      contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 102 }}
       refreshControl={
         <RefreshControl
           refreshing={!isLoading && isFetching}

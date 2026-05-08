@@ -8,6 +8,7 @@ import { tracker } from "../../src/lib/tracker";
 import { DateSelector, DateValue, toISODate, calcularEdad } from "../../src/components/DateSelector";
 import { InputField } from "../../src/components/InputField";
 import { CheckboxRow } from "../../src/components/CheckboxRow";
+import { UserIcon, PhoneIcon, LockIcon } from "../../src/components/icons/AppIcons";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -128,7 +129,7 @@ export default function RegisterScreen() {
           {/* Form */}
           <InputField
             label="Nombre Completo"
-            icon="👤"
+            icon={<UserIcon color="#6D7B6C" size={18} />}
             placeholder="Ej. Juan Pérez"
             value={nombre}
             onChangeText={setNombre}
@@ -137,7 +138,7 @@ export default function RegisterScreen() {
           />
           <InputField
             label="Número de Teléfono"
-            icon="📱"
+            icon={<PhoneIcon color="#6D7B6C" size={18} />}
             placeholder="+57 300 000 0000"
             value={telefono}
             onChangeText={setTelefono}
@@ -147,7 +148,7 @@ export default function RegisterScreen() {
           />
           <InputField
             label="Contraseña"
-            icon="🔒"
+            icon={<LockIcon color="#6D7B6C" size={18} />}
             placeholder="••••••••"
             value={password}
             onChangeText={setPassword}

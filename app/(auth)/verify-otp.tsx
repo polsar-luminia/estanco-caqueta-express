@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams, Redirect } from "expo-router";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { InputField } from "../../src/components/InputField";
+import { KeyIcon, LockIcon } from "../../src/components/icons/AppIcons";
 import { verificarResetPassword, solicitarResetPassword } from "../../src/lib/api";
 import { WHATSAPP_NEGOCIO_LINK } from "../../src/constants/config";
 
@@ -127,7 +128,7 @@ export default function VerifyOtpScreen() {
 
           <InputField
             label="Código de verificación"
-            icon="🔑"
+            icon={<KeyIcon color="#6D7B6C" size={18} />}
             placeholder="123456"
             value={codigo}
             onChangeText={setCodigo}
@@ -138,7 +139,7 @@ export default function VerifyOtpScreen() {
 
           <InputField
             label="Nueva Contraseña"
-            icon="🔒"
+            icon={<LockIcon color="#6D7B6C" size={18} />}
             placeholder="••••••••"
             value={nuevaPassword}
             onChangeText={setNuevaPassword}

@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { InputField } from "../../src/components/InputField";
+import { PhoneIcon } from "../../src/components/icons/AppIcons";
 import { solicitarResetPassword } from "../../src/lib/api";
 import { WHATSAPP_NEGOCIO_LINK } from "../../src/constants/config";
 
@@ -89,7 +90,7 @@ export default function ForgotPasswordScreen() {
 
           <InputField
             label="Número de Teléfono"
-            icon="📱"
+            icon={<PhoneIcon color="#6D7B6C" size={18} />}
             placeholder="3001234567"
             value={telefono}
             onChangeText={setTelefono}

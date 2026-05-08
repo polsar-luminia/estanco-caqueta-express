@@ -1,6 +1,8 @@
 import { View, Text, Pressable, ScrollView, Linking, Alert, Image } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Clipboard from "expo-clipboard";
 import Toast from "react-native-toast-message";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +11,7 @@ import { useCartStore } from "../../src/stores/cart";
 import { WHATSAPP_SOPORTE } from "../../src/constants/config";
 import { formatCOP } from "../../src/lib/format";
 import { getCuponesDisponibles } from "../../src/lib/api";
+import { CopyIcon } from "../../src/components/icons/AppIcons";
 
 function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string; badge?: string; onPress?: () => void }) {
   const iconMap: Record<string, keyof typeof Feather.glyphMap> = {
@@ -25,14 +28,16 @@ function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center justify-between p-4"
-      style={{ borderBottomWidth: 0.5, borderBottomColor: "#F4F4F0" }}
+      style={{
+        flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+        padding: 16, borderBottomWidth: 0.5, borderBottomColor: "#F4F4F0",
+      }}
     >
-      <View className="flex-row items-center" style={{ gap: 14 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
         <Feather name={iconMap[icon] || "circle"} size={20} color={icon === "confirmation_number" ? "#D33587" : "#9E9E9E"} />
         <Text style={{ fontSize: 15, fontWeight: "500", color: "#1A1C1A" }}>{label}</Text>
       </View>
-      <View className="flex-row items-center" style={{ gap: 8 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         {badge && (
           <View style={{ backgroundColor: "#D33587", borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
             <Text style={{ color: "#fff", fontSize: 9, fontWeight: "700", textTransform: "uppercase" }}>{badge}</Text>
@@ -46,6 +51,7 @@ function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const cliente = useAuthStore((s) => s.cliente);
   const logout = useAuthStore((s) => s.logout);
   const clearCart = useCartStore((s) => s.clear);
@@ -56,116 +62,202 @@ export default function ProfileScreen() {
     queryFn: getCuponesDisponibles,
     staleTime: 5 * 60 * 1000,
   });
-  const cuponesNuevos = cupones.filter(c => !c.ya_usado).length;
+  const cuponesNuevos = cupones.filter((c) => !c.ya_usado).length;
 
   const handleLogout = () => {
     Alert.alert("Cerrar sesión", "¿Quieres salir de tu cuenta?", [
       { text: "No" },
-      { text: "Sí", style: "destructive", onPress: async () => {
+      {
+        text: "Sí", style: "destructive", onPress: async () => {
           clearCart();
           queryClient.clear();
           await logout();
           Toast.show({ type: "success", text1: "Sesión cerrada" });
-        }
+        },
       },
     ]);
   };
 
+  // Iniciales del avatar — máx 2 letras
+  const initials = cliente?.nombre
+    ?.split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "U";
+
+  const puntos = cliente?.puntos || 0;
+  // Aproximación de pedidos hasta que el backend devuelva total_pedidos
+  const pedidosAprox = Math.floor(puntos / 10);
+  const ahorroTotal = cliente?.ahorro_total ?? 0;
+
+  // Progress bar puntos (0-100 por ciclo)
+  const pct = Math.min(100, ((puntos % 100) / 100) * 100);
+  const puntosNext = 100 - (puntos % 100);
+
   return (
-    <ScrollView className="flex-1 bg-white" contentContainerStyle={{ paddingBottom: 100 }}>
-      {/* Profile Header */}
-      <View className="items-center mt-8 mb-8">
-        <View
-          style={{
-            width: 100, height: 100, borderRadius: 50,
-            backgroundColor: "#F4F4F0",
-            borderWidth: 3, borderColor: "rgba(31,175,85,0.15)",
-            alignItems: "center", justifyContent: "center",
-          }}
-        >
-          <Text style={{ fontSize: 40 }}>👤</Text>
+    <ScrollView style={{ flex: 1, backgroundColor: "#FAFAF6" }} contentContainerStyle={{ paddingBottom: 112 }}>
+
+      {/* ── Header oscuro ────────────────────────────────────── */}
+      <View style={{ backgroundColor: "#1A1C1A", paddingBottom: 28, position: "relative", overflow: "hidden" }}>
+        {/* Glow verde — top right */}
+        <View style={{
+          position: "absolute", top: -40, right: -40,
+          width: 160, height: 160, borderRadius: 80,
+          backgroundColor: "rgba(31,175,85,0.09)",
+        }} />
+        {/* Glow pink — bottom left */}
+        <View style={{
+          position: "absolute", bottom: -20, left: -20,
+          width: 120, height: 120, borderRadius: 60,
+          backgroundColor: "rgba(211,53,135,0.07)",
+        }} />
+
+        {/* Avatar + nombre */}
+        <View style={{ alignItems: "center", paddingTop: insets.top + 16, gap: 8 }}>
+          <LinearGradient
+            colors={["#1FAF55", "#006D30"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              width: 76, height: 76, borderRadius: 38,
+              alignItems: "center", justifyContent: "center",
+              borderWidth: 3, borderColor: "rgba(255,255,255,0.12)",
+              shadowColor: "#1FAF55", shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.30, shadowRadius: 24, elevation: 8,
+            }}
+          >
+            <Text style={{ fontSize: 26, fontWeight: "900", color: "#fff", letterSpacing: -1 }}>
+              {initials}
+            </Text>
+          </LinearGradient>
+
+          <View style={{ alignItems: "center" }}>
+            <Text style={{ fontSize: 20, fontWeight: "800", color: "#fff" }}>
+              {cliente?.nombre || "Usuario"}
+            </Text>
+            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>
+              {cliente?.telefono}
+            </Text>
+          </View>
         </View>
-        <Text style={{ fontSize: 22, fontWeight: "700", color: "#1A1C1A", marginTop: 12 }}>
-          {cliente?.nombre || "Usuario"}
-        </Text>
-        <Text style={{ fontSize: 13, color: "#6D7B6C", marginTop: 2 }}>
-          {cliente?.telefono}
-        </Text>
+
+        {/* Stats row flotante */}
+        <View style={{
+          marginHorizontal: 16, marginTop: 16,
+          backgroundColor: "#FFFFFF", borderRadius: 16,
+          paddingVertical: 14, flexDirection: "row",
+          shadowColor: "#000", shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.10, shadowRadius: 24, elevation: 6,
+          marginBottom: -28, position: "relative", zIndex: 2,
+        }}>
+          {[
+            { label: "Pedidos", value: String(pedidosAprox), color: "#1FAF55", sub: "realizados" },
+            { label: "Puntos", value: `${puntos} pts`, color: "#D33587", sub: "100 = envío gratis" },
+            { label: "Ahorro", value: formatCOP(ahorroTotal), color: "#2A6FDB", sub: "en total" },
+          ].map((stat, i) => (
+            <View key={stat.label} style={{
+              flex: 1, alignItems: "center",
+              borderLeftWidth: i > 0 ? 1 : 0, borderLeftColor: "#E2E3DF",
+            }}>
+              <Text style={{
+                fontSize: 10, fontWeight: "700", color: stat.color,
+                textTransform: "uppercase", letterSpacing: 1, marginBottom: 3,
+              }}>
+                {stat.label}
+              </Text>
+              <Text style={{ fontSize: 18, fontWeight: "800", color: "#1A1C1A" }}>{stat.value}</Text>
+              <Text style={{ fontSize: 9, color: "#BCCABA", marginTop: 1 }}>{stat.sub}</Text>
+            </View>
+          ))}
+        </View>
       </View>
 
-      {/* Stats */}
-      <View className="flex-row mx-6" style={{ gap: 12, marginBottom: 12 }}>
-        <View className="flex-1 items-center py-4 rounded-2xl" style={{ backgroundColor: "#F4F4F0" }}>
-          <Text style={{ fontSize: 10, fontWeight: "700", color: "#1FAF55", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>
-            Pedidos
+      {/* Spacer para compensar el float del stats row */}
+      <View style={{ height: 28 }} />
+
+      {/* ── Progress bar de puntos ───────────────────────────── */}
+      <View style={{
+        marginHorizontal: 24, marginBottom: 12,
+        backgroundColor: "#FFFFFF", borderRadius: 16,
+        padding: 14, borderWidth: 1, borderColor: "#E2E3DF",
+      }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <Text style={{ fontSize: 13, fontWeight: "700", color: "#1A1C1A" }}>Progreso de puntos</Text>
+          <Text style={{ fontSize: 11, fontWeight: "700", color: "#D33587" }}>
+            {puntosNext} pts para envío gratis
           </Text>
-          <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>
-            {cliente?.puntos != null ? Math.floor((cliente.puntos || 0) / 100) : 0}
-          </Text>
-          <Text style={{ fontSize: 9, color: "#6D7B6C", marginTop: 2 }}>envíos gratis</Text>
         </View>
-        <View
-          className="flex-1 items-center py-4 rounded-2xl"
-          style={{ backgroundColor: "#F4F4F0", borderLeftWidth: 2, borderLeftColor: "#D33587" }}
-        >
-          <Text style={{ fontSize: 10, fontWeight: "700", color: "#D33587", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>
-            Puntos
-          </Text>
-          <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>
-            {cliente?.puntos || 0} pts
-          </Text>
-          <Text style={{ fontSize: 9, color: "#6D7B6C", marginTop: 2 }}>100 pts = envío gratis</Text>
+        <View style={{ height: 6, borderRadius: 3, backgroundColor: "#F4F4F0" }}>
+          <LinearGradient
+            colors={["#1FAF55", "#006D30"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{ height: 6, borderRadius: 3, width: `${pct}%` as `${number}%` }}
+          />
         </View>
-      </View>
-      <View className="mx-6 mb-8 items-center py-4 rounded-2xl" style={{ backgroundColor: "#F4F4F0" }}>
-        <Text style={{ fontSize: 10, fontWeight: "700", color: "#D33587", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>
-          Ahorro Total
-        </Text>
-        <Text style={{ fontSize: 18, fontWeight: "700", color: "#D33587" }}>
-          {formatCOP(cliente?.ahorro_total ?? 0)}
-        </Text>
-        <Text style={{ fontSize: 9, color: "#6D7B6C", marginTop: 2 }}>en todos tus pedidos</Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 5 }}>
+          <Text style={{ fontSize: 9, color: "#BCCABA" }}>0 pts</Text>
+          <Text style={{ fontSize: 9, color: "#BCCABA" }}>100 pts</Text>
+        </View>
       </View>
 
-      {/* Codigo de referido */}
+      {/* ── Código de referido ───────────────────────────────── */}
       {cliente?.codigo_referido ? (
-        <View style={{ marginHorizontal: 24, marginBottom: 24, backgroundColor: '#F4F4F0', borderRadius: 16, padding: 16 }}>
-          <Text style={{ fontSize: 12, fontWeight: '700', color: '#6D7B6C', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>
-            Tu código de referido
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Text style={{ fontSize: 22, fontWeight: '800', color: '#1A1C1A', letterSpacing: 3, fontFamily: 'monospace', flex: 1 }}>
+        <View style={{
+          marginHorizontal: 24, marginBottom: 24,
+          backgroundColor: "#F4F4F0", borderRadius: 16,
+          padding: 14, flexDirection: "row", alignItems: "center", gap: 12,
+        }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{
+              fontSize: 10, fontWeight: "700", color: "#6D7B6C",
+              textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4,
+            }}>
+              Código de referido
+            </Text>
+            <Text style={{ fontSize: 20, fontWeight: "900", color: "#1A1C1A", letterSpacing: 3 }}>
               {cliente.codigo_referido}
             </Text>
-            <Pressable
-              onPress={() => { Clipboard.setStringAsync(cliente.codigo_referido!); Toast.show({ type: 'success', text1: 'Código copiado', visibilityTime: 1500 }); }}
-              style={{ backgroundColor: '#1FAF55', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 }}
-            >
-              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Copiar</Text>
-            </Pressable>
+            <Text style={{ fontSize: 11, color: "#BCCABA", marginTop: 3 }}>
+              Comparte y gana puntos
+            </Text>
           </View>
-          <Text style={{ fontSize: 11, color: '#6D7B6C', marginTop: 8 }}>Comparte tu código con amigos</Text>
+          <Pressable
+            onPress={() => {
+              Clipboard.setStringAsync(cliente.codigo_referido!);
+              Toast.show({ type: "success", text1: "Código copiado", visibilityTime: 1500 });
+            }}
+            style={{
+              backgroundColor: "#1FAF55", borderRadius: 10,
+              paddingHorizontal: 14, paddingVertical: 10,
+              flexDirection: "row", alignItems: "center", gap: 6,
+            }}
+          >
+            <CopyIcon color="#fff" size={14} />
+            <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>Copiar</Text>
+          </Pressable>
         </View>
       ) : null}
 
-      {/* Información Personal */}
-      <View className="mx-6 mb-6">
+      {/* ── Información Personal ─────────────────────────────── */}
+      <View style={{ marginHorizontal: 24, marginBottom: 24 }}>
         <Text style={{ fontSize: 10, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
           Información Personal
         </Text>
-        <View className="bg-white rounded-2xl overflow-hidden" style={{ borderWidth: 1, borderColor: "#F4F4F0" }}>
+        <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: "#F4F4F0" }}>
           <MenuItem icon="person" label="Mis Direcciones" onPress={() => router.push("/profile/direcciones")} />
           <MenuItem icon="payments" label="Métodos de Pago" onPress={() => router.push("/profile/metodos-pago")} />
           <MenuItem icon="notifications" label="Notificaciones" onPress={() => router.push("/profile/notificaciones")} />
         </View>
       </View>
 
-      {/* Pedidos y Promociones */}
-      <View className="mx-6 mb-6">
+      {/* ── Pedidos y Promociones ────────────────────────────── */}
+      <View style={{ marginHorizontal: 24, marginBottom: 24 }}>
         <Text style={{ fontSize: 10, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
           Pedidos y Promociones
         </Text>
-        <View className="bg-white rounded-2xl overflow-hidden" style={{ borderWidth: 1, borderColor: "#F4F4F0" }}>
+        <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: "#F4F4F0" }}>
           <MenuItem
             icon="receipt_long"
             label="Historial de Pedidos"
@@ -174,18 +266,18 @@ export default function ProfileScreen() {
           <MenuItem
             icon="confirmation_number"
             label="Cupones y Descuentos"
-            badge={cuponesNuevos > 0 ? `${cuponesNuevos} disponible${cuponesNuevos > 1 ? 's' : ''}` : undefined}
+            badge={cuponesNuevos > 0 ? `${cuponesNuevos} disponible${cuponesNuevos > 1 ? "s" : ""}` : undefined}
             onPress={() => router.push("/profile/cupones")}
           />
         </View>
       </View>
 
-      {/* Soporte */}
-      <View className="mx-6 mb-6">
+      {/* ── Soporte ──────────────────────────────────────────── */}
+      <View style={{ marginHorizontal: 24, marginBottom: 24 }}>
         <Text style={{ fontSize: 10, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
           Soporte
         </Text>
-        <View className="bg-white rounded-2xl overflow-hidden" style={{ borderWidth: 1, borderColor: "#F4F4F0" }}>
+        <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: "#F4F4F0" }}>
           <MenuItem
             icon="chat"
             label="Soporte WhatsApp"
@@ -204,30 +296,28 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Logout */}
-      <View className="mx-6 mt-2">
+      {/* ── Cerrar Sesión — sutil oscuro ─────────────────────── */}
+      <View style={{ marginHorizontal: 24, marginTop: 8 }}>
         <Pressable
           onPress={handleLogout}
-          className="flex-row items-center justify-center py-4 rounded-xl"
           style={{
-            backgroundColor: "#D33587",
-            shadowColor: "#D33587",
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.2,
-            shadowRadius: 16,
-            elevation: 4,
+            backgroundColor: "#1A1C1A",
+            borderRadius: 14,
+            paddingVertical: 14,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
             gap: 8,
           }}
         >
-          <Feather name="log-out" size={18} color="#fff" />
-          <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15, letterSpacing: 0.5 }}>
+          <Feather name="log-out" size={17} color="rgba(255,255,255,0.7)" />
+          <Text style={{ color: "rgba(255,255,255,0.85)", fontWeight: "700", fontSize: 14, letterSpacing: 0.3 }}>
             Cerrar Sesión
           </Text>
         </Pressable>
-
       </View>
 
-      {/* Branding Polo & Salazar */}
+      {/* ── Branding Polo & Salazar — NO MODIFICAR ───────────── */}
       <View style={{ alignItems: "center", marginTop: 16, gap: 4 }}>
         <Text style={{ fontSize: 10, color: "#BCCABA", textTransform: "uppercase", letterSpacing: 2 }}>
           Un producto de
@@ -239,7 +329,7 @@ export default function ProfileScreen() {
         />
       </View>
 
-      {/* Versión y créditos */}
+      {/* ── Versión y créditos — NO MODIFICAR ────────────────── */}
       <View style={{ alignItems: "center", marginBottom: 24, gap: 2 }}>
         <Text style={{ textAlign: "center", fontSize: 9, color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2 }}>
           Versión 1.0.0

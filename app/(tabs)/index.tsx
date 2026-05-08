@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { getCategorias, getDestacados, getPatrocinados, getHeroModo, getCombos, getOfertas, type Combo } from "../../src/lib/api";
-import { OfertasSection } from "../../src/components/OfertasSection";
+import { OfertasBannerCard } from "../../src/components/OfertasBannerCard";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
@@ -221,7 +221,7 @@ export default function HomeScreen() {
     <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: itemCount > 0 ? 160 : 90 }}
+        contentContainerStyle={{ paddingBottom: itemCount > 0 ? 172 : 102 }}
         refreshControl={
           <RefreshControl refreshing={!isLoading && isFetching} onRefresh={onRefresh} colors={["#1FAF55"]} />
         }
@@ -307,6 +307,16 @@ export default function HomeScreen() {
               )}
             </View>
 
+            {/* Ofertas — banner card prominente */}
+            {ofertas.length > 0 && (
+              <View className="px-4 pt-4">
+                <OfertasBannerCard
+                  ofertas={ofertas}
+                  onPress={() => router.push("/ofertas")}
+                />
+              </View>
+            )}
+
             {/* Categorías */}
             <View className="px-4 pt-5 pb-2">
               <View className="flex-row justify-between items-center mb-3">
@@ -323,29 +333,39 @@ export default function HomeScreen() {
               />
             </View>
 
-            {/* Combos */}
+            {/* Combos — productos únicos con metadata especial (precio combo + fechas).
+                El tap navega al producto subyacente (creado en Tryton/Shopify). */}
             {combos.length > 0 && (
               <View className="px-4 pt-3 pb-2">
                 <Text style={{ fontSize: 18, fontWeight: '700', color: '#1A1C1A', marginBottom: 12 }}>Combos</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, paddingHorizontal: 16 }}>
                   <View style={{ flexDirection: 'row', gap: 12 }}>
                     {combos.map((combo: Combo) => (
-                      <View key={combo.id} style={{ width: 180, backgroundColor: '#fff', borderRadius: 16, padding: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}>
+                      <Pressable
+                        key={combo.id}
+                        onPress={() => combo.producto?.id && router.push(`/product/${combo.producto.id}`)}
+                        style={{ width: 180, backgroundColor: '#fff', borderRadius: 16, padding: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
+                      >
+                        {combo.producto?.imagen_url ? (
+                          <ShimmerImage
+                            imageUrl={combo.producto.imagen_url}
+                            fallbackCategory={combo.producto.categoria}
+                            style={{ width: '100%', height: 100, borderRadius: 10, marginBottom: 10 }}
+                            contentFit="cover"
+                          />
+                        ) : null}
                         {combo.precio_original && (
                           <Text style={{ fontSize: 10, color: '#9E9E9E', textDecorationLine: 'line-through', marginBottom: 2 }}>{formatCOP(combo.precio_original)}</Text>
                         )}
                         <Text style={{ fontSize: 18, fontWeight: '800', color: '#D33587', marginBottom: 4 }}>{formatCOP(combo.precio_combo)}</Text>
                         <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1C1A', marginBottom: 4 }} numberOfLines={2}>{combo.nombre}</Text>
                         {combo.descripcion && <Text style={{ fontSize: 11, color: '#6D7B6C' }} numberOfLines={2}>{combo.descripcion}</Text>}
-                      </View>
+                      </Pressable>
                     ))}
                   </View>
                 </ScrollView>
               </View>
             )}
-
-            {/* Ofertas (curado desde admin, badge magenta + precio tachado opcional) */}
-            <OfertasSection ofertas={ofertas} />
 
             {/* Destacados */}
             <View className="px-4 pt-3 pb-4">

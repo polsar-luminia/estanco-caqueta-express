@@ -13,6 +13,8 @@ import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
 import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, type DireccionGuardada, type CuponValidado } from "../../src/lib/api";
 import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
 import { tracker } from "../../src/lib/tracker";
+import { TruckIcon, TagIcon } from "../../src/components/icons/AppIcons";
+import { CartIcon } from "../../src/components/icons/TabIcons";
 import { formatCOP } from "../../src/lib/format";
 import { CartItem } from "../../src/components/CartItem";
 
@@ -244,7 +246,7 @@ export default function CartScreen() {
   if (items.length === 0) {
     return (
       <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: "#FAFAF6" }}>
-        <Text style={{ fontSize: 48, marginBottom: 16 }}>🛒</Text>
+        <CartIcon color="#BCCABA" size={48} />
         <Text style={{ fontSize: 20, fontWeight: "700", color: "#6D7B6C", marginBottom: 6 }}>Carrito vacío</Text>
         <Text style={{ color: "#BCCABA", textAlign: "center", fontSize: 14 }}>
           Agrega productos desde el catálogo para hacer tu pedido
@@ -277,7 +279,7 @@ export default function CartScreen() {
             <View className="p-5 rounded-2xl" style={{ backgroundColor: "#F4F4F0" }}>
               <View className="flex-row items-center justify-between mb-4">
                 <View className="flex-row items-center">
-                  <Text style={{ fontSize: 20, marginRight: 8 }}>🚚</Text>
+                  <TruckIcon color="#1A1C1A" size={20} />
                   <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Entrega</Text>
                 </View>
                 <Pressable onPress={() => setMostrarNueva(!mostrarNueva)}>
@@ -377,7 +379,7 @@ export default function CartScreen() {
             {/* Cupon de descuento */}
             <View className="p-5 rounded-2xl" style={{ backgroundColor: "#F4F4F0" }}>
               <View className="flex-row items-center mb-3">
-                <Text style={{ fontSize: 20, marginRight: 8 }}>🏷️</Text>
+                <TagIcon color="#1A1C1A" size={20} />
                 <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Cupon</Text>
               </View>
 

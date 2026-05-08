@@ -1,8 +1,10 @@
+import { ReactNode } from "react";
 import { View, Text, TextInput, Pressable, KeyboardTypeOptions } from "react-native";
+import { EyeIcon, EyeOffIcon } from "./icons/AppIcons";
 
 interface InputFieldProps {
   label: string;
-  icon: string;
+  icon: ReactNode;
   placeholder: string;
   value: string;
   onChangeText: (v: string) => void;
@@ -62,7 +64,7 @@ export function InputField({
           borderColor: error ? "#D33587" : "transparent",
         }}
       >
-        <Text style={{ fontSize: 18, marginRight: 12, color: "#6D7B6C" }}>{icon}</Text>
+        <View style={{ marginRight: 12 }}>{icon}</View>
         <TextInput
           className="flex-1 text-base"
           style={{ color: "#1A1C1A" }}
@@ -83,9 +85,9 @@ export function InputField({
             accessibilityLabel={secureTextEntry ? "Mostrar contraseña" : "Ocultar contraseña"}
             accessibilityRole="button"
           >
-            <Text style={{ fontSize: 18, color: "#6D7B6C" }}>
-              {secureTextEntry ? "👁️" : "🙈"}
-            </Text>
+            {secureTextEntry
+              ? <EyeIcon color="#6D7B6C" size={18} />
+              : <EyeOffIcon color="#6D7B6C" size={18} />}
           </Pressable>
         )}
       </View>

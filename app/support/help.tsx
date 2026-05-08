@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Pressable, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import { MessageIcon } from "../../src/components/icons/AppIcons";
 
 const FAQ = [
   {
@@ -89,7 +90,7 @@ export default function HelpScreen() {
             className="flex-row items-center justify-center py-3.5 rounded-xl mb-3"
             style={{ backgroundColor: "#25D366" }}
           >
-            <Text style={{ fontSize: 18, marginRight: 8 }}>💬</Text>
+            <MessageIcon color="#fff" size={20} />
             <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>WhatsApp: 315 551 9216</Text>
           </Pressable>
 
