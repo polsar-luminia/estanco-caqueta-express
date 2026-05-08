@@ -52,6 +52,12 @@ vi.mock("react-native-toast-message", () => ({
   default: { show: vi.fn() },
 }));
 
+const mockRouterReplace = vi.fn();
+vi.mock("expo-router", () => ({
+  useRouter: () => ({ replace: mockRouterReplace }),
+  Redirect: ({ href }: any) => React.createElement("Redirect", { href }),
+}));
+
 const mockConfirmarEdad = vi.fn();
 const mockGetPerfil = vi.fn();
 vi.mock("../../src/lib/api", () => ({

@@ -182,9 +182,9 @@ export default function ProfileScreen() {
         backgroundColor: "#FFFFFF", borderRadius: 16,
         padding: 14, borderWidth: 1, borderColor: "#E2E3DF",
       }}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <View style={{ marginBottom: 8 }}>
           <Text style={{ fontSize: 13, fontWeight: "700", color: "#1A1C1A" }}>Progreso de puntos</Text>
-          <Text style={{ fontSize: 11, fontWeight: "700", color: "#D33587" }}>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: "#D33587", marginTop: 2 }}>
             {puntosNext} pts para envío gratis
           </Text>
         </View>

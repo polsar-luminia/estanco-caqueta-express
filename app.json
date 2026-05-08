@@ -20,7 +20,9 @@
         "applinks:estancocaqueta.com"
       ],
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIViewControllerBasedStatusBarAppearance": true,
+        "LSApplicationQueriesSchemes": ["whatsapp"]
       }
     },
     "android": {
@@ -30,7 +32,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "co.estancocaqueta.express",
-      "versionCode": 3
+      "versionCode": 5
     },
     "plugins": [
       "expo-router",
@@ -52,6 +54,12 @@
           "color": "#1FAF55"
         }
       ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "Esta información sirve para mejorar tu experiencia de compra y mostrarte contenido relevante."
+        }
+      ],
       "react-native-edge-to-edge"
     ],
     "extra": {
@@ -65,12 +73,7 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/669996b7-c230-4933-b487-ee4fadf0b90d",
-      "codeSigningCertificate": "./code-signing/certificate.pem",
-      "codeSigningMetadata": {
-        "keyid": "main",
-        "alg": "rsa-v1_5-sha256"
-      }
+      "url": "https://u.expo.dev/669996b7-c230-4933-b487-ee4fadf0b90d"
     }
   }
 }

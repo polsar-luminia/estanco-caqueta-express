@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text } from "react-native";
 import { Image, type ImageStyle, type ImageContentFit, type ImageContentPosition } from "expo-image";
 
@@ -9,10 +9,17 @@ interface Props {
   style?: ImageStyle;
   contentFit?: ImageContentFit;
   contentPosition?: ImageContentPosition;
+  priority?: "low" | "normal" | "high";
 }
 
-export function ShimmerImage({ imageUrl, fallbackCategory, style, contentFit = "contain", contentPosition }: Props) {
+export function ShimmerImage({ imageUrl, fallbackCategory, style, contentFit = "contain", contentPosition, priority = "normal" }: Props) {
   const [hasError, setHasError] = useState(false);
+
+  // Cuando cambia la URL (p.ej. FlatList reutiliza la celda con otro producto),
+  // resetear el error para que expo-image intente cargar la nueva imagen.
+  useEffect(() => {
+    setHasError(false);
+  }, [imageUrl]);
 
   // Sin URL o falló la carga: placeholder local neutro (evita placehold.co y
   // los rectángulos verdes con texto "Whisky" que se ven peor que estar vacío).
@@ -41,6 +48,8 @@ export function ShimmerImage({ imageUrl, fallbackCategory, style, contentFit = "
       contentFit={contentFit}
       contentPosition={contentPosition}
       cachePolicy="memory-disk"
+      recyclingKey={imageUrl}
+      priority={priority}
       transition={300}
       onError={() => setHasError(true)}
     />

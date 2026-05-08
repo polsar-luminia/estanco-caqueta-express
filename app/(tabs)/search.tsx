@@ -249,7 +249,7 @@ export default function SearchScreen() {
 
       {/* Explore */}
       {showExplore && (
-        <ScrollView contentContainerStyle={{ paddingBottom: 102 }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
           {/* Recent Searches */}
           <View style={{ paddingHorizontal: 16, marginBottom: 20, paddingTop: 16 }}>
             <Text style={{ fontSize: 10, fontWeight: "700", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>

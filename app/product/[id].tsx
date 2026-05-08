@@ -249,6 +249,7 @@ export default function ProductDetailScreen() {
                 style={{
                   width: SCREEN_WIDTH * 0.75,
                   height: SCREEN_WIDTH * 0.75,
+                  backgroundColor: "#FFFFFF",
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 20 },
                   shadowOpacity: 0.3,

@@ -37,8 +37,21 @@ export default function ForgotPasswordScreen() {
     submittingRef.current = true;
     setLoading(true);
     try {
-      // 1. Abrir WhatsApp del negocio — Meta entrega OTP solo cuando la ventana 24h está abierta.
-      // Si Linking falla, el OTP llega huérfano (Meta no lo entrega sin ventana activa).
+      // 1. Verificar que WhatsApp esté instalado ANTES de abrir o disparar OTP.
+      // Sin este guard, en iOS openURL("https://wa.me/...") resuelve true incluso
+      // sin WhatsApp (cae a Safari) → OTP huérfano + cobro a Meta sin entrega.
+      // Requiere LSApplicationQueriesSchemes:["whatsapp"] en app.json (iOS, build nativo).
+      const tieneWhatsApp = await Linking.canOpenURL("whatsapp://send").catch(() => false);
+      if (!tieneWhatsApp) {
+        Toast.show({
+          type: "error",
+          text1: "Necesitas WhatsApp instalado",
+          text2: "Instala WhatsApp y vuelve a intentar",
+        });
+        return;
+      }
+
+      // 2. Abrir WhatsApp del negocio — Meta entrega OTP solo cuando la ventana 24h está abierta.
       const wsAbierto = await Linking.openURL(WHATSAPP_NEGOCIO_LINK).then(() => true).catch(() => false);
       if (!wsAbierto) {
         Sentry.captureException(new Error('forgot_password_linking_failed'), { extra: { url: WHATSAPP_NEGOCIO_LINK }, tags: { flow: "auth", screen: "forgot-password" } });
@@ -49,7 +62,7 @@ export default function ForgotPasswordScreen() {
         });
         return;
       }
-      // 2. Disparar OTP (Meta lo entregará en la ventana recién abierta)
+      // 3. Disparar OTP (Meta lo entregará en la ventana recién abierta)
       await solicitarResetPassword(tel);
       router.push({ pathname: "/(auth)/verify-otp", params: { telefono: tel } });
     } catch (err: unknown) {

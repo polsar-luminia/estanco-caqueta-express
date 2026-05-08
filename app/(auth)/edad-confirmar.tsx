@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Alert, BackHandler, Image, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { confirmarEdad, getPerfil } from "../../src/lib/api";
@@ -7,6 +8,7 @@ import { useAuthStore } from "../../src/stores/auth";
 
 export default function EdadConfirmarScreen() {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
   const setCliente = useAuthStore((s) => s.setCliente);
   const logout = useAuthStore((s) => s.logout);
 
@@ -23,6 +25,7 @@ export default function EdadConfirmarScreen() {
         return;
       }
       setCliente(perfil);
+      router.replace("/(tabs)");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo confirmar tu edad";
       Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "auth", screen: "edad-confirmar" } });

@@ -118,6 +118,9 @@ export default function CategoryScreen() {
           contentContainerStyle={{ padding: 16, gap: 12 }}
           columnWrapperStyle={{ gap: 12 }}
           keyExtractor={(item) => String(item.id)}
+          initialNumToRender={8}
+          maxToRenderPerBatch={4}
+          windowSize={5}
           ListEmptyComponent={
             <View className="items-center py-8">
               <Text style={{ color: "#9CA3AF" }}>
@@ -125,12 +128,13 @@ export default function CategoryScreen() {
               </Text>
             </View>
           }
-          renderItem={({ item }) => {
+          renderItem={({ item, index }) => {
             if ("_spacer" in item) return <View style={{ flex: 1 }} />;
             return (
               <ProductCard
                 product={item}
                 onPress={() => router.push(`/product/${item.id}`)}
+                priority={index < 8 ? "high" : "normal"}
               />
             );
           }}

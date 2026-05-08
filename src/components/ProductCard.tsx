@@ -21,9 +21,10 @@ interface Props {
   // Si la card representa un producto en oferta, le pasamos la info para
   // pintar el badge custom y el precio tachado. Tiene prioridad sobre `badge`.
   oferta?: OfertaInfo;
+  priority?: "low" | "normal" | "high";
 }
 
-export function ProductCard({ product, onPress, badge, oferta }: Props) {
+export function ProductCard({ product, onPress, badge, oferta, priority = "normal" }: Props) {
   const addItem = useCartStore((s) => s.addItem);
   const { animatedStyle, onPressIn, onPressOut } = useScalePress();
 
@@ -110,6 +111,7 @@ export function ProductCard({ product, onPress, badge, oferta }: Props) {
             fallbackCategory={product.categoria}
             style={{ width: "100%", aspectRatio: 1 }}
             contentFit="cover"
+            priority={priority}
           />
         </View>
 

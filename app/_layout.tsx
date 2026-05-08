@@ -117,10 +117,7 @@ export default Sentry.wrap(function RootLayout() {
           />
           <Stack.Screen
             name="category/[id]"
-            options={{
-              headerShown: true,
-              headerTintColor: "#17994A",
-            }}
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="support/help"

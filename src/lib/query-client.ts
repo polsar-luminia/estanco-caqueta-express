@@ -1,7 +1,19 @@
-import { QueryClient, QueryCache, MutationCache } from "@tanstack/react-query";
+import { QueryClient, QueryCache, MutationCache, onlineManager, focusManager } from "@tanstack/react-query";
+import { AppState, type AppStateStatus } from "react-native";
+import NetInfo from "@react-native-community/netinfo";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { registerLogoutHandler } from "../stores/auth";
+
+// Reconexión automática: cuando la red vuelve, React Query refetcha las queries stale
+onlineManager.setEventListener((setOnline) =>
+  NetInfo.addEventListener((state) => setOnline(!!state.isConnected))
+);
+
+// Refetch al volver la app al foreground (equivalente a refetchOnWindowFocus en web)
+AppState.addEventListener("change", (status: AppStateStatus) => {
+  focusManager.setFocused(status === "active");
+});
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
