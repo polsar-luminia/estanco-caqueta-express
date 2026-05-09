@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import * as Sentry from "@sentry/react-native";
+import * as Notifications from "expo-notifications";
 import {
   getToken,
   setToken,
@@ -11,6 +12,22 @@ import {
   eliminarPushToken,
   type Cliente,
 } from "../lib/api";
+
+// M-PERS-13: bandeja del OS y badge son datos de sesión — deben limpiarse
+// en cualquier cierre (logout manual o 401). Best-effort: si el OS rechaza
+// (raro), la sesión sigue cerrándose.
+async function limpiarNotificacionesOS() {
+  try {
+    await Notifications.dismissAllNotificationsAsync();
+  } catch {
+    // OS rechazó — ignorar.
+  }
+  try {
+    await Notifications.setBadgeCountAsync(0);
+  } catch {
+    // OS rechazó — ignorar.
+  }
+}
 
 type LogoutHandler = () => void | Promise<void>;
 const logoutHandlers: LogoutHandler[] = [];
@@ -126,6 +143,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       // sin red u otro error — el frontend reseteará el ref local igualmente
     }
+    // M-PERS-13: limpiar bandeja del OS + badge antes de los handlers de app
+    // (cart, query-cache, push-registered) para que el orden sea OS → app.
+    await limpiarNotificacionesOS();
     await removeToken();
     await runLogoutHandlers();
     set({ token: null, cliente: null, isAuthenticated: false });
@@ -151,6 +171,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
 // Cuando apiFetch recibe un 401, resetea el store sin dep circular
 registerUnauthorizedHandler(() => {
+  // M-PERS-13: limpieza OS-side igual que en logout manual.
+  void limpiarNotificacionesOS();
   void runLogoutHandlers();
   useAuthStore.setState({ token: null, cliente: null, isAuthenticated: false });
 });

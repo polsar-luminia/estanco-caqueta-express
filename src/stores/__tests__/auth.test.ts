@@ -9,6 +9,13 @@ vi.mock("../../lib/api", () => ({
   registrarCliente: vi.fn(),
   getPerfil: vi.fn(),
   registerUnauthorizedHandler: vi.fn(),
+  eliminarPushToken: vi.fn().mockResolvedValue(undefined),
+}));
+
+// Mock de expo-notifications: auth.ts las llama en logout y en el callback 401.
+vi.mock("expo-notifications", () => ({
+  dismissAllNotificationsAsync: vi.fn().mockResolvedValue(undefined),
+  setBadgeCountAsync: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { useAuthStore } from "../auth";
@@ -115,6 +122,14 @@ describe("useAuthStore", () => {
       expect(api.removeToken).toHaveBeenCalled();
       expect(useAuthStore.getState().token).toBe(null);
       expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    });
+
+    it("limpia bandeja del OS y badge (M-PERS-13)", async () => {
+      const Notifications = await import("expo-notifications");
+      useAuthStore.setState({ token: "t", cliente: { id: 1 } as any, isAuthenticated: true });
+      await useAuthStore.getState().logout();
+      expect(Notifications.dismissAllNotificationsAsync).toHaveBeenCalledTimes(1);
+      expect(Notifications.setBadgeCountAsync).toHaveBeenCalledWith(0);
     });
   });
 
