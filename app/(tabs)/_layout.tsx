@@ -1,5 +1,5 @@
 import { Pressable, View, Text, Image } from "react-native";
-import { Redirect, Tabs } from "expo-router";
+import { Redirect, Tabs, useSegments } from "expo-router";
 import { useAuthStore } from "../../src/stores/auth";
 import { useCartStore } from "../../src/stores/cart";
 import { HomeIcon, SearchIcon, CartIcon, OrdersIcon, ProfileIcon } from "../../src/components/icons/TabIcons";
@@ -16,10 +16,23 @@ interface TabButtonProps {
   label: string;
   icon: React.ComponentType<{ color: string; size: number }>;
   badge?: number;
+  /** Ruta del Tabs.Screen — usada para detectar focus via useSegments. */
+  routeName: string;
 }
 
-function TabButton({ onPress, onLongPress, accessibilityState, label, icon: Icon, badge }: TabButtonProps) {
-  const focused = accessibilityState?.selected ?? false;
+function TabButton({ onPress, onLongPress, accessibilityState, label, icon: Icon, badge, routeName }: TabButtonProps) {
+  // Doble fuente para detectar focus:
+  // 1. accessibilityState.selected — funciona en algunos casos de React Navigation
+  // 2. useSegments — fallback 100% reliable en Expo Router
+  // El "index" (Inicio) es ruta default cuando no hay segmento adicional.
+  const segments = useSegments();
+  const lastSegment = segments[segments.length - 1];
+  const onTabsRoot = segments[0] === "(tabs)";
+  const focusedBySegment =
+    routeName === "index"
+      ? onTabsRoot && (lastSegment === "(tabs)" || lastSegment === "index")
+      : lastSegment === routeName || segments.includes(routeName);
+  const focused = (accessibilityState?.selected ?? false) || focusedBySegment;
 
   return (
     <Pressable
@@ -137,7 +150,7 @@ export default function TabLayout() {
         options={{
           title: "Inicio",
           tabBarButton: (props) => (
-            <TabButton {...props} label="Inicio" icon={HomeIcon} />
+            <TabButton {...props} routeName="index" label="Inicio" icon={HomeIcon} />
           ),
         }}
       />
@@ -146,7 +159,7 @@ export default function TabLayout() {
         options={{
           title: "Buscar",
           tabBarButton: (props) => (
-            <TabButton {...props} label="Buscar" icon={SearchIcon} />
+            <TabButton {...props} routeName="search" label="Buscar" icon={SearchIcon} />
           ),
         }}
       />
@@ -155,7 +168,7 @@ export default function TabLayout() {
         options={{
           title: "Carrito",
           tabBarButton: (props) => (
-            <TabButton {...props} label="Carrito" icon={CartIcon} badge={itemCount} />
+            <TabButton {...props} routeName="cart" label="Carrito" icon={CartIcon} badge={itemCount} />
           ),
         }}
       />
@@ -165,7 +178,7 @@ export default function TabLayout() {
           title: "Pedidos",
           headerShown: false,
           tabBarButton: (props) => (
-            <TabButton {...props} label="Pedidos" icon={OrdersIcon} />
+            <TabButton {...props} routeName="orders" label="Pedidos" icon={OrdersIcon} />
           ),
         }}
       />
@@ -174,7 +187,7 @@ export default function TabLayout() {
         options={{
           title: "Perfil",
           tabBarButton: (props) => (
-            <TabButton {...props} label="Perfil" icon={ProfileIcon} />
+            <TabButton {...props} routeName="profile" label="Perfil" icon={ProfileIcon} />
           ),
         }}
       />
