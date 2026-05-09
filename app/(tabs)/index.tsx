@@ -138,7 +138,7 @@ function HeroCarousel({ banners, router }: { banners: Patrocinado[]; router: Ret
         renderItem={({ item }) => (
           <HeroSlide
             banner={item}
-            onPress={() => item.producto?.id ? router.push(`/product/${item.producto.id}`) : null}
+            onPress={() => router.push(item.producto?.id ? `/product/${item.producto.id}` : "/ofertas")}
           />
         )}
       />
@@ -301,7 +301,7 @@ export default function HomeScreen() {
                 ) : (
                   <HeroSlide
                     banner={patrocinados[0]}
-                    onPress={() => patrocinados[0]?.producto?.id ? router.push(`/product/${patrocinados[0].producto.id}`) : null}
+                    onPress={() => router.push(patrocinados[0]?.producto?.id ? `/product/${patrocinados[0].producto.id}` : "/ofertas")}
                   />
                 )
               )}
