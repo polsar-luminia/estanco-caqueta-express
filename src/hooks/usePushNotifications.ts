@@ -73,6 +73,13 @@ export function usePushNotifications() {
   useEffect(() => {
     if (!isAuthenticated || registered) return;
 
+    // M-PERS-12: capturamos el clienteId al iniciar para detectar carrera con
+    // logout/login. Si entre que pedimos el token Expo y registrarPushToken()
+    // termina, el cliente cambió, NO marcamos registered=true — dejamos que el
+    // nuevo cliente dispare su propio registro fresh (ej: vía el N14 retry).
+    const clienteIdAlIniciar = useAuthStore.getState().cliente?.id;
+    if (clienteIdAlIniciar == null) return;
+
     (async () => {
       try {
         const token = await obtenerPushToken();
@@ -80,6 +87,27 @@ export function usePushNotifications() {
 
         const plataforma = Platform.OS;
         await registrarPushToken(token, plataforma);
+
+        const clienteIdActual = useAuthStore.getState().cliente?.id;
+        if (clienteIdActual !== clienteIdAlIniciar) {
+          if (__DEV__) {
+            console.log(
+              "[push] Cliente cambió durante registro (",
+              clienteIdAlIniciar,
+              "→",
+              clienteIdActual,
+              "), no marcamos registered"
+            );
+          }
+          Sentry.addBreadcrumb({
+            category: "push_notifications",
+            level: "info",
+            message: "Cliente cambió durante registro de push token",
+            data: { clienteIdAlIniciar, clienteIdActual },
+          });
+          return;
+        }
+
         registered = true;
         if (__DEV__) {
           console.log("[push] Token registrado:", token.substring(0, 30) + "...");
@@ -99,10 +127,16 @@ export function usePushNotifications() {
     if (!isAuthenticated) return;
     const unsub = NetInfo.addEventListener(async (state) => {
       if (state.isConnected && !registered) {
+        // M-PERS-12: mismo guard que el useEffect principal — capturamos
+        // clienteId al disparar el retry y verificamos antes de marcar registered.
+        const clienteIdAlIniciar = useAuthStore.getState().cliente?.id;
+        if (clienteIdAlIniciar == null) return;
         try {
           const token = await obtenerPushToken();
           if (!token) return;
           await registrarPushToken(token, Platform.OS);
+          const clienteIdActual = useAuthStore.getState().cliente?.id;
+          if (clienteIdActual !== clienteIdAlIniciar) return;
           registered = true;
         } catch {
           // silencioso — se reintentará al próximo cambio de red
