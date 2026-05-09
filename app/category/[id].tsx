@@ -1,6 +1,6 @@
-import { View, Text, FlatList, Pressable } from "react-native";
+import { View, Text, FlatList, Pressable, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import Svg, { Path } from "react-native-svg";
 import { getProductos, type Producto } from "../../src/lib/api";
@@ -24,13 +24,28 @@ export default function CategoryScreen() {
   const router = useRouter();
   const categoriaId = id && id.trim() ? Number(id) : NaN;
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const PAGE_SIZE = 20;
+
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["productos", "categoria", categoriaId],
-    queryFn: () => getProductos({ categoria: categoriaId, limite: 50 }),
+    queryFn: ({ pageParam }) =>
+      getProductos({ categoria: categoriaId, pagina: pageParam, limite: PAGE_SIZE }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.paginas > allPages.length ? allPages.length + 1 : undefined,
     enabled: Number.isFinite(categoriaId) && categoriaId > 0,
   });
 
-  const nombreCategoria = data?.productos?.[0]?.categoria || "Categoría";
+  const productos = data?.pages.flatMap((p) => p.productos) ?? [];
+  const nombreCategoria = data?.pages[0]?.productos?.[0]?.categoria || "Categoría";
 
   useEffect(() => {
     if (!isLoading && nombreCategoria !== "Categoría") {
@@ -107,7 +122,6 @@ export default function CategoryScreen() {
       ) : (
         <FlatList<GridItem>
           data={(() => {
-            const productos = data?.productos || [];
             const gridData: GridItem[] =
               productos.length % 2 !== 0
                 ? [...productos, { id: -1, _spacer: true }]
@@ -121,6 +135,17 @@ export default function CategoryScreen() {
           initialNumToRender={8}
           maxToRenderPerBatch={4}
           windowSize={5}
+          onEndReachedThreshold={0.5}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+          }}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View style={{ paddingVertical: 16, alignItems: "center" }}>
+                <ActivityIndicator color="#1FAF55" />
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View className="items-center py-8">
               <Text style={{ color: "#9CA3AF" }}>
