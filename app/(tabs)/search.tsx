@@ -224,6 +224,7 @@ export default function SearchScreen() {
           numColumns={2}
           contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: 102 }}
           columnWrapperStyle={{ gap: 10 }}
+          keyboardShouldPersistTaps="handled"
           keyExtractor={(item) => String(item.id)}
           onEndReachedThreshold={0.5}
           onEndReached={() => {
@@ -277,7 +278,7 @@ export default function SearchScreen() {
 
       {/* Explore */}
       {showExplore && (
-        <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 120 }}>
           {/* Recent Searches */}
           <View style={{ paddingHorizontal: 16, marginBottom: 20, paddingTop: 16 }}>
             <Text style={{ fontSize: 10, fontWeight: "700", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>
