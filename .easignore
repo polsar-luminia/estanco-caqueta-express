@@ -1,5 +1,25 @@
+# Heredado del setup actual
 .claude
 .git
 node_modules/.cache
 __tests__
 *.test.*
+
+# M-OBS-23: replicar patrones de secretos de .gitignore
+# Defensa en profundidad: aunque .gitignore ya impide commits, eas build lee
+# del working tree y subiría cualquier archivo presente al servicio EAS.
+.env
+.env.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+google-services.json
+GoogleService-Info.plist
+code-signing/private-key.pem
+
+# Reportes internos / cache de tooling
+.gstack/
+.idea/
+*.tsbuildinfo
