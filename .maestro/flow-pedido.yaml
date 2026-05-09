@@ -1,8 +1,22 @@
 # Flow end-to-end: login → agregar producto → carrito → confirmar pedido
 # Uso: maestro test .maestro/flow-pedido.yaml
 # Requiere cuenta test: 3001234567 / testpass
+#
+# M-OBS-27: este flow es DESTRUCTIVO (crea un pedido real).
+# Para ejecutar contra producción se aborta con error. Setea
+# MAESTRO_ENV=staging (o no lo setees) cuando corras local/CI.
 appId: co.estancocaqueta.express
 ---
+# Guard: bloquea ejecución si MAESTRO_ENV=production
+- evalScript: |
+    ${
+      (() => {
+        if (MAESTRO_ENV === 'production') {
+          throw new Error('flow-pedido.yaml es destructivo (crea pedido real). Abortado: MAESTRO_ENV=production. Setea MAESTRO_ENV=staging para ejecutar contra ambiente de pruebas.');
+        }
+      })()
+    }
+
 - launchApp:
     clearState: true
 
