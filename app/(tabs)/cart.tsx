@@ -38,6 +38,7 @@ export default function CartScreen() {
   const subtotalComputed = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad * i.precioUnitario, 0));
   const clear = useCartStore((s) => s.clear);
   const updatePrices = useCartStore((s) => s.updatePrices);
+  const updateStocks = useCartStore((s) => s.updateStocks);
   const cliente = useAuthStore((s) => s.cliente);
 
   // Refetch precios al montar — detecta si cambiaron desde que se persistieron en AsyncStorage.
@@ -51,18 +52,32 @@ export default function CartScreen() {
   });
   useEffect(() => {
     if (items.length === 0 || productosCheck.some((q) => q.isLoading)) return;
-    const map = new Map<number, number>();
-    let huboCambio = false;
+    const priceMap = new Map<number, number>();
+    const stockMap = new Map<number, number>();
+    let huboCambioPrecio = false;
+    let huboCambioStock = false;
     productosCheck.forEach((q, idx) => {
       if (q.data && items[idx]) {
-        const nuevo = q.data.precio_app;
-        if (nuevo !== items[idx].precioUnitario) huboCambio = true;
-        map.set(items[idx].productoId, nuevo);
+        const nuevoPrecio = q.data.precio_app;
+        const nuevoStock = q.data.stock_total ?? 0;
+        if (nuevoPrecio !== items[idx].precioUnitario) huboCambioPrecio = true;
+        priceMap.set(items[idx].productoId, nuevoPrecio);
+        const stockActual = items[idx].stockMaximo ?? Infinity;
+        const cantidadActual = items[idx].cantidad;
+        if (nuevoStock !== stockActual || nuevoStock < cantidadActual) huboCambioStock = true;
+        stockMap.set(items[idx].productoId, nuevoStock);
       }
     });
-    if (huboCambio) {
-      updatePrices(map);
-      Toast.show({ type: "info", text1: "Precios actualizados", text2: "Algunos productos cambiaron de precio" });
+    if (huboCambioPrecio) updatePrices(priceMap);
+    if (huboCambioStock) updateStocks(stockMap);
+    if (huboCambioPrecio || huboCambioStock) {
+      Toast.show({
+        type: "info",
+        text1: huboCambioStock && !huboCambioPrecio ? "Stock actualizado" : "Carrito actualizado",
+        text2: huboCambioStock
+          ? "Algunos productos cambiaron de stock o precio"
+          : "Algunos productos cambiaron de precio",
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productosCheck.map((q) => q.dataUpdatedAt).join(","), items.length]);

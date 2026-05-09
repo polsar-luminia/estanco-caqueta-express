@@ -132,4 +132,37 @@ describe("useCartStore", () => {
     expect(state.direccion).toBe("");
     expect(state.notas).toBe("");
   });
+
+  // ── updateStocks ───────────────────────────────────────────────────────────
+
+  it("updateStocks clampa cantidad al nuevo stockMaximo cuando el stock baja", () => {
+    useCartStore.getState().addItemWithQuantity({ ...PRODUCT_A, stockMaximo: 10 }, 5);
+    const map = new Map<number, number>([[1, 3]]);
+    useCartStore.getState().updateStocks(map);
+    const { items } = useCartStore.getState();
+    expect(items).toHaveLength(1);
+    expect(items[0].cantidad).toBe(3);
+    expect(items[0].stockMaximo).toBe(3);
+  });
+
+  it("updateStocks elimina items con stockMaximo 0 (stock-out)", () => {
+    useCartStore.getState().addItem(PRODUCT_A);
+    useCartStore.getState().addItem(PRODUCT_B);
+    const map = new Map<number, number>([[1, 0]]);
+    useCartStore.getState().updateStocks(map);
+    const { items } = useCartStore.getState();
+    expect(items).toHaveLength(1);
+    expect(items[0].productoId).toBe(2);
+  });
+
+  it("updateStocks no toca items que no estén en el map", () => {
+    useCartStore.getState().addItemWithQuantity(PRODUCT_A, 2);
+    useCartStore.getState().addItemWithQuantity(PRODUCT_B, 1);
+    const map = new Map<number, number>([[1, 5]]);
+    useCartStore.getState().updateStocks(map);
+    const items = useCartStore.getState().items;
+    const b = items.find((i) => i.productoId === 2);
+    expect(b?.cantidad).toBe(1);
+    expect(b?.stockMaximo).toBeUndefined();
+  });
 });

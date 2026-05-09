@@ -31,6 +31,7 @@ interface CartState {
   setNotas: (notas: string) => void;
   setDireccionId: (id: number | null) => void;
   updatePrices: (map: Map<number, number>) => void;
+  updateStocks: (map: Map<number, number>) => void;
 
   // Computed
   getTotal: () => number;
@@ -125,6 +126,18 @@ export const useCartStore = create<CartState>()(
           items: state.items.map((i) => {
             const nuevo = map.get(i.productoId);
             return nuevo != null && nuevo !== i.precioUnitario ? { ...i, precioUnitario: nuevo } : i;
+          }),
+        })),
+
+      updateStocks: (map) =>
+        set((state) => ({
+          items: state.items.flatMap((i) => {
+            const nuevoStock = map.get(i.productoId);
+            if (nuevoStock == null) return [i];
+            if (nuevoStock <= 0) return [];
+            const nuevaCantidad = Math.min(i.cantidad, nuevoStock);
+            if (nuevaCantidad === i.cantidad && i.stockMaximo === nuevoStock) return [i];
+            return [{ ...i, cantidad: nuevaCantidad, stockMaximo: nuevoStock }];
           }),
         })),
 
