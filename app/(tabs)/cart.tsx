@@ -92,6 +92,7 @@ export default function CartScreen() {
   const [cuponValidado, setCuponValidado] = useState<CuponValidado | null>(null);
   const [cuponError, setCuponError] = useState("");
   const [validandoCupon, setValidandoCupon] = useState(false);
+  const cuponSubtotalRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
 
   const tienda = useTiendaAbierta();
@@ -130,6 +131,7 @@ export default function CartScreen() {
     try {
       const result = await validarCupon(codigoCupon.trim(), subtotal);
       setCuponValidado(result);
+      cuponSubtotalRef.current = subtotal;
       tracker.track('cupon_aplicado', { cupon_codigo: result.cupon.codigo, descuento: result.descuento }, 'cart');
       Toast.show({ type: "success", text1: "Cupon aplicado", text2: `-${formatCOP(result.descuento)} de descuento` });
     } catch (err: unknown) {
@@ -145,7 +147,40 @@ export default function CartScreen() {
     setCuponValidado(null);
     setCodigoCupon("");
     setCuponError("");
+    cuponSubtotalRef.current = null;
   };
+
+  // M-CART-17: si el subtotal cambió respecto al subtotal con el que se validó
+  // el cupón, re-llamar al backend. Si el cupón ya no aplica (min_pedido, etc.)
+  // lo retiramos y avisamos. Sin esto el total mostrado al cliente diverge del
+  // que cobra el backend al crear pedido.
+  useEffect(() => {
+    if (!cuponValidado) return;
+    if (cuponSubtotalRef.current === subtotal) return;
+    const codigo = cuponValidado.cupon.codigo;
+    const subtotalAtIntento = subtotal;
+    let cancelado = false;
+    (async () => {
+      try {
+        const result = await validarCupon(codigo, subtotalAtIntento);
+        if (cancelado) return;
+        cuponSubtotalRef.current = subtotalAtIntento;
+        setCuponValidado(result);
+      } catch {
+        if (cancelado) return;
+        cuponSubtotalRef.current = null;
+        setCuponValidado(null);
+        setCodigoCupon("");
+        setCuponError("");
+        Toast.show({
+          type: "info",
+          text1: "Cupon retirado",
+          text2: "El subtotal cambio y el cupon ya no aplica",
+        });
+      }
+    })();
+    return () => { cancelado = true; };
+  }, [subtotal, cuponValidado]);
 
   const submitLockRef = useRef(false);
 
