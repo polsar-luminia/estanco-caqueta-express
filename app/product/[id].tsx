@@ -371,7 +371,6 @@ export default function ProductDetailScreen() {
               {/* Plus */}
               <Pressable
                 onPress={increment}
-                disabled={quantity >= stockMax}
                 className="items-center justify-center rounded-full bg-white"
                 style={{
                   width: 40,
