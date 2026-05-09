@@ -70,6 +70,13 @@ describe("useCartStore", () => {
     expect(useCartStore.getState().items[0].cantidad).toBe(5);
   });
 
+  it("clampa a stockMaximo cuando se piden más unidades de las disponibles", () => {
+    const productoLimitado = { ...PRODUCT_A, stockMaximo: 2 };
+    useCartStore.getState().addItemWithQuantity(productoLimitado, 5);
+    const item = useCartStore.getState().items.find((i) => i.productoId === PRODUCT_A.productoId);
+    expect(item?.cantidad).toBe(2);
+  });
+
   // ── updateQuantity ─────────────────────────────────────────────────────────
 
   it("actualiza la cantidad de un ítem", () => {

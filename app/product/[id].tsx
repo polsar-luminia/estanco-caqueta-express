@@ -188,6 +188,7 @@ export default function ProductDetailScreen() {
   }
 
   const inStock = product.stock_total > 0;
+  const stockMax = product.stock_total;
 
   const ofertaParseada = ofertaPrecio ? Number(ofertaPrecio) : NaN;
   const ofertaValida = Number.isFinite(ofertaParseada) && ofertaParseada > 0 && ofertaParseada < product.precio_app;
@@ -211,7 +212,15 @@ export default function ProductDetailScreen() {
   };
 
   const decrement = () => setQuantity((q) => Math.max(1, q - 1));
-  const increment = () => setQuantity((q) => q + 1);
+  const increment = () => {
+    setQuantity((q) => {
+      if (q >= stockMax) {
+        Toast.show({ type: "info", text1: `Solo quedan ${stockMax} unidades` });
+        return q;
+      }
+      return q + 1;
+    });
+  };
 
   return (
     <View className="flex-1 bg-white">
@@ -362,6 +371,7 @@ export default function ProductDetailScreen() {
               {/* Plus */}
               <Pressable
                 onPress={increment}
+                disabled={quantity >= stockMax}
                 className="items-center justify-center rounded-full bg-white"
                 style={{
                   width: 40,
@@ -371,7 +381,9 @@ export default function ProductDetailScreen() {
                   shadowOpacity: 0.08,
                   shadowRadius: 4,
                   elevation: 2,
+                  opacity: quantity >= stockMax ? 0.4 : 1,
                 }}
+                accessibilityLabel="Aumentar cantidad"
               >
                 <PlusIcon />
               </Pressable>
