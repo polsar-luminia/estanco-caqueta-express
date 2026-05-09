@@ -11,6 +11,7 @@ import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
 import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, type DireccionGuardada, type CuponValidado } from "../../src/lib/api";
+import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
 import { tracker } from "../../src/lib/tracker";
 import { TruckIcon, TagIcon } from "../../src/components/icons/AppIcons";
@@ -183,6 +184,8 @@ export default function CartScreen() {
   }, [subtotal, cuponValidado]);
 
   const submitLockRef = useRef(false);
+  // M-CART-15: idempotency key persiste hasta éxito; reintentos tras timeout reusan el mismo
+  const submitIdempotencyKeyRef = useRef<string | null>(null);
 
   const handlePedir = async () => {
     if (submitLockRef.current) return;
@@ -240,6 +243,10 @@ export default function CartScreen() {
       }
 
       llegoACrearPedido = true;
+      // M-CART-15: generar key UNA vez; reintentos tras timeout/error reusan el mismo
+      if (!submitIdempotencyKeyRef.current) {
+        submitIdempotencyKeyRef.current = nuevoUuidV4();
+      }
       const { pedido, puntos_ganados } = await crearPedido({
         direccion: dirFinal,
         barrio: barFinal || undefined,
@@ -248,7 +255,9 @@ export default function CartScreen() {
         usar_puntos: usarPuntos && puedeUsarPuntos,
         cupon_codigo: cuponValidado?.cupon.codigo || undefined,
         lineas: items.map((i) => ({ producto_id: i.productoId, cantidad: i.cantidad })),
-      });
+      }, submitIdempotencyKeyRef.current);
+      // Éxito: liberar el key para que el próximo pedido genere uno nuevo
+      submitIdempotencyKeyRef.current = null;
       tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos }, 'cart');
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });
       queryClient.invalidateQueries({ queryKey: ["cupones-disponibles"] });

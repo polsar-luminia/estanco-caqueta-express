@@ -21,20 +21,28 @@ export async function removeToken(): Promise<void> {
   await SecureStore.deleteItemAsync(TOKEN_KEY);
 }
 
+export type ApiFetchOptions = RequestInit & { idempotencyKey?: string };
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- default any para callers que no especifican generic; los callers tipados pasan <T> explícito
 export async function apiFetch<T = any>(
   path: string,
-  options: RequestInit = {}
+  options: ApiFetchOptions = {}
 ): Promise<T> {
+  const { idempotencyKey, ...rest } = options;
   const token = await getToken();
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(options.headers as Record<string, string>),
+    ...(rest.headers as Record<string, string>),
   };
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  // M-CART-15: idempotency key opcional para POST /pedidos (y futuros endpoints)
+  if (idempotencyKey) {
+    headers["Idempotency-Key"] = idempotencyKey;
   }
 
   const controller = new AbortController();
@@ -43,7 +51,7 @@ export async function apiFetch<T = any>(
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, {
-      ...options,
+      ...rest,
       headers,
       signal: controller.signal,
     });
@@ -234,10 +242,11 @@ export async function buscarProductos(
 
 // --- Pedidos ---
 
-export async function crearPedido(pedido: CrearPedidoInput) {
+export async function crearPedido(pedido: CrearPedidoInput, idempotencyKey?: string) {
   return apiFetch<{ pedido: Pedido; puntos_ganados: number; puntos_usados: number; envio: number; descuento: number }>("/pedidos", {
     method: "POST",
     body: JSON.stringify(pedido),
+    idempotencyKey,
   });
 }
 
