@@ -343,7 +343,15 @@ export default function HomeScreen() {
                     {combos.map((combo: Combo) => (
                       <Pressable
                         key={combo.id}
-                        onPress={() => combo.producto?.id && router.push(`/product/${combo.producto.id}`)}
+                        onPress={() => {
+                          if (!combo.producto?.id) return;
+                          const productoId = combo.producto.id;
+                          const precioApp = combo.producto.precio_app;
+                          const url = combo.precio_combo != null && precioApp != null && combo.precio_combo < precioApp
+                            ? `/product/${productoId}?ofertaPrecio=${combo.precio_combo}`
+                            : `/product/${productoId}`;
+                          router.push(url);
+                        }}
                         style={{ width: 180, backgroundColor: '#fff', borderRadius: 16, padding: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
                       >
                         {combo.producto?.imagen_url ? (
