@@ -104,7 +104,7 @@ export default function VerifyOtpScreen() {
     <View className="flex-1" style={{ backgroundColor: "#FFFFFF" }}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0} className="flex-1">
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 60, paddingBottom: 24 }}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
           keyboardShouldPersistTaps="handled"
         >
           <View className="items-center mb-8">
