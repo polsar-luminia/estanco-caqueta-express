@@ -40,6 +40,16 @@ export default function ForgotPasswordScreen() {
       router.push({ pathname: "/(auth)/verify-otp", params: { telefono: tel } });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo enviar el código";
+      // Caso especial: numero no registrado → CTA al registro en vez de error generico
+      if (msg === "Este número no está registrado.") {
+        Toast.show({
+          type: "info",
+          text1: "Número no registrado",
+          text2: "Crea una cuenta para empezar a pedir.",
+          onPress: () => router.replace("/(auth)/register"),
+        });
+        return;
+      }
       Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "auth", screen: "forgot-password" } });
       Toast.show({ type: "error", text1: "Error", text2: msg });
     } finally {

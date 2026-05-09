@@ -110,6 +110,10 @@ export async function apiFetch<T = any>(
       'Direccion requerida': 'Dirección requerida',
       'Direccion no encontrada': 'Dirección no encontrada',
       'confirmado debe ser true': 'Debes confirmar para continuar',
+      'Este número no está registrado.': 'Este número no está registrado.',
+      'Espera 1 minuto antes de pedir otro código.': 'Espera un minuto antes de pedir otro código.',
+      'Código inválido o expirado': 'Código inválido o expirado',
+      'La contraseña debe tener al menos 8 caracteres': 'La contraseña debe tener al menos 8 caracteres',
     };
     let msg: string;
     const errorField = bodyParsed && typeof body.error === 'string' ? body.error : undefined;
