@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useRef, useState } from "react";
 import { View, Text, TextInput, Pressable, KeyboardTypeOptions } from "react-native";
 import { EyeIcon, EyeOffIcon } from "./icons/AppIcons";
 
@@ -36,13 +36,19 @@ export function InputField({
   onSubmitEditing,
 }: InputFieldProps) {
   const [focused, setFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   const autoCapitalizeFinal =
     autoCapitalize ??
     (keyboardType === "phone-pad" || keyboardType === "email-address" ? "none" : "words");
 
+  // Asegurar foco explicito al tocar cualquier parte del campo (no solo el TextInput).
+  // Sin esto, en algunos casos (sin border/shadow visibles) iOS no detecta correctamente
+  // el TextInput como target de tap.
+  const focusInput = () => inputRef.current?.focus();
+
   return (
-    <View style={{ gap: 4, marginBottom: 12 }}>
+    <View style={{ marginBottom: 12 }}>
       <Text
         style={{
           fontSize: 10,
@@ -51,13 +57,16 @@ export function InputField({
           textTransform: "uppercase",
           letterSpacing: 1,
           marginLeft: 16,
+          marginBottom: 4,
         }}
       >
         {label}
       </Text>
-      <View
-        className="flex-row items-center"
+      <Pressable
+        onPress={focusInput}
         style={{
+          flexDirection: "row",
+          alignItems: "center",
           backgroundColor: focused || error ? "#FFFFFF" : "#F4F4F0",
           borderRadius: 999,
           paddingHorizontal: 20,
@@ -73,8 +82,8 @@ export function InputField({
       >
         <View style={{ marginRight: 12 }}>{icon}</View>
         <TextInput
-          className="flex-1 text-base"
-          style={{ color: "#1A1C1A" }}
+          ref={inputRef}
+          style={{ flex: 1, fontSize: 16, color: "#1A1C1A" }}
           placeholder={placeholder}
           placeholderTextColor="#BCCABA"
           keyboardType={keyboardType}
@@ -90,6 +99,7 @@ export function InputField({
         {showToggle && onToggleSecure && (
           <Pressable
             onPress={onToggleSecure}
+            hitSlop={8}
             accessibilityLabel={secureTextEntry ? "Mostrar contraseña" : "Ocultar contraseña"}
             accessibilityRole="button"
           >
@@ -98,7 +108,7 @@ export function InputField({
               : <EyeOffIcon color="#6D7B6C" size={18} />}
           </Pressable>
         )}
-      </View>
+      </Pressable>
       {error ? (
         <Text
           style={{
@@ -106,7 +116,7 @@ export function InputField({
             color: "#D33587",
             fontWeight: "500",
             marginLeft: 16,
-            marginTop: 2,
+            marginTop: 4,
           }}
         >
           {error}
