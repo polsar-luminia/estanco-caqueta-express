@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { View, TextInput, FlatList, Text, ScrollView, Pressable, Dimensions, ActivityIndicator } from "react-native";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -79,6 +79,7 @@ export default function SearchScreen() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [focused, setFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- debouncer IIFE con closure intencional
   const debounceRef = useCallback(
@@ -167,7 +168,8 @@ export default function SearchScreen() {
           elevation: 2,
         }}
       >
-        <View
+        <Pressable
+          onPress={() => inputRef.current?.focus()}
           style={{
             flexDirection: "row",
             alignItems: "center",
@@ -187,6 +189,7 @@ export default function SearchScreen() {
         >
           <SearchIcon color={focused ? "#1FAF55" : "#9E9E9E"} size={18} />
           <TextInput
+            ref={inputRef}
             style={{ flex: 1, fontSize: 15, color: "#1A1C1A" }}
             placeholder="Busca licores o snacks..."
             placeholderTextColor="#9E9E9E"
@@ -195,6 +198,8 @@ export default function SearchScreen() {
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             autoFocus={false}
+            blurOnSubmit={false}
+            returnKeyType="search"
           />
           {query.length > 0 && (
             <Pressable
@@ -202,11 +207,12 @@ export default function SearchScreen() {
                 setQuery("");
                 setDebouncedQuery("");
               }}
+              hitSlop={8}
             >
               <CloseIcon color="#9E9E9E" size={16} />
             </Pressable>
           )}
-        </View>
+        </Pressable>
       </View>
 
       {/* Loading */}
