@@ -91,7 +91,7 @@ function ProductDetailSkeleton() {
 /* ── Main screen ──────────────────────────────────────────── */
 
 export default function ProductDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, ofertaPrecio } = useLocalSearchParams<{ id: string; ofertaPrecio?: string }>();
   const productoId = id && id.trim() ? Number(id) : NaN;
   const router = useRouter();
   const addItemWithQuantity = useCartStore((s) => s.addItemWithQuantity);
@@ -189,11 +189,15 @@ export default function ProductDetailScreen() {
 
   const inStock = product.stock_total > 0;
 
+  const ofertaParseada = ofertaPrecio ? Number(ofertaPrecio) : NaN;
+  const ofertaValida = Number.isFinite(ofertaParseada) && ofertaParseada > 0 && ofertaParseada < product.precio_app;
+  const precioActivo = ofertaValida ? ofertaParseada : product.precio_app;
+
   const handleAdd = () => {
     addItemWithQuantity({
       productoId: product.id,
       nombre: product.nombre,
-      precioUnitario: product.precio_app,
+      precioUnitario: precioActivo,
       imagenUrl: product.imagen_url || undefined,
       stockMaximo: product.stock_total,
     }, quantity);
@@ -292,13 +296,17 @@ export default function ProductDetailScreen() {
 
           {/* Price */}
           <View style={{ gap: 2 }}>
-            {product.precio_lista1 ? (
+            {ofertaValida ? (
+              <Text style={{ fontSize: 14, color: "#9E9E9E", textDecorationLine: "line-through" }}>
+                {formatCOP(product.precio_app)}
+              </Text>
+            ) : product.precio_lista1 ? (
               <Text style={{ fontSize: 14, color: "#9E9E9E", textDecorationLine: "line-through" }}>
                 {formatCOP(product.precio_lista1)}
               </Text>
             ) : null}
             <Text className="text-2xl font-extrabold text-brand-500">
-              {formatCOP(product.precio_app)}
+              {formatCOP(precioActivo)}
             </Text>
           </View>
 

@@ -317,7 +317,12 @@ export default function OfertasScreen() {
                       key={oferta.id}
                       product={oferta.producto}
                       oferta={{ titulo: oferta.titulo, precio_oferta: oferta.precio_oferta }}
-                      onPress={() => router.push(`/product/${oferta.producto.id}`)}
+                      onPress={() => {
+                        const url = oferta.precio_oferta != null && oferta.precio_oferta < oferta.producto.precio_app
+                          ? `/product/${oferta.producto.id}?ofertaPrecio=${oferta.precio_oferta}`
+                          : `/product/${oferta.producto.id}`;
+                        router.push(url);
+                      }}
                     />
                   ))}
                   {/* Filler para fila impar */}
