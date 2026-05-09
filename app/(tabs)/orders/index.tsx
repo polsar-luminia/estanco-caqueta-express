@@ -151,18 +151,25 @@ function OrderCard({ item }: { item: Pedido }) {
       const disponibles = resultados.flatMap((r) =>
         r.status === "fulfilled" ? [r.value] : []
       );
-      const omitidos = pedido.lineas.length - disponibles.length;
+      const omitidosCatalogo = pedido.lineas.length - disponibles.length;
+      // M-CART-16: filtrar productos con stock_total<=0 para no meterlos al carrito.
+      // Sin este guard, items con stock=0 entran y bloquean checkout con "Stock insuficiente".
+      const conStock = disponibles.filter((d) => (d.producto.stock_total ?? 0) > 0);
+      const omitidosStock = disponibles.length - conStock.length;
+      const omitidosTotal = omitidosCatalogo + omitidosStock;
 
-      if (disponibles.length === 0) {
+      if (conStock.length === 0) {
         Toast.show({
           type: "error",
           text1: "Productos no disponibles",
-          text2: "Ninguno de los productos del pedido sigue en el catálogo",
+          text2: omitidosStock > 0 && omitidosCatalogo === 0
+            ? "Los productos del pedido están sin stock"
+            : "Ninguno de los productos del pedido sigue disponible",
         });
         return;
       }
 
-      for (const { linea, producto } of disponibles) {
+      for (const { linea, producto } of conStock) {
         addItemWithQuantity({
           productoId: producto.id,
           nombre: producto.nombre,
@@ -172,13 +179,22 @@ function OrderCard({ item }: { item: Pedido }) {
         }, linea.cantidad);
       }
 
-      tracker.track('pedido_reordenado', { pedido_id: item.id, omitidos }, 'orders');
+      tracker.track('pedido_reordenado', { pedido_id: item.id, omitidos: omitidosTotal, omitidos_catalogo: omitidosCatalogo, omitidos_stock: omitidosStock }, 'orders');
+
+      let text2: string;
+      if (omitidosCatalogo > 0 && omitidosStock > 0) {
+        text2 = `${omitidosCatalogo} ya no en catalogo y ${omitidosStock} sin stock`;
+      } else if (omitidosCatalogo > 0) {
+        text2 = `${omitidosCatalogo} producto${omitidosCatalogo > 1 ? 's' : ''} ya no en catalogo`;
+      } else if (omitidosStock > 0) {
+        text2 = `${omitidosStock} producto${omitidosStock > 1 ? 's' : ''} sin stock`;
+      } else {
+        text2 = `${conStock.length} productos de pedido #${item.id}`;
+      }
       Toast.show({
-        type: omitidos > 0 ? "info" : "success",
-        text1: omitidos > 0 ? "Algunos productos cambiaron" : "Productos agregados al carrito",
-        text2: omitidos > 0
-          ? `${omitidos} producto${omitidos > 1 ? 's' : ''} ya no disponible${omitidos > 1 ? 's' : ''}`
-          : `${disponibles.length} productos de pedido #${item.id}`,
+        type: omitidosTotal > 0 ? "info" : "success",
+        text1: omitidosTotal > 0 ? "Algunos productos cambiaron" : "Productos agregados al carrito",
+        text2,
       });
       router.push("/(tabs)/cart");
     } catch (err: unknown) {
