@@ -107,10 +107,13 @@ export default function OrderDetailScreen() {
       {/* Estado y timeline */}
       <View className="bg-white rounded-2xl p-6" style={CARD_SHADOW}>
         <Text className="text-xl font-bold text-on-surface mb-1">
-          Pedido #{pedido.id}
+          Pedido #{pedido.numero_orden_cliente ?? pedido.id}
         </Text>
-        <Text className="text-sm text-gray-500 mb-4">
+        <Text className="text-sm text-gray-500">
           {formatDate(pedido.created_at)} - {formatTime(pedido.created_at)}
+        </Text>
+        <Text className="text-xs text-gray-400 mb-4 mt-1">
+          Ref. soporte: #{pedido.id}
         </Text>
         <OrderStatusTimeline estado={pedido.estado} pedido={pedido} />
       </View>

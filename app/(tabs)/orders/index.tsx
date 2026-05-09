@@ -115,7 +115,7 @@ function OrderCard({ item }: { item: Pedido }) {
       const confirmar = await new Promise<boolean>((resolve) => {
         Alert.alert(
           "Tu carrito ya tiene productos",
-          `Reordenar agregará los productos del pedido #${item.id} a tu carrito actual (${itemsActuales} producto${itemsActuales === 1 ? "" : "s"}). ¿Continuar?`,
+          `Reordenar agregará los productos del pedido #${item.numero_orden_cliente ?? item.id} a tu carrito actual (${itemsActuales} producto${itemsActuales === 1 ? "" : "s"}). ¿Continuar?`,
           [
             { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
             { text: "Sí, agregar", onPress: () => resolve(true) },
@@ -189,7 +189,7 @@ function OrderCard({ item }: { item: Pedido }) {
       } else if (omitidosStock > 0) {
         text2 = `${omitidosStock} producto${omitidosStock > 1 ? 's' : ''} sin stock`;
       } else {
-        text2 = `${conStock.length} productos de pedido #${item.id}`;
+        text2 = `${conStock.length} productos de pedido #${item.numero_orden_cliente ?? item.id}`;
       }
       Toast.show({
         type: omitidosTotal > 0 ? "info" : "success",
@@ -227,7 +227,7 @@ function OrderCard({ item }: { item: Pedido }) {
       <View className="flex-row justify-between items-start">
         <View className="flex-1 mr-3">
           <Text className="text-xl font-bold text-on-surface">
-            Pedido #{item.id}
+            Pedido #{item.numero_orden_cliente ?? item.id}
           </Text>
           <Text className="text-sm text-gray-500 mt-1">
             {formatDate(item.created_at)} - {formatTime(item.created_at)}

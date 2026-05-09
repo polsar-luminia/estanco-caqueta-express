@@ -325,6 +325,12 @@ export interface Categoria {
 
 export interface Pedido {
   id: number;
+  /**
+   * Número secuencial de pedido del cliente (1, 2, 3...). Calculado en backend.
+   * Para mostrar al usuario. `id` es el ID global de la tabla y debe usarse solo
+   * para tracking interno, deep links y referencia con soporte.
+   */
+  numero_orden_cliente?: number;
   estado: "recibido" | "en_preparacion" | "en_camino" | "entregado" | "cancelado";
   direccion: string;
   barrio?: string;

@@ -278,7 +278,7 @@ export default function CartScreen() {
       Toast.show({
         type: "success",
         text1: "Pedido confirmado" + ptsMsg,
-        text2: `Pedido #${pedido.id} - ${formatCOP(pedido.total)}`,
+        text2: `Pedido #${pedido.numero_orden_cliente ?? pedido.id} - ${formatCOP(pedido.total)}`,
         visibilityTime: 3000,
       });
       // Replace cart con la lista de pedidos + push detalle encima:
