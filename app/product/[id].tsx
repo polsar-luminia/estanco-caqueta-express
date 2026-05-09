@@ -215,7 +215,7 @@ export default function ProductDetailScreen() {
   const increment = () => {
     setQuantity((q) => {
       if (q >= stockMax) {
-        Toast.show({ type: "info", text1: `Solo quedan ${stockMax} unidades` });
+        Toast.show({ type: "info", text1: `Solo quedan ${Math.floor(stockMax)} unidades` });
         return q;
       }
       return q + 1;
