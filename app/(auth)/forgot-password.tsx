@@ -1,12 +1,11 @@
 import { useState, useRef } from "react";
-import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image, Linking } from "react-native";
+import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { InputField } from "../../src/components/InputField";
 import { PhoneIcon } from "../../src/components/icons/AppIcons";
 import { solicitarResetPassword } from "../../src/lib/api";
-import { WHATSAPP_NEGOCIO_LINK } from "../../src/constants/config";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -24,9 +23,9 @@ export default function ForgotPasswordScreen() {
     }
   };
 
-  // Flujo: abrir WhatsApp del negocio (abre ventana 24h en Meta) + disparar OTP en
-  // paralelo. Meta entrega el OTP UTILITY una vez la ventana este abierta.
-  // La pantalla verify-otp tiene un boton "Reenviar" que vuelve a abrir WhatsApp.
+  // Flujo: el backend decide el canal de envio (SMS por defecto mientras la
+  // WABA de Meta esta bloqueada). El cliente solo solicita el OTP. La
+  // pantalla verify-otp tiene un boton "Reenviar" que vuelve a pedir uno nuevo.
   const handleSolicitar = async () => {
     if (submittingRef.current) return;
     const tel = telefono.trim();
@@ -37,32 +36,6 @@ export default function ForgotPasswordScreen() {
     submittingRef.current = true;
     setLoading(true);
     try {
-      // 1. Verificar que WhatsApp esté instalado ANTES de abrir o disparar OTP.
-      // Sin este guard, en iOS openURL("https://wa.me/...") resuelve true incluso
-      // sin WhatsApp (cae a Safari) → OTP huérfano + cobro a Meta sin entrega.
-      // Requiere LSApplicationQueriesSchemes:["whatsapp"] en app.json (iOS, build nativo).
-      const tieneWhatsApp = await Linking.canOpenURL("whatsapp://send").catch(() => false);
-      if (!tieneWhatsApp) {
-        Toast.show({
-          type: "error",
-          text1: "Necesitas WhatsApp instalado",
-          text2: "Instala WhatsApp y vuelve a intentar",
-        });
-        return;
-      }
-
-      // 2. Abrir WhatsApp del negocio — Meta entrega OTP solo cuando la ventana 24h está abierta.
-      const wsAbierto = await Linking.openURL(WHATSAPP_NEGOCIO_LINK).then(() => true).catch(() => false);
-      if (!wsAbierto) {
-        Sentry.captureException(new Error('forgot_password_linking_failed'), { extra: { url: WHATSAPP_NEGOCIO_LINK }, tags: { flow: "auth", screen: "forgot-password" } });
-        Toast.show({
-          type: "error",
-          text1: "No se pudo abrir WhatsApp",
-          text2: "Verifica que tengas WhatsApp instalado",
-        });
-        return;
-      }
-      // 3. Disparar OTP (Meta lo entregará en la ventana recién abierta)
       await solicitarResetPassword(tel);
       router.push({ pathname: "/(auth)/verify-otp", params: { telefono: tel } });
     } catch (err: unknown) {
@@ -89,7 +62,7 @@ export default function ForgotPasswordScreen() {
               resizeMode="contain"
             />
             <Text style={{ color: "#6D7B6C", fontSize: 13, marginTop: 12, textAlign: "center" }}>
-              Te enviaremos un código por WhatsApp
+              Te enviaremos un código de verificación
             </Text>
           </View>
 
@@ -98,8 +71,8 @@ export default function ForgotPasswordScreen() {
           </Text>
 
           <Text style={{ fontSize: 13, color: "#6D7B6C", marginBottom: 20, textAlign: "center", lineHeight: 18 }}>
-            Te abriremos WhatsApp con un mensaje listo para enviar al negocio.{"\n"}
-            <Text style={{ fontWeight: "600", color: "#1A1C1A" }}>Mándalo y vuelve a la app</Text> — tu código llegará en segundos.
+            Ingresa tu número y te enviaremos un{"\n"}
+            <Text style={{ fontWeight: "600", color: "#1A1C1A" }}>código de 6 dígitos</Text> en segundos.
           </Text>
 
           <InputField
@@ -128,10 +101,10 @@ export default function ForgotPasswordScreen() {
               elevation: 6,
             }}
             accessibilityRole="button"
-            accessibilityLabel="Abrir WhatsApp y enviar código"
+            accessibilityLabel="Enviar código de verificación"
           >
             <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>
-              {loading ? "Enviando..." : "Abrir WhatsApp y enviar código"}
+              {loading ? "Enviando..." : "Enviar código"}
             </Text>
           </Pressable>
 

@@ -1,12 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image, Linking } from "react-native";
+import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
 import { useRouter, useLocalSearchParams, Redirect } from "expo-router";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { InputField } from "../../src/components/InputField";
 import { KeyIcon, LockIcon } from "../../src/components/icons/AppIcons";
 import { verificarResetPassword, solicitarResetPassword } from "../../src/lib/api";
-import { WHATSAPP_NEGOCIO_LINK } from "../../src/constants/config";
 
 export default function VerifyOtpScreen() {
   const router = useRouter();
@@ -77,20 +76,15 @@ export default function VerifyOtpScreen() {
     }
   };
 
-  // Reenviar: vuelve a abrir WhatsApp del negocio (asegura ventana 24h abierta)
-  // y dispara nuevo OTP en paralelo. Si la primera vez Meta silencio el envio
-  // por falta de ventana, esta vez si entrega.
+  // Reenviar: dispara un nuevo OTP. El backend decide el canal (SMS hoy).
   const handleReenviar = async () => {
     if (reenviandoRef.current) return;
     reenviandoRef.current = true;
     setReenviando(true);
-    Linking.openURL(WHATSAPP_NEGOCIO_LINK).catch(() => {
-      // Si WhatsApp no abre, igual seguimos: tal vez ya tiene ventana abierta
-    });
     try {
       await solicitarResetPassword(telefono);
-      Toast.show({ type: "success", text1: "Código reenviado", text2: "Manda el saludo en WhatsApp y revisa el código" });
-      // Cooldown 30s para evitar spam de OTP (Meta cobra por cada envío UTILITY)
+      Toast.show({ type: "success", text1: "Código reenviado", text2: "Revisa tus mensajes en unos segundos" });
+      // Cooldown 30s para evitar spam de OTP (cada envio tiene costo)
       setCooldownSegundos(30);
       cooldownRef.current = setInterval(() => {
         setCooldownSegundos((s) => {
@@ -125,13 +119,13 @@ export default function VerifyOtpScreen() {
             Ingresa el código
           </Text>
           <Text style={{ fontSize: 13, color: "#6D7B6C", marginBottom: 16, textAlign: "center" }}>
-            Enviamos un código de 6 dígitos al WhatsApp{"\n"}
+            Enviamos un código de 6 dígitos al{"\n"}
             <Text style={{ fontWeight: "700", color: "#1A1C1A" }}>+57 {telefono}</Text>
           </Text>
 
           <Text style={{ fontSize: 12, color: "#8B968A", marginBottom: 20, textAlign: "center", lineHeight: 16 }}>
-            ¿No te llegó? Asegúrate de haber enviado el saludo al negocio en WhatsApp.
-            Si no lo hiciste, toca <Text style={{ fontWeight: "700", color: "#1FAF55" }}>Reenviar</Text> abajo.
+            ¿No te llegó? Espera unos segundos y luego toca{" "}
+            <Text style={{ fontWeight: "700", color: "#1FAF55" }}>Reenviar</Text> abajo.
           </Text>
 
           <InputField

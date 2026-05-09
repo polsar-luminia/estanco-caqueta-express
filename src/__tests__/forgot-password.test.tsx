@@ -1,13 +1,14 @@
 /**
- * M-AUTH-13 — Test de regresión para app/(auth)/forgot-password.tsx
+ * Test de regresión para app/(auth)/forgot-password.tsx
+ *
+ * Estado del flujo (2026-05-09): WhatsApp deshabilitado en backend
+ * (WHATSAPP_OTP_ENABLED=false). El cliente solo solicita el OTP — el backend
+ * decide canal (SMS por defecto). Sin abrir WhatsApp ni guardas Linking.
  *
  * Verifica que:
  *  1. El componente renderiza sin invocar Linking en el render inicial.
- *  2. Linking.canOpenURL y Linking.openURL están disponibles en el mock
- *     (contrato del guard de WhatsApp instalado).
- *  3. solicitarResetPassword está disponible desde lib/api (contrato del flujo OTP).
- *
- * Mocks: react-native (incluye Linking), expo-router, toast, sentry, lib/api.
+ *  2. solicitarResetPassword está disponible desde lib/api (contrato del flujo OTP).
+ *  3. Importación limpia sin dependencia a Linking ni WHATSAPP_NEGOCIO_LINK.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -47,6 +48,9 @@ vi.mock("react-native", () => {
     KeyboardAvoidingView: stub("KeyboardAvoidingView"),
     Image: stub("Image"),
     Platform: { OS: "ios", select: (o: any) => o.ios ?? o.default },
+    // Linking SE deja en el mock por si algun import transitivo lo toca,
+    // pero el componente actual NO lo importa (verificado por ausencia de
+    // calls a estos mocks tras render).
     Linking: { canOpenURL: mockCanOpenURL, openURL: mockOpenURL },
   };
 });
@@ -87,25 +91,24 @@ beforeEach(() => {
   mockSolicitarReset.mockReset();
 });
 
-describe("ForgotPasswordScreen — guard WhatsApp instalado (M-AUTH-13)", () => {
-  it("renderiza sin invocar Linking en el render inicial", () => {
+describe("ForgotPasswordScreen — flujo SMS-only (WhatsApp deshabilitado)", () => {
+  it("renderiza sin errores", () => {
     const out = ForgotPasswordScreen() as React.ReactElement;
     expect(out).toBeTruthy();
+  });
+
+  it("NO invoca Linking.canOpenURL en el render inicial", () => {
+    ForgotPasswordScreen();
     expect(mockCanOpenURL).not.toHaveBeenCalled();
+  });
+
+  it("NO invoca Linking.openURL en el render inicial", () => {
+    ForgotPasswordScreen();
     expect(mockOpenURL).not.toHaveBeenCalled();
   });
 
   it("expone solicitarResetPassword desde lib/api (contrato del flujo OTP)", () => {
     expect(mockSolicitarReset).toBeDefined();
-  });
-
-  it("Linking.canOpenURL es un vi.fn invocable (contrato del guard)", () => {
-    expect(typeof mockCanOpenURL).toBe("function");
-    expect(mockCanOpenURL.mock).toBeDefined();
-  });
-
-  it("Linking.openURL es un vi.fn invocable (contrato)", () => {
-    expect(typeof mockOpenURL).toBe("function");
-    expect(mockOpenURL.mock).toBeDefined();
+    expect(typeof mockSolicitarReset).toBe("function");
   });
 });
