@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
-import { View, TextInput, FlatList, Text, ScrollView, Pressable, Dimensions } from "react-native";
-import { useQuery } from "@tanstack/react-query";
+import { View, TextInput, FlatList, Text, ScrollView, Pressable, Dimensions, ActivityIndicator } from "react-native";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -102,11 +102,28 @@ export default function SearchScreen() {
     setDebouncedQuery(term);
   };
 
-  const { data: resultados = [], isLoading, isError, refetch } = useQuery({
+  const SEARCH_PAGE_SIZE = 20;
+
+  const {
+    data: searchData,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["buscar", debouncedQuery],
-    queryFn: () => buscarProductos(debouncedQuery),
+    queryFn: ({ pageParam }) =>
+      buscarProductos(debouncedQuery, { pagina: pageParam, limite: SEARCH_PAGE_SIZE }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.paginas > allPages.length ? allPages.length + 1 : undefined,
     enabled: debouncedQuery.length >= 2,
   });
+
+  const resultados = searchData?.pages.flatMap((p) => p.productos) ?? [];
+  const totalResultados = searchData?.pages[0]?.total ?? 0;
 
   const hasResults = debouncedQuery.length >= 2 && resultados.length > 0 && !isError;
   const noResults = debouncedQuery.length >= 2 && resultados.length === 0 && !isLoading && !isError;
@@ -125,13 +142,13 @@ export default function SearchScreen() {
 
   useEffect(() => {
     if (debouncedQuery.length >= 2 && !isLoading) {
-      if (resultados.length === 0) {
+      if (totalResultados === 0) {
         tracker.track("busqueda_sin_resultado", { q: debouncedQuery }, "search");
       } else {
-        tracker.track("busqueda", { q: debouncedQuery, resultados: resultados.length }, "search");
+        tracker.track("busqueda", { q: debouncedQuery, resultados: totalResultados }, "search");
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- resultados.length se lee vía isLoading=false gate
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- totalResultados de primera página, gate isLoading
   }, [debouncedQuery, isLoading]);
 
   return (
@@ -208,10 +225,21 @@ export default function SearchScreen() {
           contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: 102 }}
           columnWrapperStyle={{ gap: 10 }}
           keyExtractor={(item) => String(item.id)}
+          onEndReachedThreshold={0.5}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+          }}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View style={{ paddingVertical: 16, alignItems: "center" }}>
+                <ActivityIndicator color="#1FAF55" />
+              </View>
+            ) : null
+          }
           ListHeaderComponent={
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <Text style={{ fontSize: 18, fontWeight: "800", color: "#1A1C1A" }}>Resultados</Text>
-              <Text style={{ fontSize: 12, color: "#6D7B6C" }}>{resultados.length} productos</Text>
+              <Text style={{ fontSize: 12, color: "#6D7B6C" }}>{totalResultados} productos</Text>
             </View>
           }
           renderItem={({ item }) => (

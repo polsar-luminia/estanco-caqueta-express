@@ -220,8 +220,16 @@ export interface EventoInput {
   pantalla?: string;
 }
 
-export async function buscarProductos(q: string) {
-  return apiFetch<Producto[]>(`/catalogo/buscar?q=${encodeURIComponent(q)}`);
+export async function buscarProductos(
+  q: string,
+  opts: { pagina?: number; limite?: number } = {},
+) {
+  const qs = new URLSearchParams({ q });
+  if (opts.pagina != null) qs.set("pagina", String(opts.pagina));
+  if (opts.limite != null) qs.set("limite", String(opts.limite));
+  return apiFetch<{ productos: Producto[]; total: number; paginas: number }>(
+    `/catalogo/buscar?${qs}`,
+  );
 }
 
 // --- Pedidos ---
