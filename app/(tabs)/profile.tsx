@@ -87,8 +87,7 @@ export default function ProfileScreen() {
     .toUpperCase() || "U";
 
   const puntos = cliente?.puntos || 0;
-  // Aproximación de pedidos hasta que el backend devuelva total_pedidos
-  const pedidosAprox = Math.floor(puntos / 10);
+  const totalPedidos = cliente?.total_pedidos ?? 0;
   const ahorroTotal = cliente?.ahorro_total ?? 0;
 
   // Progress bar puntos (0-100 por ciclo)
@@ -152,7 +151,7 @@ export default function ProfileScreen() {
           marginBottom: -28, position: "relative", zIndex: 2,
         }}>
           {[
-            { label: "Pedidos", value: String(pedidosAprox), color: "#1FAF55", sub: "realizados" },
+            { label: "Pedidos", value: String(totalPedidos), color: "#1FAF55", sub: "realizados" },
             { label: "Puntos", value: `${puntos} pts`, color: "#D33587", sub: "100 = envío gratis" },
             { label: "Ahorro", value: formatCOP(ahorroTotal), color: "#2A6FDB", sub: "en total" },
           ].map((stat, i) => (
@@ -185,7 +184,7 @@ export default function ProfileScreen() {
         <View style={{ marginBottom: 8 }}>
           <Text style={{ fontSize: 13, fontWeight: "700", color: "#1A1C1A" }}>Progreso de puntos</Text>
           <Text style={{ fontSize: 12, fontWeight: "600", color: "#D33587", marginTop: 2 }}>
-            {puntosNext} pts para envío gratis
+            {puntosNext} pts para tu próximo envío gratis
           </Text>
         </View>
         <View style={{ height: 6, borderRadius: 3, backgroundColor: "#F4F4F0" }}>
