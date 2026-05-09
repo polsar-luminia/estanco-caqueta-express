@@ -10,6 +10,7 @@ vi.mock("../../lib/api", () => ({
   getPerfil: vi.fn(),
   registerUnauthorizedHandler: vi.fn(),
   eliminarPushToken: vi.fn().mockResolvedValue(undefined),
+  logoutCliente: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
 // Mock de expo-notifications: auth.ts las llama en logout y en el callback 401.

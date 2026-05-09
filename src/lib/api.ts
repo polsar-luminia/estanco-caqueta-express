@@ -183,6 +183,10 @@ export async function eliminarPushToken() {
   return apiFetch("/clientes/push-token", { method: "DELETE" });
 }
 
+export async function logoutCliente() {
+  return apiFetch<{ ok: true }>("/clientes/logout", { method: "POST" });
+}
+
 // Apple App Store §1.4.3 — confirmación explícita de mayoría de edad.
 // El backend exige `{ confirmado: true }`; cualquier otra cosa es 400.
 export async function confirmarEdad() {

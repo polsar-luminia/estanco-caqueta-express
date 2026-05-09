@@ -146,13 +146,27 @@ export function usePushNotifications() {
     return () => unsub();
   }, [isAuthenticated]);
 
-  // Listeners de notificaciones: tap navega al pedido, foreground solo registra
+  // Listeners de notificaciones: tap navega al destino, foreground solo registra
   useEffect(() => {
+    // M-NAV-18: el backend siempre envía data.deep_link. Validar contra allowlist antes de navegar.
+    // Si se añade una ruta nueva en notificaciones.js o crons-notificaciones.js, registrarla aquí.
+    const ALLOWED_DEEP_LINKS = [
+      /^\/\(tabs\)\/orders\/\d+$/,
+      /^\/\(tabs\)\/cart$/,
+      /^\/\(tabs\)\/index$/,
+      /^\/product\/\d+$/,
+    ];
+
     const subResponse = Notifications.addNotificationResponseReceivedListener((response) => {
-      const pedidoId = response.notification.request.content.data?.pedidoId;
-      if (pedidoId && useAuthStore.getState().isAuthenticated) {
-        router.push(`/(tabs)/orders/${pedidoId}` as Href);
+      const deepLink = response.notification.request.content.data?.deep_link;
+      if (typeof deepLink !== "string") return;
+      const valido = ALLOWED_DEEP_LINKS.some((r) => r.test(deepLink));
+      if (!valido) {
+        Sentry.addBreadcrumb({ category: "push", message: "deep_link rechazado", data: { deepLink } });
+        return;
       }
+      if (!useAuthStore.getState().isAuthenticated) return;
+      router.push(deepLink as Href);
     });
 
     const subReceived = Notifications.addNotificationReceivedListener((_notification) => {

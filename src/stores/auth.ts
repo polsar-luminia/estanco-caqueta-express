@@ -10,6 +10,7 @@ import {
   getPerfil,
   registerUnauthorizedHandler,
   eliminarPushToken,
+  logoutCliente,
   type Cliente,
 } from "../lib/api";
 
@@ -136,6 +137,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
+    // M-AUTH-15: revocar sesión server-side antes de borrar el token local.
+    // Best-effort: si falla por red el logout local continúa igual.
+    await logoutCliente().catch(() => {});
     // Desactivar push tokens en backend ANTES de borrar el JWT (necesita auth).
     // Best-effort: si falla por red, el frontend sigue cerrando sesión.
     try {

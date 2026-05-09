@@ -70,12 +70,22 @@ export default Sentry.wrap(function RootLayout() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, lastHydrateError]);
 
-  // Guard Apple §1.4.3: cualquier deep link sin edad confirmada → redirigir.
-  // Allowlist: solo (auth) está exento. Cubre product, category, profile, support y cualquier ruta futura.
+  // Guard auth + edad: allowlist de rutas públicas. Bloquea deep links sin sesión ni age gate.
+  // M-NAV-17: sin este guard, product/[id] y category/[id] eran accesibles sin login ni edad.
   useEffect(() => {
-    if (isLoading || !isAuthenticated) return;
+    if (isLoading) return;
+    const rutaActual = segments[0] as string | undefined;
+    // Solo (auth) es público. Cualquier otra ruta requiere sesión activa.
+    const RUTAS_PUBLICAS = ["(auth)"];
+
+    if (!isAuthenticated && rutaActual && !RUTAS_PUBLICAS.includes(rutaActual)) {
+      router.replace("/(auth)/login");
+      return;
+    }
+    if (!isAuthenticated) return;
+
+    // Apple §1.4.3: con sesión pero sin edad confirmada → age gate.
     if (!edadConfirmada) {
-      const rutaActual = segments[0] as string | undefined;
       if (rutaActual && !RUTAS_EXENTAS_EDAD.includes(rutaActual)) {
         router.replace("/(auth)/edad-confirmar");
       }
