@@ -62,4 +62,20 @@ describe('tracker — allowlist M-OBS-21', () => {
     const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
     expect(body.eventos[0].payload).toBeUndefined();
   });
+
+  it('busqueda: filtra `q` aunque venga en payload (M-OBS-21 cierre)', async () => {
+    tracker.track('busqueda', { q: 'leak', resultados: 5 } as any, 'search');
+    await tracker.flush();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.eventos[0].payload).toEqual({ resultados: 5 });
+    expect(body.eventos[0].payload).not.toHaveProperty('q');
+  });
+
+  it('cupon_aplicado: filtra `cupon_codigo` aunque venga en payload (M-OBS-21 cierre)', async () => {
+    tracker.track('cupon_aplicado', { cupon_codigo: 'PROMO10', descuento: 1000 } as any);
+    await tracker.flush();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.eventos[0].payload).toEqual({ descuento: 1000 });
+    expect(body.eventos[0].payload).not.toHaveProperty('cupon_codigo');
+  });
 });
