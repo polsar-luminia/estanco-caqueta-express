@@ -4,6 +4,10 @@
  *
  * El interval se pausa cuando la app va a background para no consumir
  * batería ni red innecesariamente (AppState listener).
+ *
+ * M-OBS-21: allowlist por tipo de evento (default-deny). Keys no listadas
+ * en ALLOWED_KEYS[tipo] se omiten silenciosamente. Tipos no registrados
+ * descartan el evento entero y emiten Sentry breadcrumb.
  */
 
 import { AppState, AppStateStatus } from 'react-native';
@@ -16,23 +20,66 @@ const FLUSH_INTERVAL_MS = 30_000;
 const MAX_QUEUE = 20;
 const MAX_QUEUE_SIZE = 200;
 
-const SENSITIVE_KEYS = /token|password|telefono|phone|secret|auth/i;
-function sanitizarPayload(payload?: Record<string, unknown>): Record<string, unknown> | undefined {
+export type EventTipo =
+  | 'app_error'
+  | 'app_abierta'
+  | 'categoria_abierta'
+  | 'registro_completado'
+  | 'sesion_iniciada'
+  | 'cupon_copiado'
+  | 'producto_visto'
+  | 'tiempo_en_producto'
+  | 'sugerencia_clickeada'
+  | 'cupon_aplicado'
+  | 'pedido_creado'
+  | 'busqueda_sin_resultado'
+  | 'busqueda'
+  | 'pedido_reordenado'
+  | 'pedido_cancelado'
+  | 'carrito_agregado'
+  | 'carrito_eliminado'
+  | 'carrito_cantidad_cambiada';
+
+// Allowlist por evento — toda key fuera de esta lista se omite del payload
+// enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
+// (TypeScript lo fuerza vía Record<EventTipo, ...>).
+const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
+  app_error: ['message', 'stack'],
+  app_abierta: [],
+  categoria_abierta: ['categoria_id', 'nombre'],
+  registro_completado: [],
+  sesion_iniciada: [],
+  cupon_copiado: ['cupon_codigo'],
+  producto_visto: ['producto_id', 'nombre', 'categoria'],
+  tiempo_en_producto: ['producto_id', 'segundos'],
+  sugerencia_clickeada: ['desde_producto', 'producto_clickeado', 'nombre'],
+  cupon_aplicado: ['cupon_codigo', 'descuento'],
+  pedido_creado: ['pedido_id', 'total', 'items_count', 'uso_cupon', 'uso_puntos'],
+  busqueda_sin_resultado: ['q'],
+  busqueda: ['q', 'resultados'],
+  pedido_reordenado: ['pedido_id', 'omitidos', 'omitidos_catalogo', 'omitidos_stock'],
+  pedido_cancelado: ['pedido_id'],
+  carrito_agregado: ['producto_id', 'nombre', 'precio', 'cantidad'],
+  carrito_eliminado: ['producto_id'],
+  carrito_cantidad_cambiada: ['producto_id', 'cantidad_nueva'],
+};
+
+function aplicarAllowlist(
+  tipo: EventTipo,
+  payload?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
   if (!payload) return undefined;
-  return Object.fromEntries(
-    Object.entries(payload)
-      .filter(([key]) => !SENSITIVE_KEYS.test(key))
-      .map(([key, val]) => [
-        key,
-        val !== null && typeof val === 'object' && !Array.isArray(val)
-          ? sanitizarPayload(val as Record<string, unknown>)
-          : val,
-      ])
-  );
+  const allowed = ALLOWED_KEYS[tipo];
+  if (allowed.length === 0) return undefined;
+  const filtered: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (key in payload) filtered[key] = payload[key];
+  }
+  return Object.keys(filtered).length > 0 ? filtered : undefined;
 }
 
 interface EventoInput {
-  tipo: string;
+  tipo: EventTipo;
   payload?: Record<string, unknown>;
   pantalla?: string;
 }
@@ -70,8 +117,19 @@ class Tracker {
     this.timer = null;
   }
 
-  track(tipo: string, payload?: Record<string, unknown>, pantalla?: string) {
-    this.queue.push({ tipo, payload: sanitizarPayload(payload), pantalla });
+  track(tipo: EventTipo, payload?: Record<string, unknown>, pantalla?: string) {
+    // Defensa runtime: si alguien hace cast (tipo as EventTipo) con un
+    // string que no está en ALLOWED_KEYS, descartar y reportar.
+    if (!(tipo in ALLOWED_KEYS)) {
+      Sentry.addBreadcrumb({
+        category: 'tracker',
+        level: 'warning',
+        message: 'evento desconocido descartado',
+        data: { tipo },
+      });
+      return;
+    }
+    this.queue.push({ tipo, payload: aplicarAllowlist(tipo, payload), pantalla });
     if (this.queue.length >= MAX_QUEUE) {
       this.flush();
     }
@@ -86,7 +144,7 @@ class Tracker {
     } catch (err) {
       console.warn('[tracker] payload no serializable, descartando batch');
       Sentry.captureException(err instanceof Error ? err : new Error('tracker_payload_no_serializable'), {
-        tags: { source: "tracker" },
+        tags: { source: 'tracker' },
         extra: { batchSize: batch.length, tipos: batch.map((e) => e.tipo) },
       });
       return;

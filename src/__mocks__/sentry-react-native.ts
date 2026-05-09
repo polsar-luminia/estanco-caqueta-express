@@ -1,14 +1,16 @@
 // Stub mínimo para @sentry/react-native en tests de Vitest
-export const init = () => {};
-export const wrap = (component: unknown) => component;
-export const captureException = () => '';
-export const captureMessage = () => '';
-export const addBreadcrumb = () => {};
-export const setUser = () => {};
-export const setTag = () => {};
-export const setExtra = () => {};
-export const withScope = (cb: (scope: unknown) => void) => cb({
-  setTag: () => {},
-  setExtra: () => {},
-  setFingerprint: () => {},
-});
+import { vi } from "vitest";
+export const init = vi.fn();
+export const wrap = vi.fn((component: unknown) => component);
+export const captureException = vi.fn().mockReturnValue('');
+export const captureMessage = vi.fn().mockReturnValue('');
+export const addBreadcrumb = vi.fn();
+export const setUser = vi.fn();
+export const setTag = vi.fn();
+export const setExtra = vi.fn();
+export const withScope = vi.fn((cb: (scope: unknown) => void) => cb({
+  setTag: vi.fn(),
+  setExtra: vi.fn(),
+  setFingerprint: vi.fn(),
+}));
+export const setupExpressErrorHandler = vi.fn();
