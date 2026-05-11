@@ -6,6 +6,9 @@
  * El timer ahora arranca desde onLoad (no desde el efecto), así que en el
  * caso con datos válidos se extrae onLoad del elemento Image y se llama
  * manualmente para simular que la imagen terminó de cargar.
+ *
+ * Mientras la imagen carga se muestra SplashBranded como overlay (mockeado
+ * a null). Si en 7s no cargó, un timeout llama onFinish directamente.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import React from "react";
@@ -25,6 +28,7 @@ vi.mock("react", async () => {
     },
     useRef: (init: unknown) => ({ current: init }),
     useCallback: (fn: unknown) => fn,
+    useState: (init: unknown) => [init, vi.fn()],
   };
 });
 
@@ -75,6 +79,12 @@ vi.mock("../../lib/tracker", () => ({
   tracker: { track: vi.fn() },
 }));
 
+// ── Mock SplashBranded (no necesitamos testear sus internos aquí) ─────────────
+
+vi.mock("../SplashBranded", () => ({
+  SplashBranded: () => null,
+}));
+
 // Importaciones DESPUÉS de los mocks
 import { useQuery } from "@tanstack/react-query";
 import { tracker } from "../../lib/tracker";
@@ -93,6 +103,15 @@ function flushCleanups() {
     const fn = _cleanups.shift();
     if (typeof fn === "function") fn();
   }
+}
+
+// ── Helpers para extraer el elemento Image del árbol ──────────────────────────
+
+function getImageEl(result: React.ReactElement) {
+  // Estructura: <View> [ <Image />, <View><SplashBranded /></View> ] </View>
+  // Image es el primer hijo de la View raíz.
+  const children = result.props.children as React.ReactElement[];
+  return children[0] as React.ReactElement<{ onLoad: () => void; onError: () => void }>;
 }
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
@@ -130,9 +149,9 @@ describe("Interstitial", () => {
     expect(tracker.track).not.toHaveBeenCalled();
   });
 
-  // ── Caso 2: data válida — timer arranca desde onLoad ──────────────────────
+  // ── Caso 2: data válida — splash hasta onLoad, timer arranca desde onLoad ──
 
-  it("llama onFinish tras duracion_segundos una vez que la imagen cargó", () => {
+  it("muestra splash hasta que la imagen carga y luego llama onFinish tras duracion_segundos", () => {
     const interstitial = {
       id: 1,
       imagen_url: "https://cdn.estancocaqueta.com/banner.jpg",
@@ -150,21 +169,19 @@ describe("Interstitial", () => {
 
     expect(result).not.toBeNull();
 
-    // Efectos fail-fast: no hacen nada (data existe, sin error)
+    // Efectos fail-fast e imagen-timeout arrancan (data existe, sin error)
     flushEffects();
     expect(onFinish).not.toHaveBeenCalled();
     expect(tracker.track).not.toHaveBeenCalled();
 
-    // Simular que la imagen terminó de cargar → onLoad dispara el timer
-    const imageEl = (result as React.ReactElement).props.children as React.ReactElement<{
-      onLoad: () => void;
-    }>;
+    // Simular que la imagen terminó de cargar → onLoad cancela timeout + dispara timer
+    const imageEl = getImageEl(result as React.ReactElement);
     imageEl.props.onLoad();
 
     expect(tracker.track).toHaveBeenCalledWith("interstitial_mostrado", { interstitial_id: 1 });
     expect(onFinish).not.toHaveBeenCalled();
 
-    // Avanzar 3 segundos → timer completa
+    // Avanzar 3 segundos → timer de duración completa
     vi.advanceTimersByTime(3000);
 
     expect(onFinish).toHaveBeenCalledOnce();
@@ -233,11 +250,37 @@ describe("Interstitial", () => {
     expect(onFinish).not.toHaveBeenCalled();
 
     // Simular fallo de imagen → onError llama onFinish inmediatamente
-    const imageEl = (result as React.ReactElement).props.children as React.ReactElement<{
-      onError: () => void;
-    }>;
+    const imageEl = getImageEl(result as React.ReactElement);
     imageEl.props.onError();
 
     expect(onFinish).toHaveBeenCalledOnce();
+  });
+
+  // ── Caso 6: timeout de 7s si la imagen nunca carga ────────────────────────
+
+  it("llama onFinish tras 7s si la imagen no llega a cargar", () => {
+    const interstitial = {
+      id: 3,
+      imagen_url: "https://cdn.estancocaqueta.com/lento.jpg",
+      duracion_segundos: 4,
+    };
+
+    (useQuery as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: interstitial,
+      isLoading: false,
+      isError: false,
+    });
+
+    const onFinish = vi.fn();
+    Interstitial({ onFinish });
+
+    flushEffects();
+    expect(onFinish).not.toHaveBeenCalled();
+
+    // No llamamos onLoad → el timeout de 7s dispara
+    vi.advanceTimersByTime(7000);
+
+    expect(onFinish).toHaveBeenCalledOnce();
+    expect(tracker.track).not.toHaveBeenCalled();
   });
 });

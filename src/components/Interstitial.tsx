@@ -1,12 +1,17 @@
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { useQuery } from "@tanstack/react-query";
 import { getInterstitial, type Interstitial as InterstitialData } from "../lib/api";
 import { tracker } from "../lib/tracker";
+import { SplashBranded } from "./SplashBranded";
+
+const IMAGEN_TIMEOUT_MS = 7_000;
 
 export function Interstitial({ onFinish }: { onFinish: () => void }) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const imageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const { data, isLoading, isError } = useQuery<InterstitialData | null>({
     queryKey: ["interstitial"],
@@ -21,16 +26,30 @@ export function Interstitial({ onFinish }: { onFinish: () => void }) {
     if (isError || !data) onFinish();
   }, [isLoading, isError, data, onFinish]);
 
-  // Limpiar timer al desmontar
+  // Timeout de carga: si la imagen no cargó en 7s → saltar al home
+  useEffect(() => {
+    if (!data) return;
+    imageTimeoutRef.current = setTimeout(onFinish, IMAGEN_TIMEOUT_MS);
+    return () => {
+      if (imageTimeoutRef.current !== null) clearTimeout(imageTimeoutRef.current);
+    };
+  }, [data, onFinish]);
+
+  // Limpiar timer de duración al desmontar
   useEffect(() => {
     return () => {
       if (timerRef.current !== null) clearTimeout(timerRef.current);
     };
   }, []);
 
-  // Timer arranca solo cuando la imagen ya es visible en pantalla
+  // Timer de duración arranca solo cuando la imagen ya es visible en pantalla
   const handleLoad = useCallback(() => {
     if (!data) return;
+    if (imageTimeoutRef.current !== null) {
+      clearTimeout(imageTimeoutRef.current);
+      imageTimeoutRef.current = null;
+    }
+    setImageLoaded(true);
     tracker.track("interstitial_mostrado", { interstitial_id: data.id });
     timerRef.current = setTimeout(() => {
       tracker.track("interstitial_completado", { interstitial_id: data.id });
@@ -50,6 +69,11 @@ export function Interstitial({ onFinish }: { onFinish: () => void }) {
         onLoad={handleLoad}
         onError={() => onFinish()}
       />
+      {!imageLoaded && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <SplashBranded />
+        </View>
+      )}
     </View>
   );
 }
