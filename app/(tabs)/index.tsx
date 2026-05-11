@@ -46,7 +46,7 @@ function HeroSlide({ banner, onPress }: { banner: Patrocinado | undefined; onPre
         contentFit="cover"
       />
       <LinearGradient
-        colors={["rgba(0,0,0,0.8)", "transparent"]}
+        colors={["rgba(0,0,0,0.52)", "rgba(0,0,0,0.10)"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={{ position: "absolute", width: "100%", height: "100%" }}
