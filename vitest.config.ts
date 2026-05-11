@@ -23,6 +23,7 @@ export default defineConfig({
       { find: "react-native", replacement: path.resolve(__dirname, "./src/__mocks__/react-native.ts") },
       { find: "react-native-svg", replacement: path.resolve(__dirname, "./src/__mocks__/react-native-svg.ts") },
       { find: "expo-notifications", replacement: path.resolve(__dirname, "./src/__mocks__/expo-notifications.ts") },
+      { find: "expo-image", replacement: path.resolve(__dirname, "./src/__mocks__/expo-image.ts") },
       // Stub para assets de imagen (PNG/JPG/etc). RN usa require() en el código.
       { find: /\.(png|jpg|jpeg|gif|webp|svg)$/, replacement: path.resolve(__dirname, "./src/__mocks__/image-asset.ts") },
     ],

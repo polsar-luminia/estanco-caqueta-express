@@ -287,6 +287,23 @@ export async function getOfertas() {
   return apiFetch<Oferta[]>("/ofertas");
 }
 
+// --- Interstitiales ---
+
+export interface Interstitial {
+  id: number;
+  imagen_url: string;
+  duracion_segundos: number;
+}
+
+export async function getInterstitial(): Promise<Interstitial | null> {
+  try {
+    const list = await apiFetch<Interstitial[]>("/interstitiales");
+    return list[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // --- Tipos ---
 
 export interface Cliente {
@@ -487,6 +504,7 @@ export interface Oferta {
   tipo: "oferta" | "oferta_relampago" | "imperdible" | "promocion" | "irresistible";
   titulo: string | null;
   precio_oferta: number | null;
+  precio_anterior?: number | null;
   orden: number;
   fecha_inicio?: string | null;
   fecha_fin?: string | null;

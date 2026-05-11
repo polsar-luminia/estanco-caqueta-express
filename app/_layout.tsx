@@ -1,5 +1,5 @@
 import "../global.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AppState } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -13,6 +13,8 @@ import { usePushNotifications } from "../src/hooks/usePushNotifications";
 import { tracker } from "../src/lib/tracker";
 import { toastConfig } from "../src/components/ToastConfig";
 import { OfflineBanner } from "../src/components/OfflineBanner";
+import { Interstitial } from "../src/components/Interstitial";
+import { SplashBranded } from "../src/components/SplashBranded";
 
 // Rutas exentas del age gate (autenticación pública). Todo lo demás requiere edad confirmada.
 const RUTAS_EXENTAS_EDAD = ["(auth)"];
@@ -40,6 +42,7 @@ if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
 }
 
 export default Sentry.wrap(function RootLayout() {
+  const [interstitialDone, setInterstitialDone] = useState(false);
   const hydrate = useAuthStore((s) => s.hydrate);
   const clearHydrateError = useAuthStore((s) => s.clearHydrateError);
   const isLoading = useAuthStore((s) => s.isLoading);
@@ -106,7 +109,7 @@ export default Sentry.wrap(function RootLayout() {
   usePushNotifications();
 
   if (isLoading) {
-    return null;
+    return <SplashBranded />;
   }
 
   return (
@@ -144,6 +147,9 @@ export default Sentry.wrap(function RootLayout() {
         </Stack>
         <Toast config={toastConfig} position="bottom" bottomOffset={100} />
         <OfflineBanner />
+        {!interstitialDone && (
+          <Interstitial onFinish={() => setInterstitialDone(true)} />
+        )}
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

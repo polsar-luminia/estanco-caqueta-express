@@ -38,7 +38,9 @@ export type EventTipo =
   | 'pedido_cancelado'
   | 'carrito_agregado'
   | 'carrito_eliminado'
-  | 'carrito_cantidad_cambiada';
+  | 'carrito_cantidad_cambiada'
+  | 'interstitial_mostrado'
+  | 'interstitial_completado';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -62,6 +64,8 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   carrito_agregado: ['producto_id', 'nombre', 'precio', 'cantidad'],
   carrito_eliminado: ['producto_id'],
   carrito_cantidad_cambiada: ['producto_id', 'cantidad_nueva'],
+  interstitial_mostrado: ['interstitial_id'],
+  interstitial_completado: ['interstitial_id'],
 };
 
 function aplicarAllowlist(
