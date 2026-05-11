@@ -3,14 +3,15 @@
  *
  * Estrategia: se mockea useQuery para controlar el estado de carga/datos/error
  * y se invoca el componente directamente como función (patrón del proyecto).
- * Se usan fake timers para verificar el comportamiento del setTimeout.
+ * El timer ahora arranca desde onLoad (no desde el efecto), así que en el
+ * caso con datos válidos se extrae onLoad del elemento Image y se llama
+ * manualmente para simular que la imagen terminó de cargar.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import React from "react";
 
 // ── Mocks de módulos React ────────────────────────────────────────────────────
 
-// Capturamos los callbacks de useEffect para ejecutarlos manualmente
 const _effects: Array<() => (() => void) | void> = [];
 const _cleanups: Array<(() => void) | void> = [];
 
@@ -22,6 +23,8 @@ vi.mock("react", async () => {
     useEffect: (fn: () => (() => void) | void, _deps?: unknown[]) => {
       _effects.push(fn);
     },
+    useRef: (init: unknown) => ({ current: init }),
+    useCallback: (fn: unknown) => fn,
   };
 });
 
@@ -77,7 +80,6 @@ import { useQuery } from "@tanstack/react-query";
 import { tracker } from "../../lib/tracker";
 import { Interstitial } from "../Interstitial";
 
-// Helper para ejecutar todos los efectos registrados y recopilar cleanups
 function flushEffects() {
   while (_effects.length > 0) {
     const fn = _effects.shift()!;
@@ -86,7 +88,6 @@ function flushEffects() {
   }
 }
 
-// Helper para ejecutar todos los cleanups registrados
 function flushCleanups() {
   while (_cleanups.length > 0) {
     const fn = _cleanups.shift();
@@ -121,19 +122,17 @@ describe("Interstitial", () => {
     const onFinish = vi.fn();
     const result = Interstitial({ onFinish });
 
-    // Componente no renderiza nada cuando data es null
     expect(result).toBeNull();
 
-    // Ejecutar efectos pendientes
     flushEffects();
 
     expect(onFinish).toHaveBeenCalledOnce();
     expect(tracker.track).not.toHaveBeenCalled();
   });
 
-  // ── Caso 2: data válida ────────────────────────────────────────────────────
+  // ── Caso 2: data válida — timer arranca desde onLoad ──────────────────────
 
-  it("renderiza View y llama onFinish tras duracion_segundos", () => {
+  it("llama onFinish tras duracion_segundos una vez que la imagen cargó", () => {
     const interstitial = {
       id: 1,
       imagen_url: "https://cdn.estancocaqueta.com/banner.jpg",
@@ -149,32 +148,30 @@ describe("Interstitial", () => {
     const onFinish = vi.fn();
     const result = Interstitial({ onFinish });
 
-    // Debe renderizar el View contenedor (type es la función stub de View)
     expect(result).not.toBeNull();
-    expect((result as React.ReactElement).type).toBeDefined();
 
-    // Ejecutar efectos pendientes
+    // Efectos fail-fast: no hacen nada (data existe, sin error)
     flushEffects();
+    expect(onFinish).not.toHaveBeenCalled();
+    expect(tracker.track).not.toHaveBeenCalled();
 
-    // onFinish aún no se ha llamado (el timer no ha expirado)
+    // Simular que la imagen terminó de cargar → onLoad dispara el timer
+    const imageEl = (result as React.ReactElement).props.children as React.ReactElement<{
+      onLoad: () => void;
+    }>;
+    imageEl.props.onLoad();
+
+    expect(tracker.track).toHaveBeenCalledWith("interstitial_mostrado", { interstitial_id: 1 });
     expect(onFinish).not.toHaveBeenCalled();
 
-    // Verificar que se registró la impresión
-    expect(tracker.track).toHaveBeenCalledWith("interstitial_mostrado", {
-      interstitial_id: 1,
-    });
-
-    // Avanzar el timer 3 segundos
+    // Avanzar 3 segundos → timer completa
     vi.advanceTimersByTime(3000);
 
-    // Ahora onFinish debe haberse llamado
     expect(onFinish).toHaveBeenCalledOnce();
-    expect(tracker.track).toHaveBeenCalledWith("interstitial_completado", {
-      interstitial_id: 1,
-    });
+    expect(tracker.track).toHaveBeenCalledWith("interstitial_completado", { interstitial_id: 1 });
   });
 
-  // ── Caso 3: error ──────────────────────────────────────────────────────────
+  // ── Caso 3: error de query ─────────────────────────────────────────────────
 
   it("llama onFinish de inmediato cuando hay error", () => {
     (useQuery as ReturnType<typeof vi.fn>).mockReturnValue({
@@ -186,10 +183,8 @@ describe("Interstitial", () => {
     const onFinish = vi.fn();
     const result = Interstitial({ onFinish });
 
-    // No renderiza nada (data es undefined/falsy)
     expect(result).toBeNull();
 
-    // Ejecutar efectos pendientes
     flushEffects();
 
     expect(onFinish).toHaveBeenCalledOnce();
@@ -212,8 +207,37 @@ describe("Interstitial", () => {
 
     flushEffects();
 
-    // El efecto hace return early cuando isLoading=true
     expect(onFinish).not.toHaveBeenCalled();
     expect(tracker.track).not.toHaveBeenCalled();
+  });
+
+  // ── Caso 5: error de imagen (onError) ─────────────────────────────────────
+
+  it("llama onFinish si la imagen falla al cargar", () => {
+    const interstitial = {
+      id: 2,
+      imagen_url: "https://cdn.estancocaqueta.com/roto.jpg",
+      duracion_segundos: 4,
+    };
+
+    (useQuery as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: interstitial,
+      isLoading: false,
+      isError: false,
+    });
+
+    const onFinish = vi.fn();
+    const result = Interstitial({ onFinish });
+
+    flushEffects();
+    expect(onFinish).not.toHaveBeenCalled();
+
+    // Simular fallo de imagen → onError llama onFinish inmediatamente
+    const imageEl = (result as React.ReactElement).props.children as React.ReactElement<{
+      onError: () => void;
+    }>;
+    imageEl.props.onError();
+
+    expect(onFinish).toHaveBeenCalledOnce();
   });
 });
