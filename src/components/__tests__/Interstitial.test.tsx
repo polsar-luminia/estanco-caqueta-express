@@ -210,7 +210,7 @@ describe("Interstitial", () => {
 
   // ── Caso 4: isLoading ──────────────────────────────────────────────────────
 
-  it("no llama onFinish ni renderiza nada mientras isLoading es true", () => {
+  it("muestra SplashBranded (no home) mientras isLoading es true y no llama onFinish", () => {
     (useQuery as ReturnType<typeof vi.fn>).mockReturnValue({
       data: undefined,
       isLoading: true,
@@ -220,7 +220,8 @@ describe("Interstitial", () => {
     const onFinish = vi.fn();
     const result = Interstitial({ onFinish });
 
-    expect(result).toBeNull();
+    // Debe cubrir el home con el splash, no retornar null
+    expect(result).not.toBeNull();
 
     flushEffects();
 

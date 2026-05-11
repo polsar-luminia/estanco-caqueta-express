@@ -57,7 +57,10 @@ export function Interstitial({ onFinish }: { onFinish: () => void }) {
     }, data.duracion_segundos * 1000);
   }, [data, onFinish]);
 
-  if (isLoading || !data) return null;
+  // Mientras la query carga, cubrir el home para evitar el flash
+  if (isLoading) return <SplashBranded />;
+  // Sin datos o error → fail-fast effect ya llamó onFinish
+  if (!data) return null;
 
   return (
     <View style={StyleSheet.absoluteFillObject} pointerEvents="auto" accessible accessibilityViewIsModal>
