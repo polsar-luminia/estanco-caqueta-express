@@ -290,8 +290,8 @@ function OrderCard({ item }: { item: Pedido }) {
 
 function HelpSection() {
   const handleWhatsApp = () => {
-    Linking.openURL("https://wa.me/573155519216").catch(() => {
-      Linking.openURL("https://api.whatsapp.com/send?phone=573155519216");
+    Linking.openURL("https://wa.me/573189495704").catch(() => {
+      Linking.openURL("https://api.whatsapp.com/send?phone=573189495704");
     });
   };
 

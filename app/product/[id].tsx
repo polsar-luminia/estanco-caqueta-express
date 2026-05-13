@@ -91,7 +91,7 @@ function ProductDetailSkeleton() {
 /* ── Main screen ──────────────────────────────────────────── */
 
 export default function ProductDetailScreen() {
-  const { id, ofertaPrecio } = useLocalSearchParams<{ id: string; ofertaPrecio?: string }>();
+  const { id, ofertaPrecio, precioAnterior } = useLocalSearchParams<{ id: string; ofertaPrecio?: string; precioAnterior?: string }>();
   const productoId = id && id.trim() ? Number(id) : NaN;
   const router = useRouter();
   const addItemWithQuantity = useCartStore((s) => s.addItemWithQuantity);
@@ -193,6 +193,8 @@ export default function ProductDetailScreen() {
   const ofertaParseada = ofertaPrecio ? Number(ofertaPrecio) : NaN;
   const ofertaValida = Number.isFinite(ofertaParseada) && ofertaParseada > 0 && ofertaParseada < product.precio_app;
   const precioActivo = ofertaValida ? ofertaParseada : product.precio_app;
+  const precioAnteriorParsed = precioAnterior ? Number(precioAnterior) : NaN;
+  const precioAnteriorValido = Number.isFinite(precioAnteriorParsed) && precioAnteriorParsed > 0;
 
   const handleAdd = () => {
     addItemWithQuantity({
@@ -305,13 +307,9 @@ export default function ProductDetailScreen() {
 
           {/* Price */}
           <View style={{ gap: 2 }}>
-            {ofertaValida ? (
+            {ofertaValida && precioAnteriorValido ? (
               <Text style={{ fontSize: 14, color: "#9E9E9E", textDecorationLine: "line-through" }}>
-                {formatCOP(product.precio_app)}
-              </Text>
-            ) : product.precio_lista1 ? (
-              <Text style={{ fontSize: 14, color: "#9E9E9E", textDecorationLine: "line-through" }}>
-                {formatCOP(product.precio_lista1)}
+                {formatCOP(precioAnteriorParsed)}
               </Text>
             ) : null}
             <Text className="text-2xl font-extrabold text-brand-500">
@@ -417,7 +415,7 @@ export default function ProductDetailScreen() {
                       product={item}
                       onPress={() => {
                         tracker.track('sugerencia_clickeada', { desde_producto: product.id, producto_clickeado: item.id, nombre: item.nombre }, 'product/[id]');
-                        router.push(`/product/${item.id}`);
+                        router.replace(`/product/${item.id}`);
                       }}
                     />
                   </View>

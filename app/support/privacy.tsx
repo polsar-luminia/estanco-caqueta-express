@@ -6,7 +6,7 @@ import { Feather } from "@expo/vector-icons";
 const SECTIONS = [
   {
     title: "1. Responsable del Tratamiento",
-    body: "Organización Polo & Salazar ZOMAC S.A.S.\nNIT: 901.327.818-0\nDirección: Carrera 10 #16-86, Florencia, Caquetá, Colombia\nCorreo: zomacpolosalazar@gmail.com\nTeléfono: +57 315 551 9216",
+    body: "Organización Polo & Salazar ZOMAC S.A.S.\nNIT: 901.327.818-0\nDirección: Carrera 10 #16-86, Florencia, Caquetá, Colombia\nCorreo: app@estancocaqueta.com\nTeléfono: +57 318 949 5704",
   },
   {
     title: "2. Datos que Recopilamos",
@@ -14,15 +14,15 @@ const SECTIONS = [
   },
   {
     title: "3. Finalidad del Tratamiento",
-    body: "Tus datos personales son utilizados para:\n\n• Gestionar y procesar tus pedidos\n• Coordinar las entregas a domicilio\n• Enviarte notificaciones push sobre el estado de tus pedidos\n• Enviarte notificaciones push de marketing, incluyendo: recordatorios de carritos con productos pendientes (carrito abandonado), recomendaciones cuando llevas tiempo sin abrir la app (re-engagement) y promociones programadas en horarios específicos (por ejemplo, ofertas de fin de semana)\n• Estas comunicaciones de marketing están sujetas a una frecuencia máxima de 2 mensajes por semana y puedes desactivarlas en cualquier momento desde la configuración de tu dispositivo o solicitándolo a zomacpolosalazar@gmail.com\n• Mejorar la experiencia de la aplicación\n• Cumplir con las obligaciones legales aplicables, incluida la verificación de mayoría de edad conforme a la Ley 124 de 1994",
+    body: "Tus datos personales son utilizados para:\n\n• Gestionar y procesar tus pedidos\n• Coordinar las entregas a domicilio\n• Enviarte notificaciones push sobre el estado de tus pedidos\n• Enviarte notificaciones push de marketing, incluyendo: recordatorios de carritos con productos pendientes (carrito abandonado), recomendaciones cuando llevas tiempo sin abrir la app (re-engagement) y promociones programadas en horarios específicos (por ejemplo, ofertas de fin de semana)\n• Estas comunicaciones de marketing están sujetas a una frecuencia máxima de 2 mensajes por semana y puedes desactivarlas en cualquier momento desde la configuración de tu dispositivo o solicitándolo a app@estancocaqueta.com\n• Mejorar la experiencia de la aplicación\n• Cumplir con las obligaciones legales aplicables, incluida la verificación de mayoría de edad conforme a la Ley 124 de 1994",
   },
   {
     title: "4. Base Legal",
-    body: "El tratamiento de tus datos personales se realiza con fundamento en:\n\n• Tu consentimiento expreso otorgado al momento del registro (Ley 1581 de 2012, Art. 6, literal a).\n• Decreto 1377 de 2013, reglamentario de la Ley 1581.\n\nPuedes retirar tu consentimiento en cualquier momento enviando una solicitud a zomacpolosalazar@gmail.com, sin que ello afecte la licitud del tratamiento previo.",
+    body: "El tratamiento de tus datos personales se realiza con fundamento en:\n\n• Tu consentimiento expreso otorgado al momento del registro (Ley 1581 de 2012, Art. 6, literal a).\n• Decreto 1377 de 2013, reglamentario de la Ley 1581.\n\nPuedes retirar tu consentimiento en cualquier momento enviando una solicitud a app@estancocaqueta.com, sin que ello afecte la licitud del tratamiento previo.",
   },
   {
     title: "5. Derechos del Titular",
-    body: "Como titular de los datos personales tienes derecho a:\n\n• Conocer, actualizar y rectificar tus datos.\n• Solicitar la supresión de tus datos cuando no exista deber legal de conservarlos.\n• Ser informado sobre el uso que se da a tus datos.\n• Revocar la autorización y/o solicitar la supresión del dato.\n\nPara ejercer estos derechos, envía tu solicitud a:\nzomacpolosalazar@gmail.com\n\nTiempos de respuesta: consultas 10 días hábiles, reclamos 15 días hábiles.",
+    body: "Como titular de los datos personales tienes derecho a:\n\n• Conocer, actualizar y rectificar tus datos.\n• Solicitar la supresión de tus datos cuando no exista deber legal de conservarlos.\n• Ser informado sobre el uso que se da a tus datos.\n• Revocar la autorización y/o solicitar la supresión del dato.\n\nPara ejercer estos derechos, envía tu solicitud a:\napp@estancocaqueta.com\n\nTiempos de respuesta: consultas 10 días hábiles, reclamos 15 días hábiles.",
   },
   {
     title: "6. Vigencia y Seguridad",

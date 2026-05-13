@@ -9,7 +9,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../src/stores/auth";
 import { useCartStore } from "../../src/stores/cart";
 import { WHATSAPP_SOPORTE } from "../../src/constants/config";
-import { formatCOP } from "../../src/lib/format";
 import { getCuponesDisponibles } from "../../src/lib/api";
 import { CopyIcon } from "../../src/components/icons/AppIcons";
 
@@ -88,7 +87,6 @@ export default function ProfileScreen() {
 
   const puntos = cliente?.puntos || 0;
   const totalPedidos = cliente?.total_pedidos ?? 0;
-  const ahorroTotal = cliente?.ahorro_total ?? 0;
 
   // Progress bar puntos (0-100 por ciclo)
   const pct = Math.min(100, ((puntos % 100) / 100) * 100);
@@ -152,8 +150,7 @@ export default function ProfileScreen() {
         }}>
           {[
             { label: "Pedidos", value: String(totalPedidos), color: "#1FAF55", sub: "realizados" },
-            { label: "Puntos", value: `${puntos} pts`, color: "#D33587", sub: "100 = envío gratis" },
-            { label: "Ahorro", value: formatCOP(ahorroTotal), color: "#2A6FDB", sub: "en total" },
+            { label: "Puntos", value: `${puntos} pts`, color: "#D33587", sub: "200 = envío gratis" },
           ].map((stat, i) => (
             <View key={stat.label} style={{
               flex: 1, alignItems: "center",

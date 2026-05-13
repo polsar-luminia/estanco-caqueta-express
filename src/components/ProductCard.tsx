@@ -12,6 +12,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 interface OfertaInfo {
   titulo?: string | null;
   precio_oferta?: number | null;
+  precio_anterior?: number | null;
 }
 
 interface Props {
@@ -33,7 +34,8 @@ export function ProductCard({ product, onPress, badge, oferta, priority = "norma
   // Precio efectivo: precio_oferta tiene prioridad sobre precio_app si está
   // definido. Para el carrito siempre usamos el efectivo (no doble cargo).
   const precioEfectivo = oferta?.precio_oferta ?? product.precio_app;
-  const tienePrecioOferta = oferta?.precio_oferta != null && oferta.precio_oferta < product.precio_app;
+  const tienePrecioOferta = oferta?.precio_oferta != null && oferta?.precio_anterior != null;
+  const precioTachado = oferta?.precio_anterior ?? product.precio_app;
 
   const handleAdd = () => {
     if (agotado) return;
@@ -127,10 +129,9 @@ export function ProductCard({ product, onPress, badge, oferta, priority = "norma
           <View className="flex-row items-center justify-between mt-2">
             <View style={{ gap: 1 }}>
               {tienePrecioOferta ? (
-                // Caso oferta con precio: tachamos precio_app, mostramos precio_oferta
                 <>
                   <Text style={{ fontSize: 11, color: "#9E9E9E", textDecorationLine: "line-through" }}>
-                    {formatCOP(product.precio_app)}
+                    {formatCOP(precioTachado)}
                   </Text>
                   <Text
                     className="font-bold text-lg"
@@ -140,20 +141,12 @@ export function ProductCard({ product, onPress, badge, oferta, priority = "norma
                   </Text>
                 </>
               ) : (
-                // Comportamiento legacy: precio_lista1 tachado si existe
-                <>
-                  {product.precio_lista1 ? (
-                    <Text style={{ fontSize: 11, color: "#9E9E9E", textDecorationLine: "line-through" }}>
-                      {formatCOP(product.precio_lista1)}
-                    </Text>
-                  ) : null}
-                  <Text
-                    className="font-bold text-lg"
-                    style={{ color: agotado ? "#9CA3AF" : "#D33587" }}
-                  >
-                    {formatCOP(product.precio_app)}
-                  </Text>
-                </>
+                <Text
+                  className="font-bold text-lg"
+                  style={{ color: agotado ? "#9CA3AF" : "#D33587" }}
+                >
+                  {formatCOP(product.precio_app)}
+                </Text>
               )}
             </View>
 

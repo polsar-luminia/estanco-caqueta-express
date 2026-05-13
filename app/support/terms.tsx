@@ -6,7 +6,7 @@ import { Feather } from "@expo/vector-icons";
 const SECTIONS = [
   {
     title: "1. Identificación del Responsable",
-    body: "Organización Polo & Salazar ZOMAC S.A.S.\nNIT: 901.327.818-0\nDirección: Carrera 10 #16-86, Florencia, Caquetá, Colombia\nCorreo: zomacpolosalazar@gmail.com\nTeléfono: +57 315 551 9216",
+    body: "Organización Polo & Salazar ZOMAC S.A.S.\nNIT: 901.327.818-0\nDirección: Carrera 10 #16-86, Florencia, Caquetá, Colombia\nCorreo: app@estancocaqueta.com\nTeléfono: +57 318 949 5704",
   },
   {
     title: "2. Objeto y Aceptación",
@@ -30,7 +30,7 @@ const SECTIONS = [
   },
   {
     title: "7. Protección de Datos Personales",
-    body: "El tratamiento de datos personales se rige por la Ley 1581 de 2012 y el Decreto 1377 de 2013.\n\nDatos recopilados: nombre, teléfono, dirección de entrega, historial de pedidos.\n\nFinalidades: gestión de pedidos, entregas, comunicaciones comerciales y mejora del servicio.\n\nDerechos del titular: conocer, actualizar, rectificar y suprimir datos enviando solicitud a zomacpolosalazar@gmail.com.\n\nTiempos de respuesta: consultas 10 días hábiles, reclamos 15 días hábiles.",
+    body: "El tratamiento de datos personales se rige por la Ley 1581 de 2012 y el Decreto 1377 de 2013.\n\nDatos recopilados: nombre, teléfono, dirección de entrega, historial de pedidos.\n\nFinalidades: gestión de pedidos, entregas, comunicaciones comerciales y mejora del servicio.\n\nDerechos del titular: conocer, actualizar, rectificar y suprimir datos enviando solicitud a app@estancocaqueta.com.\n\nTiempos de respuesta: consultas 10 días hábiles, reclamos 15 días hábiles.",
   },
   {
     title: "8. Propiedad Intelectual",

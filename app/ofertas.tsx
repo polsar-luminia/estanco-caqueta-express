@@ -35,7 +35,8 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
   const addItem = useCartStore((s) => s.addItem);
   const { gradient, emoji } = getCatVisuals(oferta.producto.categoria);
   const precioOferta = oferta.precio_oferta ?? oferta.producto.precio_app;
-  const saving = oferta.producto.precio_app - precioOferta;
+  const precioBase = oferta.precio_anterior ?? oferta.producto.precio_app;
+  const saving = precioBase - precioOferta;
 
   const handleAdd = () => {
     if ((oferta.producto.stock_total ?? 0) <= 0) return;
@@ -109,7 +110,7 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <View>
             <Text style={{ fontSize: 9, color: "rgba(255,255,255,0.40)", textDecorationLine: "line-through" }}>
-              {formatCOP(oferta.producto.precio_app)}
+              {formatCOP(precioBase)}
             </Text>
             <Text style={{ fontSize: 17, fontWeight: "800", color: "#fff" }}>
               {formatCOP(precioOferta)}
@@ -316,11 +317,13 @@ export default function OfertasScreen() {
                     <ProductCard
                       key={oferta.id}
                       product={oferta.producto}
-                      oferta={{ titulo: oferta.titulo, precio_oferta: oferta.precio_oferta }}
+                      oferta={{ titulo: oferta.titulo, precio_oferta: oferta.precio_oferta, precio_anterior: oferta.precio_anterior }}
                       onPress={() => {
-                        const url = oferta.precio_oferta != null && oferta.precio_oferta < oferta.producto.precio_app
-                          ? `/product/${oferta.producto.id}?ofertaPrecio=${oferta.precio_oferta}`
-                          : `/product/${oferta.producto.id}`;
+                        let url = `/product/${oferta.producto.id}`;
+                        if (oferta.precio_oferta != null) {
+                          url += `?ofertaPrecio=${oferta.precio_oferta}`;
+                          if (oferta.precio_anterior != null) url += `&precioAnterior=${oferta.precio_anterior}`;
+                        }
                         router.push(url);
                       }}
                     />

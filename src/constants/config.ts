@@ -1,6 +1,6 @@
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://api.estancocaqueta.com/api/v1";
 
-export const WHATSAPP_SOPORTE = "https://wa.me/573155519216";
+export const WHATSAPP_SOPORTE = "https://wa.me/573189495704";
 
 // Numero del WhatsApp Business de Estanco Caqueta Express (WABA verificada en Meta).
 // Se usa en el flujo "Olvide contrasena": el usuario abre WhatsApp y manda un saludo

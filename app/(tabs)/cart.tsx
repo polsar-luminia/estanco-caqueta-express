@@ -115,7 +115,7 @@ export default function CartScreen() {
 
   const subtotal = subtotalComputed;
   const puntos = cliente?.puntos || 0;
-  const puedeUsarPuntos = puntos >= 100;
+  const puedeUsarPuntos = puntos >= 200;
   const envioGratisMinimo = configApp?.envio_gratis_minimo ?? 150000;
   const envioCosto = configApp?.envio_costo ?? 5000;
   const pedidoMinimo = configApp?.pedido_minimo ?? 30000;
@@ -538,7 +538,7 @@ export default function CartScreen() {
               {puedeUsarPuntos && subtotal < envioGratisMinimo && (
                 <View className="flex-row justify-between items-center rounded-xl p-3" style={{ backgroundColor: "#F4F4F0" }}>
                   <View className="flex-1">
-                    <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1C1A" }}>Usar 100 puntos</Text>
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1C1A" }}>Usar 200 puntos</Text>
                     <Text style={{ fontSize: 11, color: "#6D7B6C" }}>Envío gratis (tienes {puntos} pts)</Text>
                   </View>
                   <Switch
@@ -551,7 +551,7 @@ export default function CartScreen() {
               )}
               {!puedeUsarPuntos && puntos > 0 && subtotal < envioGratisMinimo && (
                 <Text style={{ fontSize: 11, color: "#6D7B6C", fontStyle: "italic" }}>
-                  Tienes {puntos} pts. Necesitas 100 para envío gratis.
+                  Tienes {puntos} pts. Necesitas 200 para envío gratis.
                 </Text>
               )}
             </View>
