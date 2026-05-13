@@ -32,7 +32,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "co.estancocaqueta.express",
-      "versionCode": 5
+      "versionCode": 6
     },
     "plugins": [
       "expo-router",
