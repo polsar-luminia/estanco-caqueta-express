@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "co.estancocaqueta.express",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "associatedDomains": [
         "applinks:estancocaqueta.com"
       ],
