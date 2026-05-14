@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { getCategorias, getDestacados, getPatrocinados, getHeroModo, getCombos, getOfertas, type Combo } from "../../src/lib/api";
+import { filtrarCategoriasIOS, filtrarProductosIOS, filtrarConProductoIOS } from "../../src/lib/iosFilters";
 import { OfertasBannerCard } from "../../src/components/OfertasBannerCard";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
@@ -173,17 +174,17 @@ export default function HomeScreen() {
 
   const tienda = useTiendaAbierta();
 
-  const { data: categorias = [], isLoading: loadCat, isError: errorCat, isFetching: fetchCat } = useQuery({
+  const { data: categoriasRaw = [], isLoading: loadCat, isError: errorCat, isFetching: fetchCat } = useQuery({
     queryKey: ["categorias"],
     queryFn: getCategorias,
   });
 
-  const { data: destacados = [], isLoading: loadDest, isError: errorDest, isFetching: fetchDest } = useQuery({
+  const { data: destacadosRaw = [], isLoading: loadDest, isError: errorDest, isFetching: fetchDest } = useQuery({
     queryKey: ["destacados"],
     queryFn: getDestacados,
   });
 
-  const { data: patrocinados = [], isLoading: loadPat, isFetching: fetchPat } = useQuery({
+  const { data: patrocinadosRaw = [], isLoading: loadPat, isFetching: fetchPat } = useQuery({
     queryKey: ["patrocinados"],
     queryFn: getPatrocinados,
   });
@@ -194,16 +195,24 @@ export default function HomeScreen() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: ofertas = [] } = useQuery({
+  const { data: ofertasRaw = [] } = useQuery({
     queryKey: ["ofertas"],
     queryFn: getOfertas,
   });
 
-  const { data: combos = [] } = useQuery({
+  const { data: combosRaw = [] } = useQuery({
     queryKey: ['combos'],
     queryFn: getCombos,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Apple §1.4.3 — defensa cliente para iOS por si el backend devuelve tabaco
+  // (ej: cache vencido o regresión). El header X-Platform ya filtra server-side.
+  const categorias = filtrarCategoriasIOS(categoriasRaw);
+  const destacados = filtrarProductosIOS(destacadosRaw);
+  const patrocinados = filtrarConProductoIOS(patrocinadosRaw);
+  const ofertas = filtrarConProductoIOS(ofertasRaw);
+  const combos = filtrarConProductoIOS(combosRaw);
 
   const isLoading = loadCat || loadDest || loadPat;
   // Error total: ambas queries principales fallaron y no hay datos cacheados

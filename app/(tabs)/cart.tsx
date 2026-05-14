@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { View, Text, FlatList, TextInput, Pressable, Switch, KeyboardAvoidingView, Platform } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, Redirect } from "expo-router";
 import * as Sentry from "@sentry/react-native";
 import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
@@ -41,6 +41,8 @@ export default function CartScreen() {
   const updatePrices = useCartStore((s) => s.updatePrices);
   const updateStocks = useCartStore((s) => s.updateStocks);
   const cliente = useAuthStore((s) => s.cliente);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthLoading = useAuthStore((s) => s.isLoading);
 
   // Refetch precios al montar — detecta si cambiaron desde que se persistieron en AsyncStorage.
   // El backend cobra el precio actual (lineas sin precio), así que es sólo corrección visual.
@@ -107,6 +109,7 @@ export default function CartScreen() {
   const { data: direcciones = [], refetch: refetchDirs } = useQuery({
     queryKey: ["direcciones"],
     queryFn: getDirecciones,
+    enabled: isAuthenticated,
   });
 
   const dirPredeterminada = direcciones.find((d) => d.predeterminada) || direcciones[0];
@@ -307,6 +310,15 @@ export default function CartScreen() {
       setLoading(false);
     }
   };
+
+  // Apple §5.1.1(v): el catálogo es público pero el checkout requiere sesión.
+  // Items en el cart (Zustand persistido) sobreviven el login y se mantienen
+  // disponibles al volver. Bloqueamos cart únicamente cuando hay items pendientes
+  // (un guest que solo abre el tab ve la pantalla vacía y puede volver a explorar).
+  if (isAuthLoading) return null;
+  if (!isAuthenticated && items.length > 0) {
+    return <Redirect href="/(auth)/login" />;
+  }
 
   if (items.length === 0) {
     return (

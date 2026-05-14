@@ -57,14 +57,15 @@ export default function ProfileScreen() {
   const clearCart = useCartStore((s) => s.clear);
   const queryClient = useQueryClient();
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
-
   const { data: cupones = [] } = useQuery({
     queryKey: ["cupones-disponibles"],
     queryFn: getCuponesDisponibles,
     staleTime: 5 * 60 * 1000,
+    enabled: isAuthenticated,
   });
   const cuponesNuevos = cupones.filter((c) => !c.ya_usado).length;
+
+  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
 
   const handleLogout = () => {
     Alert.alert("Cerrar sesión", "¿Quieres salir de tu cuenta?", [
@@ -295,7 +296,7 @@ export default function ProfileScreen() {
           <MenuItem
             icon="policy"
             label="Eliminar cuenta"
-            onPress={() => Linking.openURL("https://admin.estancocaqueta.com/eliminar-cuenta.html")}
+            onPress={() => router.push("/profile/eliminar-cuenta")}
           />
         </View>
       </View>

@@ -7,6 +7,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import Toast from "react-native-toast-message";
 import { getOfertas, type Oferta } from "../src/lib/api";
+import { filtrarConProductoIOS } from "../src/lib/iosFilters";
 import { ProductCard } from "../src/components/ProductCard";
 import { CountdownChip } from "../src/components/CountdownChip";
 import { ProductGridSkeleton } from "../src/components/skeletons/ProductGridSkeleton";
@@ -147,16 +148,20 @@ export default function OfertasScreen() {
   const itemCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad, 0));
   const total = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad * i.precioUnitario, 0));
 
-  const { data: ofertas = [], isLoading, isError, refetch } = useQuery({
+  const { data: ofertasRaw = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["ofertas"],
     queryFn: getOfertas,
     staleTime: 2 * 60 * 1000,
   });
 
-  // Guards de auth + edad (Apple §1.4.3 + Ley 124) — deben ir después de todos los hooks
+  // Apple §1.4.3 — defensa cliente para iOS por si llega oferta de tabaco.
+  const ofertas = filtrarConProductoIOS(ofertasRaw);
+
+  // Apple §5.1.1(v) — ofertas es catálogo, debe ser visible para guests.
+  // Apple §1.4.3 — si hay sesión activa pero sin edad confirmada → age gate.
+  // El guard de root layout y el de (tabs) ya cubren la edad cuando hay sesión.
   if (isAuthLoading) return null;
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
-  if (cliente && !cliente.edad_confirmada) return <Redirect href="/(auth)/edad-confirmar" />;
+  if (isAuthenticated && cliente && !cliente.edad_confirmada) return <Redirect href="/(auth)/edad-confirmar" />;
 
   // Separar flash vs regulares
   const flash = ofertas.filter((o) => o.tipo === "oferta_relampago");

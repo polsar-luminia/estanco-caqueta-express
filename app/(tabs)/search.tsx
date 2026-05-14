@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { View, TextInput, FlatList, Text, ScrollView, Pressable, Dimensions, ActivityIndicator, Platform } from "react-native";
+import { View, TextInput, FlatList, Text, ScrollView, Pressable, Dimensions, ActivityIndicator } from "react-native";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { buscarProductos, getCategorias, getDestacados, type Categoria } from "../../src/lib/api";
+import { filtrarCategoriasIOS, filtrarProductosIOS } from "../../src/lib/iosFilters";
 import { tracker } from "../../src/lib/tracker";
 import { getCatVisuals } from "../../src/lib/catVisuals";
 import { ProductCard } from "../../src/components/ProductCard";
@@ -13,7 +14,10 @@ import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridS
 import { ErrorState } from "../../src/components/ErrorState";
 import { SearchIcon, CloseIcon, ClockIcon } from "../../src/components/icons/AppIcons";
 
-const RECENT_SEARCHES = ["Jack Daniel's", "Olmeca Reposado", "Something Special", "Absolut", "Bacardi", "Casillero del Diablo"];
+// Sugerencias visibles antes de que el usuario escriba — son recomendaciones
+// fijas, no historial real. El header lo nombra "Búsquedas populares" para
+// no engañar (Apple §1.1.6: no false/misleading information).
+const SUGERENCIAS_BUSQUEDA = ["Jack Daniel's", "Olmeca Reposado", "Something Special", "Absolut", "Bacardi", "Casillero del Diablo"];
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const COL_WIDTH = (SCREEN_WIDTH - 32 - 12) / 2; // px-4 padding + 1 gap de 12
 
@@ -123,7 +127,8 @@ export default function SearchScreen() {
     enabled: debouncedQuery.length >= 2,
   });
 
-  const resultados = searchData?.pages.flatMap((p) => p.productos) ?? [];
+  // Apple §1.4.3 — defensa cliente en iOS contra resultados de tabaco.
+  const resultados = filtrarProductosIOS(searchData?.pages.flatMap((p) => p.productos) ?? []);
   const totalResultados = searchData?.pages[0]?.total ?? 0;
 
   const hasResults = debouncedQuery.length >= 2 && resultados.length > 0 && !isError;
@@ -134,17 +139,15 @@ export default function SearchScreen() {
     queryKey: ["categorias"],
     queryFn: getCategorias,
   });
-  // Guía 1.4.3 — ocultar tabaco/vapes en iOS (no permitido en App Store)
-  const BLOQUEADAS_IOS = ["cigarr", "vape", "tabac"];
-  const categorias = Platform.OS === "ios"
-    ? categoriasRaw.filter(c => !BLOQUEADAS_IOS.some(b => c.nombre.toLowerCase().includes(b)))
-    : categoriasRaw;
+  // Apple §1.4.3 — filtro centralizado de tabaco/vape para iOS.
+  const categorias = filtrarCategoriasIOS(categoriasRaw);
 
-  const { data: destacados = [] } = useQuery({
+  const { data: destacadosRaw = [] } = useQuery({
     queryKey: ["destacados"],
     queryFn: getDestacados,
     enabled: showExplore,
   });
+  const destacados = filtrarProductosIOS(destacadosRaw);
 
   useEffect(() => {
     if (debouncedQuery.length >= 2 && !isLoading) {
@@ -293,10 +296,10 @@ export default function SearchScreen() {
           {/* Recent Searches */}
           <View style={{ paddingHorizontal: 16, marginBottom: 20, paddingTop: 16 }}>
             <Text style={{ fontSize: 10, fontWeight: "700", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>
-              Búsquedas Recientes
+              Búsquedas Populares
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-              {RECENT_SEARCHES.map((term) => (
+              {SUGERENCIAS_BUSQUEDA.map((term) => (
                 <Pressable
                   key={term}
                   onPress={() => handleRecentSearch(term)}

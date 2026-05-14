@@ -4,6 +4,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import Svg, { Path } from "react-native-svg";
 import { getProductos, type Producto } from "../../src/lib/api";
+import { esCategoriaProhibidaIOS, filtrarProductosIOS } from "../../src/lib/iosFilters";
 
 type GridItem = Producto | { id: number; _spacer: true };
 import { tracker } from "../../src/lib/tracker";
@@ -44,8 +45,13 @@ export default function CategoryScreen() {
     enabled: Number.isFinite(categoriaId) && categoriaId > 0,
   });
 
-  const productos = data?.pages.flatMap((p) => p.productos) ?? [];
+  // Apple §1.4.3 — defensa cliente en iOS: si por error llega un producto
+  // de tabaco/vape, lo filtramos. El backend ya bloquea por X-Platform.
+  const productos = filtrarProductosIOS(data?.pages.flatMap((p) => p.productos) ?? []);
   const nombreCategoria = data?.pages[0]?.productos?.[0]?.categoria || "Categoría";
+
+  // Si la categoría entera está bloqueada en iOS, mostrar "no encontrada".
+  const categoriaBloqueada = esCategoriaProhibidaIOS(nombreCategoria);
 
   useEffect(() => {
     if (!isLoading && nombreCategoria !== "Categoría") {
@@ -53,7 +59,7 @@ export default function CategoryScreen() {
     }
   }, [isLoading, categoriaId, nombreCategoria]);
 
-  if (!Number.isFinite(categoriaId) || categoriaId <= 0) {
+  if (!Number.isFinite(categoriaId) || categoriaId <= 0 || categoriaBloqueada) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
         <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>

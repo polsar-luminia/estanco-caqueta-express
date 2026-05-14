@@ -19,6 +19,12 @@ import { SplashBranded } from "../src/components/SplashBranded";
 // Rutas exentas del age gate (autenticación pública). Todo lo demás requiere edad confirmada.
 const RUTAS_EXENTAS_EDAD = ["(auth)"];
 
+// Apple §5.1.1(v) — el catálogo debe ser navegable sin login (guest browsing).
+// Por eso usamos blacklist (rutas que SÍ exigen sesión) en vez de whitelist:
+// product/[id], category/[id], ofertas, support y (tabs) son públicos.
+// cart/orders/profile dentro de (tabs) hacen su propio Redirect a /login.
+const RUTAS_REQUIEREN_AUTH = ["profile"];
+
 if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -73,21 +79,23 @@ export default Sentry.wrap(function RootLayout() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, lastHydrateError]);
 
-  // Guard auth + edad: allowlist de rutas públicas. Bloquea deep links sin sesión ni age gate.
-  // M-NAV-17: sin este guard, product/[id] y category/[id] eran accesibles sin login ni edad.
+  // Guard auth + edad — Apple §5.1.1(v) compliant:
+  //   - Sin sesión: solo bloquea rutas en RUTAS_REQUIEREN_AUTH (profile).
+  //     El catálogo, ofertas, product/[id], category/[id] y support son
+  //     accesibles como invitado. Cart/orders hacen su propio Redirect interno.
+  //   - Con sesión y sin edad confirmada (Apple §1.4.3): salta a /edad-confirmar
+  //     excepto si ya está en (auth).
   useEffect(() => {
     if (isLoading) return;
     const rutaActual = segments[0] as string | undefined;
-    // Solo (auth) es público. Cualquier otra ruta requiere sesión activa.
-    const RUTAS_PUBLICAS = ["(auth)"];
 
-    if (!isAuthenticated && rutaActual && !RUTAS_PUBLICAS.includes(rutaActual)) {
-      router.replace("/(auth)/login");
+    if (!isAuthenticated) {
+      if (rutaActual && RUTAS_REQUIEREN_AUTH.includes(rutaActual)) {
+        router.replace("/(auth)/login");
+      }
       return;
     }
-    if (!isAuthenticated) return;
 
-    // Apple §1.4.3: con sesión pero sin edad confirmada → age gate.
     if (!edadConfirmada) {
       if (rutaActual && !RUTAS_EXENTAS_EDAD.includes(rutaActual)) {
         router.replace("/(auth)/edad-confirmar");

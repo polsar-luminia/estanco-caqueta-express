@@ -1,4 +1,5 @@
 import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 import { API_URL } from "../constants/config";
 
 const TOKEN_KEY = "auth_token";
@@ -33,6 +34,10 @@ export async function apiFetch<T = any>(
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    // Apple §1.4.3 — el backend filtra categorías de tabaco/vape cuando
+    // el header indica ios. Es defensa server-side; el frontend tiene su
+    // propio filtro defensivo en src/lib/iosFilters.ts.
+    "X-Platform": Platform.OS,
     ...(rest.headers as Record<string, string>),
   };
 
@@ -185,6 +190,16 @@ export async function eliminarPushToken() {
 
 export async function logoutCliente() {
   return apiFetch<{ ok: true }>("/clientes/logout", { method: "POST" });
+}
+
+// Apple App Store §5.1.1(v) — eliminación in-app de la cuenta.
+// El backend anonimiza/elimina los datos del cliente y revoca todas sus sesiones.
+// Devuelve 204 No Content; cualquier 4xx/5xx se mapea a Error en apiFetch.
+export async function eliminarCuenta(confirmacion: string) {
+  return apiFetch<{ ok: true }>("/clientes/me", {
+    method: "DELETE",
+    body: JSON.stringify({ confirmacion }),
+  });
 }
 
 // Apple App Store §1.4.3 — confirmación explícita de mayoría de edad.
