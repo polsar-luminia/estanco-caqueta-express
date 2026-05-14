@@ -320,7 +320,6 @@ function HelpSection() {
 
 export default function OrdersScreen() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
 
   const {
     data: pedidos = [],
@@ -333,7 +332,10 @@ export default function OrdersScreen() {
     queryFn: getPedidos,
     refetchInterval: 30_000,
     refetchIntervalInBackground: false,
+    enabled: isAuthenticated,
   });
+
+  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
 
   if (isLoading) {
     return (

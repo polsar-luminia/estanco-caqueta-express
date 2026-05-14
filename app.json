@@ -7,7 +7,6 @@
     "icon": "./assets/icon.png",
     "scheme": "estancocaqueta",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -31,9 +30,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1FAF55"
       },
-      "edgeToEdgeEnabled": true,
       "package": "co.estancocaqueta.express",
-      "versionCode": 6
+      "versionCode": 7
     },
     "plugins": [
       "expo-router",
@@ -54,8 +52,7 @@
           "icon": "./assets/icon.png",
           "color": "#1FAF55"
         }
-      ],
-      "react-native-edge-to-edge"
+      ]
     ],
     "extra": {
       "router": {},
