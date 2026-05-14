@@ -14,7 +14,7 @@ const SECTIONS = [
   },
   {
     title: "3. Requisitos de Uso",
-    body: "• Ser mayor de 18 años conforme a la legislación colombiana.\n• Proporcionar datos verídicos al momento del registro.\n• El domiciliario podrá solicitar documento de identidad para verificar la edad del comprador.\n• La venta de bebidas embriagantes a menores de edad está prohibida (Ley 124 de 1994).",
+    body: "• Ser mayor de 18 años conforme a la legislación colombiana.\n• Proporcionar datos verídicos al momento del registro.\n• El domiciliario verificará el documento de identidad del comprador antes de entregar productos restringidos a mayores de 18 años (licor, tabaco, vapes), conforme a las Leyes 124 de 1994 y 1335 de 2009.\n• La venta de bebidas embriagantes y productos derivados del tabaco a menores de edad está prohibida por las leyes colombianas.",
   },
   {
     title: "4. Productos y Precios",
