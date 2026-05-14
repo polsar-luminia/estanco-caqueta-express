@@ -1,5 +1,5 @@
 import { View, Text, Pressable, ScrollView, Linking, Alert, Image } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, Redirect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -51,10 +51,13 @@ function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const cliente = useAuthStore((s) => s.cliente);
   const logout = useAuthStore((s) => s.logout);
   const clearCart = useCartStore((s) => s.clear);
   const queryClient = useQueryClient();
+
+  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
 
   const { data: cupones = [] } = useQuery({
     queryKey: ["cupones-disponibles"],
@@ -288,6 +291,11 @@ export default function ProfileScreen() {
             icon="policy"
             label="Términos y Condiciones"
             onPress={() => router.push("/support/terms")}
+          />
+          <MenuItem
+            icon="policy"
+            label="Eliminar cuenta"
+            onPress={() => Linking.openURL("https://admin.estancocaqueta.com/eliminar-cuenta.html")}
           />
         </View>
       </View>

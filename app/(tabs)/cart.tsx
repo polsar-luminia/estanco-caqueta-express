@@ -190,6 +190,12 @@ export default function CartScreen() {
   const handlePedir = async () => {
     if (submitLockRef.current) return;
 
+    // Guía 5.1.1(v) — requerir login solo al momento del checkout
+    if (!cliente) {
+      router.push("/(auth)/login");
+      return;
+    }
+
     if (subtotal < pedidoMinimo) {
       Toast.show({ type: "error", text1: "Pedido mínimo", text2: `Agrega ${formatCOP(pedidoMinimo - subtotal)} más para continuar` });
       return;

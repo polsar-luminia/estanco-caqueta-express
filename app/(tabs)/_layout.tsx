@@ -99,14 +99,14 @@ export default function TabLayout() {
 
   if (isLoading) return null;
 
-  if (!isAuthenticated) {
-    return <Redirect href="/(auth)/login" />;
-  }
+  // Guía 5.1.1(v) — el catálogo debe ser accesible sin login.
+  // profile.tsx y orders/index.tsx tienen su propio guard para
+  // redirigir a login cuando se requiere autenticación.
 
   // Apple App Store §1.4.3 — bloquear acceso al catálogo hasta que el
   // usuario confirme explícitamente que es mayor de 18. Se usa !falsy
   // para cubrir false, null y undefined (respuesta de API que omite el campo).
-  if (cliente && !cliente.edad_confirmada) {
+  if (isAuthenticated && cliente && !cliente.edad_confirmada) {
     return <Redirect href="/(auth)/edad-confirmar" />;
   }
 

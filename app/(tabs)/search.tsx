@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { View, TextInput, FlatList, Text, ScrollView, Pressable, Dimensions, ActivityIndicator } from "react-native";
+import { View, TextInput, FlatList, Text, ScrollView, Pressable, Dimensions, ActivityIndicator, Platform } from "react-native";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -130,10 +130,15 @@ export default function SearchScreen() {
   const noResults = debouncedQuery.length >= 2 && resultados.length === 0 && !isLoading && !isError;
   const showExplore = debouncedQuery.length < 2;
 
-  const { data: categorias = [] } = useQuery({
+  const { data: categoriasRaw = [] } = useQuery({
     queryKey: ["categorias"],
     queryFn: getCategorias,
   });
+  // Guía 1.4.3 — ocultar tabaco/vapes en iOS (no permitido en App Store)
+  const BLOQUEADAS_IOS = ["cigarr", "vape", "tabac"];
+  const categorias = Platform.OS === "ios"
+    ? categoriasRaw.filter(c => !BLOQUEADAS_IOS.some(b => c.nombre.toLowerCase().includes(b)))
+    : categoriasRaw;
 
   const { data: destacados = [] } = useQuery({
     queryKey: ["destacados"],

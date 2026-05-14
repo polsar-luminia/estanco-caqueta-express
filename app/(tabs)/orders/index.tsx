@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import * as Sentry from "@sentry/react-native";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
+import { useRouter, Redirect } from "expo-router";
+import { useAuthStore } from "../../../src/stores/auth";
 import Toast from "react-native-toast-message";
 import { getPedidos, getPedido, getProducto } from "../../../src/lib/api";
 import { tracker } from "../../../src/lib/tracker";
@@ -318,6 +319,9 @@ function HelpSection() {
 /* ── Pantalla principal ──────────────────────────────────── */
 
 export default function OrdersScreen() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
+
   const {
     data: pedidos = [],
     isLoading,
