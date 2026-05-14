@@ -54,12 +54,6 @@
           "color": "#1FAF55"
         }
       ],
-      [
-        "expo-tracking-transparency",
-        {
-          "userTrackingPermission": "Esta información sirve para mejorar tu experiencia de compra y mostrarte contenido relevante."
-        }
-      ],
       "react-native-edge-to-edge"
     ],
     "extra": {
