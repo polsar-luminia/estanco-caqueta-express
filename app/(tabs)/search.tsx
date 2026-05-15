@@ -128,7 +128,11 @@ export default function SearchScreen() {
   });
 
   // Apple §1.4.3 — defensa cliente en iOS contra resultados de tabaco.
-  const resultados = filtrarProductosIOS(searchData?.pages.flatMap((p) => p.productos) ?? []);
+  // Apple 2.1a — `p?.productos ?? []` evita TypeError si el backend devuelve
+  // una página sin `productos` (null/ausente) tras filtrar tabaco en /buscar.
+  const resultados = filtrarProductosIOS(
+    searchData?.pages.flatMap((p) => p?.productos ?? []) ?? [],
+  );
   const totalResultados = searchData?.pages[0]?.total ?? 0;
 
   const hasResults = debouncedQuery.length >= 2 && resultados.length > 0 && !isError;

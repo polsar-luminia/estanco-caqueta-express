@@ -57,8 +57,17 @@ export function Interstitial({ onFinish }: { onFinish: () => void }) {
     }, data.duracion_segundos * 1000);
   }, [data, onFinish]);
 
-  // Mientras la query carga, cubrir el home para evitar el flash
-  if (isLoading) return <SplashBranded />;
+  // Mientras la query carga, cubrir el home para evitar el flash.
+  // CRÍTICO: absoluteFillObject — sin esto SplashBranded (flex:1) se vuelve
+  // hermano flex del <Stack> en _layout y reparten la pantalla 50/50
+  // (home/skeletons arriba, splash abajo). Debe ser overlay absoluto.
+  if (isLoading) {
+    return (
+      <View style={StyleSheet.absoluteFillObject}>
+        <SplashBranded />
+      </View>
+    );
+  }
   // Sin datos o error → fail-fast effect ya llamó onFinish
   if (!data) return null;
 

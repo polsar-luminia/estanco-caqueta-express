@@ -47,7 +47,11 @@ export default function CategoryScreen() {
 
   // Apple §1.4.3 — defensa cliente en iOS: si por error llega un producto
   // de tabaco/vape, lo filtramos. El backend ya bloquea por X-Platform.
-  const productos = filtrarProductosIOS(data?.pages.flatMap((p) => p.productos) ?? []);
+  // Apple 2.1a — `p?.productos ?? []` evita TypeError si una página llega
+  // sin `productos` (null/ausente).
+  const productos = filtrarProductosIOS(
+    data?.pages.flatMap((p) => p?.productos ?? []) ?? [],
+  );
   const nombreCategoria = data?.pages[0]?.productos?.[0]?.categoria || "Categoría";
 
   // Si la categoría entera está bloqueada en iOS, mostrar "no encontrada".
