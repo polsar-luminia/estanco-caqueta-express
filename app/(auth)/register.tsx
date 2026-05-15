@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Feather } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { useAuthStore } from "../../src/stores/auth";
@@ -13,6 +15,7 @@ import { UserIcon, PhoneIcon, LockIcon } from "../../src/components/icons/AppIco
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
@@ -122,6 +125,37 @@ export default function RegisterScreen() {
         width: 200, height: 200, borderRadius: 100,
         backgroundColor: "rgba(211,53,135,0.05)",
       }} />
+
+      {/* Botón Volver — guest browsing */}
+      <Pressable
+        onPress={() => {
+          if (router.canGoBack()) router.back();
+          else router.replace("/(tabs)");
+        }}
+        hitSlop={12}
+        style={{
+          position: "absolute",
+          top: insets.top + 8,
+          left: 16,
+          zIndex: 10,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 4,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          backgroundColor: "rgba(255,255,255,0.75)",
+          borderRadius: 999,
+          borderWidth: 1,
+          borderColor: "rgba(226,227,223,0.6)",
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Volver"
+      >
+        <Feather name="chevron-left" size={20} color="#1A1C1A" />
+        <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1C1A" }}>
+          Volver
+        </Text>
+      </Pressable>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
