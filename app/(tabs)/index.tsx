@@ -4,8 +4,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import { getCategorias, getDestacados, getPatrocinados, getHeroModo, getCombos, getOfertas, type Combo } from "../../src/lib/api";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getCategorias, getDestacados, getPatrocinados, getHeroModo, getCombos, getOfertas, getDirecciones, type Combo } from "../../src/lib/api";
 import { filtrarCategoriasIOS, filtrarProductosIOS, filtrarConProductoIOS } from "../../src/lib/iosFilters";
+import { SearchIcon } from "../../src/components/icons/AppIcons";
 import { OfertasBannerCard } from "../../src/components/OfertasBannerCard";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
@@ -166,7 +168,9 @@ function HeroCarousel({ banners, router }: { banners: Patrocinado[]; router: Ret
 export default function HomeScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const insets = useSafeAreaInsets();
   const cliente = useAuthStore((s) => s.cliente);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   // Selectores inline (no metodos): los metodos del store no son reactivos a cambios
   // del state — el banner inferior no desaparecia al limpiar carrito tras crear pedido.
   const itemCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad, 0));
@@ -206,6 +210,17 @@ export default function HomeScreen() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Mismo queryKey que cart.tsx → cache compartida, sin fetch extra.
+  // enabled gateado: invitado no dispara /clientes/direcciones (evita 401).
+  const { data: direcciones = [] } = useQuery({
+    queryKey: ["direcciones"],
+    queryFn: getDirecciones,
+    enabled: isAuthenticated,
+    staleTime: 60 * 1000,
+  });
+  const dirPred = direcciones.find((d) => d.predeterminada) || direcciones[0];
+  const dirActiva = dirPred?.direccion ?? cliente?.direccion ?? null;
+
   // Apple §1.4.3 — defensa cliente para iOS por si el backend devuelve tabaco
   // (ej: cache vencido o regresión). El header X-Platform ya filtra server-side.
   const categorias = filtrarCategoriasIOS(categoriasRaw);
@@ -228,6 +243,56 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>
+      {/* Header sticky — TaDa-style: perfil (izq) + buscar (der). Fuera del
+          ScrollView para que no haga scroll. Invitado: perfil → guard login. */}
+      <View
+        style={{
+          paddingTop: insets.top + 8,
+          paddingHorizontal: 16,
+          paddingBottom: 12,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          backgroundColor: "#FAFAF6",
+          borderBottomWidth: 1,
+          borderBottomColor: "#EFEFE9",
+        }}
+      >
+        <Pressable
+          onPress={() => router.push("/profile")}
+          hitSlop={8}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 19,
+            backgroundColor: "#F4F4F0",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Feather name="user" size={19} color="#1A1C1A" />
+        </Pressable>
+
+        <Text style={{ fontSize: 16, fontWeight: "800", color: "#1A1C1A", letterSpacing: -0.3 }}>
+          Estanco Caquetá
+        </Text>
+
+        <Pressable
+          onPress={() => router.push("/(tabs)/search")}
+          hitSlop={8}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 19,
+            backgroundColor: "#F4F4F0",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <SearchIcon size={20} color="#1A1C1A" />
+        </Pressable>
+      </View>
+
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: itemCount > 0 ? 172 : 102 }}
@@ -286,7 +351,7 @@ export default function HomeScreen() {
               </View>
             )}
 
-            {/* Barra de dirección */}
+            {/* Barra de dirección — TaDa-style: dirección activa + acción */}
             <View
               className="mx-4 mt-3 flex-row items-center p-4 rounded-xl"
               style={{ backgroundColor: "#F4F4F0" }}
@@ -297,12 +362,40 @@ export default function HomeScreen() {
                   Entregar en
                 </Text>
                 <Text className="text-sm font-semibold text-gray-800" numberOfLines={1}>
-                  {cliente?.direccion || "Florencia, Caquetá"}
+                  {isAuthenticated
+                    ? (dirActiva || "Agrega tu dirección de entrega")
+                    : "Florencia, Caquetá"}
                 </Text>
               </View>
+              <Pressable
+                onPress={() =>
+                  router.push(isAuthenticated ? "/profile/direcciones" : "/(auth)/login")
+                }
+                hitSlop={8}
+              >
+                <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>
+                  {isAuthenticated ? "Cambiar" : "Iniciar sesión"}
+                </Text>
+              </Pressable>
             </View>
 
-            {/* Hero Banner */}
+            {/* Categorías — TaDa: arriba del hero (intención de compra primero) */}
+            <View className="px-4 pt-5 pb-2">
+              <View className="flex-row justify-between items-center mb-3">
+                <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Categorías</Text>
+                <Pressable onPress={() => router.push("/(tabs)/search")}>
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: "#1FAF55", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    Ver todas
+                  </Text>
+                </Pressable>
+              </View>
+              <CategoryStrip
+                categorias={categorias}
+                onSelect={(id) => router.push(`/category/${id}`)}
+              />
+            </View>
+
+            {/* Hero Banner — debajo de categorías (marketing después de utilidad) */}
             <View className="mx-4 mt-4">
               {patrocinados.length > 0 && (
                 heroModo === "carousel" ? (
@@ -325,22 +418,6 @@ export default function HomeScreen() {
                 />
               </View>
             )}
-
-            {/* Categorías */}
-            <View className="px-4 pt-5 pb-2">
-              <View className="flex-row justify-between items-center mb-3">
-                <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Categorías</Text>
-                <Pressable onPress={() => router.push("/(tabs)/search")}>
-                  <Text style={{ fontSize: 11, fontWeight: "700", color: "#1FAF55", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    Ver todas
-                  </Text>
-                </Pressable>
-              </View>
-              <CategoryStrip
-                categorias={categorias}
-                onSelect={(id) => router.push(`/category/${id}`)}
-              />
-            </View>
 
             {/* Combos — productos únicos con metadata especial (precio combo + fechas).
                 El tap navega al producto subyacente (creado en Tryton/Shopify). */}
