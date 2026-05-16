@@ -1,5 +1,5 @@
 import { View, Text, Pressable, ScrollView, Linking, Alert, Image } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, Redirect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -9,7 +9,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../src/stores/auth";
 import { useCartStore } from "../../src/stores/cart";
 import { WHATSAPP_SOPORTE } from "../../src/constants/config";
-import { formatCOP } from "../../src/lib/format";
 import { getCuponesDisponibles } from "../../src/lib/api";
 import { CopyIcon } from "../../src/components/icons/AppIcons";
 
@@ -52,6 +51,7 @@ function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const cliente = useAuthStore((s) => s.cliente);
   const logout = useAuthStore((s) => s.logout);
   const clearCart = useCartStore((s) => s.clear);
@@ -61,8 +61,11 @@ export default function ProfileScreen() {
     queryKey: ["cupones-disponibles"],
     queryFn: getCuponesDisponibles,
     staleTime: 5 * 60 * 1000,
+    enabled: isAuthenticated,
   });
   const cuponesNuevos = cupones.filter((c) => !c.ya_usado).length;
+
+  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
 
   const handleLogout = () => {
     Alert.alert("Cerrar sesión", "¿Quieres salir de tu cuenta?", [
@@ -88,7 +91,6 @@ export default function ProfileScreen() {
 
   const puntos = cliente?.puntos || 0;
   const totalPedidos = cliente?.total_pedidos ?? 0;
-  const ahorroTotal = cliente?.ahorro_total ?? 0;
 
   // Progress bar puntos (0-100 por ciclo)
   const pct = Math.min(100, ((puntos % 100) / 100) * 100);
@@ -111,6 +113,27 @@ export default function ProfileScreen() {
           width: 120, height: 120, borderRadius: 60,
           backgroundColor: "rgba(211,53,135,0.07)",
         }} />
+
+        {/* Back — perfil ya no es tab, se accede vía push desde el header.
+            canGoBack guard evita dead-end en deep-link directo (Apple 5.1.1v). */}
+        <Pressable
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)"))}
+          hitSlop={10}
+          style={{
+            position: "absolute",
+            top: insets.top + 8,
+            left: 12,
+            zIndex: 10,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 4,
+            paddingVertical: 6,
+            paddingHorizontal: 8,
+          }}
+        >
+          <Feather name="chevron-left" size={22} color="#fff" />
+          <Text style={{ fontSize: 15, fontWeight: "600", color: "#fff" }}>Volver</Text>
+        </Pressable>
 
         {/* Avatar + nombre */}
         <View style={{ alignItems: "center", paddingTop: insets.top + 16, gap: 8 }}>
@@ -152,8 +175,7 @@ export default function ProfileScreen() {
         }}>
           {[
             { label: "Pedidos", value: String(totalPedidos), color: "#1FAF55", sub: "realizados" },
-            { label: "Puntos", value: `${puntos} pts`, color: "#D33587", sub: "100 = envío gratis" },
-            { label: "Ahorro", value: formatCOP(ahorroTotal), color: "#2A6FDB", sub: "en total" },
+            { label: "Puntos", value: `${puntos} pts`, color: "#D33587", sub: "200 = envío gratis" },
           ].map((stat, i) => (
             <View key={stat.label} style={{
               flex: 1, alignItems: "center",
@@ -291,6 +313,11 @@ export default function ProfileScreen() {
             icon="policy"
             label="Términos y Condiciones"
             onPress={() => router.push("/support/terms")}
+          />
+          <MenuItem
+            icon="policy"
+            label="Eliminar cuenta"
+            onPress={() => router.push("/profile/eliminar-cuenta")}
           />
         </View>
       </View>

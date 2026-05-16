@@ -6,7 +6,7 @@ import { Feather } from "@expo/vector-icons";
 const SECTIONS = [
   {
     title: "1. Identificación del Responsable",
-    body: "Organización Polo & Salazar ZOMAC S.A.S.\nNIT: 901.327.818-0\nDirección: Carrera 10 #16-86, Florencia, Caquetá, Colombia\nCorreo: zomacpolosalazar@gmail.com\nTeléfono: +57 315 551 9216",
+    body: "Organización Polo & Salazar ZOMAC S.A.S.\nNIT: 901.327.818-0\nDirección: Carrera 10 #16-86, Florencia, Caquetá, Colombia\nCorreo: app@estancocaqueta.com\nTeléfono: +57 318 949 5704",
   },
   {
     title: "2. Objeto y Aceptación",
@@ -14,7 +14,7 @@ const SECTIONS = [
   },
   {
     title: "3. Requisitos de Uso",
-    body: "• Ser mayor de 18 años conforme a la legislación colombiana.\n• Proporcionar datos verídicos al momento del registro.\n• El domiciliario podrá solicitar documento de identidad para verificar la edad del comprador.\n• La venta de bebidas embriagantes a menores de edad está prohibida (Ley 124 de 1994).",
+    body: "• Ser mayor de 18 años conforme a la legislación colombiana.\n• Proporcionar datos verídicos al momento del registro.\n• El domiciliario verificará el documento de identidad del comprador antes de entregar productos restringidos a mayores de 18 años (licor, tabaco, vapes), conforme a las Leyes 124 de 1994 y 1335 de 2009.\n• La venta de bebidas embriagantes y productos derivados del tabaco a menores de edad está prohibida por las leyes colombianas.",
   },
   {
     title: "4. Productos y Precios",
@@ -30,7 +30,7 @@ const SECTIONS = [
   },
   {
     title: "7. Protección de Datos Personales",
-    body: "El tratamiento de datos personales se rige por la Ley 1581 de 2012 y el Decreto 1377 de 2013.\n\nDatos recopilados: nombre, teléfono, dirección de entrega, historial de pedidos.\n\nFinalidades: gestión de pedidos, entregas, comunicaciones comerciales y mejora del servicio.\n\nDerechos del titular: conocer, actualizar, rectificar y suprimir datos enviando solicitud a zomacpolosalazar@gmail.com.\n\nTiempos de respuesta: consultas 10 días hábiles, reclamos 15 días hábiles.",
+    body: "El tratamiento de datos personales se rige por la Ley 1581 de 2012 y el Decreto 1377 de 2013.\n\nDatos recopilados: nombre, teléfono, dirección de entrega, historial de pedidos.\n\nFinalidades: gestión de pedidos, entregas, comunicaciones comerciales y mejora del servicio.\n\nDerechos del titular: conocer, actualizar, rectificar y suprimir datos enviando solicitud a app@estancocaqueta.com.\n\nTiempos de respuesta: consultas 10 días hábiles, reclamos 15 días hábiles.",
   },
   {
     title: "8. Propiedad Intelectual",

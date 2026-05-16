@@ -12,6 +12,7 @@ import Animated, {
 import Svg, { Path } from "react-native-svg";
 import Toast from "react-native-toast-message";
 import { getProducto, getSugerencias } from "../../src/lib/api";
+import { esCategoriaProhibidaIOS, filtrarProductosIOS } from "../../src/lib/iosFilters";
 import { ProductCard } from "../../src/components/ProductCard";
 import { tracker } from "../../src/lib/tracker";
 import { useCartStore } from "../../src/stores/cart";
@@ -91,7 +92,7 @@ function ProductDetailSkeleton() {
 /* ── Main screen ──────────────────────────────────────────── */
 
 export default function ProductDetailScreen() {
-  const { id, ofertaPrecio } = useLocalSearchParams<{ id: string; ofertaPrecio?: string }>();
+  const { id, ofertaPrecio, precioAnterior } = useLocalSearchParams<{ id: string; ofertaPrecio?: string; precioAnterior?: string }>();
   const productoId = id && id.trim() ? Number(id) : NaN;
   const router = useRouter();
   const addItemWithQuantity = useCartStore((s) => s.addItemWithQuantity);
@@ -104,11 +105,18 @@ export default function ProductDetailScreen() {
     enabled: Number.isFinite(productoId) && productoId > 0,
   });
 
-  const { data: sugerencias = [] } = useQuery({
+  const { data: sugerenciasRaw = [] } = useQuery({
     queryKey: ["sugerencias", productoId],
     queryFn: () => getSugerencias(productoId),
     enabled: Number.isFinite(productoId) && productoId > 0,
   });
+
+  // Apple §1.4.3 — sugerencias también pueden venir contaminadas en iOS.
+  const sugerencias = filtrarProductosIOS(sugerenciasRaw);
+  // Producto entero bloqueado en iOS si su categoría es tabaco/vape.
+  const productoBloqueadoIOS = product
+    ? esCategoriaProhibidaIOS(product.categoria) || esCategoriaProhibidaIOS(product.nombre)
+    : false;
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -167,6 +175,17 @@ export default function ProductDetailScreen() {
     return <ProductDetailSkeleton />;
   }
 
+  if (productoBloqueadoIOS) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>
+        <Text style={{ fontSize: 18, fontWeight: "600", color: "#1F1F1F", textAlign: "center" }}>
+          Producto no disponible
+        </Text>
+      </View>
+    );
+  }
+
   if (isError || !product) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
@@ -193,6 +212,8 @@ export default function ProductDetailScreen() {
   const ofertaParseada = ofertaPrecio ? Number(ofertaPrecio) : NaN;
   const ofertaValida = Number.isFinite(ofertaParseada) && ofertaParseada > 0 && ofertaParseada < product.precio_app;
   const precioActivo = ofertaValida ? ofertaParseada : product.precio_app;
+  const precioAnteriorParsed = precioAnterior ? Number(precioAnterior) : NaN;
+  const precioAnteriorValido = Number.isFinite(precioAnteriorParsed) && precioAnteriorParsed > 0;
 
   const handleAdd = () => {
     addItemWithQuantity({
@@ -305,13 +326,9 @@ export default function ProductDetailScreen() {
 
           {/* Price */}
           <View style={{ gap: 2 }}>
-            {ofertaValida ? (
+            {ofertaValida && precioAnteriorValido ? (
               <Text style={{ fontSize: 14, color: "#9E9E9E", textDecorationLine: "line-through" }}>
-                {formatCOP(product.precio_app)}
-              </Text>
-            ) : product.precio_lista1 ? (
-              <Text style={{ fontSize: 14, color: "#9E9E9E", textDecorationLine: "line-through" }}>
-                {formatCOP(product.precio_lista1)}
+                {formatCOP(precioAnteriorParsed)}
               </Text>
             ) : null}
             <Text className="text-2xl font-extrabold text-brand-500">
@@ -417,7 +434,7 @@ export default function ProductDetailScreen() {
                       product={item}
                       onPress={() => {
                         tracker.track('sugerencia_clickeada', { desde_producto: product.id, producto_clickeado: item.id, nombre: item.nombre }, 'product/[id]');
-                        router.push(`/product/${item.id}`);
+                        router.replace(`/product/${item.id}`);
                       }}
                     />
                   </View>

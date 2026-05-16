@@ -24,7 +24,7 @@ const FAQ = [
   },
   {
     q: "¿Qué hago si mi pedido llega incompleto o dañado?",
-    a: "Contáctanos inmediatamente por WhatsApp al 315 551 9216. Tomaremos una foto del problema y te enviaremos un reemplazo o reembolso.",
+    a: "Contáctanos inmediatamente por WhatsApp al 318 949 5704. Tomaremos una foto del problema y te enviaremos un reemplazo o reembolso.",
   },
   {
     q: "¿Venden a menores de edad?",
@@ -86,16 +86,16 @@ export default function HelpScreen() {
           </Text>
 
           <Pressable
-            onPress={() => Linking.openURL("https://wa.me/573155519216")}
+            onPress={() => Linking.openURL("https://wa.me/573189495704")}
             className="flex-row items-center justify-center py-3.5 rounded-xl mb-3"
             style={{ backgroundColor: "#25D366" }}
           >
             <MessageIcon color="#fff" size={20} />
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>WhatsApp: 315 551 9216</Text>
+            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>WhatsApp: 318 949 5704</Text>
           </Pressable>
 
           <Pressable
-            onPress={() => Linking.openURL("tel:+573155519216")}
+            onPress={() => Linking.openURL("tel:+573189495704")}
             className="flex-row items-center justify-center py-3.5 rounded-xl"
             style={{ backgroundColor: "#fff" }}
           >
@@ -115,7 +115,7 @@ export default function HelpScreen() {
             </View>
             <View className="flex-row" style={{ gap: 10 }}>
               <Feather name="mail" size={16} color="#1FAF55" style={{ marginTop: 2 }} />
-              <Text style={{ fontSize: 13, color: "#6D7B6C" }}>Pys-marketexpress@hotmail.com</Text>
+              <Text style={{ fontSize: 13, color: "#6D7B6C" }}>app@estancocaqueta.com</Text>
             </View>
             <View className="flex-row" style={{ gap: 10 }}>
               <Feather name="clock" size={16} color="#1FAF55" style={{ marginTop: 2 }} />

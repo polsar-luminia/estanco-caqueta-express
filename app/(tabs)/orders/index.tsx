@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import * as Sentry from "@sentry/react-native";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
+import { useRouter, Redirect } from "expo-router";
+import { useAuthStore } from "../../../src/stores/auth";
 import Toast from "react-native-toast-message";
 import { getPedidos, getPedido, getProducto } from "../../../src/lib/api";
 import { tracker } from "../../../src/lib/tracker";
@@ -290,8 +291,8 @@ function OrderCard({ item }: { item: Pedido }) {
 
 function HelpSection() {
   const handleWhatsApp = () => {
-    Linking.openURL("https://wa.me/573155519216").catch(() => {
-      Linking.openURL("https://api.whatsapp.com/send?phone=573155519216");
+    Linking.openURL("https://wa.me/573189495704").catch(() => {
+      Linking.openURL("https://api.whatsapp.com/send?phone=573189495704");
     });
   };
 
@@ -318,6 +319,8 @@ function HelpSection() {
 /* ── Pantalla principal ──────────────────────────────────── */
 
 export default function OrdersScreen() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   const {
     data: pedidos = [],
     isLoading,
@@ -329,7 +332,10 @@ export default function OrdersScreen() {
     queryFn: getPedidos,
     refetchInterval: 30_000,
     refetchIntervalInBackground: false,
+    enabled: isAuthenticated,
   });
+
+  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
 
   if (isLoading) {
     return (

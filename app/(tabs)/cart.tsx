@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { View, Text, FlatList, TextInput, Pressable, Switch, KeyboardAvoidingView, Platform } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, Redirect } from "expo-router";
 import * as Sentry from "@sentry/react-native";
 import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
@@ -41,6 +41,8 @@ export default function CartScreen() {
   const updatePrices = useCartStore((s) => s.updatePrices);
   const updateStocks = useCartStore((s) => s.updateStocks);
   const cliente = useAuthStore((s) => s.cliente);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthLoading = useAuthStore((s) => s.isLoading);
 
   // Refetch precios al montar — detecta si cambiaron desde que se persistieron en AsyncStorage.
   // El backend cobra el precio actual (lineas sin precio), así que es sólo corrección visual.
@@ -107,6 +109,7 @@ export default function CartScreen() {
   const { data: direcciones = [], refetch: refetchDirs } = useQuery({
     queryKey: ["direcciones"],
     queryFn: getDirecciones,
+    enabled: isAuthenticated,
   });
 
   const dirPredeterminada = direcciones.find((d) => d.predeterminada) || direcciones[0];
@@ -115,7 +118,7 @@ export default function CartScreen() {
 
   const subtotal = subtotalComputed;
   const puntos = cliente?.puntos || 0;
-  const puedeUsarPuntos = puntos >= 100;
+  const puedeUsarPuntos = puntos >= 200;
   const envioGratisMinimo = configApp?.envio_gratis_minimo ?? 150000;
   const envioCosto = configApp?.envio_costo ?? 5000;
   const pedidoMinimo = configApp?.pedido_minimo ?? 30000;
@@ -189,6 +192,12 @@ export default function CartScreen() {
 
   const handlePedir = async () => {
     if (submitLockRef.current) return;
+
+    // Guía 5.1.1(v) — requerir login solo al momento del checkout
+    if (!cliente) {
+      router.push("/(auth)/login");
+      return;
+    }
 
     if (subtotal < pedidoMinimo) {
       Toast.show({ type: "error", text1: "Pedido mínimo", text2: `Agrega ${formatCOP(pedidoMinimo - subtotal)} más para continuar` });
@@ -301,6 +310,15 @@ export default function CartScreen() {
       setLoading(false);
     }
   };
+
+  // Apple §5.1.1(v): el catálogo es público pero el checkout requiere sesión.
+  // Items en el cart (Zustand persistido) sobreviven el login y se mantienen
+  // disponibles al volver. Bloqueamos cart únicamente cuando hay items pendientes
+  // (un guest que solo abre el tab ve la pantalla vacía y puede volver a explorar).
+  if (isAuthLoading) return null;
+  if (!isAuthenticated && items.length > 0) {
+    return <Redirect href="/(auth)/login" />;
+  }
 
   if (items.length === 0) {
     return (
@@ -538,7 +556,7 @@ export default function CartScreen() {
               {puedeUsarPuntos && subtotal < envioGratisMinimo && (
                 <View className="flex-row justify-between items-center rounded-xl p-3" style={{ backgroundColor: "#F4F4F0" }}>
                   <View className="flex-1">
-                    <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1C1A" }}>Usar 100 puntos</Text>
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1C1A" }}>Usar 200 puntos</Text>
                     <Text style={{ fontSize: 11, color: "#6D7B6C" }}>Envío gratis (tienes {puntos} pts)</Text>
                   </View>
                   <Switch
@@ -551,7 +569,7 @@ export default function CartScreen() {
               )}
               {!puedeUsarPuntos && puntos > 0 && subtotal < envioGratisMinimo && (
                 <Text style={{ fontSize: 11, color: "#6D7B6C", fontStyle: "italic" }}>
-                  Tienes {puntos} pts. Necesitas 100 para envío gratis.
+                  Tienes {puntos} pts. Necesitas 200 para envío gratis.
                 </Text>
               )}
             </View>

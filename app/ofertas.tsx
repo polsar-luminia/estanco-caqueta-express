@@ -7,6 +7,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import Toast from "react-native-toast-message";
 import { getOfertas, type Oferta } from "../src/lib/api";
+import { filtrarConProductoIOS } from "../src/lib/iosFilters";
 import { ProductCard } from "../src/components/ProductCard";
 import { CountdownChip } from "../src/components/CountdownChip";
 import { ProductGridSkeleton } from "../src/components/skeletons/ProductGridSkeleton";
@@ -35,7 +36,8 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
   const addItem = useCartStore((s) => s.addItem);
   const { gradient, emoji } = getCatVisuals(oferta.producto.categoria);
   const precioOferta = oferta.precio_oferta ?? oferta.producto.precio_app;
-  const saving = oferta.producto.precio_app - precioOferta;
+  const precioBase = oferta.precio_anterior ?? oferta.producto.precio_app;
+  const saving = precioBase - precioOferta;
 
   const handleAdd = () => {
     if ((oferta.producto.stock_total ?? 0) <= 0) return;
@@ -109,7 +111,7 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <View>
             <Text style={{ fontSize: 9, color: "rgba(255,255,255,0.40)", textDecorationLine: "line-through" }}>
-              {formatCOP(oferta.producto.precio_app)}
+              {formatCOP(precioBase)}
             </Text>
             <Text style={{ fontSize: 17, fontWeight: "800", color: "#fff" }}>
               {formatCOP(precioOferta)}
@@ -146,16 +148,20 @@ export default function OfertasScreen() {
   const itemCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad, 0));
   const total = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad * i.precioUnitario, 0));
 
-  const { data: ofertas = [], isLoading, isError, refetch } = useQuery({
+  const { data: ofertasRaw = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["ofertas"],
     queryFn: getOfertas,
     staleTime: 2 * 60 * 1000,
   });
 
-  // Guards de auth + edad (Apple §1.4.3 + Ley 124) — deben ir después de todos los hooks
+  // Apple §1.4.3 — defensa cliente para iOS por si llega oferta de tabaco.
+  const ofertas = filtrarConProductoIOS(ofertasRaw);
+
+  // Apple §5.1.1(v) — ofertas es catálogo, debe ser visible para guests.
+  // Apple §1.4.3 — si hay sesión activa pero sin edad confirmada → age gate.
+  // El guard de root layout y el de (tabs) ya cubren la edad cuando hay sesión.
   if (isAuthLoading) return null;
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
-  if (cliente && !cliente.edad_confirmada) return <Redirect href="/(auth)/edad-confirmar" />;
+  if (isAuthenticated && cliente && !cliente.edad_confirmada) return <Redirect href="/(auth)/edad-confirmar" />;
 
   // Separar flash vs regulares
   const flash = ofertas.filter((o) => o.tipo === "oferta_relampago");
@@ -316,11 +322,13 @@ export default function OfertasScreen() {
                     <ProductCard
                       key={oferta.id}
                       product={oferta.producto}
-                      oferta={{ titulo: oferta.titulo, precio_oferta: oferta.precio_oferta }}
+                      oferta={{ titulo: oferta.titulo, precio_oferta: oferta.precio_oferta, precio_anterior: oferta.precio_anterior }}
                       onPress={() => {
-                        const url = oferta.precio_oferta != null && oferta.precio_oferta < oferta.producto.precio_app
-                          ? `/product/${oferta.producto.id}?ofertaPrecio=${oferta.precio_oferta}`
-                          : `/product/${oferta.producto.id}`;
+                        let url = `/product/${oferta.producto.id}`;
+                        if (oferta.precio_oferta != null) {
+                          url += `?ofertaPrecio=${oferta.precio_oferta}`;
+                          if (oferta.precio_anterior != null) url += `&precioAnterior=${oferta.precio_anterior}`;
+                        }
                         router.push(url);
                       }}
                     />

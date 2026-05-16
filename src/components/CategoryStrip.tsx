@@ -32,40 +32,56 @@ function CategoryIcon({ cat }: { cat: Categoria }) {
   );
 }
 
+function CategoryItem({ cat, onSelect }: { cat: Categoria; onSelect: (id: number) => void }) {
+  return (
+    <Pressable
+      onPress={() => onSelect(cat.id)}
+      className="items-center"
+      style={{ minWidth: 72 }}
+    >
+      <View
+        className="items-center justify-center overflow-hidden"
+        style={{
+          width: 80,
+          height: 80,
+          borderRadius: 40,
+          backgroundColor: "#E8E8E5",
+          padding: 10,
+        }}
+      >
+        <CategoryIcon cat={cat} />
+      </View>
+      <Text
+        className="font-semibold text-center mt-1.5"
+        style={{ fontSize: 11, color: "#1A1C1A" }}
+        numberOfLines={1}
+      >
+        {cat.nombre}
+      </Text>
+    </Pressable>
+  );
+}
+
 export function CategoryStrip({ categorias, onSelect }: Props) {
+  // 2 filas: agrupa en columnas de a 2 (fila sup = pares, inf = impares).
+  // Scroll horizontal por columnas. Última columna puede tener 1 sola.
+  const columnas: Categoria[][] = [];
+  for (let i = 0; i < categorias.length; i += 2) {
+    columnas.push(categorias.slice(i, i + 2));
+  }
+
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ gap: 14, paddingHorizontal: 2 }}
     >
-      {categorias.map((cat) => (
-        <Pressable
-          key={cat.id}
-          onPress={() => onSelect(cat.id)}
-          className="items-center"
-          style={{ minWidth: 72 }}
-        >
-          <View
-            className="items-center justify-center overflow-hidden"
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: 40,
-              backgroundColor: "#E8E8E5",
-              padding: 10,
-            }}
-          >
-            <CategoryIcon cat={cat} />
-          </View>
-          <Text
-            className="font-semibold text-center mt-1.5"
-            style={{ fontSize: 11, color: "#1A1C1A" }}
-            numberOfLines={1}
-          >
-            {cat.nombre}
-          </Text>
-        </Pressable>
+      {columnas.map((col, idx) => (
+        <View key={col[0]?.id ?? idx} style={{ gap: 16 }}>
+          {col.map((cat) => (
+            <CategoryItem key={cat.id} cat={cat} onSelect={onSelect} />
+          ))}
+        </View>
       ))}
     </ScrollView>
   );

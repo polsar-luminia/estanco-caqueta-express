@@ -7,7 +7,6 @@
     "icon": "./assets/icon.png",
     "scheme": "estancocaqueta",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -16,6 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "co.estancocaqueta.express",
+      "buildNumber": "6",
       "associatedDomains": [
         "applinks:estancocaqueta.com"
       ],
@@ -30,9 +30,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1FAF55"
       },
-      "edgeToEdgeEnabled": true,
       "package": "co.estancocaqueta.express",
-      "versionCode": 5
+      "versionCode": 8
     },
     "plugins": [
       "expo-router",
@@ -53,14 +52,7 @@
           "icon": "./assets/icon.png",
           "color": "#1FAF55"
         }
-      ],
-      [
-        "expo-tracking-transparency",
-        {
-          "userTrackingPermission": "Esta información sirve para mejorar tu experiencia de compra y mostrarte contenido relevante."
-        }
-      ],
-      "react-native-edge-to-edge"
+      ]
     ],
     "extra": {
       "router": {},
