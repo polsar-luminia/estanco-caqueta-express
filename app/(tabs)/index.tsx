@@ -4,10 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getCategorias, getDestacados, getPatrocinados, getHeroModo, getCombos, getOfertas, getDirecciones, type Combo } from "../../src/lib/api";
 import { filtrarCategoriasIOS, filtrarProductosIOS, filtrarConProductoIOS } from "../../src/lib/iosFilters";
-import { SearchIcon } from "../../src/components/icons/AppIcons";
 import { OfertasBannerCard } from "../../src/components/OfertasBannerCard";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
@@ -168,7 +166,6 @@ function HeroCarousel({ banners, router }: { banners: Patrocinado[]; router: Ret
 export default function HomeScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const insets = useSafeAreaInsets();
   const cliente = useAuthStore((s) => s.cliente);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   // Selectores inline (no metodos): los metodos del store no son reactivos a cambios
@@ -243,56 +240,6 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>
-      {/* Header sticky — TaDa-style: perfil (izq) + buscar (der). Fuera del
-          ScrollView para que no haga scroll. Invitado: perfil → guard login. */}
-      <View
-        style={{
-          paddingTop: insets.top + 8,
-          paddingHorizontal: 16,
-          paddingBottom: 12,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          backgroundColor: "#FAFAF6",
-          borderBottomWidth: 1,
-          borderBottomColor: "#EFEFE9",
-        }}
-      >
-        <Pressable
-          onPress={() => router.push("/profile")}
-          hitSlop={8}
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 19,
-            backgroundColor: "#F4F4F0",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Feather name="user" size={19} color="#1A1C1A" />
-        </Pressable>
-
-        <Text style={{ fontSize: 16, fontWeight: "800", color: "#1A1C1A", letterSpacing: -0.3 }}>
-          Estanco Caquetá
-        </Text>
-
-        <Pressable
-          onPress={() => router.push("/(tabs)/search")}
-          hitSlop={8}
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 19,
-            backgroundColor: "#F4F4F0",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <SearchIcon size={20} color="#1A1C1A" />
-        </Pressable>
-      </View>
-
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: itemCount > 0 ? 172 : 102 }}

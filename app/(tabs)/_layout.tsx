@@ -1,8 +1,40 @@
 import { Pressable, View, Text, Image } from "react-native";
-import { Redirect, Tabs, useSegments } from "expo-router";
+import { Redirect, Tabs, useSegments, useRouter } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 import { useAuthStore } from "../../src/stores/auth";
 import { useCartStore } from "../../src/stores/cart";
-import { HomeIcon, SearchIcon, CartIcon, OrdersIcon, ProfileIcon } from "../../src/components/icons/TabIcons";
+import { HomeIcon, SearchIcon, CartIcon, OrdersIcon } from "../../src/components/icons/TabIcons";
+
+// Magenta de la organización (Polo & Salazar)
+const MAGENTA = "#D33587";
+
+// Botones del header del logo (Inicio): perfil (izq) + buscar (der).
+// useRouter interno → sin closures frágiles. Perfil ya no es tab inferior.
+function HeaderProfileBtn() {
+  const router = useRouter();
+  return (
+    <Pressable
+      onPress={() => router.push("/profile")}
+      hitSlop={10}
+      style={{ paddingHorizontal: 16, paddingVertical: 8 }}
+    >
+      <Feather name="user" size={22} color={MAGENTA} />
+    </Pressable>
+  );
+}
+
+function HeaderSearchBtn() {
+  const router = useRouter();
+  return (
+    <Pressable
+      onPress={() => router.push("/(tabs)/search")}
+      hitSlop={10}
+      style={{ paddingHorizontal: 16, paddingVertical: 8 }}
+    >
+      <SearchIcon color={MAGENTA} size={22} />
+    </Pressable>
+  );
+}
 
 // ── Tab button flotante con chip verde ────────────────────────────────────────
 
@@ -149,6 +181,8 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Inicio",
+          headerLeft: () => <HeaderProfileBtn />,
+          headerRight: () => <HeaderSearchBtn />,
           tabBarButton: (props) => (
             <TabButton {...props} routeName="index" label="Inicio" icon={HomeIcon} />
           ),
@@ -182,13 +216,14 @@ export default function TabLayout() {
           ),
         }}
       />
+      {/* Perfil ya NO es tab inferior — se accede desde el botón del header
+          (izq del logo). href:null lo saca del tab bar sin borrar la ruta;
+          /profile sigue navegable vía router.push. */}
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Perfil",
-          tabBarButton: (props) => (
-            <TabButton {...props} routeName="profile" label="Perfil" icon={ProfileIcon} />
-          ),
+          href: null,
+          headerShown: false,
         }}
       />
     </Tabs>

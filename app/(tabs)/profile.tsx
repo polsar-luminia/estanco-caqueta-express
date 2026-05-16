@@ -114,6 +114,27 @@ export default function ProfileScreen() {
           backgroundColor: "rgba(211,53,135,0.07)",
         }} />
 
+        {/* Back — perfil ya no es tab, se accede vía push desde el header.
+            canGoBack guard evita dead-end en deep-link directo (Apple 5.1.1v). */}
+        <Pressable
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)"))}
+          hitSlop={10}
+          style={{
+            position: "absolute",
+            top: insets.top + 8,
+            left: 12,
+            zIndex: 10,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 4,
+            paddingVertical: 6,
+            paddingHorizontal: 8,
+          }}
+        >
+          <Feather name="chevron-left" size={22} color="#fff" />
+          <Text style={{ fontSize: 15, fontWeight: "600", color: "#fff" }}>Volver</Text>
+        </Pressable>
+
         {/* Avatar + nombre */}
         <View style={{ alignItems: "center", paddingTop: insets.top + 16, gap: 8 }}>
           <LinearGradient
