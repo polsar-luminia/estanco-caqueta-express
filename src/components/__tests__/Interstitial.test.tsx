@@ -110,7 +110,7 @@ function flushCleanups() {
 function getImageEl(result: React.ReactElement) {
   // Estructura: <View> [ <Image />, <View><SplashBranded /></View> ] </View>
   // Image es el primer hijo de la View raíz.
-  const children = result.props.children as React.ReactElement[];
+  const children = (result.props as { children: React.ReactElement[] }).children;
   return children[0] as React.ReactElement<{ onLoad: () => void; onError: () => void }>;
 }
 
