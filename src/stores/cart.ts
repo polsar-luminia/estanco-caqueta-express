@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { tracker } from "../lib/tracker";
+import { metaLogAddToCart } from "../lib/metaEvents";
 import { debouncedSyncCart } from "../lib/cartSync";
 import { registerLogoutHandler } from "./auth";
 
@@ -53,6 +54,7 @@ export const useCartStore = create<CartState>()(
             (i) => i.productoId === product.productoId
           );
           tracker.track('carrito_agregado', { producto_id: product.productoId, nombre: product.nombre, precio: product.precioUnitario });
+          metaLogAddToCart(product.productoId, product.precioUnitario);
           if (existing) {
             // Respetar stockMaximo si ya lo conocemos
             const max = existing.stockMaximo ?? Infinity;
@@ -74,6 +76,7 @@ export const useCartStore = create<CartState>()(
         set((state) => {
           const existing = state.items.find((i) => i.productoId === product.productoId);
           tracker.track('carrito_agregado', { producto_id: product.productoId, nombre: product.nombre, precio: product.precioUnitario, cantidad });
+          metaLogAddToCart(product.productoId, product.precioUnitario);
           if (existing) {
             const max = existing.stockMaximo ?? product.stockMaximo ?? Infinity;
             const nueva = Math.min(existing.cantidad + cantidad, max);

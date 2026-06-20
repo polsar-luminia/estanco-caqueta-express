@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import * as Sentry from "@sentry/react-native";
 import * as Notifications from "expo-notifications";
+import { metaIdentify, metaClearUser } from "../lib/metaEvents";
 import {
   getToken,
   setToken,
@@ -128,12 +129,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { token, cliente } = await loginCliente(telefono, password);
     await setToken(token);
     set({ token, cliente, isAuthenticated: true });
+    metaIdentify(cliente.id, cliente.telefono);
   },
 
   register: async (telefono, nombre, password, fecha_nacimiento) => {
     const { token, cliente } = await registrarCliente(telefono, nombre, password, fecha_nacimiento);
     await setToken(token);
     set({ token, cliente, isAuthenticated: true });
+    metaIdentify(cliente.id, cliente.telefono);
   },
 
   logout: async () => {
@@ -153,6 +156,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     await removeToken();
     await runLogoutHandlers();
     set({ token: null, cliente: null, isAuthenticated: false });
+    metaClearUser();
   },
 
   setCliente: (cliente) => set({ cliente }),

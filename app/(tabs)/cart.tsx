@@ -14,6 +14,7 @@ import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp
 import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
 import { tracker } from "../../src/lib/tracker";
+import { metaLogPurchase } from "../../src/lib/metaEvents";
 import { TruckIcon, TagIcon } from "../../src/components/icons/AppIcons";
 import { CartIcon } from "../../src/components/icons/TabIcons";
 import { formatCOP } from "../../src/lib/format";
@@ -268,6 +269,7 @@ export default function CartScreen() {
       // Éxito: liberar el key para que el próximo pedido genere uno nuevo
       submitIdempotencyKeyRef.current = null;
       tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos }, 'cart');
+      metaLogPurchase(pedido.total, { pedidoId: pedido.id, numItems: items.length });
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });
       queryClient.invalidateQueries({ queryKey: ["cupones-disponibles"] });
       // Refrescar perfil antes de limpiar carrito (si falla, no afecta el pedido)

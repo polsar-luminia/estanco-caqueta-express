@@ -8,6 +8,7 @@ import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { useAuthStore } from "../../src/stores/auth";
 import { tracker } from "../../src/lib/tracker";
+import { metaLogRegistration } from "../../src/lib/metaEvents";
 import { DateSelector, DateValue, toISODate, calcularEdad } from "../../src/components/DateSelector";
 import { InputField } from "../../src/components/InputField";
 import { CheckboxRow } from "../../src/components/CheckboxRow";
@@ -101,6 +102,7 @@ export default function RegisterScreen() {
     try {
       await register(telefono.trim(), nombre.trim(), password, iso);
       tracker.track('registro_completado', {}, 'register');
+      metaLogRegistration();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo crear la cuenta";
       Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "auth", screen: "register" } });

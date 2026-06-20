@@ -52,3 +52,6 @@ code-signing/private-key.pem
 .idea/
 
 .env.local
+
+# Google Play service account (EAS submit) — clave privada, NUNCA commitear
+play-service-account.json

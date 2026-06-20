@@ -2,7 +2,7 @@
   "expo": {
     "name": "Estanco Caquetá Express",
     "slug": "estanco-caqueta-express",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "estancocaqueta",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "co.estancocaqueta.express",
-      "buildNumber": "6",
+      "buildNumber": "54",
       "associatedDomains": [
         "applinks:estancocaqueta.com"
       ],
@@ -31,7 +31,7 @@
         "backgroundColor": "#1FAF55"
       },
       "package": "co.estancocaqueta.express",
-      "versionCode": 8
+      "versionCode": 54
     },
     "plugins": [
       "expo-router",
@@ -51,6 +51,18 @@
         {
           "icon": "./assets/icon.png",
           "color": "#1FAF55"
+        }
+      ],
+      [
+        "react-native-fbsdk-next",
+        {
+          "appID": "2300234794051494",
+          "clientToken": "f8d003d5ce1a72049fa446a67e2c6353",
+          "displayName": "Estanco Caquetá Express",
+          "advertiserIDCollectionEnabled": true,
+          "autoLogAppEventsEnabled": true,
+          "isAutoInitEnabled": true,
+          "iosUserTrackingPermission": "Usamos tu actividad para medir nuestras campañas y mostrarte ofertas más relevantes."
         }
       ]
     ],

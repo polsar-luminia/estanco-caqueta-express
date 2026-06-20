@@ -11,6 +11,7 @@ import { queryClient } from "../src/lib/query-client";
 import { useAuthStore } from "../src/stores/auth";
 import { usePushNotifications } from "../src/hooks/usePushNotifications";
 import { tracker } from "../src/lib/tracker";
+import { initMetaAnalytics } from "../src/lib/metaEvents";
 import { toastConfig } from "../src/components/ToastConfig";
 import { OfflineBanner } from "../src/components/OfflineBanner";
 import { Interstitial } from "../src/components/Interstitial";
@@ -61,6 +62,8 @@ export default Sentry.wrap(function RootLayout() {
   useEffect(() => {
     hydrate();
     tracker.track('app_abierta');
+    // Init del SDK de Meta + prompt ATT (iOS) una sola vez, con la UI ya montada.
+    initMetaAnalytics();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate es un selector estable de Zustand
   }, []);
 

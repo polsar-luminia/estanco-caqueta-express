@@ -43,20 +43,20 @@
   "submit": {
     "internal": {
       "android": {
-        "serviceAccountKeyPath": "C:\\Users\\Santi\\.secrets\\polo-play-sa.json",
+        "serviceAccountKeyPath": "./play-service-account.json",
         "track": "internal",
         "releaseStatus": "draft"
       }
     },
     "alpha": {
       "android": {
-        "serviceAccountKeyPath": "C:\\Users\\Santi\\.secrets\\polo-play-sa.json",
+        "serviceAccountKeyPath": "./play-service-account.json",
         "track": "alpha"
       }
     },
     "production": {
       "android": {
-        "serviceAccountKeyPath": "C:\\Users\\Santi\\.secrets\\polo-play-sa.json",
+        "serviceAccountKeyPath": "./play-service-account.json",
         "track": "production"
       },
       "ios": {
