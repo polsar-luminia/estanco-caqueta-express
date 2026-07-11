@@ -181,6 +181,15 @@ export default function VerifyOtpScreen() {
           <Pressable onPress={() => router.back()} className="items-center mt-3">
             <Text style={{ color: "#6D7B6C", fontSize: 13 }}>← Volver</Text>
           </Pressable>
+
+          {/* M-AUTH-17: salida clara si el número no tenía cuenta. Con el backend
+              anti-enumeración (200 genérico), quien escribió un número sin cuenta
+              aterriza aquí esperando un código que no llega — este link lo rescata. */}
+          <Pressable onPress={() => router.replace("/(auth)/register")} className="items-center mt-4">
+            <Text style={{ color: "#6D7B6C", fontSize: 13 }}>
+              ¿No tienes cuenta? <Text style={{ color: "#D33587", fontWeight: "700" }}>Regístrate</Text>
+            </Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

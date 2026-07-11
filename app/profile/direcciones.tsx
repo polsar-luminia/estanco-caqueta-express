@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl } from "react-native";
 import { Stack } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BackButton } from "../../src/components/BackButton";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
@@ -9,6 +10,7 @@ import { getDirecciones, crearDireccion, setPredeterminada, eliminarDireccion } 
 import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
 
 export default function DireccionesScreen() {
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [mostrarForm, setMostrarForm] = useState(false);
   const [direccion, setDireccion] = useState("");
@@ -69,7 +71,7 @@ export default function DireccionesScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: 56, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: "#FAFAF6", borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: "#FAFAF6", borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
         <BackButton style={{ paddingRight: 16 }} />
         <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: "#1A1C1A", textAlign: "center", marginRight: 60 }}>
           Mis Direcciones

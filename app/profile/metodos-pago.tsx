@@ -1,5 +1,6 @@
 import { View, Text, ScrollView } from "react-native";
 import { Stack } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { BackButton } from "../../src/components/BackButton";
 
@@ -28,12 +29,13 @@ const METODOS = [
 ];
 
 export default function MetodosPagoScreen() {
+  const insets = useSafeAreaInsets();
   return (
     <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: 56, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: "#FAFAF6", borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: "#FAFAF6", borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
         <BackButton style={{ paddingRight: 16 }} />
         <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: "#1A1C1A", textAlign: "center", marginRight: 60 }}>
           Métodos de Pago

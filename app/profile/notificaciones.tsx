@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, ScrollView, Switch, ActivityIndicator, Pressable } from "react-native";
 import { Stack } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Feather } from "@expo/vector-icons";
 import { BackButton } from "../../src/components/BackButton";
@@ -45,6 +46,7 @@ const ITEMS: { key: PrefKey; titulo: string; descripcion: string }[] = [
 ];
 
 export default function NotificacionesScreen() {
+  const insets = useSafeAreaInsets();
   const [prefs, setPrefs] = useState<Preferencias | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<PrefKey | null>(null);
@@ -100,7 +102,7 @@ export default function NotificacionesScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: 56, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: "#FAFAF6", borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: "#FAFAF6", borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
         <BackButton style={{ paddingRight: 16 }} />
         <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: "#1A1C1A", textAlign: "center", marginRight: 60 }}>
           Notificaciones

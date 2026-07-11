@@ -57,8 +57,10 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   sugerencia_clickeada: ['desde_producto', 'producto_clickeado', 'nombre'],
   cupon_aplicado: ['descuento'],
   pedido_creado: ['pedido_id', 'total', 'items_count', 'uso_cupon', 'uso_puntos'],
-  busqueda_sin_resultado: [],
-  busqueda: ['resultados'],
+  // 'q': término buscado — dato de comportamiento (qué buscan y no encuentran),
+  // no PII. Clave para decisiones de surtido y campañas (M-OBS-22).
+  busqueda_sin_resultado: ['q'],
+  busqueda: ['q', 'resultados'],
   pedido_reordenado: ['pedido_id', 'omitidos', 'omitidos_catalogo', 'omitidos_stock'],
   pedido_cancelado: ['pedido_id'],
   carrito_agregado: ['producto_id', 'nombre', 'precio', 'cantidad'],

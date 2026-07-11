@@ -156,6 +156,8 @@ export function ProductCard({ product, onPress, badge, oferta, priority = "norma
                 handleAdd();
               }}
               disabled={agotado}
+              accessibilityRole="button"
+              accessibilityLabel={`Agregar ${product.nombre} al carrito`}
               className="items-center justify-center"
               style={{
                 width: 36,

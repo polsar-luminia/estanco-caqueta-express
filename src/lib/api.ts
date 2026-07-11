@@ -70,8 +70,17 @@ export async function apiFetch<T = any>(
   clearTimeout(timeoutId);
 
   if (res.status === 401) {
-    await removeToken();
-    _onUnauthorized?.();
+    // Los 401 de endpoints de autenticación (login/registro/reset) NO deben
+    // disparar el logout global: son "credenciales inválidas", no "sesión caída".
+    // Sin este guard, un login fallido corre runLogoutHandlers() y BORRA el
+    // carrito del invitado en el paso más caliente del funnel (M-AUTH-16).
+    // Solo invalidamos si la request iba autenticada (llevaba token) a un
+    // endpoint protegido.
+    const esEndpointAuth = /^\/clientes\/(login|registrar|reset-password)/.test(path);
+    if (token && !esEndpointAuth) {
+      await removeToken();
+      _onUnauthorized?.();
+    }
     let errorMsg = "UNAUTHORIZED";
     try {
       const body401 = await res.json() as Record<string, unknown>;
@@ -344,6 +353,11 @@ export interface Producto {
   codigo?: string;
   imagen_url?: string;
   precio_app: number;
+  // Precio efectivo con oferta/combo activo aplicado, calculado server-side.
+  // El carrito y el checkout deben usar ESTE, no precio_app, para no revertir
+  // el precio de oferta (M-CART-19). Opcional: fallback a precio_app si el
+  // backend aún no lo expone.
+  precio_vigente?: number;
   precio_lista1?: number;
   descripcion?: string;
   categoria: string;

@@ -63,12 +63,18 @@ describe('tracker — allowlist M-OBS-21', () => {
     expect(body.eventos[0].payload).toBeUndefined();
   });
 
-  it('busqueda: filtra `q` aunque venga en payload (M-OBS-21 cierre)', async () => {
-    tracker.track('busqueda', { q: 'leak', resultados: 5 } as any, 'search');
+  it('busqueda: incluye `q` y `resultados` (M-OBS-22 — término es dato de comportamiento, no PII)', async () => {
+    tracker.track('busqueda', { q: 'whisky', resultados: 5 } as any, 'search');
     await tracker.flush();
     const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
-    expect(body.eventos[0].payload).toEqual({ resultados: 5 });
-    expect(body.eventos[0].payload).not.toHaveProperty('q');
+    expect(body.eventos[0].payload).toEqual({ q: 'whisky', resultados: 5 });
+  });
+
+  it('busqueda_sin_resultado: incluye `q` (M-OBS-22 — qué buscan y no encuentran)', async () => {
+    tracker.track('busqueda_sin_resultado', { q: 'xyzabc' } as any, 'search');
+    await tracker.flush();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.eventos[0].payload).toEqual({ q: 'xyzabc' });
   });
 
   it('cupon_aplicado: filtra `cupon_codigo` aunque venga en payload (M-OBS-21 cierre)', async () => {

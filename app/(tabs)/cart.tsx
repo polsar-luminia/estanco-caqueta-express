@@ -62,7 +62,10 @@ export default function CartScreen() {
     let huboCambioStock = false;
     productosCheck.forEach((q, idx) => {
       if (q.data && items[idx]) {
-        const nuevoPrecio = q.data.precio_app;
+        // M-CART-19: usar precio_vigente (con oferta aplicada) para no revertir
+        // el precio de oferta al precio full. Fallback a precio_app si el backend
+        // aún no expone el campo.
+        const nuevoPrecio = q.data.precio_vigente ?? q.data.precio_app;
         const nuevoStock = q.data.stock_total ?? 0;
         if (nuevoPrecio !== items[idx].precioUnitario) huboCambioPrecio = true;
         priceMap.set(items[idx].productoId, nuevoPrecio);
@@ -190,6 +193,9 @@ export default function CartScreen() {
   const submitLockRef = useRef(false);
   // M-CART-15: idempotency key persiste hasta éxito; reintentos tras timeout reusan el mismo
   const submitIdempotencyKeyRef = useRef<string | null>(null);
+  // M-CART-18: id de la dirección creada en este intento. Evita que un reintento
+  // (tras timeout/stock) vuelva a crear la misma dirección una y otra vez.
+  const direccionCreadaIdRef = useRef<number | null>(null);
 
   const handlePedir = async () => {
     if (submitLockRef.current) return;
@@ -242,13 +248,19 @@ export default function CartScreen() {
         return;
       }
 
-      // Guardar nueva dirección si la ingresó
-      if (mostrarNueva && dirFinal) {
-        await crearDireccion({ direccion: dirFinal, barrio: barFinal || undefined, barrio_id: barIdFinal, notas: notFinal || undefined, predeterminada: true });
+      // Guardar nueva dirección si la ingresó. M-CART-18: solo una vez por intento
+      // — si ya la creamos y el pedido falló, el reintento NO la vuelve a crear.
+      if (mostrarNueva && dirFinal && direccionCreadaIdRef.current == null) {
         try {
-          await refetchDirs();
+          const nueva = await crearDireccion({ direccion: dirFinal, barrio: barFinal || undefined, barrio_id: barIdFinal, notas: notFinal || undefined, predeterminada: true });
+          direccionCreadaIdRef.current = nueva.id;
+          try {
+            await refetchDirs();
+          } catch {
+            // refetch best-effort: errores no bloquean el pedido
+          }
         } catch {
-          // refetch best-effort: errores no bloquean el pedido
+          // si falla la creación, el pedido continúa con la dirección inline (dirFinal)
         }
       }
 
@@ -266,8 +278,9 @@ export default function CartScreen() {
         cupon_codigo: cuponValidado?.cupon.codigo || undefined,
         lineas: items.map((i) => ({ producto_id: i.productoId, cantidad: i.cantidad })),
       }, submitIdempotencyKeyRef.current);
-      // Éxito: liberar el key para que el próximo pedido genere uno nuevo
+      // Éxito: liberar el key y el id de dirección para que el próximo pedido empiece limpio
       submitIdempotencyKeyRef.current = null;
+      direccionCreadaIdRef.current = null;
       tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos }, 'cart');
       metaLogPurchase(pedido.total, { pedidoId: pedido.id, numItems: items.length });
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });
@@ -473,7 +486,7 @@ export default function CartScreen() {
                       {cuponValidado.cupon.descripcion || (cuponValidado.cupon.tipo === "porcentaje" ? `${cuponValidado.cupon.valor}% de descuento` : `${formatCOP(cuponValidado.cupon.valor)} de descuento`)}
                     </Text>
                   </View>
-                  <Pressable onPress={handleQuitarCupon}>
+                  <Pressable onPress={handleQuitarCupon} accessibilityRole="button" accessibilityLabel="Quitar cupón">
                     <Feather name="x-circle" size={18} color="#9E9E9E" />
                   </Pressable>
                 </View>

@@ -5,9 +5,11 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import NetInfo from "@react-native-community/netinfo";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { queryClient } from "../src/lib/query-client";
+import { getToken } from "../src/lib/api";
 import { useAuthStore } from "../src/stores/auth";
 import { usePushNotifications } from "../src/hooks/usePushNotifications";
 import { tracker } from "../src/lib/tracker";
@@ -106,6 +108,21 @@ export default Sentry.wrap(function RootLayout() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [edadConfirmada, isAuthenticated, isLoading, segments]);
+
+  // M-PERS-16: si hydrate() falló por red (app abierta sin señal), el token
+  // sigue en SecureStore pero el usuario queda como invitado hasta reabrir la
+  // app. Al volver la conexión, reintentamos hydrate() en silencio.
+  useEffect(() => {
+    const unsub = NetInfo.addEventListener(async (state) => {
+      const online = state.isConnected === true && state.isInternetReachable !== false;
+      if (!online) return;
+      const st = useAuthStore.getState();
+      if (st.lastHydrateError === 'network' && !st.isAuthenticated) {
+        if (await getToken()) st.hydrate();
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Sincronizar React Query con AppState para refetch al volver de background
   useEffect(() => {

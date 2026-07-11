@@ -3,6 +3,7 @@ import * as Clipboard from "expo-clipboard";
 import { Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { BackButton } from "../../src/components/BackButton";
 import { apiFetch } from "../../src/lib/api";
@@ -25,6 +26,7 @@ function getCuponLabel(c: CuponDisponible) {
 }
 
 export default function CuponesScreen() {
+  const insets = useSafeAreaInsets();
   const { data: cupones = [], isLoading, isError, isFetching, refetch } = useQuery<CuponDisponible[]>({
     queryKey: ["cupones-disponibles"],
     queryFn: () => apiFetch("/cupones/disponibles"),
@@ -44,7 +46,7 @@ export default function CuponesScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: 56, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: "#FAFAF6", borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: "#FAFAF6", borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
         <BackButton style={{ paddingRight: 16 }} />
         <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: "#1A1C1A", textAlign: "center", marginRight: 60 }}>
           Cupones

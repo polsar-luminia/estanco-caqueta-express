@@ -121,6 +121,16 @@ export default function ForgotPasswordScreen() {
           <Pressable onPress={() => router.back()} className="items-center mt-6">
             <Text style={{ color: "#6D7B6C", fontSize: 13 }}>← Volver al inicio de sesión</Text>
           </Pressable>
+
+          {/* Link de registro PERSISTENTE (M-AUTH-17): no depende del 404 del
+              backend. Cuando el backend pase al 200 genérico anti-enumeración,
+              el CTA condicional de "número no registrado" deja de aparecer, pero
+              el usuario sin cuenta igual tiene una salida clara aquí. */}
+          <Pressable onPress={() => router.replace("/(auth)/register")} className="items-center mt-4">
+            <Text style={{ color: "#6D7B6C", fontSize: 13 }}>
+              ¿No tienes cuenta? <Text style={{ color: "#D33587", fontWeight: "700" }}>Regístrate</Text>
+            </Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

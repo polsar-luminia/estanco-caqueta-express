@@ -1,6 +1,7 @@
 import { View, Text, Pressable, ScrollView, Linking, Alert, Image } from "react-native";
 import { useRouter, Redirect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Constants from "expo-constants";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Clipboard from "expo-clipboard";
@@ -358,7 +359,7 @@ export default function ProfileScreen() {
       {/* ── Versión y créditos — NO MODIFICAR ────────────────── */}
       <View style={{ alignItems: "center", marginBottom: 24, gap: 2 }}>
         <Text style={{ textAlign: "center", fontSize: 9, color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2 }}>
-          Versión 1.0.0
+          Versión {Constants.expoConfig?.version ?? "1.0.0"}
         </Text>
         <Text style={{ textAlign: "center", fontSize: 9, color: "#9E9E9E" }}>
           Creado por{" "}

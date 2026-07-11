@@ -87,7 +87,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         setTimeout(() => reject(new Error('TIMEOUT')), 7_000)
       );
       const cliente = await Promise.race([getPerfil(), timeoutPromise]);
-      set({ token, cliente, isLoading: false, isAuthenticated: true });
+      // Éxito: limpiar cualquier lastHydrateError previo para que el listener
+      // de reconexión (app/_layout.tsx) no siga reintentando (M-PERS-16).
+      set({ token, cliente, isLoading: false, isAuthenticated: true, lastHydrateError: null });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';
       const isUnauthorized = msg === 'UNAUTHORIZED';

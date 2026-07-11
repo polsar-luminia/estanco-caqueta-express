@@ -88,6 +88,36 @@ describe("apiFetch", () => {
     expect(onUnauth).toHaveBeenCalled();
   });
 
+  it("401 en /clientes/login (credenciales malas) → NO borra token ni desloguea (M-AUTH-16)", async () => {
+    // Con token presente (invitado que reintenta o sesión previa): un login
+    // fallido NO debe disparar el logout global ni borrar el carrito.
+    vi.mocked(SecureStore.getItemAsync).mockResolvedValue("tok-viejo");
+    vi.mocked(fetch).mockResolvedValue(
+      mockResponse(401, { error: "Credenciales invalidas" }, false)
+    );
+    const onUnauth = vi.fn();
+    registerUnauthorizedHandler(onUnauth);
+
+    await expect(
+      apiFetch("/clientes/login", { method: "POST", body: "{}" })
+    ).rejects.toThrow("Teléfono o contraseña incorrectos");
+    expect(SecureStore.deleteItemAsync).not.toHaveBeenCalled();
+    expect(onUnauth).not.toHaveBeenCalled();
+  });
+
+  it("401 en /clientes/reset-password/verificar → NO desloguea", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
+    vi.mocked(fetch).mockResolvedValue(mockResponse(401, {}, false));
+    const onUnauth = vi.fn();
+    registerUnauthorizedHandler(onUnauth);
+
+    await expect(
+      apiFetch("/clientes/reset-password/verificar", { method: "POST", body: "{}" })
+    ).rejects.toThrow();
+    expect(SecureStore.deleteItemAsync).not.toHaveBeenCalled();
+    expect(onUnauth).not.toHaveBeenCalled();
+  });
+
   it("error conocido (mapping) → devuelve mensaje user-friendly", async () => {
     vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
     vi.mocked(fetch).mockResolvedValue(

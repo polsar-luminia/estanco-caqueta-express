@@ -2,6 +2,7 @@ import {
   View, Text, ScrollView, Pressable, StyleSheet,
 } from "react-native";
 import { Stack, useRouter, Redirect } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
@@ -143,6 +144,7 @@ export default function OfertasScreen() {
   const cliente = useAuthStore((s) => s.cliente);
 
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   // Selectores inline (patrón obligatorio — los métodos del store no son reactivos)
   const itemCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad, 0));
@@ -194,7 +196,7 @@ export default function OfertasScreen() {
         style={{
           flexDirection: "row",
           alignItems: "center",
-          paddingTop: 56,
+          paddingTop: insets.top + 12,
           paddingBottom: 14,
           paddingHorizontal: 16,
           backgroundColor: "#FFFFFF",

@@ -32,20 +32,22 @@ const TIPO_CFG: Record<string, { label: string; color: string }> = {
   irresistible:     { label: "Irresistible",     color: "#DC2626" },
 };
 
-const FALLBACK_IMG = "https://cdn.shopify.com/s/files/1/0906/3084/8816/collections/Diseno_sin_titulo_23.png";
-
 function HeroSlide({ banner, onPress }: { banner: Patrocinado | undefined; onPress: () => void }) {
   const cfg = TIPO_CFG[banner?.tipo ?? "banner"] ?? TIPO_CFG["banner"];
   const titulo = banner?.titulo ?? "Descuentos en\ndomicilio";
-  const imgUrl = banner?.imagen_url ?? FALLBACK_IMG;
+  const imgUrl = banner?.imagen_url;
 
   return (
-    <View style={{ width: SCREEN_WIDTH - 32, height: 220, borderRadius: 12, overflow: "hidden" }}>
-      <ShimmerImage
-        imageUrl={imgUrl}
-        style={{ width: "100%", height: 220, position: "absolute" }}
-        contentFit="cover"
-      />
+    // Fondo de marca como fallback: si el banner no trae imagen, el hero se ve
+    // intencional en verde en vez de depender de un CDN externo que puede romperse.
+    <View style={{ width: SCREEN_WIDTH - 32, height: 220, borderRadius: 12, overflow: "hidden", backgroundColor: "#1FAF55" }}>
+      {imgUrl ? (
+        <ShimmerImage
+          imageUrl={imgUrl}
+          style={{ width: "100%", height: 220, position: "absolute" }}
+          contentFit="cover"
+        />
+      ) : null}
       <LinearGradient
         colors={["rgba(0,0,0,0.52)", "rgba(0,0,0,0.10)"]}
         start={{ x: 0, y: 0 }}

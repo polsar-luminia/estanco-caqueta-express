@@ -50,8 +50,11 @@ export async function initMetaAnalytics(): Promise<void> {
       const { status } = await requestTrackingPermissionsAsync();
       Settings.setAdvertiserTrackingEnabled(status === "granted");
     }
+    // fbsdk-next 13.x: initializeSDK() ya activa la app y, con
+    // autoLogAppEventsEnabled (app.json), auto-loguea la activación. El antiguo
+    // AppEventsLogger.activateApp() NO existe en 13.x (lanzaba y el catch lo
+    // tragaba, dejando la activación a medias — degradaba la calidad de eventos).
     Settings.initializeSDK();
-    AppEventsLogger.activateApp();
   } catch (err) {
     if (__DEV__) console.warn("[metaEvents] init falló:", err);
   }
@@ -74,7 +77,9 @@ export function metaIdentify(clienteId: number, telefono?: string): void {
 export function metaClearUser(): void {
   try {
     AppEventsLogger.clearUserID();
-    AppEventsLogger.clearUserData();
+    // fbsdk-next 13.x no tiene clearUserData(); se limpia el advanced matching
+    // pasando un objeto vacío a setUserData().
+    AppEventsLogger.setUserData({});
   } catch (err) {
     if (__DEV__) console.warn("[metaEvents] clearUser falló:", err);
   }

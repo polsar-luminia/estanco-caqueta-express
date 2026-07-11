@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { View, Text, Pressable, Dimensions, ScrollView as RNScrollView } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import Animated, {
   useSharedValue,
@@ -95,6 +96,7 @@ export default function ProductDetailScreen() {
   const { id, ofertaPrecio, precioAnterior } = useLocalSearchParams<{ id: string; ofertaPrecio?: string; precioAnterior?: string }>();
   const productoId = id && id.trim() ? Number(id) : NaN;
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const addItemWithQuantity = useCartStore((s) => s.addItemWithQuantity);
   const scrollY = useSharedValue(0);
   const [quantity, setQuantity] = useState(1);
@@ -248,7 +250,7 @@ export default function ProductDetailScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: 56, paddingBottom: 12, paddingHorizontal: 16, backgroundColor: "#fff" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 12, paddingHorizontal: 16, backgroundColor: "#fff" }}>
         <Pressable onPress={() => router.back()} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
             <Path d="M15 18l-6-6 6-6" stroke="#1A1C1A" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
@@ -363,6 +365,8 @@ export default function ProductDetailScreen() {
               {/* Minus */}
               <Pressable
                 onPress={decrement}
+                accessibilityRole="button"
+                accessibilityLabel="Disminuir cantidad"
                 className="items-center justify-center rounded-full bg-white"
                 style={{
                   width: 40,

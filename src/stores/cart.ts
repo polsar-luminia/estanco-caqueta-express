@@ -50,6 +50,9 @@ export const useCartStore = create<CartState>()(
 
       addItem: (product) => {
         set((state) => {
+          // M-CART-20: no agregar productos agotados. Defensa en el store además
+          // del botón deshabilitado en la UI (evita item fantasma cantidad 0).
+          if ((product.stockMaximo ?? Infinity) <= 0) return state;
           const existing = state.items.find(
             (i) => i.productoId === product.productoId
           );
@@ -74,6 +77,8 @@ export const useCartStore = create<CartState>()(
 
       addItemWithQuantity: (product, cantidad) => {
         set((state) => {
+          // M-CART-20: no agregar productos agotados (ver addItem).
+          if ((product.stockMaximo ?? Infinity) <= 0) return state;
           const existing = state.items.find((i) => i.productoId === product.productoId);
           tracker.track('carrito_agregado', { producto_id: product.productoId, nombre: product.nombre, precio: product.precioUnitario, cantidad });
           metaLogAddToCart(product.productoId, product.precioUnitario);

@@ -24,6 +24,10 @@ export default defineConfig({
       { find: "react-native-svg", replacement: path.resolve(__dirname, "./src/__mocks__/react-native-svg.ts") },
       { find: "expo-notifications", replacement: path.resolve(__dirname, "./src/__mocks__/expo-notifications.ts") },
       { find: "expo-image", replacement: path.resolve(__dirname, "./src/__mocks__/expo-image.ts") },
+      // Meta SDK: sin módulo nativo en node. Sin estos mocks, cart.test/auth.test
+      // (que importan metaEvents vía los stores) fallan al cargar.
+      { find: "react-native-fbsdk-next", replacement: path.resolve(__dirname, "./src/__mocks__/react-native-fbsdk-next.ts") },
+      { find: "expo-tracking-transparency", replacement: path.resolve(__dirname, "./src/__mocks__/expo-tracking-transparency.ts") },
       // Stub para assets de imagen (PNG/JPG/etc). RN usa require() en el código.
       { find: /\.(png|jpg|jpeg|gif|webp|svg)$/, replacement: path.resolve(__dirname, "./src/__mocks__/image-asset.ts") },
     ],

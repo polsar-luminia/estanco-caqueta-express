@@ -1,5 +1,6 @@
 import { View, Text, FlatList, Pressable, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import Svg, { Path } from "react-native-svg";
@@ -23,6 +24,7 @@ function ChevronLeftIcon() {
 export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const categoriaId = id && id.trim() ? Number(id) : NaN;
 
   const PAGE_SIZE = 20;
@@ -83,7 +85,7 @@ export default function CategoryScreen() {
         style={{
           flexDirection: "row",
           alignItems: "center",
-          paddingTop: 56,
+          paddingTop: insets.top + 12,
           paddingBottom: 16,
           paddingHorizontal: 16,
           backgroundColor: "#FAFAF6",

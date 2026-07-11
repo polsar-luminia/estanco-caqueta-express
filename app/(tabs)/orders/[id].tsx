@@ -45,7 +45,9 @@ export default function OrderDetailScreen() {
   const { data: pedido, isLoading, isError, refetch } = useQuery({
     queryKey: ["pedido", pedidoId],
     queryFn: () => getPedido(pedidoId),
-    refetchInterval: 15000,
+    // M-ORD-11: no seguir haciendo polling si el pedido ya está en estado final.
+    refetchInterval: (query) =>
+      ["entregado", "cancelado"].includes(query.state.data?.estado ?? "") ? false : 15000,
     enabled: Number.isFinite(pedidoId) && pedidoId > 0,
   });
 

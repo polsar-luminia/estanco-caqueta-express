@@ -46,7 +46,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
           marginBottom: 32,
         }}
       >
-        Ocurrió un error inesperado. Podés intentar de nuevo o volver al inicio.
+        Ocurrió un error inesperado. Puedes intentar de nuevo o volver al inicio.
       </Text>
 
       <Pressable

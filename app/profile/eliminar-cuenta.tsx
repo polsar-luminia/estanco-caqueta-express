@@ -9,6 +9,7 @@
 import { useState, useRef } from "react";
 import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { Stack, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
@@ -22,6 +23,7 @@ const PALABRA_CONFIRMACION = "ELIMINAR";
 
 export default function EliminarCuentaScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const cliente = useAuthStore((s) => s.cliente);
   const logout = useAuthStore((s) => s.logout);
@@ -86,7 +88,7 @@ export default function EliminarCuentaScreen() {
 
       <View style={{
         flexDirection: "row", alignItems: "center",
-        paddingTop: 56, paddingBottom: 16, paddingHorizontal: 16,
+        paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16,
         backgroundColor: "#FAFAF6",
         borderBottomWidth: 1, borderBottomColor: "#EFEFEB",
       }}>
