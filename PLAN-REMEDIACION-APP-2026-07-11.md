@@ -44,18 +44,24 @@ Todo va en el **build de lanzamiento `1.0.2`**. La columna "OTA-safe" es solo re
 
 | # | Sev | Ítem | Capa | OTA-safe | Estado |
 |---|-----|------|------|----------|--------|
-| 1 | 🔴 | Login fallido borra el carrito | Frontend | sí | ⬜ pendiente |
-| 5 | 🟠 | Precio de oferta se revierte (latente) | Backend + Frontend | sí | ⬜ pendiente |
-| 6 | 🟠 | Sesión no se re-hidrata al volver la red | Frontend | sí | ⬜ pendiente |
-| 8 | 🟠 | Reintento de checkout duplica direcciones | Frontend | sí | ⬜ pendiente |
-| 10 | 🟡 | Término de búsqueda no llega a analytics | Frontend | sí | ⬜ pendiente |
-| 12 | 🟡 | `addItem` con stock 0 crea item fantasma | Frontend | sí | ⬜ pendiente |
-| 13 | 🟡 | Polling 15s en pedido ya entregado | Frontend | sí | ⬜ pendiente |
-| 🔵 | 🔵 | Voseo, versión hardcodeada, fallback img, a11y, safe-area | Frontend | sí | ⬜ pendiente |
-| **M** | 🔴 | **SDK de Meta: rebuild + config** | Nativo | no (build) | ⬜ **EN SCOPE del lanzamiento** |
-| 8-be | 🟡 | Anti-enumeración reset (coordinar con backend) | Front + Backend | sí | ⬜ pendiente |
+| 1 | 🔴 | Login fallido borra el carrito | Frontend | sí | ✅ hecho (`release/1.0.2`, +2 tests) |
+| 5 | 🟠 | Precio de oferta se revierte (latente) | Backend + Frontend | sí | 🟡 **frontend hecho** / backend pendiente |
+| 6 | 🟠 | Sesión no se re-hidrata al volver la red | Frontend | sí | ✅ hecho |
+| 8 | 🟠 | Reintento de checkout duplica direcciones | Frontend | sí | ✅ hecho |
+| 10 | 🟡 | Término de búsqueda no llega a analytics | Frontend | sí | ✅ hecho (+2 tests) |
+| 12 | 🟡 | `addItem` con stock 0 crea item fantasma | Frontend | sí | ✅ hecho |
+| 13 | 🟡 | Polling 15s en pedido ya entregado | Frontend | sí | ✅ hecho |
+| 🔵 | 🔵 | Voseo, versión hardcodeada, fallback img, a11y, safe-area | Frontend | sí | ✅ hecho |
+| **M** | 🔴 | **SDK de Meta: rebuild + config** | Nativo | no (build) | ✅ **config hecha** (fijado 13.4.3, v1.0.2/55, 2 bugs del SDK corregidos) — falta el `eas build`+submit |
+| 8-be | 🟡 | Anti-enumeración reset (coordinar con backend) | Front + Backend | sí | 🟡 **frontend hecho** / deploy backend pendiente |
+| ★ | — | Fix harness de tests (cart/auth rotos desde commit de Meta) | Frontend | sí | ✅ hecho (mocks fbsdk/ATT) |
 
 **Orden de implementación:** #1 → #6/#8/#5 → 🟡 → 🔵 → Ítem 8 → **M (Meta)** → build `1.0.2` → QA completa → lanzamiento.
+
+**Pendiente (todo lo demás ✅ en `release/1.0.2`):**
+1. **Backend #5** — `precio_vigente` en `catalogo.js` + cobrarlo en `pedidos.js` (deploy de servidor). ⚠️ Toca el path de cobro en producción — requiere revisión/confirmación antes de aplicar.
+2. **Deploy backend Ítem 8** — parche anti-enumeración (`Seguridad DistriPolsar/PENDIENTE-item8-...`). El frontend ya tolera ambas respuestas, así que se puede desplegar en cualquier momento.
+3. **`eas build --platform all` + `eas submit`** del `1.0.2`, luego QA en dispositivo físico (checklist §5) y verificación en Meta Events Manager.
 
 ---
 
