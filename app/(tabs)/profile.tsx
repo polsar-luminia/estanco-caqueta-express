@@ -12,6 +12,7 @@ import { useCartStore } from "../../src/stores/cart";
 import { WHATSAPP_SOPORTE } from "../../src/constants/config";
 import { getCuponesDisponibles } from "../../src/lib/api";
 import { CopyIcon } from "../../src/components/icons/AppIcons";
+import { colors } from "../../src/constants/theme";
 
 function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string; badge?: string; onPress?: () => void }) {
   const iconMap: Record<string, keyof typeof Feather.glyphMap> = {
@@ -24,26 +25,39 @@ function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string
     "chat": "message-circle",
     "notifications": "bell",
   };
+  // Tile de color por sección (rediseño Vibrante).
+  const colorMap: Record<string, string> = {
+    "person": colors.green,
+    "payments": colors.purple,
+    "notifications": colors.amber,
+    "receipt_long": colors.offer,
+    "confirmation_number": colors.pink,
+    "chat": colors.green,
+    "help_center": colors.blue,
+    "policy": colors.faint,
+  };
 
   return (
     <Pressable
       onPress={onPress}
       style={{
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        padding: 16, borderBottomWidth: 0.5, borderBottomColor: "#F4F4F0",
+        padding: 13, borderBottomWidth: 0.5, borderBottomColor: colors.line,
       }}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-        <Feather name={iconMap[icon] || "circle"} size={20} color={icon === "confirmation_number" ? "#D33587" : "#9E9E9E"} />
-        <Text style={{ fontSize: 15, fontWeight: "500", color: "#1A1C1A" }}>{label}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <View style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: colorMap[icon] || colors.faint, alignItems: "center", justifyContent: "center" }}>
+          <Feather name={iconMap[icon] || "circle"} size={16} color="#fff" />
+        </View>
+        <Text style={{ fontSize: 14.5, fontWeight: "600", color: colors.ink }}>{label}</Text>
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         {badge && (
-          <View style={{ backgroundColor: "#D33587", borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
+          <View style={{ backgroundColor: colors.pink, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
             <Text style={{ color: "#fff", fontSize: 9, fontWeight: "700", textTransform: "uppercase" }}>{badge}</Text>
           </View>
         )}
-        <Feather name="chevron-right" size={18} color="#D1D5DB" />
+        <Feather name="chevron-right" size={18} color="#CBD3C7" />
       </View>
     </Pressable>
   );
@@ -98,21 +112,20 @@ export default function ProfileScreen() {
   const puntosNext = 100 - (puntos % 100);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: "#FAFAF6" }} contentContainerStyle={{ paddingBottom: 112 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: 112 }}>
 
-      {/* ── Header oscuro ────────────────────────────────────── */}
-      <View style={{ backgroundColor: "#1A1C1A", paddingBottom: 28, position: "relative", overflow: "hidden" }}>
-        {/* Glow verde — top right */}
+      {/* ── Header verde (Vibrante) ──────────────────────────── */}
+      <LinearGradient
+        colors={[colors.green, colors.greenDeep]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ paddingBottom: 28, position: "relative", overflow: "hidden" }}
+      >
+        {/* Glow blanco sutil */}
         <View style={{
-          position: "absolute", top: -40, right: -40,
+          position: "absolute", top: -50, right: -30,
           width: 160, height: 160, borderRadius: 80,
-          backgroundColor: "rgba(31,175,85,0.09)",
-        }} />
-        {/* Glow pink — bottom left */}
-        <View style={{
-          position: "absolute", bottom: -20, left: -20,
-          width: 120, height: 120, borderRadius: 60,
-          backgroundColor: "rgba(211,53,135,0.07)",
+          backgroundColor: "rgba(255,255,255,0.10)",
         }} />
 
         {/* Back — perfil ya no es tab, se accede vía push desde el header.
@@ -138,28 +151,24 @@ export default function ProfileScreen() {
 
         {/* Avatar + nombre */}
         <View style={{ alignItems: "center", paddingTop: insets.top + 16, gap: 8 }}>
-          <LinearGradient
-            colors={["#1FAF55", "#006D30"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+          <View
             style={{
               width: 76, height: 76, borderRadius: 38,
               alignItems: "center", justifyContent: "center",
-              borderWidth: 3, borderColor: "rgba(255,255,255,0.12)",
-              shadowColor: "#1FAF55", shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.30, shadowRadius: 24, elevation: 8,
+              backgroundColor: "rgba(255,255,255,0.20)",
+              borderWidth: 2, borderColor: "rgba(255,255,255,0.40)",
             }}
           >
             <Text style={{ fontSize: 26, fontWeight: "900", color: "#fff", letterSpacing: -1 }}>
               {initials}
             </Text>
-          </LinearGradient>
+          </View>
 
           <View style={{ alignItems: "center" }}>
             <Text style={{ fontSize: 20, fontWeight: "800", color: "#fff" }}>
               {cliente?.nombre || "Usuario"}
             </Text>
-            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>
+            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.80)", marginTop: 2 }}>
               {cliente?.telefono}
             </Text>
           </View>
@@ -176,7 +185,7 @@ export default function ProfileScreen() {
         }}>
           {[
             { label: "Pedidos", value: String(totalPedidos), color: "#1FAF55", sub: "realizados" },
-            { label: "Puntos", value: `${puntos} pts`, color: "#D33587", sub: "200 = envío gratis" },
+            { label: "Puntos", value: `${puntos} pts`, color: colors.offer, sub: "200 = envío gratis" },
           ].map((stat, i) => (
             <View key={stat.label} style={{
               flex: 1, alignItems: "center",
@@ -193,7 +202,7 @@ export default function ProfileScreen() {
             </View>
           ))}
         </View>
-      </View>
+      </LinearGradient>
 
       {/* Spacer para compensar el float del stats row */}
       <View style={{ height: 28 }} />
@@ -206,7 +215,7 @@ export default function ProfileScreen() {
       }}>
         <View style={{ marginBottom: 8 }}>
           <Text style={{ fontSize: 13, fontWeight: "700", color: "#1A1C1A" }}>Progreso de puntos</Text>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: "#D33587", marginTop: 2 }}>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.offer, marginTop: 2 }}>
             {puntosNext} pts para tu próximo envío gratis
           </Text>
         </View>
