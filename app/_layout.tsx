@@ -161,6 +161,10 @@ export default Sentry.wrap(function RootLayout() {
             options={{ headerShown: false }}
           />
           <Stack.Screen
+            name="ubicacion"
+            options={{ headerShown: false, presentation: "modal" }}
+          />
+          <Stack.Screen
             name="support/help"
             options={{ headerShown: false }}
           />

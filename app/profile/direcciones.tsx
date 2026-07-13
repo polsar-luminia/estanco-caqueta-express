@@ -6,13 +6,17 @@ import { BackButton } from "../../src/components/BackButton";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { getDirecciones, crearDireccion, setPredeterminada, eliminarDireccion, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
+import { useRouter } from "expo-router";
+import { getDirecciones, crearDireccion, editarDireccion, setPredeterminada, eliminarDireccion, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
 import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
+import { useUbicacionPicker } from "../../src/stores/ubicacionPicker";
 
 export default function DireccionesScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const queryClient = useQueryClient();
+  const abrirPicker = useUbicacionPicker((s) => s.abrir);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [direccion, setDireccion] = useState("");
   const [barrioObj, setBarrioObj] = useState<BarrioSeleccionado | null>(null);
@@ -43,6 +47,20 @@ export default function DireccionesScreen() {
     mutationFn: setPredeterminada,
     onSuccess: refetch,
   });
+
+  const mutEditarUbic = useMutation({
+    mutationFn: ({ id, u }: { id: number; u: UbicacionCapturada }) => editarDireccion(id, ubicacionABody(u)),
+    onSuccess: () => { refetch(); Toast.show({ type: "success", text1: "Ubicación actualizada" }); },
+    onError: (err: Error) => Toast.show({ type: "error", text1: "No se pudo actualizar", text2: err.message }),
+  });
+
+  const abrirMapaDireccion = (d: { id: number; lat?: number | null; lng?: number | null }) => {
+    abrirPicker(
+      (u) => mutEditarUbic.mutate({ id: d.id, u }),
+      d.lat != null && d.lng != null ? { lat: d.lat, lng: d.lng } : null,
+    );
+    router.push("/ubicacion");
+  };
 
   const mutEliminar = useMutation({
     mutationFn: eliminarDireccion,
@@ -114,6 +132,12 @@ export default function DireccionesScreen() {
                           <Text style={{ fontSize: 8, fontWeight: "700", color: "#1FAF55" }}>PREDETERMINADA</Text>
                         </View>
                       )}
+                      {d.lat != null && (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
+                          <Feather name="map-pin" size={8} color="#1FAF55" />
+                          <Text style={{ fontSize: 8, fontWeight: "700", color: "#1FAF55" }}>CON UBICACIÓN</Text>
+                        </View>
+                      )}
                     </View>
                     <Text style={{ fontSize: 13, color: "#6D7B6C", marginTop: 2 }}>{d.direccion}</Text>
                     {d.barrio ? <Text style={{ fontSize: 12, color: "#9E9E9E", marginTop: 1 }}>{d.barrio}</Text> : null}
@@ -129,11 +153,17 @@ export default function DireccionesScreen() {
                   <Feather name="trash-2" size={16} color="#D33587" />
                 </Pressable>
               </View>
-              {!d.predeterminada && (
-                <Pressable onPress={() => mutPredeterminada.mutate(d.id)} style={{ marginTop: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: "#F4F4F0", alignItems: "center" }}>
-                  <Text style={{ fontSize: 12, fontWeight: "600", color: "#1FAF55" }}>Establecer como predeterminada</Text>
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
+                {!d.predeterminada && (
+                  <Pressable onPress={() => mutPredeterminada.mutate(d.id)} style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: "#F4F4F0", alignItems: "center" }}>
+                    <Text style={{ fontSize: 12, fontWeight: "600", color: "#1FAF55" }}>Predeterminada</Text>
+                  </Pressable>
+                )}
+                <Pressable onPress={() => abrirMapaDireccion(d)} disabled={mutEditarUbic.isPending} style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, borderRadius: 8, backgroundColor: "#F4F4F0" }}>
+                  <Feather name="map" size={12} color="#1FAF55" />
+                  <Text style={{ fontSize: 12, fontWeight: "600", color: "#1FAF55" }}>{d.lat != null ? "Editar ubicación" : "Agregar ubicación"}</Text>
                 </Pressable>
-              )}
+              </View>
             </View>
           ))
         )}

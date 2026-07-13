@@ -426,6 +426,12 @@ export default function CartScreen() {
                                     <Text style={{ fontSize: 8, fontWeight: "700", color: "#1FAF55" }}>DEFAULT</Text>
                                   </View>
                                 )}
+                                {d.lat != null && (
+                                  <View style={{ flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
+                                    <Feather name="map-pin" size={8} color="#1FAF55" />
+                                    <Text style={{ fontSize: 8, fontWeight: "700", color: "#1FAF55" }}>CON UBICACIÓN</Text>
+                                  </View>
+                                )}
                               </View>
                               <Text style={{ fontSize: 12, color: "#6D7B6C", marginTop: 2 }} numberOfLines={1}>
                                 {d.direccion}{d.barrio ? ` - ${d.barrio}` : ""}

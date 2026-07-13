@@ -1,12 +1,14 @@
 import { useState, useRef } from "react";
 import { View, Text, Pressable, ActivityIndicator, Linking } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import * as Location from "expo-location";
 import {
   type UbicacionCapturada,
   formatoPrecision,
   esUbicacionAproximada,
 } from "../lib/api";
+import { useUbicacionPicker } from "../stores/ubicacionPicker";
 
 // Botón "Usar mi ubicación actual" (Geolocalización Fase 1).
 // Controlado: el padre guarda la `UbicacionCapturada` y la manda al backend.
@@ -58,6 +60,8 @@ function aUbicacion(pos: Location.LocationObject, geocoded: string | null): Ubic
 }
 
 export function UbicacionButton({ value, onChange }: Props) {
+  const router = useRouter();
+  const abrirPicker = useUbicacionPicker((s) => s.abrir);
   const [estado, setEstado] = useState<Estado>("idle");
   const [error, setError] = useState<string | null>(null);
   const [abrirAjustes, setAbrirAjustes] = useState(false);
@@ -144,6 +148,19 @@ export function UbicacionButton({ value, onChange }: Props) {
     onChange(null);
   };
 
+  // Abrir el mapa (Fase 2): centra en el pin actual si existe. El callback aplica
+  // el resultado y cancela cualquier refinamiento GPS en curso.
+  const abrirMapa = () => {
+    sesionRef.current++;
+    setRefinando(false);
+    setError(null);
+    abrirPicker(
+      (u) => onChange(u),
+      value && value.lat != null && value.lng != null ? { lat: value.lat, lng: value.lng } : null,
+    );
+    router.push("/ubicacion");
+  };
+
   // Estado: ubicación capturada
   if (value) {
     const precision = formatoPrecision(value.precision_m);
@@ -194,6 +211,12 @@ export function UbicacionButton({ value, onChange }: Props) {
             Ubicación aproximada — revisa que la dirección y las referencias estén completas.
           </Text>
         ) : null}
+        {!refinando ? (
+          <Pressable onPress={abrirMapa} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, marginLeft: 24 }}>
+            <Feather name="map" size={13} color="#1FAF55" />
+            <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>Ajustar en el mapa</Text>
+          </Pressable>
+        ) : null}
       </View>
     );
   }
@@ -228,6 +251,13 @@ export function UbicacionButton({ value, onChange }: Props) {
           {estado === "capturando" ? "Obteniendo ubicación..." : "Usar mi ubicación actual"}
         </Text>
       </Pressable>
+
+      {estado !== "capturando" ? (
+        <Pressable onPress={abrirMapa} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 8 }}>
+          <Feather name="map" size={13} color="#6D7B6C" />
+          <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D7B6C" }}>o ubícalo en el mapa</Text>
+        </Pressable>
+      ) : null}
 
       {error ? (
         <View style={{ marginTop: 6 }}>

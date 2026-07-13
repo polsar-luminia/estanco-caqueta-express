@@ -70,7 +70,8 @@
         {
           "locationWhenInUsePermission": "Usamos tu ubicación únicamente para fijar el punto de entrega de tu pedido y facilitar el domicilio."
         }
-      ]
+      ],
+      "react-native-maps"
     ],
     "extra": {
       "router": {},

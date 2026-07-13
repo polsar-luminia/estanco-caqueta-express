@@ -548,6 +548,34 @@ export async function validarCobertura(lat: number, lng: number) {
   return apiFetch<CoberturaResponse>(`/cobertura?${qs}`);
 }
 
+// Punto del polígono como [lat, lng].
+export type PuntoZona = [number, number];
+
+export interface ZonaCobertura {
+  nombre: string;
+  poligono: PuntoZona[];
+}
+
+// GET /cobertura/zona — polígono de la zona de reparto para validar en el mapa (Fase 2).
+export async function getCoberturaZona() {
+  return apiFetch<ZonaCobertura>("/cobertura/zona");
+}
+
+// Point-in-polygon (ray-casting) para feedback instantáneo en el mapa. El
+// servidor sigue siendo la autoridad al guardar. Mismo algoritmo que el backend.
+export function puntoEnZona(lat: number, lng: number, poligono: PuntoZona[]): boolean {
+  if (!Array.isArray(poligono) || poligono.length < 3) return false;
+  let dentro = false;
+  for (let i = 0, j = poligono.length - 1; i < poligono.length; j = i++) {
+    const yi = poligono[i][0], xi = poligono[i][1];
+    const yj = poligono[j][0], xj = poligono[j][1];
+    const cruza = (yi > lat) !== (yj > lat) &&
+      lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
+    if (cruza) dentro = !dentro;
+  }
+  return dentro;
+}
+
 // --- Helpers puros de ubicación (usados por la UI y testeados) ---
 
 // iOS/Android pueden dar precisión reducida; a partir de este umbral avisamos.
@@ -584,6 +612,15 @@ export function ubicacionABody(u: UbicacionCapturada | null | undefined): {
     metodo_ubicacion: u.metodo_ubicacion,
     geocoded_direccion: u.geocoded_direccion ?? null,
   };
+}
+
+// Editar dirección (Fase 2): actualiza campos presentes. Si incluye lat/lng,
+// el servidor recalcula fuera_zona. Para editar el pin: { lat, lng, metodo_ubicacion, ... }.
+export async function editarDireccion(id: number, data: Partial<CrearDireccionInput>) {
+  return apiFetch<DireccionGuardada>(`/clientes/direcciones/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
 }
 
 export async function setPredeterminada(id: number) {

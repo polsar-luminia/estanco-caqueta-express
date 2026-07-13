@@ -13,7 +13,9 @@ import {
   esUbicacionAproximada,
   ubicacionABody,
   validarCobertura,
+  puntoEnZona,
   PRECISION_APROXIMADA_M,
+  type PuntoZona,
   type UbicacionCapturada,
 } from "../api";
 
@@ -82,6 +84,29 @@ describe("ubicacionABody", () => {
   it("NUNCA incluye fuera_zona (autoridad del servidor)", () => {
     const conFueraZona = { ...ubicGps, fuera_zona: true } as unknown as UbicacionCapturada;
     expect(ubicacionABody(conFueraZona)).not.toHaveProperty("fuera_zona");
+  });
+});
+
+describe("puntoEnZona", () => {
+  // Rectángulo que cubre el casco urbano de Florencia (bbox del backend).
+  const florencia: PuntoZona[] = [
+    [1.55, -75.68],
+    [1.55, -75.55],
+    [1.68, -75.55],
+    [1.68, -75.68],
+  ];
+  it("detecta un punto dentro", () => {
+    expect(puntoEnZona(1.6144, -75.6062, florencia)).toBe(true);
+  });
+  it("detecta un punto fuera (Bogotá)", () => {
+    expect(puntoEnZona(4.711, -74.072, florencia)).toBe(false);
+  });
+  it("un punto justo fuera del borde es false", () => {
+    expect(puntoEnZona(1.70, -75.6062, florencia)).toBe(false);
+  });
+  it("polígono vacío o degenerado → false", () => {
+    expect(puntoEnZona(1.61, -75.6, [])).toBe(false);
+    expect(puntoEnZona(1.61, -75.6, [[1.55, -75.68]] as PuntoZona[])).toBe(false);
   });
 });
 
