@@ -9,6 +9,7 @@ import * as Sentry from "@sentry/react-native";
 import { useAuthStore } from "../../src/stores/auth";
 import { tracker } from "../../src/lib/tracker";
 import { PhoneIcon, LockIcon, EyeIcon, EyeOffIcon } from "../../src/components/icons/AppIcons";
+import { colors, radii, shadows } from "../../src/constants/theme";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -53,30 +54,30 @@ export default function LoginScreen() {
     flexDirection: "row" as const,
     alignItems: "center" as const,
     gap: 10,
-    backgroundColor: focusedField === "phone" ? "#FFFFFF" : "#F4F4F0",
-    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderRadius: radii.input,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1.5,
     borderColor:
-      focusedField === "phone" ? "#1FAF55" : "transparent",
+      focusedField === "phone" ? colors.green : colors.line,
   };
 
   const passwordStyle = {
     flexDirection: "row" as const,
     alignItems: "center" as const,
     gap: 10,
-    backgroundColor: focusedField === "password" ? "#FFFFFF" : "#F4F4F0",
-    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderRadius: radii.input,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1.5,
     borderColor:
-      loginError ? "#D33587" : focusedField === "password" ? "#1FAF55" : "transparent",
+      loginError ? colors.danger : focusedField === "password" ? colors.green : colors.line,
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FAFAF6" }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       {/* Ambient glow verde — top left */}
       <View
         style={{
@@ -121,8 +122,8 @@ export default function LoginScreen() {
         accessibilityRole="button"
         accessibilityLabel="Volver al catálogo"
       >
-        <Feather name="chevron-left" size={20} color="#1A1C1A" />
-        <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1C1A" }}>
+        <Feather name="chevron-left" size={20} color={colors.ink} />
+        <Text style={{ fontSize: 14, fontWeight: "600", color: colors.ink }}>
           Volver
         </Text>
       </Pressable>
@@ -145,29 +146,29 @@ export default function LoginScreen() {
             />
             {/* Tagline con líneas decorativas */}
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 14 }}>
-              <View style={{ width: 20, height: 1, backgroundColor: "#E2E3DF" }} />
-              <Text style={{ fontSize: 12, color: "#BCCABA", letterSpacing: 0.5 }}>
+              <View style={{ width: 20, height: 1, backgroundColor: colors.line }} />
+              <Text style={{ fontSize: 12, color: colors.faint, letterSpacing: 0.5 }}>
                 Tus productos favoritos en minutos
               </Text>
-              <View style={{ width: 20, height: 1, backgroundColor: "#E2E3DF" }} />
+              <View style={{ width: 20, height: 1, backgroundColor: colors.line }} />
             </View>
           </View>
 
           {/* Campo Teléfono */}
           <View style={{ gap: 6, marginBottom: 16 }}>
             <Text style={{
-              fontSize: 10, fontWeight: "700", color: "#6D7B6C",
+              fontSize: 10, fontWeight: "700", color: colors.muted,
               textTransform: "uppercase", letterSpacing: 1.2,
               marginBottom: 6, marginLeft: 4,
             }}>
               Teléfono
             </Text>
             <View style={phoneStyle}>
-              <PhoneIcon color="#6D7B6C" size={18} />
+              <PhoneIcon color={colors.muted} size={18} />
               <TextInput
-                style={{ flex: 1, fontSize: 15, color: "#1A1C1A" }}
+                style={{ flex: 1, fontSize: 15, color: colors.ink }}
                 placeholder="300 000 0000"
-                placeholderTextColor="#BCCABA"
+                placeholderTextColor={colors.faint}
                 keyboardType="phone-pad"
                 value={telefono}
                 onChangeText={setTelefono}
@@ -181,18 +182,18 @@ export default function LoginScreen() {
           {/* Campo Contraseña */}
           <View style={{ gap: 6, marginBottom: 8 }}>
             <Text style={{
-              fontSize: 10, fontWeight: "700", color: "#6D7B6C",
+              fontSize: 10, fontWeight: "700", color: colors.muted,
               textTransform: "uppercase", letterSpacing: 1.2,
               marginBottom: 6, marginLeft: 4,
             }}>
               Contraseña
             </Text>
             <View style={passwordStyle}>
-              <LockIcon color="#6D7B6C" size={18} />
+              <LockIcon color={colors.muted} size={18} />
               <TextInput
-                style={{ flex: 1, fontSize: 15, color: "#1A1C1A" }}
+                style={{ flex: 1, fontSize: 15, color: colors.ink }}
                 placeholder="••••••••"
-                placeholderTextColor="#BCCABA"
+                placeholderTextColor={colors.faint}
                 secureTextEntry={!showPass}
                 autoCapitalize="none"
                 textContentType="password"
@@ -207,13 +208,13 @@ export default function LoginScreen() {
                 accessibilityLabel="Mostrar contraseña"
               >
                 {showPass
-                  ? <EyeOffIcon color="#6D7B6C" size={18} />
-                  : <EyeIcon color="#6D7B6C" size={18} />}
+                  ? <EyeOffIcon color={colors.muted} size={18} />
+                  : <EyeIcon color={colors.muted} size={18} />}
               </Pressable>
             </View>
 
             {loginError && (
-              <Text style={{ fontSize: 11, color: "#D33587", fontWeight: "500", marginTop: 4, marginLeft: 4 }}>
+              <Text style={{ fontSize: 11, color: colors.danger, fontWeight: "500", marginTop: 4, marginLeft: 4 }}>
                 {loginErrorMsg || "Teléfono o contraseña incorrectos"}
               </Text>
             )}
@@ -223,7 +224,7 @@ export default function LoginScreen() {
               onPress={() => router.push("/(auth)/forgot-password")}
               style={{ alignSelf: "flex-end", marginTop: 4 }}
             >
-              <Text style={{ fontSize: 12, color: "#1FAF55", fontWeight: "600" }}>
+              <Text style={{ fontSize: 12, color: colors.green, fontWeight: "600" }}>
                 ¿Olvidaste tu contraseña?
               </Text>
             </Pressable>
@@ -232,7 +233,7 @@ export default function LoginScreen() {
           {/* Botón Ingresar */}
           <Pressable onPress={handleLogin} disabled={loading} style={{ marginTop: 8 }}>
             <LinearGradient
-              colors={loading ? ["#9E9E9E", "#757575"] : ["#1FAF55", "#006D30"]}
+              colors={loading ? [colors.faint, "#757575"] : [colors.green, colors.greenDeep]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={{
@@ -240,14 +241,10 @@ export default function LoginScreen() {
                 paddingVertical: 16,
                 alignItems: "center",
                 justifyContent: "center",
-                shadowColor: "#1FAF55",
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: loading ? 0 : 0.28,
-                shadowRadius: 24,
-                elevation: loading ? 0 : 6,
+                ...(loading ? {} : shadows.greenBtn),
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>
+              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 17 }}>
                 {loading ? "Ingresando..." : "Ingresar"}
               </Text>
             </LinearGradient>
@@ -255,24 +252,24 @@ export default function LoginScreen() {
 
           {/* Divider ¿Eres nuevo? */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 28 }}>
-            <View style={{ flex: 1, height: 1, backgroundColor: "#E2E3DF" }} />
-            <Text style={{ fontSize: 11, color: "#BCCABA" }}>¿Eres nuevo?</Text>
-            <View style={{ flex: 1, height: 1, backgroundColor: "#E2E3DF" }} />
+            <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
+            <Text style={{ fontSize: 11, color: colors.faint }}>¿Eres nuevo?</Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
           </View>
 
-          {/* Botón Crear cuenta — ghost pink */}
+          {/* Botón Crear cuenta — ghost coral */}
           <Pressable
             onPress={() => router.push("/(auth)/register")}
             style={{
               borderWidth: 1.5,
-              borderColor: "rgba(211,53,135,0.30)",
+              borderColor: "rgba(240,101,63,0.30)",
               borderRadius: 14,
               paddingVertical: 14,
               alignItems: "center",
-              backgroundColor: "rgba(211,53,135,0.04)",
+              backgroundColor: "rgba(240,101,63,0.04)",
             }}
           >
-            <Text style={{ fontSize: 15, fontWeight: "700", color: "#D33587" }}>
+            <Text style={{ fontSize: 15, fontWeight: "700", color: colors.offer }}>
               Crear cuenta
             </Text>
           </Pressable>

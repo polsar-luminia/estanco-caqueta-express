@@ -13,6 +13,7 @@ import { DateSelector, DateValue, toISODate, calcularEdad } from "../../src/comp
 import { InputField } from "../../src/components/InputField";
 import { CheckboxRow } from "../../src/components/CheckboxRow";
 import { UserIcon, PhoneIcon, LockIcon } from "../../src/components/icons/AppIcons";
+import { colors, shadows } from "../../src/constants/theme";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -114,7 +115,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FAFAF6", position: "relative" }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg, position: "relative" }}>
       {/* Glow verde — top left */}
       <View style={{
         position: "absolute", top: -80, left: -50,
@@ -153,8 +154,8 @@ export default function RegisterScreen() {
         accessibilityRole="button"
         accessibilityLabel="Volver"
       >
-        <Feather name="chevron-left" size={20} color="#1A1C1A" />
-        <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1C1A" }}>
+        <Feather name="chevron-left" size={20} color={colors.ink} />
+        <Text style={{ fontSize: 14, fontWeight: "600", color: colors.ink }}>
           Volver
         </Text>
       </Pressable>
@@ -176,16 +177,16 @@ export default function RegisterScreen() {
               resizeMode="contain"
             />
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 }}>
-              <View style={{ width: 16, height: 1, backgroundColor: "#E2E3DF" }} />
-              <Text style={{ fontSize: 11, color: "#BCCABA" }}>Crea tu cuenta gratis</Text>
-              <View style={{ width: 16, height: 1, backgroundColor: "#E2E3DF" }} />
+              <View style={{ width: 16, height: 1, backgroundColor: colors.line }} />
+              <Text style={{ fontSize: 11, color: colors.faint }}>Crea tu cuenta gratis</Text>
+              <View style={{ width: 16, height: 1, backgroundColor: colors.line }} />
             </View>
           </View>
 
           {/* Form */}
           <InputField
             label="Nombre Completo"
-            icon={<UserIcon color="#6D7B6C" size={18} />}
+            icon={<UserIcon color={colors.muted} size={18} />}
             placeholder="Ej. Juan Pérez"
             value={nombre}
             onChangeText={setNombre}
@@ -194,7 +195,7 @@ export default function RegisterScreen() {
           />
           <InputField
             label="Número de Teléfono"
-            icon={<PhoneIcon color="#6D7B6C" size={18} />}
+            icon={<PhoneIcon color={colors.muted} size={18} />}
             placeholder="+57 300 000 0000"
             value={telefono}
             onChangeText={setTelefono}
@@ -204,7 +205,7 @@ export default function RegisterScreen() {
           />
           <InputField
             label="Contraseña"
-            icon={<LockIcon color="#6D7B6C" size={18} />}
+            icon={<LockIcon color={colors.muted} size={18} />}
             placeholder="••••••••"
             value={password}
             onChangeText={setPassword}
@@ -225,7 +226,7 @@ export default function RegisterScreen() {
             <CheckboxRow checked={aceptaTerminos} onToggle={() => setAceptaTerminos(!aceptaTerminos)}>
               Acepto los{" "}
               <Text
-                style={{ color: "#1FAF55", fontWeight: "700" }}
+                style={{ color: colors.green, fontWeight: "700" }}
                 onPress={(e) => { e.stopPropagation(); router.push("/support/terms"); }}
               >
                 Términos y Condiciones
@@ -235,7 +236,7 @@ export default function RegisterScreen() {
             <CheckboxRow checked={aceptaDatos} onToggle={() => setAceptaDatos(!aceptaDatos)}>
               Autorizo el tratamiento de mis{" "}
               <Text
-                style={{ color: "#1FAF55", fontWeight: "700" }}
+                style={{ color: colors.green, fontWeight: "700" }}
                 onPress={(e) => { e.stopPropagation(); router.push("/support/privacy"); }}
               >
                 Datos Personales
@@ -246,7 +247,7 @@ export default function RegisterScreen() {
           {/* CTA — Crear Cuenta */}
           <Pressable onPress={handleRegister} disabled={loading} style={{ marginTop: 20 }}>
             <LinearGradient
-              colors={loading ? ["#9E9E9E", "#757575"] : ["#1FAF55", "#006D30"]}
+              colors={loading ? [colors.faint, "#757575"] : [colors.green, colors.greenDeep]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={{
@@ -254,14 +255,10 @@ export default function RegisterScreen() {
                 paddingVertical: 16,
                 alignItems: "center",
                 justifyContent: "center",
-                shadowColor: "#1FAF55",
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: loading ? 0 : 0.28,
-                shadowRadius: 24,
-                elevation: loading ? 0 : 6,
+                ...(loading ? {} : shadows.greenBtn),
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>
+              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 17 }}>
                 {loading ? "Creando cuenta..." : "Crear Cuenta"}
               </Text>
             </LinearGradient>
@@ -270,10 +267,10 @@ export default function RegisterScreen() {
           {/* Footer — link a login */}
           <View style={{ alignItems: "center", marginTop: 16 }}>
             <View style={{ flexDirection: "row" }}>
-              <Text style={{ color: "#6D7B6C", fontSize: 13 }}>¿Ya tienes una cuenta? </Text>
+              <Text style={{ color: colors.muted, fontSize: 13 }}>¿Ya tienes una cuenta? </Text>
               <Link href="/(auth)/login" asChild>
                 <Pressable>
-                  <Text style={{ color: "#D33587", fontSize: 13, fontWeight: "700" }}>Inicia sesión</Text>
+                  <Text style={{ color: colors.offer, fontSize: 13, fontWeight: "700" }}>Inicia sesión</Text>
                 </Pressable>
               </Link>
             </View>

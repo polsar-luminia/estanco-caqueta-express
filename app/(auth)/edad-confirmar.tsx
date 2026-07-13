@@ -5,6 +5,7 @@ import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { confirmarEdad, getPerfil } from "../../src/lib/api";
 import { useAuthStore } from "../../src/stores/auth";
+import { colors, shadows } from "../../src/constants/theme";
 
 export default function EdadConfirmarScreen() {
   const [loading, setLoading] = useState(false);
@@ -61,7 +62,7 @@ export default function EdadConfirmarScreen() {
   };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: "#FFFFFF" }}>
+    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
         keyboardShouldPersistTaps="handled"
@@ -76,24 +77,18 @@ export default function EdadConfirmarScreen() {
 
         <View
           className="bg-white rounded-2xl p-6"
-          style={{
-            shadowColor: "#1A1C1A",
-            shadowOffset: { width: 0, height: 12 },
-            shadowOpacity: 0.06,
-            shadowRadius: 32,
-            elevation: 4,
-          }}
+          style={shadows.card}
         >
-          <Text style={{ fontSize: 22, fontWeight: "700", color: "#1A1C1A", textAlign: "center", marginBottom: 12 }}>
+          <Text style={{ fontSize: 22, fontWeight: "700", color: colors.ink, textAlign: "center", marginBottom: 12 }}>
             Confirma tu mayoría de edad
           </Text>
 
           <Text style={{ fontSize: 14, color: "#3C443B", lineHeight: 20, textAlign: "center", marginBottom: 8 }}>
             Para usar Estanco Caquetá Express debes ser{"\n"}
-            <Text style={{ fontWeight: "700", color: "#1A1C1A" }}>mayor de 18 años</Text>.
+            <Text style={{ fontWeight: "700", color: colors.ink }}>mayor de 18 años</Text>.
           </Text>
 
-          <Text style={{ fontSize: 13, color: "#6D7B6C", lineHeight: 18, textAlign: "center", marginBottom: 24 }}>
+          <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 18, textAlign: "center", marginBottom: 24 }}>
             Esta aplicación contiene productos para adultos.
           </Text>
 
@@ -105,16 +100,12 @@ export default function EdadConfirmarScreen() {
             accessibilityLabel="Confirmar que soy mayor de 18 años"
             className="items-center rounded-xl mb-3"
             style={{
-              backgroundColor: loading ? "#9E9E9E" : "#1FAF55",
+              backgroundColor: loading ? colors.faint : colors.green,
               paddingVertical: 16,
-              shadowColor: "#1FAF55",
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.2,
-              shadowRadius: 16,
-              elevation: 4,
+              ...(loading ? {} : shadows.greenBtn),
             }}
           >
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
+            <Text style={{ color: colors.white, fontWeight: "800", fontSize: 16 }}>
               {loading ? "Confirmando..." : "Sí, soy mayor de 18 años"}
             </Text>
           </Pressable>
@@ -127,7 +118,7 @@ export default function EdadConfirmarScreen() {
             accessibilityLabel="No soy mayor de edad, salir de la app"
             className="items-center rounded-xl"
             style={{
-              backgroundColor: "#E2E3DF",
+              backgroundColor: colors.lowfill,
               paddingVertical: 16,
             }}
           >
@@ -137,7 +128,7 @@ export default function EdadConfirmarScreen() {
           </Pressable>
         </View>
 
-        <Text style={{ fontSize: 11, color: "#8B968A", textAlign: "center", marginTop: 20, lineHeight: 16, paddingHorizontal: 12 }}>
+        <Text style={{ fontSize: 11, color: colors.muted, textAlign: "center", marginTop: 20, lineHeight: 16, paddingHorizontal: 12 }}>
           La venta y consumo de bebidas alcohólicas a menores de edad está prohibida por la ley colombiana (Ley 124 de 1994).
         </Text>
       </ScrollView>

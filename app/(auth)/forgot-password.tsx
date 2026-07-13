@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/react-native";
 import { InputField } from "../../src/components/InputField";
 import { PhoneIcon } from "../../src/components/icons/AppIcons";
 import { solicitarResetPassword } from "../../src/lib/api";
+import { colors, shadows } from "../../src/constants/theme";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -59,7 +60,7 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: "#FFFFFF" }}>
+    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0} className="flex-1">
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 80, paddingBottom: 24 }}
@@ -71,23 +72,23 @@ export default function ForgotPasswordScreen() {
               style={{ width: 260, height: 104 }}
               resizeMode="contain"
             />
-            <Text style={{ color: "#6D7B6C", fontSize: 13, marginTop: 12, textAlign: "center" }}>
+            <Text style={{ color: colors.muted, fontSize: 13, marginTop: 12, textAlign: "center" }}>
               Te enviaremos un código de verificación
             </Text>
           </View>
 
-          <Text style={{ fontSize: 20, fontWeight: "700", color: "#1A1C1A", marginBottom: 8, textAlign: "center" }}>
+          <Text style={{ fontSize: 20, fontWeight: "700", color: colors.ink, marginBottom: 8, textAlign: "center" }}>
             Recuperar contraseña
           </Text>
 
-          <Text style={{ fontSize: 13, color: "#6D7B6C", marginBottom: 20, textAlign: "center", lineHeight: 18 }}>
+          <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 20, textAlign: "center", lineHeight: 18 }}>
             Ingresa tu número y te enviaremos un{"\n"}
-            <Text style={{ fontWeight: "600", color: "#1A1C1A" }}>código de 6 dígitos</Text> en segundos.
+            <Text style={{ fontWeight: "600", color: colors.ink }}>código de 6 dígitos</Text> en segundos.
           </Text>
 
           <InputField
             label="Número de Teléfono"
-            icon={<PhoneIcon color="#6D7B6C" size={18} />}
+            icon={<PhoneIcon color={colors.muted} size={18} />}
             placeholder="3001234567"
             value={telefono}
             onChangeText={setTelefono}
@@ -101,25 +102,21 @@ export default function ForgotPasswordScreen() {
             disabled={loading}
             className="items-center mt-4"
             style={{
-              backgroundColor: loading ? "#9E9E9E" : "#1FAF55",
+              backgroundColor: loading ? colors.faint : colors.green,
               paddingVertical: 16,
-              borderRadius: 999,
-              shadowColor: "#1FAF55",
-              shadowOffset: { width: 0, height: 12 },
-              shadowOpacity: 0.2,
-              shadowRadius: 32,
-              elevation: 6,
+              borderRadius: 14,
+              ...(loading ? {} : shadows.greenBtn),
             }}
             accessibilityRole="button"
             accessibilityLabel="Enviar código de verificación"
           >
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>
+            <Text style={{ color: colors.white, fontWeight: "800", fontSize: 17 }}>
               {loading ? "Enviando..." : "Enviar código"}
             </Text>
           </Pressable>
 
           <Pressable onPress={() => router.back()} className="items-center mt-6">
-            <Text style={{ color: "#6D7B6C", fontSize: 13 }}>← Volver al inicio de sesión</Text>
+            <Text style={{ color: colors.muted, fontSize: 13 }}>← Volver al inicio de sesión</Text>
           </Pressable>
 
           {/* Link de registro PERSISTENTE (M-AUTH-17): no depende del 404 del
@@ -127,8 +124,8 @@ export default function ForgotPasswordScreen() {
               el CTA condicional de "número no registrado" deja de aparecer, pero
               el usuario sin cuenta igual tiene una salida clara aquí. */}
           <Pressable onPress={() => router.replace("/(auth)/register")} className="items-center mt-4">
-            <Text style={{ color: "#6D7B6C", fontSize: 13 }}>
-              ¿No tienes cuenta? <Text style={{ color: "#D33587", fontWeight: "700" }}>Regístrate</Text>
+            <Text style={{ color: colors.muted, fontSize: 13 }}>
+              ¿No tienes cuenta? <Text style={{ color: colors.offer, fontWeight: "700" }}>Regístrate</Text>
             </Text>
           </Pressable>
         </ScrollView>

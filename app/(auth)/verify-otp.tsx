@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/react-native";
 import { InputField } from "../../src/components/InputField";
 import { KeyIcon, LockIcon } from "../../src/components/icons/AppIcons";
 import { verificarResetPassword, solicitarResetPassword } from "../../src/lib/api";
+import { colors, shadows } from "../../src/constants/theme";
 
 export default function VerifyOtpScreen() {
   const router = useRouter();
@@ -101,7 +102,7 @@ export default function VerifyOtpScreen() {
   };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: "#FFFFFF" }}>
+    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0} className="flex-1">
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
@@ -115,22 +116,22 @@ export default function VerifyOtpScreen() {
             />
           </View>
 
-          <Text style={{ fontSize: 20, fontWeight: "700", color: "#1A1C1A", marginBottom: 8, textAlign: "center" }}>
+          <Text style={{ fontSize: 20, fontWeight: "700", color: colors.ink, marginBottom: 8, textAlign: "center" }}>
             Ingresa el código
           </Text>
-          <Text style={{ fontSize: 13, color: "#6D7B6C", marginBottom: 16, textAlign: "center" }}>
+          <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 16, textAlign: "center" }}>
             Enviamos un código de 6 dígitos al{"\n"}
-            <Text style={{ fontWeight: "700", color: "#1A1C1A" }}>+57 {telefono}</Text>
+            <Text style={{ fontWeight: "700", color: colors.ink }}>+57 {telefono}</Text>
           </Text>
 
-          <Text style={{ fontSize: 12, color: "#8B968A", marginBottom: 20, textAlign: "center", lineHeight: 16 }}>
+          <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 20, textAlign: "center", lineHeight: 16 }}>
             ¿No te llegó? Espera unos segundos y luego toca{" "}
-            <Text style={{ fontWeight: "700", color: "#1FAF55" }}>Reenviar</Text> abajo.
+            <Text style={{ fontWeight: "700", color: colors.green }}>Reenviar</Text> abajo.
           </Text>
 
           <InputField
             label="Código de verificación"
-            icon={<KeyIcon color="#6D7B6C" size={18} />}
+            icon={<KeyIcon color={colors.muted} size={18} />}
             placeholder="123456"
             value={codigo}
             onChangeText={setCodigo}
@@ -141,7 +142,7 @@ export default function VerifyOtpScreen() {
 
           <InputField
             label="Nueva Contraseña"
-            icon={<LockIcon color="#6D7B6C" size={18} />}
+            icon={<LockIcon color={colors.muted} size={18} />}
             placeholder="••••••••"
             value={nuevaPassword}
             onChangeText={setNuevaPassword}
@@ -157,37 +158,33 @@ export default function VerifyOtpScreen() {
             disabled={loading}
             className="items-center mt-4"
             style={{
-              backgroundColor: loading ? "#9E9E9E" : "#1FAF55",
+              backgroundColor: loading ? colors.faint : colors.green,
               paddingVertical: 16,
-              borderRadius: 999,
-              shadowColor: "#1FAF55",
-              shadowOffset: { width: 0, height: 12 },
-              shadowOpacity: 0.2,
-              shadowRadius: 32,
-              elevation: 6,
+              borderRadius: 14,
+              ...(loading ? {} : shadows.greenBtn),
             }}
           >
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>
+            <Text style={{ color: colors.white, fontWeight: "800", fontSize: 17 }}>
               {loading ? "Verificando..." : "Cambiar contraseña"}
             </Text>
           </Pressable>
 
           <Pressable onPress={handleReenviar} disabled={reenviando || cooldownSegundos > 0} className="items-center mt-5">
-            <Text style={{ color: cooldownSegundos > 0 ? "#9E9E9E" : "#1FAF55", fontSize: 13, fontWeight: "600" }}>
+            <Text style={{ color: cooldownSegundos > 0 ? colors.faint : colors.green, fontSize: 13, fontWeight: "600" }}>
               {reenviando ? "Reenviando..." : cooldownSegundos > 0 ? `Reenviar en ${cooldownSegundos}s` : "¿No recibiste el código? Reenviar"}
             </Text>
           </Pressable>
 
           <Pressable onPress={() => router.back()} className="items-center mt-3">
-            <Text style={{ color: "#6D7B6C", fontSize: 13 }}>← Volver</Text>
+            <Text style={{ color: colors.muted, fontSize: 13 }}>← Volver</Text>
           </Pressable>
 
           {/* M-AUTH-17: salida clara si el número no tenía cuenta. Con el backend
               anti-enumeración (200 genérico), quien escribió un número sin cuenta
               aterriza aquí esperando un código que no llega — este link lo rescata. */}
           <Pressable onPress={() => router.replace("/(auth)/register")} className="items-center mt-4">
-            <Text style={{ color: "#6D7B6C", fontSize: 13 }}>
-              ¿No tienes cuenta? <Text style={{ color: "#D33587", fontWeight: "700" }}>Regístrate</Text>
+            <Text style={{ color: colors.muted, fontSize: 13 }}>
+              ¿No tienes cuenta? <Text style={{ color: colors.offer, fontWeight: "700" }}>Regístrate</Text>
             </Text>
           </Pressable>
         </ScrollView>
