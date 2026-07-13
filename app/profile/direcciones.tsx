@@ -173,8 +173,14 @@ export default function DireccionesScreen() {
           <View style={{ backgroundColor: "#fff", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#E5E7EB" }}>
             <Text style={{ fontSize: 15, fontWeight: "700", color: "#1A1C1A", marginBottom: 16 }}>Nueva dirección</Text>
 
-            {/* Ubicación GPS (opcional) — el pin ayuda al domiciliario; la dirección sigue siendo obligatoria */}
-            <UbicacionButton value={ubicacion} onChange={setUbicacion} />
+            {/* Ubicación GPS (opcional): al capturar, auto-llena la dirección (editable). */}
+            <UbicacionButton
+              value={ubicacion}
+              onChange={(u) => {
+                setUbicacion(u);
+                if (u?.geocoded_direccion && !direccion.trim()) setDireccion(u.geocoded_direccion);
+              }}
+            />
 
             {/* Etiqueta */}
             <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Etiqueta</Text>

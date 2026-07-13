@@ -2,13 +2,11 @@ import { useState, useRef } from "react";
 import { View, Text, Pressable, ActivityIndicator, Linking } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
-import {
-  type UbicacionCapturada,
-  formatoPrecision,
-  esUbicacionAproximada,
-} from "../lib/api";
+import { type UbicacionCapturada } from "../lib/api";
 import { useUbicacionPicker } from "../stores/ubicacionPicker";
+import { colors, radii, shadows } from "../constants/theme";
 
 // Botón "Usar mi ubicación actual" (Geolocalización Fase 1).
 // Controlado: el padre guarda la `UbicacionCapturada` y la manda al backend.
@@ -161,62 +159,55 @@ export function UbicacionButton({ value, onChange }: Props) {
     router.push("/ubicacion");
   };
 
-  // Estado: ubicación capturada
-  if (value) {
-    const precision = formatoPrecision(value.precision_m);
-    const aproximada = esUbicacionAproximada(value.precision_m);
+  // Estado: ubicación capturada → mini-mapa con el pin + acciones.
+  // No mostramos precisión ni texto aproximado al cliente (la precisión igual
+  // se guarda por detrás para el domiciliario). El pin del mapa es la verdad.
+  if (value && value.lat != null && value.lng != null) {
     return (
-      <View
-        style={{
-          backgroundColor: "rgba(31,175,85,0.08)",
-          borderRadius: 12,
-          borderWidth: 1,
-          borderColor: "rgba(31,175,85,0.25)",
-          padding: 12,
-          marginBottom: 12,
-        }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
-            <Feather name="check-circle" size={16} color="#1FAF55" />
-            <Text style={{ fontSize: 13, fontWeight: "700", color: "#1A7A3C" }}>
-              Ubicación guardada{precision ? ` (${precision})` : ""}
+      <View style={{ marginBottom: 12 }}>
+        <View style={{ height: 150, borderRadius: radii.card, overflow: "hidden", ...shadows.soft }}>
+          <MapView
+            style={{ flex: 1 }}
+            pointerEvents="none"
+            scrollEnabled={false}
+            zoomEnabled={false}
+            rotateEnabled={false}
+            pitchEnabled={false}
+            region={{ latitude: value.lat, longitude: value.lng, latitudeDelta: 0.004, longitudeDelta: 0.004 }}
+          >
+            <Marker coordinate={{ latitude: value.lat, longitude: value.lng }} pinColor={colors.green} />
+          </MapView>
+          <View style={{ position: "absolute", top: 10, left: 10, backgroundColor: "rgba(255,255,255,0.94)", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, flexDirection: "row", alignItems: "center", gap: 5 }}>
+            {refinando ? (
+              <ActivityIndicator size="small" color={colors.greenInk} />
+            ) : (
+              <Feather name="check-circle" size={12} color={colors.greenInk} />
+            )}
+            <Text style={{ fontSize: 11, fontWeight: "800", color: colors.greenInk }}>
+              {refinando ? "Afinando ubicación…" : "Ubicación fijada"}
             </Text>
           </View>
-          {refinando ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 4 }}>
-              <ActivityIndicator size="small" color="#1FAF55" />
-              <Text style={{ fontSize: 11, color: "#6D7B6C" }}>Afinando…</Text>
-            </View>
-          ) : (
-            <Pressable
-              onPress={quitar}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Quitar ubicación"
-              style={{ flexDirection: "row", alignItems: "center", gap: 4, padding: 4 }}
-            >
-              <Feather name="x" size={14} color="#6D7B6C" />
-              <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D7B6C" }}>Quitar</Text>
-            </Pressable>
-          )}
         </View>
-        {value.geocoded_direccion ? (
-          <Text style={{ fontSize: 12, color: "#6D7B6C", marginTop: 4, marginLeft: 24 }}>
-            {value.geocoded_direccion} (aprox.)
-          </Text>
-        ) : null}
-        {aproximada ? (
-          <Text style={{ fontSize: 11, color: "#B8860B", marginTop: 4, marginLeft: 24 }}>
-            Ubicación aproximada — revisa que la dirección y las referencias estén completas.
-          </Text>
-        ) : null}
-        {!refinando ? (
-          <Pressable onPress={abrirMapa} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, marginLeft: 24 }}>
-            <Feather name="map" size={13} color="#1FAF55" />
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>Ajustar en el mapa</Text>
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+          <Pressable
+            onPress={abrirMapa}
+            accessibilityRole="button"
+            accessibilityLabel="Ajustar en el mapa"
+            style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingVertical: 11, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.green }}
+          >
+            <Feather name="map" size={14} color={colors.greenInk} />
+            <Text style={{ fontSize: 13, fontWeight: "800", color: colors.greenInk }}>Ajustar en el mapa</Text>
           </Pressable>
-        ) : null}
+          <Pressable
+            onPress={quitar}
+            accessibilityRole="button"
+            accessibilityLabel="Quitar ubicación"
+            style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 12, backgroundColor: colors.lowfill }}
+          >
+            <Feather name="x" size={12} color={colors.muted} />
+            <Text style={{ fontSize: 13, fontWeight: "700", color: colors.muted }}>Quitar</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -234,20 +225,19 @@ export function UbicacionButton({ value, onChange }: Props) {
           alignItems: "center",
           justifyContent: "center",
           gap: 8,
-          paddingVertical: 12,
-          borderRadius: 12,
-          borderWidth: 1.5,
-          borderColor: "#1FAF55",
-          backgroundColor: "#fff",
-          opacity: estado === "capturando" ? 0.7 : 1,
+          paddingVertical: 13,
+          borderRadius: 14,
+          backgroundColor: colors.green,
+          opacity: estado === "capturando" ? 0.75 : 1,
+          ...shadows.greenBtn,
         }}
       >
         {estado === "capturando" ? (
-          <ActivityIndicator size="small" color="#1FAF55" />
+          <ActivityIndicator size="small" color="#fff" />
         ) : (
-          <Feather name="map-pin" size={16} color="#1FAF55" />
+          <Feather name="map-pin" size={16} color="#fff" />
         )}
-        <Text style={{ fontSize: 14, fontWeight: "700", color: "#1FAF55" }}>
+        <Text style={{ fontSize: 14, fontWeight: "800", color: "#fff" }}>
           {estado === "capturando" ? "Obteniendo ubicación..." : "Usar mi ubicación actual"}
         </Text>
       </Pressable>

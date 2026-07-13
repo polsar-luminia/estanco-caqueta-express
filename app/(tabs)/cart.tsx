@@ -457,8 +457,14 @@ export default function CartScreen() {
               ) : (
                 <>
                   {/* Nueva dirección */}
-                  {/* Ubicación GPS (opcional): el pin ayuda al domiciliario; la dirección sigue siendo obligatoria */}
-                  <UbicacionButton value={nuevaUbicacion} onChange={setNuevaUbicacion} />
+                  {/* Ubicación GPS (opcional): al capturar, auto-llena la dirección (editable). */}
+                  <UbicacionButton
+                    value={nuevaUbicacion}
+                    onChange={(u) => {
+                      setNuevaUbicacion(u);
+                      if (u?.geocoded_direccion && !nuevaDireccion.trim()) setNuevaDireccion(u.geocoded_direccion);
+                    }}
+                  />
                   <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
                     Dirección
                   </Text>
