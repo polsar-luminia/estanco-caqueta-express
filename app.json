@@ -71,7 +71,12 @@
           "locationWhenInUsePermission": "Usamos tu ubicación únicamente para fijar el punto de entrega de tu pedido y facilitar el domicilio."
         }
       ],
-      "react-native-maps"
+      [
+        "react-native-maps",
+        {
+          "androidGoogleMapsApiKey": "AIzaSyCd3RFESmWCbzzHR17iVAZC5ZupvuBCYno"
+        }
+      ]
     ],
     "extra": {
       "router": {},
