@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { View, Text, Pressable, ActivityIndicator, Linking } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import * as Location from "expo-location";
@@ -47,13 +47,30 @@ function conTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
+function aUbicacion(pos: Location.LocationObject, geocoded: string | null): UbicacionCapturada {
+  return {
+    lat: pos.coords.latitude,
+    lng: pos.coords.longitude,
+    precision_m: pos.coords.accuracy ?? null,
+    metodo_ubicacion: "gps",
+    geocoded_direccion: geocoded,
+  };
+}
+
 export function UbicacionButton({ value, onChange }: Props) {
   const [estado, setEstado] = useState<Estado>("idle");
   const [error, setError] = useState<string | null>(null);
   const [abrirAjustes, setAbrirAjustes] = useState(false);
+  const [refinando, setRefinando] = useState(false);
+  // Cada captura tiene un id; los updates en segundo plano de una captura vieja
+  // (o cancelada con "Quitar") se descartan.
+  const sesionRef = useRef(0);
 
   const capturar = async () => {
     if (estado === "capturando") return;
+    const sesion = ++sesionRef.current;
+    const vigente = () => sesionRef.current === sesion;
+
     setError(null);
     setAbrirAjustes(false);
     setEstado("capturando");
@@ -76,38 +93,55 @@ export function UbicacionButton({ value, onChange }: Props) {
         return;
       }
 
-      // Fast-path: última ubicación conocida (instantánea si el SO tiene un fix reciente).
-      // Sirve de respaldo si el fix fresco tarda más que el timeout.
-      let pos = await Location.getLastKnownPositionAsync({ maxAge: 120000 }).catch(() => null);
+      // 1) INSTANTÁNEO (como Rappi): mostramos ya la última ubicación conocida y
+      //    seguimos afinando en segundo plano. Solo si el SO tiene un fix reciente.
+      const last = await Location.getLastKnownPositionAsync({ maxAge: 300000 }).catch(() => null);
+      let entregada = false;
+      if (last && vigente()) {
+        onChange(aUbicacion(last, null));
+        entregada = true;
+        setRefinando(true);
+        setEstado("idle"); // ya hay pin; lo demás es refinamiento silencioso
+        // geocode del lastKnown en segundo plano (no bloquea)
+        reverseGeocode(last.coords.latitude, last.coords.longitude).then((g) => {
+          if (g && vigente()) onChange(aUbicacion(last, g));
+        });
+      }
 
-      // Fix fresco (Balanced: usa wifi/celular además de GPS → rápido y funciona bajo techo).
+      // 2) Fix fresco (Balanced: wifi/celular + GPS → rápido y funciona bajo techo).
+      let fresh: Location.LocationObject | null = null;
       try {
-        pos = await conTimeout(
+        fresh = await conTimeout(
           Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
           TIMEOUT_MS,
         );
       } catch {
-        // Si no hubo lastKnown tampoco, avisamos; si sí, seguimos con ella.
-        if (!pos) {
+        if (!entregada && vigente()) {
           setError("No pudimos obtener tu ubicación a tiempo. Escribe tu dirección normalmente.");
-          return;
         }
+        return;
       }
 
-      const { latitude, longitude, accuracy } = pos.coords;
-      const geocoded = await reverseGeocode(latitude, longitude);
-      onChange({
-        lat: latitude,
-        lng: longitude,
-        precision_m: accuracy ?? null,
-        metodo_ubicacion: "gps",
-        geocoded_direccion: geocoded,
-      });
+      if (fresh && vigente()) {
+        const g = await reverseGeocode(fresh.coords.latitude, fresh.coords.longitude);
+        if (vigente()) onChange(aUbicacion(fresh, g));
+      }
     } catch {
-      setError("No pudimos obtener tu ubicación. Escribe tu dirección normalmente.");
+      if (vigente()) setError("No pudimos obtener tu ubicación. Escribe tu dirección normalmente.");
     } finally {
-      setEstado("idle");
+      if (vigente()) {
+        setEstado("idle");
+        setRefinando(false);
+      }
     }
+  };
+
+  // Quitar: cancela cualquier refinamiento en curso para que no reaparezca el pin.
+  const quitar = () => {
+    sesionRef.current++;
+    setRefinando(false);
+    setError(null);
+    onChange(null);
   };
 
   // Estado: ubicación capturada
@@ -132,16 +166,23 @@ export function UbicacionButton({ value, onChange }: Props) {
               Ubicación guardada{precision ? ` (${precision})` : ""}
             </Text>
           </View>
-          <Pressable
-            onPress={() => onChange(null)}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Quitar ubicación"
-            style={{ flexDirection: "row", alignItems: "center", gap: 4, padding: 4 }}
-          >
-            <Feather name="x" size={14} color="#6D7B6C" />
-            <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D7B6C" }}>Quitar</Text>
-          </Pressable>
+          {refinando ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 4 }}>
+              <ActivityIndicator size="small" color="#1FAF55" />
+              <Text style={{ fontSize: 11, color: "#6D7B6C" }}>Afinando…</Text>
+            </View>
+          ) : (
+            <Pressable
+              onPress={quitar}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Quitar ubicación"
+              style={{ flexDirection: "row", alignItems: "center", gap: 4, padding: 4 }}
+            >
+              <Feather name="x" size={14} color="#6D7B6C" />
+              <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D7B6C" }}>Quitar</Text>
+            </Pressable>
+          )}
         </View>
         {value.geocoded_direccion ? (
           <Text style={{ fontSize: 12, color: "#6D7B6C", marginTop: 4, marginLeft: 24 }}>
