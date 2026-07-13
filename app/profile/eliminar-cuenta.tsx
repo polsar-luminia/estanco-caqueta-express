@@ -18,6 +18,7 @@ import { useAuthStore } from "../../src/stores/auth";
 import { useCartStore } from "../../src/stores/cart";
 import { eliminarCuenta } from "../../src/lib/api";
 import { BackButton } from "../../src/components/BackButton";
+import { colors, radii } from "../../src/constants/theme";
 
 const PALABRA_CONFIRMACION = "ELIMINAR";
 
@@ -83,17 +84,17 @@ export default function EliminarCuentaScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FAFAF6" }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={{
         flexDirection: "row", alignItems: "center",
         paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16,
-        backgroundColor: "#FAFAF6",
-        borderBottomWidth: 1, borderBottomColor: "#EFEFEB",
+        backgroundColor: colors.bg,
+        borderBottomWidth: 1, borderBottomColor: colors.line,
       }}>
         <BackButton style={{ paddingRight: 16 }} />
-        <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: "#1A1C1A", textAlign: "center", marginRight: 60 }}>
+        <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: colors.ink, textAlign: "center", marginRight: 60 }}>
           Eliminar cuenta
         </Text>
       </View>
@@ -109,25 +110,25 @@ export default function EliminarCuentaScreen() {
         >
           <View style={{
             backgroundColor: "rgba(220,38,38,0.06)",
-            borderRadius: 16,
+            borderRadius: radii.card,
             padding: 16,
             flexDirection: "row",
             alignItems: "flex-start",
             gap: 12,
             marginBottom: 20,
           }}>
-            <Feather name="alert-triangle" size={22} color="#DC2626" />
+            <Feather name="alert-triangle" size={22} color={colors.danger} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 14, fontWeight: "800", color: "#DC2626", marginBottom: 4 }}>
+              <Text style={{ fontSize: 14, fontWeight: "800", color: colors.danger, marginBottom: 4 }}>
                 Esta acción no se puede deshacer
               </Text>
-              <Text style={{ fontSize: 12, color: "#6D7B6C", lineHeight: 18 }}>
+              <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18 }}>
                 Tu cuenta y todos tus datos serán eliminados de forma permanente.
               </Text>
             </View>
           </View>
 
-          <Text style={{ fontSize: 13, fontWeight: "700", color: "#1A1C1A", marginBottom: 10 }}>
+          <Text style={{ fontSize: 13, fontWeight: "700", color: colors.ink, marginBottom: 10 }}>
             Lo que se eliminará:
           </Text>
           <View style={{ gap: 8, marginBottom: 24 }}>
@@ -140,15 +141,15 @@ export default function EliminarCuentaScreen() {
               "Tu acceso a la app (tendrás que registrarte de nuevo)",
             ].map((it, i) => (
               <View key={i} style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
-                <Feather name="x-circle" size={14} color="#DC2626" style={{ marginTop: 2 }} />
-                <Text style={{ flex: 1, fontSize: 13, color: "#3C443B", lineHeight: 18 }}>{it}</Text>
+                <Feather name="x-circle" size={14} color={colors.danger} style={{ marginTop: 2 }} />
+                <Text style={{ flex: 1, fontSize: 13, color: colors.ink, lineHeight: 18 }}>{it}</Text>
               </View>
             ))}
           </View>
 
-          <Text style={{ fontSize: 12, color: "#6D7B6C", lineHeight: 18, marginBottom: 16 }}>
+          <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18, marginBottom: 16 }}>
             Por seguridad, escribe la palabra{" "}
-            <Text style={{ fontWeight: "800", color: "#1A1C1A" }}>{PALABRA_CONFIRMACION}</Text>{" "}
+            <Text style={{ fontWeight: "800", color: colors.ink }}>{PALABRA_CONFIRMACION}</Text>{" "}
             (en mayúsculas) para confirmar.
           </Text>
 
@@ -156,19 +157,19 @@ export default function EliminarCuentaScreen() {
             value={confirmacion}
             onChangeText={setConfirmacion}
             placeholder={PALABRA_CONFIRMACION}
-            placeholderTextColor="#BCCABA"
+            placeholderTextColor={colors.faint}
             autoCapitalize="characters"
             autoCorrect={false}
             style={{
-              backgroundColor: "#FFFFFF",
-              borderRadius: 14,
+              backgroundColor: colors.surface,
+              borderRadius: radii.input,
               paddingHorizontal: 16,
               paddingVertical: 14,
               fontSize: 16,
               fontWeight: "700",
-              color: "#1A1C1A",
+              color: colors.ink,
               borderWidth: 1.5,
-              borderColor: palabraOk ? "#1FAF55" : "#E2E3DF",
+              borderColor: palabraOk ? colors.danger : colors.line,
               marginBottom: 24,
               letterSpacing: 2,
             }}
@@ -178,15 +179,15 @@ export default function EliminarCuentaScreen() {
             onPress={handleEliminar}
             disabled={!palabraOk || loading}
             style={{
-              backgroundColor: !palabraOk || loading ? "#E2E3DF" : "#DC2626",
-              borderRadius: 14,
+              backgroundColor: !palabraOk || loading ? colors.lowfill : colors.danger,
+              borderRadius: radii.input,
               paddingVertical: 16,
               alignItems: "center",
               justifyContent: "center",
             }}
           >
             <Text style={{
-              color: !palabraOk || loading ? "#9E9E9E" : "#FFFFFF",
+              color: !palabraOk || loading ? colors.faint : colors.white,
               fontWeight: "700",
               fontSize: 15,
             }}>
@@ -203,13 +204,13 @@ export default function EliminarCuentaScreen() {
               alignItems: "center",
             }}
           >
-            <Text style={{ color: "#6D7B6C", fontWeight: "600", fontSize: 14 }}>
+            <Text style={{ color: colors.muted, fontWeight: "600", fontSize: 14 }}>
               Cancelar
             </Text>
           </Pressable>
 
           <Text style={{
-            fontSize: 11, color: "#9E9E9E",
+            fontSize: 11, color: colors.faint,
             marginTop: 24, textAlign: "center", lineHeight: 16, paddingHorizontal: 8,
           }}>
             ¿Solo necesitas cambiar tu información? Vuelve atrás y edita tu perfil — no

@@ -9,6 +9,7 @@ import { BackButton } from "../../src/components/BackButton";
 import { apiFetch } from "../../src/lib/api";
 import { tracker } from "../../src/lib/tracker";
 import { formatCOP } from "../../src/lib/format";
+import { colors, radii, shadows } from "../../src/constants/theme";
 
 interface CuponDisponible {
   id: number;
@@ -42,13 +43,13 @@ export default function CuponesScreen() {
   const usados = cupones.filter((c) => c.ya_usado);
 
   return (
-    <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>
+    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: "#FAFAF6", borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.line }}>
         <BackButton style={{ paddingRight: 16 }} />
-        <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: "#1A1C1A", textAlign: "center", marginRight: 60 }}>
+        <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: colors.ink, textAlign: "center", marginRight: 60 }}>
           Cupones
         </Text>
       </View>
@@ -59,19 +60,19 @@ export default function CuponesScreen() {
       >
         {isError ? (
           <View className="items-center py-16">
-            <Feather name="alert-circle" size={40} color="#D1D5DB" />
-            <Text style={{ fontSize: 16, fontWeight: "600", color: "#6D7B6C", marginTop: 12 }}>No pudimos cargar los cupones</Text>
-            <Pressable onPress={() => refetch()} style={{ marginTop: 12, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: "#1FAF55", borderRadius: 999 }}>
+            <Feather name="alert-circle" size={40} color={colors.faint} />
+            <Text style={{ fontSize: 16, fontWeight: "600", color: colors.muted, marginTop: 12 }}>No pudimos cargar los cupones</Text>
+            <Pressable onPress={() => refetch()} style={{ marginTop: 12, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: colors.green, borderRadius: radii.pill }}>
               <Text style={{ color: "#fff", fontWeight: "600" }}>Reintentar</Text>
             </Pressable>
           </View>
         ) : isLoading ? (
-          <Text style={{ color: "#9E9E9E", textAlign: "center", marginTop: 32 }}>Cargando cupones...</Text>
+          <Text style={{ color: colors.faint, textAlign: "center", marginTop: 32 }}>Cargando cupones...</Text>
         ) : cupones.length === 0 ? (
           <View className="items-center py-16">
-            <Feather name="tag" size={40} color="#D1D5DB" />
-            <Text style={{ fontSize: 16, fontWeight: "600", color: "#6D7B6C", marginTop: 12 }}>No hay cupones disponibles</Text>
-            <Text style={{ fontSize: 13, color: "#9E9E9E", marginTop: 4, textAlign: "center" }}>
+            <Feather name="tag" size={40} color={colors.faint} />
+            <Text style={{ fontSize: 16, fontWeight: "600", color: colors.muted, marginTop: 12 }}>No hay cupones disponibles</Text>
+            <Text style={{ fontSize: 13, color: colors.faint, marginTop: 4, textAlign: "center" }}>
               Sigue comprando para recibir descuentos exclusivos
             </Text>
           </View>
@@ -79,7 +80,7 @@ export default function CuponesScreen() {
           <>
             {activos.length > 0 && (
               <>
-                <Text style={{ fontSize: 10, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2 }}>
+                <Text style={{ fontSize: 10, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2 }}>
                   Disponibles ({activos.length})
                 </Text>
                 {activos.map((c) => (
@@ -90,7 +91,7 @@ export default function CuponesScreen() {
 
             {usados.length > 0 && (
               <>
-                <Text style={{ fontSize: 10, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginTop: 8 }}>
+                <Text style={{ fontSize: 10, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginTop: 8 }}>
                   Ya usados ({usados.length})
                 </Text>
                 {usados.map((c) => (
@@ -111,55 +112,54 @@ function CuponCard({ cupon, onCopiar, usado }: { cupon: CuponDisponible; onCopia
 
   return (
     <View style={{
-      backgroundColor: "#fff",
-      borderRadius: 16,
+      backgroundColor: colors.surface,
+      borderRadius: radii.card,
       overflow: "hidden",
       opacity: usado ? 0.6 : 1,
-      borderWidth: 1,
-      borderColor: usado ? "#E5E7EB" : "#F4F4F0",
+      ...shadows.card,
     }}>
       {/* Franja izquierda */}
       <View style={{ flexDirection: "row" }}>
-        <View style={{ width: 6, backgroundColor: usado ? "#D1D5DB" : "#D33587" }} />
+        <View style={{ width: 6, backgroundColor: usado ? colors.faint : colors.offer }} />
         <View style={{ flex: 1, padding: 16 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
             {/* Código */}
-            <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#F4F4F0", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, gap: 8 }}>
-              <Text style={{ fontSize: 15, fontWeight: "800", color: "#1A1C1A", letterSpacing: 2, fontVariant: ["tabular-nums"] }}>
+            <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: colors.lowfill, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, gap: 8 }}>
+              <Text style={{ fontSize: 15, fontWeight: "800", color: colors.ink, letterSpacing: 2, fontVariant: ["tabular-nums"] }}>
                 {cupon.codigo}
               </Text>
               {!usado && (
                 <Pressable onPress={() => onCopiar(cupon.codigo)}>
-                  <Feather name="copy" size={14} color="#6D7B6C" />
+                  <Feather name="copy" size={14} color={colors.muted} />
                 </Pressable>
               )}
             </View>
 
             {/* Valor */}
-            <View style={{ backgroundColor: usado ? "#F4F4F0" : "rgba(211,53,135,0.1)", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
-              <Text style={{ fontSize: 14, fontWeight: "800", color: usado ? "#9E9E9E" : "#D33587" }}>
+            <View style={{ backgroundColor: usado ? colors.lowfill : "rgba(240,101,63,0.1)", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+              <Text style={{ fontSize: 14, fontWeight: "800", color: usado ? colors.faint : colors.offer }}>
                 {getCuponLabel(cupon)}
               </Text>
             </View>
           </View>
 
           {cupon.descripcion ? (
-            <Text style={{ fontSize: 13, color: "#6D7B6C", marginBottom: 6 }}>{cupon.descripcion}</Text>
+            <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 6 }}>{cupon.descripcion}</Text>
           ) : null}
 
           <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
             {Number(cupon.min_pedido) > 0 && (
-              <Text style={{ fontSize: 11, color: "#9E9E9E" }}>
+              <Text style={{ fontSize: 11, color: colors.faint }}>
                 Pedido mín. {formatCOP(cupon.min_pedido)}
               </Text>
             )}
             {diasRestantes !== null && (
-              <Text style={{ fontSize: 11, color: diasRestantes <= 3 ? "#D33587" : "#9E9E9E" }}>
+              <Text style={{ fontSize: 11, color: diasRestantes <= 3 ? colors.offer : colors.faint }}>
                 {diasRestantes === 1 ? "Vence hoy" : `Vence en ${diasRestantes} días`}
               </Text>
             )}
             {usado && (
-              <Text style={{ fontSize: 11, color: "#9E9E9E", fontStyle: "italic" }}>Ya utilizado</Text>
+              <Text style={{ fontSize: 11, color: colors.faint, fontStyle: "italic" }}>Ya utilizado</Text>
             )}
           </View>
         </View>

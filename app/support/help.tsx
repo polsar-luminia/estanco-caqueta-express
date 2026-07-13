@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { MessageIcon } from "../../src/components/icons/AppIcons";
+import { colors, shadows } from "../../src/constants/theme";
 
 const FAQ = [
   {
@@ -41,20 +42,17 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   return (
     <Pressable
       onPress={() => setOpen(!open)}
-      className="bg-white rounded-2xl overflow-hidden"
-      style={{
-        shadowColor: "#1A1C1A", shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.03, shadowRadius: 12, elevation: 1,
-      }}
+      className="rounded-2xl overflow-hidden"
+      style={{ backgroundColor: colors.surface, ...shadows.card }}
     >
       <View className="flex-row items-center justify-between p-4">
-        <Text style={{ flex: 1, fontSize: 14, fontWeight: "600", color: "#1A1C1A", marginRight: 12 }}>{q}</Text>
-        <Feather name={open ? "chevron-up" : "chevron-down"} size={18} color="#1FAF55" />
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: "600", color: colors.ink, marginRight: 12 }}>{q}</Text>
+        <Feather name={open ? "chevron-up" : "chevron-down"} size={18} color={colors.green} />
       </View>
       {open && (
         <View className="px-4 pb-4">
-          <View style={{ height: 1, backgroundColor: "#F4F4F0", marginBottom: 12 }} />
-          <Text style={{ fontSize: 13, color: "#6D7B6C", lineHeight: 20 }}>{a}</Text>
+          <View style={{ height: 1, backgroundColor: colors.line, marginBottom: 12 }} />
+          <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 20 }}>{a}</Text>
         </View>
       )}
     </Pressable>
@@ -66,22 +64,22 @@ export default function HelpScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       {/* Header */}
       <View className="flex-row items-center px-4 pb-2" style={{ gap: 12, paddingTop: insets.top + 8 }}>
         <Pressable onPress={() => router.back()}>
-          <Feather name="arrow-left" size={22} color="#1A1C1A" />
+          <Feather name="arrow-left" size={22} color={colors.ink} />
         </Pressable>
-        <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Centro de Ayuda</Text>
+        <Text style={{ fontSize: 18, fontWeight: "700", color: colors.ink }}>Centro de Ayuda</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40, gap: 20 }}>
         {/* Contact Card */}
-        <View className="rounded-2xl p-5" style={{ backgroundColor: "#F4F4F0" }}>
-          <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A", marginBottom: 4 }}>
+        <View className="rounded-2xl p-5" style={{ backgroundColor: colors.lowfill }}>
+          <Text style={{ fontSize: 18, fontWeight: "700", color: colors.ink, marginBottom: 4 }}>
             ¿Necesitas ayuda?
           </Text>
-          <Text style={{ fontSize: 13, color: "#6D7B6C", marginBottom: 16 }}>
+          <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 16 }}>
             Estamos disponibles para resolver cualquier duda o problema con tu pedido.
           </Text>
 
@@ -97,33 +95,33 @@ export default function HelpScreen() {
           <Pressable
             onPress={() => Linking.openURL("tel:+573189495704")}
             className="flex-row items-center justify-center py-3.5 rounded-xl"
-            style={{ backgroundColor: "#fff" }}
+            style={{ backgroundColor: colors.surface }}
           >
-            <Feather name="phone" size={16} color="#1FAF55" />
-            <Text style={{ color: "#1A1C1A", fontWeight: "600", fontSize: 14, marginLeft: 8 }}>Llamar</Text>
+            <Feather name="phone" size={16} color={colors.green} />
+            <Text style={{ color: colors.ink, fontWeight: "600", fontSize: 14, marginLeft: 8 }}>Llamar</Text>
           </Pressable>
         </View>
 
         {/* Business Info */}
-        <View className="rounded-2xl p-5 bg-white" style={{ borderWidth: 1, borderColor: "#F4F4F0" }}>
-          <Text style={{ fontSize: 14, fontWeight: "700", color: "#1A1C1A", marginBottom: 12 }}>Información</Text>
+        <View className="rounded-2xl p-5" style={{ backgroundColor: colors.surface, ...shadows.card }}>
+          <Text style={{ fontSize: 14, fontWeight: "700", color: colors.ink, marginBottom: 12 }}>Información</Text>
 
           <View style={{ gap: 10 }}>
             <View className="flex-row" style={{ gap: 10 }}>
-              <Feather name="map-pin" size={16} color="#1FAF55" style={{ marginTop: 2 }} />
-              <Text style={{ fontSize: 13, color: "#6D7B6C", flex: 1 }}>Carrera 10 #16-86, Florencia, Caquetá</Text>
+              <Feather name="map-pin" size={16} color={colors.green} style={{ marginTop: 2 }} />
+              <Text style={{ fontSize: 13, color: colors.muted, flex: 1 }}>Carrera 10 #16-86, Florencia, Caquetá</Text>
             </View>
             <View className="flex-row" style={{ gap: 10 }}>
-              <Feather name="mail" size={16} color="#1FAF55" style={{ marginTop: 2 }} />
-              <Text style={{ fontSize: 13, color: "#6D7B6C" }}>app@estancocaqueta.com</Text>
+              <Feather name="mail" size={16} color={colors.green} style={{ marginTop: 2 }} />
+              <Text style={{ fontSize: 13, color: colors.muted }}>app@estancocaqueta.com</Text>
             </View>
             <View className="flex-row" style={{ gap: 10 }}>
-              <Feather name="clock" size={16} color="#1FAF55" style={{ marginTop: 2 }} />
+              <Feather name="clock" size={16} color={colors.green} style={{ marginTop: 2 }} />
               <View>
-                <Text style={{ fontSize: 13, color: "#6D7B6C" }}>Lun-Jue: 8am – 7pm</Text>
-                <Text style={{ fontSize: 13, color: "#6D7B6C" }}>Vie-Sáb: 8am – 12am</Text>
-                <Text style={{ fontSize: 13, color: "#6D7B6C" }}>Dom: 9am – 4:30pm</Text>
-                <Text style={{ fontSize: 13, color: "#6D7B6C" }}>Festivos: 9:30am – 5pm</Text>
+                <Text style={{ fontSize: 13, color: colors.muted }}>Lun-Jue: 8am – 7pm</Text>
+                <Text style={{ fontSize: 13, color: colors.muted }}>Vie-Sáb: 8am – 12am</Text>
+                <Text style={{ fontSize: 13, color: colors.muted }}>Dom: 9am – 4:30pm</Text>
+                <Text style={{ fontSize: 13, color: colors.muted }}>Festivos: 9:30am – 5pm</Text>
               </View>
             </View>
           </View>
@@ -131,7 +129,7 @@ export default function HelpScreen() {
 
         {/* FAQ */}
         <View>
-          <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A", marginBottom: 12 }}>
+          <Text style={{ fontSize: 18, fontWeight: "700", color: colors.ink, marginBottom: 12 }}>
             Preguntas Frecuentes
           </Text>
           <View style={{ gap: 10 }}>

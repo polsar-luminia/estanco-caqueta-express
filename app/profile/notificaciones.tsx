@@ -11,6 +11,7 @@ import Toast from "react-native-toast-message";
 import { Feather } from "@expo/vector-icons";
 import { BackButton } from "../../src/components/BackButton";
 import { apiFetch } from "../../src/lib/api";
+import { colors, radii, shadows } from "../../src/constants/theme";
 
 interface Preferencias {
   operativas: boolean;
@@ -98,13 +99,13 @@ export default function NotificacionesScreen() {
   };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>
+    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: "#FAFAF6", borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.line }}>
         <BackButton style={{ paddingRight: 16 }} />
-        <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: "#1A1C1A", textAlign: "center", marginRight: 60 }}>
+        <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: colors.ink, textAlign: "center", marginRight: 60 }}>
           Notificaciones
         </Text>
       </View>
@@ -112,16 +113,16 @@ export default function NotificacionesScreen() {
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 40 }}>
         {loading ? (
           <View style={{ alignItems: "center", paddingVertical: 48 }}>
-            <ActivityIndicator color="#1FAF55" />
+            <ActivityIndicator color={colors.green} />
           </View>
         ) : !prefs ? (
           <View style={{ alignItems: "center", paddingVertical: 48, gap: 16 }}>
-            <Text style={{ fontSize: 14, color: "#6D7B6C", textAlign: "center" }}>
+            <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center" }}>
               No pudimos cargar tus preferencias
             </Text>
             <Pressable
               onPress={() => setFetchKey((k) => k + 1)}
-              style={{ backgroundColor: "#1FAF55", paddingHorizontal: 24, paddingVertical: 12, borderRadius: 999 }}
+              style={{ backgroundColor: colors.green, paddingHorizontal: 24, paddingVertical: 12, borderRadius: radii.pill }}
             >
               <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}>Reintentar</Text>
             </Pressable>
@@ -130,25 +131,25 @@ export default function NotificacionesScreen() {
           <>
             {/* Operativas — no se pueden desactivar */}
             <View>
-              <Text style={{ fontSize: 10, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
+              <Text style={{ fontSize: 10, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
                 Tus pedidos
               </Text>
-              <View style={{ backgroundColor: "#fff", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#F4F4F0", flexDirection: "row", alignItems: "center", gap: 12 }}>
+              <View style={{ backgroundColor: colors.surface, borderRadius: radii.card, padding: 16, flexDirection: "row", alignItems: "center", gap: 12, ...shadows.card }}>
                 <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(31,175,85,0.12)", alignItems: "center", justifyContent: "center" }}>
-                  <Feather name="package" size={18} color="#1FAF55" />
+                  <Feather name="package" size={18} color={colors.green} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: "700", color: "#1A1C1A" }}>
+                  <Text style={{ fontSize: 14, fontWeight: "700", color: colors.ink }}>
                     Estado de tus pedidos
                   </Text>
-                  <Text style={{ fontSize: 12, color: "#6D7B6C", marginTop: 2 }}>
+                  <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
                     Recibido, en camino, entregado. Estas son transaccionales y no se pueden desactivar.
                   </Text>
                 </View>
                 <Switch
                   value
                   disabled
-                  trackColor={{ false: "#E5E5E5", true: "#1FAF55" }}
+                  trackColor={{ false: colors.line, true: colors.green }}
                   thumbColor="#fff"
                 />
               </View>
@@ -156,10 +157,10 @@ export default function NotificacionesScreen() {
 
             {/* Marketing */}
             <View>
-              <Text style={{ fontSize: 10, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
+              <Text style={{ fontSize: 10, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
                 Promociones y avisos
               </Text>
-              <View style={{ backgroundColor: "#fff", borderRadius: 16, borderWidth: 1, borderColor: "#F4F4F0", overflow: "hidden" }}>
+              <View style={{ backgroundColor: colors.surface, borderRadius: radii.card, overflow: "hidden", ...shadows.card }}>
                 {ITEMS.map((item, idx) => (
                   <View
                     key={item.key}
@@ -169,24 +170,24 @@ export default function NotificacionesScreen() {
                       gap: 12,
                       padding: 16,
                       borderBottomWidth: idx === ITEMS.length - 1 ? 0 : 0.5,
-                      borderBottomColor: "#F4F4F0",
+                      borderBottomColor: colors.line,
                     }}
                   >
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14, fontWeight: "700", color: "#1A1C1A" }}>
+                      <Text style={{ fontSize: 14, fontWeight: "700", color: colors.ink }}>
                         {item.titulo}
                       </Text>
-                      <Text style={{ fontSize: 12, color: "#6D7B6C", marginTop: 2 }}>
+                      <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
                         {item.descripcion}
                       </Text>
                     </View>
                     {saving === item.key ? (
-                      <ActivityIndicator color="#1FAF55" />
+                      <ActivityIndicator color={colors.green} />
                     ) : (
                       <Switch
                         value={prefs ? prefs[item.key] : true}
                         onValueChange={(v) => togglePref(item.key, v)}
-                        trackColor={{ false: "#E5E5E5", true: "#1FAF55" }}
+                        trackColor={{ false: colors.line, true: colors.green }}
                         thumbColor="#fff"
                       />
                     )}
@@ -195,7 +196,7 @@ export default function NotificacionesScreen() {
               </View>
             </View>
 
-            <Text style={{ fontSize: 11, color: "#9E9E9E", textAlign: "center", marginTop: 8, paddingHorizontal: 16 }}>
+            <Text style={{ fontSize: 11, color: colors.faint, textAlign: "center", marginTop: 8, paddingHorizontal: 16 }}>
               Maximo 2 mensajes promocionales por semana. Puedes cambiar tus preferencias cuando quieras.
             </Text>
           </>

@@ -2,6 +2,7 @@ import { View, Text, ScrollView, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import { colors } from "../../src/constants/theme";
 
 const SECTIONS = [
   {
@@ -35,23 +36,23 @@ export default function PrivacyScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       {/* Header */}
       <View className="flex-row items-center px-4 pb-2" style={{ gap: 12, paddingTop: insets.top + 8 }}>
         <Pressable onPress={() => router.back()}>
-          <Feather name="arrow-left" size={22} color="#1A1C1A" />
+          <Feather name="arrow-left" size={22} color={colors.ink} />
         </Pressable>
-        <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Política de Privacidad</Text>
+        <Text style={{ fontSize: 18, fontWeight: "700", color: colors.ink }}>Política de Privacidad</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         {/* Header info */}
-        <View className="rounded-2xl p-5 mb-5" style={{ backgroundColor: "#F4F4F0" }}>
-          <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>
+        <View className="rounded-2xl p-5 mb-5" style={{ backgroundColor: colors.lowfill }}>
+          <Text style={{ fontSize: 10, fontWeight: "700", color: colors.muted, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>
             Última actualización
           </Text>
-          <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1C1A" }}>8 de mayo de 2026</Text>
-          <Text style={{ fontSize: 12, color: "#6D7B6C", marginTop: 8, lineHeight: 18 }}>
+          <Text style={{ fontSize: 14, fontWeight: "600", color: colors.ink }}>8 de mayo de 2026</Text>
+          <Text style={{ fontSize: 12, color: colors.muted, marginTop: 8, lineHeight: 18 }}>
             Conoce cómo Polo & Salazar ZOMAC S.A.S. trata y protege tus datos personales conforme a la Ley 1581 de 2012.
           </Text>
         </View>
@@ -60,10 +61,10 @@ export default function PrivacyScreen() {
         <View style={{ gap: 20 }}>
           {SECTIONS.map((sec, i) => (
             <View key={i}>
-              <Text style={{ fontSize: 15, fontWeight: "700", color: "#1A1C1A", marginBottom: 8 }}>
+              <Text style={{ fontSize: 15, fontWeight: "700", color: colors.ink, marginBottom: 8 }}>
                 {sec.title}
               </Text>
-              <Text style={{ fontSize: 13, color: "#6D7B6C", lineHeight: 20 }}>
+              <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 20 }}>
                 {sec.body}
               </Text>
             </View>
@@ -72,10 +73,10 @@ export default function PrivacyScreen() {
 
         {/* Footer */}
         <View className="items-center mt-8">
-          <Text style={{ fontSize: 10, color: "#BCCABA", textAlign: "center", letterSpacing: 1, textTransform: "uppercase" }}>
+          <Text style={{ fontSize: 10, color: colors.faint, textAlign: "center", letterSpacing: 1, textTransform: "uppercase" }}>
             Organización Polo & Salazar ZOMAC S.A.S.
           </Text>
-          <Text style={{ fontSize: 10, color: "#BCCABA", marginTop: 2 }}>
+          <Text style={{ fontSize: 10, color: colors.faint, marginTop: 2 }}>
             NIT 901.327.818-0 • Florencia, Caquetá
           </Text>
         </View>
