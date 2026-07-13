@@ -20,6 +20,7 @@ import { TruckIcon, TagIcon } from "../../src/components/icons/AppIcons";
 import { CartIcon } from "../../src/components/icons/TabIcons";
 import { formatCOP } from "../../src/lib/format";
 import { CartItem } from "../../src/components/CartItem";
+import { colors, shadows } from "../../src/constants/theme";
 
 function ChevronRightIcon() {
   return (
@@ -355,7 +356,7 @@ export default function CartScreen() {
 
   if (items.length === 0) {
     return (
-      <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: "#FAFAF6" }}>
+      <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: colors.bg }}>
         <CartIcon color="#BCCABA" size={48} />
         <Text style={{ fontSize: 20, fontWeight: "700", color: "#6D7B6C", marginBottom: 6 }}>Carrito vacío</Text>
         <Text style={{ color: "#BCCABA", textAlign: "center", fontSize: 14 }}>
@@ -371,7 +372,7 @@ export default function CartScreen() {
       keyboardVerticalOffset={80}
       style={{ flex: 1 }}
     >
-    <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>
+    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       <FlatList
         data={items}
         keyExtractor={(item) => String(item.productoId)}
@@ -386,7 +387,7 @@ export default function CartScreen() {
         ListFooterComponent={
           <View style={{ gap: 24, marginTop: 24 }}>
             {/* Delivery - Direcciones Guardadas */}
-            <View className="p-5 rounded-2xl" style={{ backgroundColor: "#F4F4F0" }}>
+            <View className="p-5 rounded-2xl" style={{ backgroundColor: colors.surface, ...shadows.card }}>
               <View className="flex-row items-center justify-between mb-4">
                 <View className="flex-row items-center">
                   <TruckIcon color="#1A1C1A" size={20} />
@@ -501,7 +502,7 @@ export default function CartScreen() {
             </View>
 
             {/* Cupon de descuento */}
-            <View className="p-5 rounded-2xl" style={{ backgroundColor: "#F4F4F0" }}>
+            <View className="p-5 rounded-2xl" style={{ backgroundColor: colors.surface, ...shadows.card }}>
               <View className="flex-row items-center mb-3">
                 <TagIcon color="#1A1C1A" size={20} />
                 <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Cupon</Text>
@@ -561,7 +562,7 @@ export default function CartScreen() {
               )}
 
               {cuponError ? (
-                <Text style={{ fontSize: 11, color: "#D33587", marginTop: 6, marginLeft: 4 }}>{cuponError}</Text>
+                <Text style={{ fontSize: 11, color: colors.danger, marginTop: 6, marginLeft: 4 }}>{cuponError}</Text>
               ) : null}
             </View>
 
@@ -583,7 +584,7 @@ export default function CartScreen() {
             ) : null}
 
             {/* Puntos + Envio */}
-            <View className="rounded-2xl p-4 bg-white" style={{ borderWidth: 1, borderColor: "#F4F4F0", gap: 12 }}>
+            <View className="rounded-2xl p-4 bg-white" style={{ ...shadows.card, gap: 12 }}>
               <View className="flex-row justify-between">
                 <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Subtotal</Text>
                 <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1C1A" }}>{formatCOP(subtotal)}</Text>
@@ -601,7 +602,7 @@ export default function CartScreen() {
                 </Text>
               </View>
               {puedeUsarPuntos && subtotal < envioGratisMinimo && (
-                <View className="flex-row justify-between items-center rounded-xl p-3" style={{ backgroundColor: "#F4F4F0" }}>
+                <View className="flex-row justify-between items-center rounded-xl p-3" style={{ backgroundColor: colors.lowfill }}>
                   <View className="flex-1">
                     <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1C1A" }}>Usar 200 puntos</Text>
                     <Text style={{ fontSize: 11, color: "#6D7B6C" }}>Envío gratis (tienes {puntos} pts)</Text>
@@ -682,7 +683,7 @@ export default function CartScreen() {
             <Text style={{ fontSize: 10, fontWeight: "600", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5 }}>
               Total a pagar
             </Text>
-            <Text style={{ fontSize: 28, fontWeight: "800", color: "#D33587", letterSpacing: -1 }}>
+            <Text style={{ fontSize: 28, fontWeight: "800", color: colors.ink, letterSpacing: -1 }}>
               {formatCOP(total)}
             </Text>
             {(() => {
@@ -700,7 +701,7 @@ export default function CartScreen() {
               {envio === 0 ? "Envío gratis con puntos 🎉" : `Incluye domicilio (${formatCOP(envio)})`}
             </Text>
             {subtotal < pedidoMinimo && (
-              <Text style={{ fontSize: 11, color: "#D33587", fontWeight: "600", marginTop: 2 }}>
+              <Text style={{ fontSize: 11, color: colors.offer, fontWeight: "600", marginTop: 2 }}>
                 Pedido mínimo: {formatCOP(pedidoMinimo)} (faltan {formatCOP(pedidoMinimo - subtotal)})
               </Text>
             )}
