@@ -193,6 +193,9 @@ export default function TabLayout() {
         name="search"
         options={{
           title: "Buscar",
+          // Buscar tiene su propio header (la barra de búsqueda). Ocultamos el
+          // header del logo para que no quede el espacio muerto duplicado arriba.
+          headerShown: false,
           tabBarButton: (props) => (
             <TabButton {...props} routeName="search" label="Buscar" icon={SearchIcon} />
           ),

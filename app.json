@@ -8,9 +8,9 @@
     "scheme": "estancocaqueta",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo-estanco.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1FAF55"
+      "backgroundColor": "#FFFFFF"
     },
     "ios": {
       "supportsTablet": false,
