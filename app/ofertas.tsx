@@ -17,6 +17,7 @@ import { useAuthStore } from "../src/stores/auth";
 import { useCartStore } from "../src/stores/cart";
 import { formatCOP } from "../src/lib/format";
 import { getCatVisuals } from "../src/lib/catVisuals";
+import { colors } from "../src/constants/theme";
 
 function ChevronLeftIcon() {
   return (
@@ -130,7 +131,7 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
               justifyContent: "center",
             }}
           >
-            <Text style={{ fontSize: 20, fontWeight: "700", color: "#DC2626", marginTop: -1 }}>+</Text>
+            <Text style={{ fontSize: 20, fontWeight: "700", color: colors.offer, marginTop: -1 }}>+</Text>
           </Pressable>
         </View>
       </View>
@@ -188,7 +189,7 @@ export default function OfertasScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FAFAF6" }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* ── Header blanco ── */}
@@ -201,14 +202,14 @@ export default function OfertasScreen() {
           paddingHorizontal: 16,
           backgroundColor: "#FFFFFF",
           borderBottomWidth: 1,
-          borderBottomColor: "#E2E3DF",
+          borderBottomColor: colors.line,
           gap: 8,
         }}
       >
         <Pressable onPress={() => router.back()} style={{ paddingRight: 8 }}>
           <ChevronLeftIcon />
         </Pressable>
-        <Text style={{ fontSize: 17, fontWeight: "800", color: "#1A1C1A" }}>Ofertas de hoy</Text>
+        <Text style={{ fontSize: 17, fontWeight: "800", color: colors.ink }}>Ofertas de hoy</Text>
         {!isLoading && ofertas.length > 0 && (
           <View
             style={{
@@ -244,7 +245,7 @@ export default function OfertasScreen() {
           {flash.length > 0 && (
             <View
               style={{
-                backgroundColor: "#DC2626",
+                backgroundColor: "#191D14",
                 paddingHorizontal: 14,
                 paddingTop: 14,
                 paddingBottom: 18,
@@ -269,7 +270,7 @@ export default function OfertasScreen() {
                     Solo por tiempo limitado
                   </Text>
                 </View>
-                <CountdownChip expiresAt={proxFin} color="rgba(0,0,0,0.20)" />
+                <CountdownChip expiresAt={proxFin} color="rgba(255,255,255,0.16)" />
               </View>
 
               {/* Grid 2 columnas */}
@@ -297,12 +298,12 @@ export default function OfertasScreen() {
               }}
             >
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <View style={{ flex: 1, height: 1, backgroundColor: "#E2E3DF" }} />
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
                 <Text
                   style={{
                     fontSize: 11,
                     fontWeight: "700",
-                    color: "#6D7B6C",
+                    color: colors.muted,
                     textTransform: "uppercase",
                     letterSpacing: 1,
                     paddingHorizontal: 10,
@@ -310,7 +311,7 @@ export default function OfertasScreen() {
                 >
                   Todas las ofertas
                 </Text>
-                <View style={{ flex: 1, height: 1, backgroundColor: "#E2E3DF" }} />
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
               </View>
             </View>
           )}
@@ -389,10 +390,10 @@ export default function OfertasScreen() {
               <Text style={{ color: "#fff", fontWeight: "800", fontSize: 13 }}>{itemCount}</Text>
             </View>
             <View style={{ marginLeft: 12 }}>
-              <Text style={{ fontSize: 9, fontWeight: "700", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 0.5 }}>
+              <Text style={{ fontSize: 9, fontWeight: "700", color: colors.faint, textTransform: "uppercase", letterSpacing: 0.5 }}>
                 Tu Pedido
               </Text>
-              <Text style={{ fontSize: 14, fontWeight: "800", color: "#1A1C1A" }}>
+              <Text style={{ fontSize: 14, fontWeight: "800", color: colors.ink }}>
                 {formatCOP(total)}
               </Text>
             </View>

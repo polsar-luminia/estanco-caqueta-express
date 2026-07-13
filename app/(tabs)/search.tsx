@@ -13,6 +13,7 @@ import { ProductCard } from "../../src/components/ProductCard";
 import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
 import { ErrorState } from "../../src/components/ErrorState";
 import { SearchIcon, CloseIcon, ClockIcon } from "../../src/components/icons/AppIcons";
+import { colors } from "../../src/constants/theme";
 
 // Sugerencias visibles antes de que el usuario escriba — son recomendaciones
 // fijas, no historial real. El header lo nombra "Búsquedas populares" para
@@ -37,7 +38,7 @@ function CategoryGridItem({ cat, onPress }: { cat: Categoria; onPress: () => voi
         paddingHorizontal: 14,
         paddingVertical: 13,
         gap: 10,
-        backgroundColor: "#F4F4F0",
+        backgroundColor: colors.lowfill,
         overflow: "hidden",
       }}
     >
@@ -67,7 +68,7 @@ function CategoryGridItem({ cat, onPress }: { cat: Categoria; onPress: () => voi
       </LinearGradient>
 
       <Text
-        style={{ flex: 1, fontSize: 12, fontWeight: "700", color: "#1A1C1A" }}
+        style={{ flex: 1, fontSize: 12, fontWeight: "700", color: colors.ink }}
         numberOfLines={1}
         adjustsFontSizeToFit
       >
@@ -165,7 +166,7 @@ export default function SearchScreen() {
   }, [debouncedQuery, isLoading]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FAFAF6" }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       {/* Search Bar — con sombra y estados animados */}
       <View
         style={{
@@ -186,7 +187,7 @@ export default function SearchScreen() {
             flexDirection: "row",
             alignItems: "center",
             gap: 10,
-            backgroundColor: focused ? "#FFFFFF" : "#F4F4F0",
+            backgroundColor: focused ? "#FFFFFF" : colors.lowfill,
             borderRadius: 14,
             paddingHorizontal: 16,
             paddingVertical: 13,
@@ -199,12 +200,12 @@ export default function SearchScreen() {
             elevation: focused ? 4 : 0,
           }}
         >
-          <SearchIcon color={focused ? "#1FAF55" : "#9E9E9E"} size={18} />
+          <SearchIcon color={focused ? "#1FAF55" : colors.faint} size={18} />
           <TextInput
             ref={inputRef}
-            style={{ flex: 1, fontSize: 15, color: "#1A1C1A" }}
+            style={{ flex: 1, fontSize: 15, color: colors.ink }}
             placeholder="Busca licores o snacks..."
-            placeholderTextColor="#9E9E9E"
+            placeholderTextColor={colors.faint}
             value={query}
             onChangeText={handleChange}
             onFocus={() => setFocused(true)}
@@ -221,7 +222,7 @@ export default function SearchScreen() {
               }}
               hitSlop={8}
             >
-              <CloseIcon color="#9E9E9E" size={16} />
+              <CloseIcon color={colors.faint} size={16} />
             </Pressable>
           )}
         </Pressable>
@@ -257,8 +258,8 @@ export default function SearchScreen() {
           }
           ListHeaderComponent={
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <Text style={{ fontSize: 18, fontWeight: "800", color: "#1A1C1A" }}>Resultados</Text>
-              <Text style={{ fontSize: 12, color: "#6D7B6C" }}>{totalResultados} productos</Text>
+              <Text style={{ fontSize: 18, fontWeight: "800", color: colors.ink }}>Resultados</Text>
+              <Text style={{ fontSize: 12, color: colors.muted }}>{totalResultados} productos</Text>
             </View>
           }
           renderItem={({ item }) => (
@@ -279,16 +280,16 @@ export default function SearchScreen() {
         <View style={{ alignItems: "center", paddingTop: 60 }}>
           <View style={{
             width: 72, height: 72, borderRadius: 36,
-            backgroundColor: "#F4F4F0",
+            backgroundColor: colors.lowfill,
             alignItems: "center", justifyContent: "center",
             marginBottom: 12,
           }}>
-            <SearchIcon color="#BCCABA" size={32} />
+            <SearchIcon color={colors.faint} size={32} />
           </View>
-          <Text style={{ fontSize: 16, fontWeight: "700", color: "#6D7B6C" }}>
+          <Text style={{ fontSize: 16, fontWeight: "700", color: colors.muted }}>
             Sin resultados para &quot;{debouncedQuery}&quot;
           </Text>
-          <Text style={{ fontSize: 12, color: "#BCCABA", marginTop: 4 }}>
+          <Text style={{ fontSize: 12, color: colors.faint, marginTop: 4 }}>
             Intenta con otro término
           </Text>
         </View>
@@ -299,7 +300,7 @@ export default function SearchScreen() {
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 120 }}>
           {/* Recent Searches */}
           <View style={{ paddingHorizontal: 16, marginBottom: 20, paddingTop: 16 }}>
-            <Text style={{ fontSize: 10, fontWeight: "700", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>
+            <Text style={{ fontSize: 10, fontWeight: "700", color: colors.faint, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>
               Búsquedas Populares
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
@@ -313,14 +314,14 @@ export default function SearchScreen() {
                     paddingHorizontal: 14,
                     paddingVertical: 8,
                     borderWidth: 1,
-                    borderColor: "#E2E3DF",
+                    borderColor: colors.line,
                     flexDirection: "row",
                     alignItems: "center",
                     gap: 6,
                   }}
                 >
-                  <ClockIcon color="#BCCABA" size={13} />
-                  <Text style={{ fontSize: 12, fontWeight: "500", color: "#1A1C1A" }}>{term}</Text>
+                  <ClockIcon color={colors.faint} size={13} />
+                  <Text style={{ fontSize: 12, fontWeight: "500", color: colors.ink }}>{term}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -328,7 +329,7 @@ export default function SearchScreen() {
 
           {/* Categories Grid — 2 columns */}
           <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
-            <Text style={{ fontSize: 18, fontWeight: "800", color: "#1A1C1A", marginBottom: 16 }}>
+            <Text style={{ fontSize: 18, fontWeight: "800", color: colors.ink, marginBottom: 16 }}>
               Explora Categorías
             </Text>
             <FlatList
@@ -348,9 +349,9 @@ export default function SearchScreen() {
           {destacados.length > 0 && (
             <View style={{ paddingHorizontal: 16 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <Text style={{ fontSize: 18, fontWeight: "800", color: "#1A1C1A" }}>Sugerencias de Hoy</Text>
+                <Text style={{ fontSize: 18, fontWeight: "800", color: colors.ink }}>Sugerencias de Hoy</Text>
                 <Pressable onPress={() => router.push("/(tabs)/")}>
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#D33587" }}>Ver Todo</Text>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: colors.greenInk }}>Ver Todo</Text>
                 </Pressable>
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingRight: 16 }}>
