@@ -11,11 +11,11 @@ const SECTIONS = [
   },
   {
     title: "2. Datos que Recopilamos",
-    body: "Al registrarte y usar la aplicación, recopilamos los siguientes datos personales:\n\n• Nombre completo\n• Número de teléfono\n• Fecha de nacimiento\n• Dirección(es) de entrega\n• Historial de pedidos\n• Token de notificaciones push (para enviarte actualizaciones sobre tus pedidos y comunicaciones de marketing relacionadas con productos, promociones y recordatorios)\n• Comportamiento dentro de la aplicación (carritos abandonados, frecuencia de uso, productos vistos) para personalizar tus comunicaciones",
+    body: "Al registrarte y usar la aplicación, recopilamos los siguientes datos personales:\n\n• Nombre completo\n• Número de teléfono\n• Fecha de nacimiento\n• Dirección(es) de entrega\n• Historial de pedidos\n• Token de notificaciones push (para enviarte actualizaciones sobre tus pedidos y comunicaciones de marketing relacionadas con productos, promociones y recordatorios)\n• Comportamiento dentro de la aplicación (carritos abandonados, frecuencia de uso, productos vistos) para personalizar tus comunicaciones\n• Ubicación geográfica (coordenadas de tu punto de entrega), únicamente si decides usar la función \"Usar mi ubicación\" o ubicar el pin en el mapa al agregar o editar una dirección de entrega. Nunca se accede a tu ubicación en segundo plano ni sin que tú lo actives",
   },
   {
     title: "3. Finalidad del Tratamiento",
-    body: "Tus datos personales son utilizados para:\n\n• Gestionar y procesar tus pedidos\n• Coordinar las entregas a domicilio\n• Enviarte notificaciones push sobre el estado de tus pedidos\n• Enviarte notificaciones push de marketing, incluyendo: recordatorios de carritos con productos pendientes (carrito abandonado), recomendaciones cuando llevas tiempo sin abrir la app (re-engagement) y promociones programadas en horarios específicos (por ejemplo, ofertas de fin de semana)\n• Estas comunicaciones de marketing están sujetas a una frecuencia máxima de 2 mensajes por semana y puedes desactivarlas en cualquier momento desde la configuración de tu dispositivo o solicitándolo a app@estancocaqueta.com\n• Mejorar la experiencia de la aplicación\n• Cumplir con las obligaciones legales aplicables, incluida la verificación de mayoría de edad conforme a la Ley 124 de 1994",
+    body: "Tus datos personales son utilizados para:\n\n• Gestionar y procesar tus pedidos\n• Coordinar las entregas a domicilio\n• Fijar con precisión el punto de entrega de tu pedido y facilitar el domicilio, cuando activas voluntariamente tu ubicación GPS o el pin en el mapa\n• Enviarte notificaciones push sobre el estado de tus pedidos\n• Enviarte notificaciones push de marketing, incluyendo: recordatorios de carritos con productos pendientes (carrito abandonado), recomendaciones cuando llevas tiempo sin abrir la app (re-engagement) y promociones programadas en horarios específicos (por ejemplo, ofertas de fin de semana)\n• Estas comunicaciones de marketing están sujetas a una frecuencia máxima de 2 mensajes por semana y puedes desactivarlas en cualquier momento desde la configuración de tu dispositivo o solicitándolo a app@estancocaqueta.com\n• Mejorar la experiencia de la aplicación\n• Cumplir con las obligaciones legales aplicables, incluida la verificación de mayoría de edad conforme a la Ley 124 de 1994",
   },
   {
     title: "4. Base Legal",
@@ -27,7 +27,7 @@ const SECTIONS = [
   },
   {
     title: "6. Vigencia y Seguridad",
-    body: "Tus datos serán conservados mientras tu cuenta permanezca activa o mientras sea necesario para cumplir con las finalidades descritas o las obligaciones legales.\n\nImplementamos medidas técnicas y organizacionales para proteger tus datos contra acceso no autorizado, pérdida o divulgación indebida. Los datos se almacenan en servidores ubicados en la Unión Europea bajo estándares de seguridad reconocidos internacionalmente.",
+    body: "Tus datos serán conservados mientras tu cuenta permanezca activa o mientras sea necesario para cumplir con las finalidades descritas o las obligaciones legales.\n\nLas coordenadas de ubicación asociadas a un pedido se disocian (eliminan) automáticamente 12 meses después de la entrega, ya que la factura no requiere conservarlas. Las direcciones guardadas con ubicación permanecen mientras tu cuenta esté activa y se eliminan junto con ella.\n\nImplementamos medidas técnicas y organizacionales para proteger tus datos contra acceso no autorizado, pérdida o divulgación indebida. Los datos se almacenan en servidores ubicados en la Unión Europea bajo estándares de seguridad reconocidos internacionalmente.",
   },
 ];
 
@@ -51,7 +51,7 @@ export default function PrivacyScreen() {
           <Text style={{ fontSize: 10, fontWeight: "700", color: colors.muted, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>
             Última actualización
           </Text>
-          <Text style={{ fontSize: 14, fontWeight: "600", color: colors.ink }}>8 de mayo de 2026</Text>
+          <Text style={{ fontSize: 14, fontWeight: "600", color: colors.ink }}>13 de julio de 2026</Text>
           <Text style={{ fontSize: 12, color: colors.muted, marginTop: 8, lineHeight: 18 }}>
             Conoce cómo Polo & Salazar ZOMAC S.A.S. trata y protege tus datos personales conforme a la Ley 1581 de 2012.
           </Text>
