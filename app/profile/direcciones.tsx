@@ -10,6 +10,7 @@ import { useRouter } from "expo-router";
 import { getDirecciones, crearDireccion, editarDireccion, setPredeterminada, eliminarDireccion, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
 import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
+import { colors, shadows } from "../../src/constants/theme";
 import { useUbicacionPicker } from "../../src/stores/ubicacionPicker";
 
 export default function DireccionesScreen() {
@@ -87,11 +88,11 @@ export default function DireccionesScreen() {
   const etiquetas = ["Casa", "Trabajo", "Otro"];
 
   return (
-    <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>
+    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: "#FAFAF6", borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 14, paddingHorizontal: 16, backgroundColor: colors.bg }}>
         <BackButton style={{ paddingRight: 16 }} />
         <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: "#1A1C1A", textAlign: "center", marginRight: 60 }}>
           Mis Direcciones
@@ -120,7 +121,7 @@ export default function DireccionesScreen() {
           </View>
         ) : (
           direcciones.map((d) => (
-            <View key={d.id} style={{ backgroundColor: "#fff", borderRadius: 16, padding: 16, borderWidth: 2, borderColor: d.predeterminada ? "#1FAF55" : "#F4F4F0" }}>
+            <View key={d.id} style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1.5, borderColor: d.predeterminada ? colors.green : "transparent", ...shadows.card }}>
               <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
                   <Feather name="map-pin" size={16} color={d.predeterminada ? "#1FAF55" : "#9E9E9E"} />
@@ -155,11 +156,11 @@ export default function DireccionesScreen() {
               </View>
               <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
                 {!d.predeterminada && (
-                  <Pressable onPress={() => mutPredeterminada.mutate(d.id)} style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: "#F4F4F0", alignItems: "center" }}>
+                  <Pressable onPress={() => mutPredeterminada.mutate(d.id)} style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: colors.lowfill, alignItems: "center" }}>
                     <Text style={{ fontSize: 12, fontWeight: "600", color: "#1FAF55" }}>Predeterminada</Text>
                   </Pressable>
                 )}
-                <Pressable onPress={() => abrirMapaDireccion(d)} disabled={mutEditarUbic.isPending} style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, borderRadius: 8, backgroundColor: "#F4F4F0" }}>
+                <Pressable onPress={() => abrirMapaDireccion(d)} disabled={mutEditarUbic.isPending} style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, borderRadius: 8, backgroundColor: colors.lowfill }}>
                   <Feather name="map" size={12} color="#1FAF55" />
                   <Text style={{ fontSize: 12, fontWeight: "600", color: "#1FAF55" }}>{d.lat != null ? "Editar ubicación" : "Agregar ubicación"}</Text>
                 </Pressable>
@@ -170,8 +171,8 @@ export default function DireccionesScreen() {
 
         {/* Formulario nueva dirección */}
         {mostrarForm ? (
-          <View style={{ backgroundColor: "#fff", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#E5E7EB" }}>
-            <Text style={{ fontSize: 15, fontWeight: "700", color: "#1A1C1A", marginBottom: 16 }}>Nueva dirección</Text>
+          <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, ...shadows.card }}>
+            <Text style={{ fontSize: 16, fontWeight: "800", color: colors.ink, marginBottom: 16 }}>Nueva dirección</Text>
 
             {/* Ubicación GPS (opcional): al capturar, auto-llena la dirección (editable). */}
             <UbicacionButton
@@ -186,14 +187,14 @@ export default function DireccionesScreen() {
             <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Etiqueta</Text>
             <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
               {etiquetas.map((e) => (
-                <Pressable key={e} onPress={() => setEtiqueta(e)} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: etiqueta === e ? "#1FAF55" : "#F4F4F0" }}>
+                <Pressable key={e} onPress={() => setEtiqueta(e)} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: etiqueta === e ? "#1FAF55" : colors.lowfill }}>
                   <Text style={{ fontSize: 13, fontWeight: "600", color: etiqueta === e ? "#fff" : "#6D7B6C" }}>{e}</Text>
                 </Pressable>
               ))}
             </View>
 
             <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Dirección *</Text>
-            <TextInput style={{ backgroundColor: "#F4F4F0", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: "#1A1C1A", marginBottom: 12 }} placeholder="Carrera 15 # 12-34" placeholderTextColor="#BCCABA" value={direccion} onChangeText={setDireccion} />
+            <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontSize: 14, color: colors.ink, marginBottom: 12 }} placeholder="Carrera 15 # 12-34" placeholderTextColor="#BCCABA" value={direccion} onChangeText={setDireccion} />
 
             <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Barrio</Text>
             <BarrioSelector
@@ -204,10 +205,10 @@ export default function DireccionesScreen() {
             />
 
             <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Notas (opcional)</Text>
-            <TextInput style={{ backgroundColor: "#F4F4F0", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: "#1A1C1A", marginBottom: 16 }} placeholder="Portería, dejar con vigilante..." placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline />
+            <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontSize: 14, color: colors.ink, marginBottom: 16 }} placeholder="Portería, dejar con vigilante..." placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline />
 
             <View style={{ flexDirection: "row", gap: 8 }}>
-              <Pressable onPress={() => { setMostrarForm(false); setUbicacion(null); }} style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: "#F4F4F0", alignItems: "center" }}>
+              <Pressable onPress={() => { setMostrarForm(false); setUbicacion(null); }} style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.lowfill, alignItems: "center" }}>
                 <Text style={{ fontSize: 14, fontWeight: "600", color: "#6D7B6C" }}>Cancelar</Text>
               </Pressable>
               <Pressable onPress={handleGuardar} disabled={mutCrear.isPending} style={{ flex: 2, paddingVertical: 12, borderRadius: 12, backgroundColor: "#1FAF55", alignItems: "center" }}>
