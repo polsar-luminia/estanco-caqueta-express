@@ -133,7 +133,7 @@ export default function LoginScreen() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
         style={{ flex: 1 }}
       >
-        <ScrollView
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive"
           contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: 24, paddingVertical: 32 }}
           keyboardShouldPersistTaps="handled"
         >

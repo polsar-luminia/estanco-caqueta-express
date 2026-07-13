@@ -99,7 +99,7 @@ export default function DireccionesScreen() {
         </Text>
       </View>
 
-      <ScrollView
+      <ScrollView automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive"
         contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
         refreshControl={<RefreshControl refreshing={!isLoading && isFetching} onRefresh={refetch} />}
       >

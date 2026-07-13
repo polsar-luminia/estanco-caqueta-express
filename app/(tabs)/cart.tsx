@@ -373,7 +373,7 @@ export default function CartScreen() {
       style={{ flex: 1 }}
     >
     <View className="flex-1" style={{ backgroundColor: colors.bg }}>
-      <FlatList
+      <FlatList automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive"
         data={items}
         keyExtractor={(item) => String(item.productoId)}
         contentContainerStyle={{ padding: 16, paddingBottom: 200 }}

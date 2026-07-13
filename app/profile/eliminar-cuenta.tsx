@@ -104,7 +104,7 @@ export default function EliminarCuentaScreen() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
         style={{ flex: 1 }}
       >
-        <ScrollView
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive"
           contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
         >
