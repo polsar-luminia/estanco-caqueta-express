@@ -1,6 +1,7 @@
 import { ReactNode, useRef, useState } from "react";
 import { View, Text, TextInput, Pressable, KeyboardTypeOptions } from "react-native";
 import { EyeIcon, EyeOffIcon } from "./icons/AppIcons";
+import { colors, radii } from "../constants/theme";
 
 interface InputFieldProps {
   label: string;
@@ -53,7 +54,7 @@ export function InputField({
         style={{
           fontSize: 10,
           fontWeight: "700",
-          color: "#6D7B6C",
+          color: colors.muted,
           textTransform: "uppercase",
           letterSpacing: 1,
           marginLeft: 16,
@@ -67,15 +68,15 @@ export function InputField({
         style={{
           flexDirection: "row",
           alignItems: "center",
-          backgroundColor: focused || error ? "#FFFFFF" : "#F4F4F0",
-          borderRadius: 999,
-          paddingHorizontal: 20,
+          backgroundColor: focused || error ? colors.surface : colors.lowfill,
+          borderRadius: radii.input,
+          paddingHorizontal: 18,
           paddingVertical: 14,
-          borderWidth: error ? 1 : focused ? 1.5 : 0,
-          borderColor: error ? "#D33587" : focused ? "#1FAF55" : "transparent",
-          shadowColor: focused && !error ? "#1FAF55" : "transparent",
+          borderWidth: error ? 1 : 1.5,
+          borderColor: error ? colors.danger : focused ? colors.green : colors.line,
+          shadowColor: focused && !error ? colors.green : "transparent",
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: focused && !error ? 0.10 : 0,
+          shadowOpacity: focused && !error ? 0.1 : 0,
           shadowRadius: 16,
           elevation: focused && !error ? 3 : 0,
         }}
@@ -83,9 +84,9 @@ export function InputField({
         <View style={{ marginRight: 12 }}>{icon}</View>
         <TextInput
           ref={inputRef}
-          style={{ flex: 1, fontSize: 16, color: "#1A1C1A" }}
+          style={{ flex: 1, fontSize: 16, color: colors.ink }}
           placeholder={placeholder}
-          placeholderTextColor="#BCCABA"
+          placeholderTextColor={colors.faint}
           keyboardType={keyboardType}
           secureTextEntry={secureTextEntry}
           value={value}
@@ -104,8 +105,8 @@ export function InputField({
             accessibilityRole="button"
           >
             {secureTextEntry
-              ? <EyeIcon color="#6D7B6C" size={18} />
-              : <EyeOffIcon color="#6D7B6C" size={18} />}
+              ? <EyeIcon color={colors.muted} size={18} />
+              : <EyeOffIcon color={colors.muted} size={18} />}
           </Pressable>
         )}
       </Pressable>
@@ -113,7 +114,7 @@ export function InputField({
         <Text
           style={{
             fontSize: 11,
-            color: "#D33587",
+            color: colors.danger,
             fontWeight: "500",
             marginLeft: 16,
             marginTop: 4,
