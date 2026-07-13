@@ -64,6 +64,12 @@
           "isAutoInitEnabled": true,
           "iosUserTrackingPermission": "Usamos tu actividad para medir nuestras campañas y mostrarte ofertas más relevantes."
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Usamos tu ubicación únicamente para fijar el punto de entrega de tu pedido y facilitar el domicilio."
+        }
       ]
     ],
     "extra": {

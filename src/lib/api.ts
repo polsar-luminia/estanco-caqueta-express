@@ -411,6 +411,12 @@ export interface CrearPedidoInput {
   usar_puntos?: boolean;
   cupon_codigo?: string;
   lineas: { producto_id: number; cantidad: number }[];
+  // Snapshot de ubicación opcional (Fase 1): llegan juntos lat/lng o ninguno.
+  lat?: number;
+  lng?: number;
+  precision_m?: number | null;
+  metodo_ubicacion?: Exclude<MetodoUbicacion, "manual">;
+  geocoded_direccion?: string | null;
 }
 
 // --- Cupones ---
@@ -474,6 +480,20 @@ export async function getPuntos() {
 
 // --- Direcciones ---
 
+// --- Geolocalización (Fase 1) ---
+
+export type MetodoUbicacion = "manual" | "gps" | "pin_mapa";
+
+// Ubicación capturada en la app (GPS en Fase 1). El servidor calcula `fuera_zona`;
+// el cliente NUNCA lo envía. Ver PLAN-GEOLOCALIZACION.md §2.1, §4.
+export interface UbicacionCapturada {
+  lat: number;
+  lng: number;
+  precision_m: number | null; // accuracy GPS en metros; null si método = 'pin_mapa'
+  metodo_ubicacion: Exclude<MetodoUbicacion, "manual">; // 'gps' | 'pin_mapa'
+  geocoded_direccion: string | null; // reverse geocode, solo prellenado/display
+}
+
 export interface DireccionGuardada {
   id: number;
   etiqueta: string;
@@ -482,17 +502,88 @@ export interface DireccionGuardada {
   barrio_id?: number;
   notas?: string;
   predeterminada: boolean;
+  // Campos de ubicación (Fase 1). Direcciones viejas: lat/lng null, método 'manual'.
+  lat?: number | null;
+  lng?: number | null;
+  precision_m?: number | null;
+  metodo_ubicacion?: MetodoUbicacion;
+  geocoded_direccion?: string | null;
+  fuera_zona?: boolean | null;
 }
 
 export async function getDirecciones() {
   return apiFetch<DireccionGuardada[]>("/clientes/direcciones");
 }
 
-export async function crearDireccion(data: { etiqueta?: string; direccion: string; barrio?: string; barrio_id?: number; notas?: string; predeterminada?: boolean }) {
+export interface CrearDireccionInput {
+  etiqueta?: string;
+  direccion: string;
+  barrio?: string;
+  barrio_id?: number;
+  notas?: string;
+  predeterminada?: boolean;
+  // Ubicación opcional (Fase 1): llegan juntos lat/lng o ninguno.
+  lat?: number;
+  lng?: number;
+  precision_m?: number | null;
+  metodo_ubicacion?: Exclude<MetodoUbicacion, "manual">;
+  geocoded_direccion?: string | null;
+}
+
+export async function crearDireccion(data: CrearDireccionInput) {
   return apiFetch<DireccionGuardada>("/clientes/direcciones", {
     method: "POST",
     body: JSON.stringify(data),
   });
+}
+
+export interface CoberturaResponse {
+  dentro: boolean;
+  zona: string | null;
+}
+
+// GET /cobertura?lat=&lng= — el servidor decide si el punto está dentro de la zona.
+export async function validarCobertura(lat: number, lng: number) {
+  const qs = new URLSearchParams({ lat: String(lat), lng: String(lng) });
+  return apiFetch<CoberturaResponse>(`/cobertura?${qs}`);
+}
+
+// --- Helpers puros de ubicación (usados por la UI y testeados) ---
+
+// iOS/Android pueden dar precisión reducida; a partir de este umbral avisamos.
+export const PRECISION_APROXIMADA_M = 50;
+
+/** Texto de precisión para mostrar al usuario, p.ej. "±12 m". null si no hay dato. */
+export function formatoPrecision(precision_m?: number | null): string | null {
+  if (precision_m == null || !Number.isFinite(precision_m) || precision_m < 0) return null;
+  return `±${Math.round(precision_m)} m`;
+}
+
+/** true si la captura es imprecisa (precisión reducida) y conviene avisar. */
+export function esUbicacionAproximada(precision_m?: number | null): boolean {
+  return precision_m != null && Number.isFinite(precision_m) && precision_m > PRECISION_APROXIMADA_M;
+}
+
+/**
+ * Extrae los campos de ubicación para el body de crearDireccion/crearPedido.
+ * Devuelve {} si no hay ubicación válida (→ dirección manual, comportamiento 1.0.x).
+ * Nunca incluye `fuera_zona` (autoridad del servidor).
+ */
+export function ubicacionABody(u: UbicacionCapturada | null | undefined): {
+  lat?: number;
+  lng?: number;
+  precision_m?: number | null;
+  metodo_ubicacion?: Exclude<MetodoUbicacion, "manual">;
+  geocoded_direccion?: string | null;
+} {
+  if (!u || !Number.isFinite(u.lat) || !Number.isFinite(u.lng)) return {};
+  return {
+    lat: u.lat,
+    lng: u.lng,
+    precision_m: u.precision_m ?? null,
+    metodo_ubicacion: u.metodo_ubicacion,
+    geocoded_direccion: u.geocoded_direccion ?? null,
+  };
 }
 
 export async function setPredeterminada(id: number) {
