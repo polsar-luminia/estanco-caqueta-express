@@ -463,7 +463,10 @@ export default function CartScreen() {
                     value={nuevaUbicacion}
                     onChange={(u) => {
                       setNuevaUbicacion(u);
-                      if (u?.geocoded_direccion && !nuevaDireccion.trim()) setNuevaDireccion(u.geocoded_direccion);
+                      // Punto del mapa (pin_mapa) siempre reescribe; GPS solo si está vacía.
+                      if (u?.geocoded_direccion && (u.metodo_ubicacion === "pin_mapa" || !nuevaDireccion.trim())) {
+                        setNuevaDireccion(u.geocoded_direccion);
+                      }
                     }}
                   />
                   <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>

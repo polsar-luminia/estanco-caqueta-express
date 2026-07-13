@@ -162,7 +162,14 @@ export default Sentry.wrap(function RootLayout() {
           />
           <Stack.Screen
             name="ubicacion"
-            options={{ headerShown: false, presentation: "modal" }}
+            options={{
+              headerShown: false,
+              presentation: "modal",
+              // gestureEnabled:false → el swipe-para-cerrar del modal ya no se roba
+              // el arrastre vertical del mapa (si no, el mapa se siente "congelado").
+              // Se cierra con la flecha atrás o "Escribir dirección manualmente".
+              gestureEnabled: false,
+            }}
           />
           <Stack.Screen
             name="support/help"

@@ -179,7 +179,11 @@ export default function DireccionesScreen() {
               value={ubicacion}
               onChange={(u) => {
                 setUbicacion(u);
-                if (u?.geocoded_direccion && !direccion.trim()) setDireccion(u.geocoded_direccion);
+                // Un punto elegido en el mapa (pin_mapa) siempre reescribe la
+                // dirección; el GPS solo la llena si está vacía (no pisa lo escrito).
+                if (u?.geocoded_direccion && (u.metodo_ubicacion === "pin_mapa" || !direccion.trim())) {
+                  setDireccion(u.geocoded_direccion);
+                }
               }}
             />
 
