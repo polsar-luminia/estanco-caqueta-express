@@ -181,8 +181,9 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Inicio",
-          headerLeft: () => <HeaderProfileBtn />,
-          headerRight: () => <HeaderSearchBtn />,
+          // El Inicio ahora trae su propio header verde (ubicación + buscador + carrito),
+          // definido dentro de app/(tabs)/index.tsx. Ocultamos el header del logo aquí.
+          headerShown: false,
           tabBarButton: (props) => (
             <TabButton {...props} routeName="index" label="Inicio" icon={HomeIcon} />
           ),

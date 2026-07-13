@@ -1,9 +1,11 @@
 import { View, Text, ScrollView, FlatList, RefreshControl, Pressable, type NativeSyntheticEvent, type NativeScrollEvent } from "react-native";
 import { useRef, useState, useEffect } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import { colors } from "../../src/constants/theme";
 import { getCategorias, getDestacados, getPatrocinados, getHeroModo, getCombos, getOfertas, getDirecciones, type Combo } from "../../src/lib/api";
 import { filtrarCategoriasIOS, filtrarProductosIOS, filtrarConProductoIOS } from "../../src/lib/iosFilters";
 import { OfertasBannerCard } from "../../src/components/OfertasBannerCard";
@@ -165,8 +167,83 @@ function HeroCarousel({ banners, router }: { banners: Patrocinado[]; router: Ret
 }
 
 
+// Header verde de bloque del Inicio (rediseño Vibrante): ubicación de entrega,
+// accesos a perfil/carrito y buscador. Reemplaza el header del logo + la vieja
+// barra de dirección.
+function HomeHeader({
+  insets, dirActiva, isAuthenticated, itemCount, router,
+}: {
+  insets: { top: number };
+  dirActiva: string | null;
+  isAuthenticated: boolean;
+  itemCount: number;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const iconBtn = {
+    width: 38, height: 38, borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center" as const, justifyContent: "center" as const,
+  };
+  return (
+    <View
+      style={{
+        backgroundColor: colors.green,
+        paddingTop: insets.top + 8,
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+        shadowColor: colors.greenDeep,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.35,
+        shadowRadius: 18,
+        elevation: 8,
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+        <Pressable
+          onPress={() => router.push(isAuthenticated ? "/profile/direcciones" : "/(auth)/login")}
+          style={{ flex: 1, paddingRight: 12 }}
+          hitSlop={6}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <Feather name="map-pin" size={11} color="rgba(255,255,255,0.85)" />
+            <Text style={{ fontSize: 10.5, fontWeight: "600", color: "rgba(255,255,255,0.85)" }}>Entregar en</Text>
+          </View>
+          <Text style={{ fontSize: 14, fontWeight: "800", color: "#fff", marginTop: 1 }} numberOfLines={1}>
+            {isAuthenticated ? (dirActiva || "Agrega tu dirección") : "Florencia, Caquetá"} ▾
+          </Text>
+        </Pressable>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <Pressable onPress={() => router.push("/profile")} style={iconBtn} accessibilityLabel="Mi perfil" accessibilityRole="button">
+            <Feather name="user" size={19} color="#fff" />
+          </Pressable>
+          <Pressable onPress={() => router.push("/(tabs)/cart")} style={iconBtn} accessibilityLabel="Carrito" accessibilityRole="button">
+            <Feather name="shopping-bag" size={18} color="#fff" />
+            {itemCount > 0 && (
+              <View style={{ position: "absolute", top: -4, right: -4, minWidth: 16, height: 16, paddingHorizontal: 3, borderRadius: 999, backgroundColor: colors.offer, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ color: "#fff", fontSize: 9, fontWeight: "800" }}>{itemCount > 99 ? "99+" : itemCount}</Text>
+              </View>
+            )}
+          </Pressable>
+        </View>
+      </View>
+      <Pressable
+        onPress={() => router.push("/(tabs)/search")}
+        style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#fff", borderRadius: 14, paddingHorizontal: 13, paddingVertical: 11 }}
+        accessibilityLabel="Buscar"
+        accessibilityRole="button"
+      >
+        <Feather name="search" size={16} color={colors.faint} />
+        <Text style={{ fontSize: 12.5, color: colors.faint, fontWeight: "500" }}>Busca tu licor favorito</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const cliente = useAuthStore((s) => s.cliente);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -241,7 +318,14 @@ export default function HomeScreen() {
   };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>
+    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
+      <HomeHeader
+        insets={insets}
+        dirActiva={dirActiva}
+        isAuthenticated={isAuthenticated}
+        itemCount={itemCount}
+        router={router}
+      />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: itemCount > 0 ? 172 : 102 }}
@@ -300,35 +384,7 @@ export default function HomeScreen() {
               </View>
             )}
 
-            {/* Barra de dirección — TaDa-style: dirección activa + acción */}
-            <View
-              className="mx-4 mt-3 flex-row items-center p-4 rounded-xl"
-              style={{ backgroundColor: "#F4F4F0" }}
-            >
-              <Feather name="map-pin" size={18} color="#1FAF55" />
-              <View className="ml-2 flex-1">
-                <Text style={{ fontSize: 9, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1, color: "#6D7B6C" }}>
-                  Entregar en
-                </Text>
-                <Text className="text-sm font-semibold text-gray-800" numberOfLines={1}>
-                  {isAuthenticated
-                    ? (dirActiva || "Agrega tu dirección de entrega")
-                    : "Florencia, Caquetá"}
-                </Text>
-              </View>
-              <Pressable
-                onPress={() =>
-                  router.push(isAuthenticated ? "/profile/direcciones" : "/(auth)/login")
-                }
-                hitSlop={8}
-              >
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>
-                  {isAuthenticated ? "Cambiar" : "Iniciar sesión"}
-                </Text>
-              </Pressable>
-            </View>
-
-            {/* Categorías — TaDa: arriba del hero (intención de compra primero) */}
+            {/* Categorías — arriba del hero (intención de compra primero) */}
             <View className="px-4 pt-5 pb-2">
               <View className="flex-row justify-between items-center mb-3">
                 <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Categorías</Text>
@@ -400,7 +456,7 @@ export default function HomeScreen() {
                         {combo.precio_original && (
                           <Text style={{ fontSize: 10, color: '#9E9E9E', textDecorationLine: 'line-through', marginBottom: 2 }}>{formatCOP(combo.precio_original)}</Text>
                         )}
-                        <Text style={{ fontSize: 18, fontWeight: '800', color: '#D33587', marginBottom: 4 }}>{formatCOP(combo.precio_combo)}</Text>
+                        <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink, marginBottom: 4 }}>{formatCOP(combo.precio_combo)}</Text>
                         <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1C1A', marginBottom: 4 }} numberOfLines={2}>{combo.nombre}</Text>
                         {combo.descripcion && <Text style={{ fontSize: 11, color: '#6D7B6C' }} numberOfLines={2}>{combo.descripcion}</Text>}
                       </Pressable>
