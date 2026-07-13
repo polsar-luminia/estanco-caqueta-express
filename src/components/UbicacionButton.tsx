@@ -21,7 +21,9 @@ interface Props {
   onChange: (u: UbicacionCapturada | null) => void;
 }
 
-const TIMEOUT_MS = 8000;
+// Un cold-fix de GPS en dispositivo real (sobre todo bajo techo) suele pasar de
+// 8 s; 15 s + fast-path de última ubicación conocida da una captura confiable.
+const TIMEOUT_MS = 15000;
 
 // reverseGeocode con timeout propio; nunca bloquea la captura.
 async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
@@ -67,10 +69,31 @@ export function UbicacionButton({ value, onChange }: Props) {
         return;
       }
 
-      const pos = await conTimeout(
-        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
-        TIMEOUT_MS,
-      );
+      // ¿Los servicios de ubicación del sistema están encendidos?
+      const serviciosOn = await Location.hasServicesEnabledAsync().catch(() => true);
+      if (!serviciosOn) {
+        setError("Activa la Ubicación del teléfono e inténtalo de nuevo, o escribe tu dirección normalmente.");
+        return;
+      }
+
+      // Fast-path: última ubicación conocida (instantánea si el SO tiene un fix reciente).
+      // Sirve de respaldo si el fix fresco tarda más que el timeout.
+      let pos = await Location.getLastKnownPositionAsync({ maxAge: 120000 }).catch(() => null);
+
+      // Fix fresco (Balanced: usa wifi/celular además de GPS → rápido y funciona bajo techo).
+      try {
+        pos = await conTimeout(
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+          TIMEOUT_MS,
+        );
+      } catch {
+        // Si no hubo lastKnown tampoco, avisamos; si sí, seguimos con ella.
+        if (!pos) {
+          setError("No pudimos obtener tu ubicación a tiempo. Escribe tu dirección normalmente.");
+          return;
+        }
+      }
+
       const { latitude, longitude, accuracy } = pos.coords;
       const geocoded = await reverseGeocode(latitude, longitude);
       onChange({
@@ -80,13 +103,8 @@ export function UbicacionButton({ value, onChange }: Props) {
         metodo_ubicacion: "gps",
         geocoded_direccion: geocoded,
       });
-    } catch (e) {
-      const esTimeout = e instanceof Error && e.message === "timeout";
-      setError(
-        esTimeout
-          ? "No pudimos obtener tu ubicación a tiempo. Escribe tu dirección normalmente."
-          : "No pudimos obtener tu ubicación. Escribe tu dirección normalmente.",
-      );
+    } catch {
+      setError("No pudimos obtener tu ubicación. Escribe tu dirección normalmente.");
     } finally {
       setEstado("idle");
     }
