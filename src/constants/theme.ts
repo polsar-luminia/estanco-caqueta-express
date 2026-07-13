@@ -1,0 +1,83 @@
+// Sistema de diseño "Vibrante" — fuente única de verdad del rediseño 2026.
+// Componentes con estilos inline importan de aquí; así el look es consistente
+// y cambiar un token actualiza toda la app. Ver mockups aprobados (Vibrante).
+
+export const colors = {
+  // --- Marca ---
+  green: "#1FAF55",       // verde primario (botones, activos, header)
+  greenDeep: "#0F9A48",   // verde profundo (gradiente del header)
+  greenInk: "#14803E",    // verde oscuro para texto/enlaces sobre fondo claro
+  greenTint: "rgba(31,175,85,0.10)", // relleno suave verde (chips, badges)
+
+  // --- Neutros ---
+  ink: "#16241A",         // texto principal (negro con matiz verde)
+  muted: "#6E7A6C",       // texto secundario
+  faint: "#9AA69A",       // placeholders / terciario
+  bg: "#F4F6F3",          // fondo de pantalla
+  surface: "#FFFFFF",     // tarjetas y superficies
+  line: "#EBEFE9",        // bordes / hairlines
+  lowfill: "#F1F4F0",     // rellenos suaves (chips, botones "ghost")
+  strike: "#B2BAAE",      // precio tachado
+
+  // --- Acentos / semánticos ---
+  offer: "#F0653F",       // coral — ofertas y descuentos
+  pink: "#E0457B",
+  purple: "#7C5CFF",
+  amber: "#E4A400",
+  blue: "#2563EB",
+  danger: "#DC2626",
+  white: "#FFFFFF",
+} as const;
+
+// Colores rotativos para tiles de categoría (grilla multicolor).
+export const categoryColors = [
+  colors.offer, colors.purple, colors.green, colors.amber, colors.blue, colors.pink,
+] as const;
+
+export const radii = {
+  sm: 8,
+  md: 12,
+  input: 13,
+  card: 16,
+  tile: 18,
+  pill: 999,
+} as const;
+
+// Sombras (React Native: sin spread; se aproxima con opacidad/radio).
+export const shadows = {
+  // Tarjeta de producto / contenido — profundidad suave.
+  card: {
+    shadowColor: "#12281A",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 3,
+  },
+  soft: {
+    shadowColor: "#12281A",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    elevation: 2,
+  },
+  // Botón primario verde — halo de marca.
+  greenBtn: {
+    shadowColor: colors.green,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+} as const;
+
+export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 } as const;
+
+// Tipografía: tamaños y pesos base del rediseño.
+export const type = {
+  h1: { fontSize: 20, fontWeight: "800" as const, letterSpacing: -0.2 },
+  title: { fontSize: 15, fontWeight: "800" as const, letterSpacing: -0.1 },
+  body: { fontSize: 13.5, fontWeight: "500" as const },
+  price: { fontSize: 14, fontWeight: "800" as const },
+  label: { fontSize: 10, fontWeight: "900" as const, letterSpacing: 1.2, textTransform: "uppercase" as const },
+  meta: { fontSize: 10, fontWeight: "500" as const },
+} as const;

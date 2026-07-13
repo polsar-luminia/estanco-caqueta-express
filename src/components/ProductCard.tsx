@@ -5,6 +5,7 @@ import { formatCOP } from "../lib/format";
 import { useCartStore } from "../stores/cart";
 import { useScalePress } from "../hooks/useScalePress";
 import { ShimmerImage } from "./ShimmerImage";
+import { colors, radii, shadows } from "../constants/theme";
 import type { Producto } from "../lib/api";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -63,7 +64,8 @@ export function ProductCard({ product, onPress, badge, oferta, priority = "norma
       : badge
         ? "Oferta"
         : null;
-  const badgeColor = oferta || badge === "top_ventas" ? "#D33587" : "#1FAF55";
+  // Coral para ofertas/descuentos, verde para etiquetas de destaque.
+  const badgeColor = oferta || badge === "top_ventas" ? colors.offer : colors.green;
 
   return (
     <AnimatedPressable
@@ -73,37 +75,24 @@ export function ProductCard({ product, onPress, badge, oferta, priority = "norma
       style={[animatedStyle, { flex: 1, opacity: agotado ? 0.6 : 1 }]}
     >
       <View
-        className="bg-white overflow-hidden"
         style={{
-          padding: 12,
-          borderRadius: 16,
-          shadowColor: "#1A1C1A",
-          shadowOffset: { width: 0, height: 12 },
-          shadowOpacity: 0.04,
-          shadowRadius: 32,
-          elevation: 2,
+          backgroundColor: colors.surface,
+          padding: 10,
+          borderRadius: radii.card,
+          ...shadows.card,
         }}
       >
         {/* Imagen con badge */}
-        <View
-          className="w-full overflow-hidden"
-          style={{ borderRadius: 12, backgroundColor: "#FFFFFF" }}
-        >
+        <View style={{ borderRadius: 12, backgroundColor: colors.white, overflow: "hidden", position: "relative" }}>
           {agotado ? (
-            <View
-              className="absolute top-2 left-2 z-10 px-2 py-1 rounded"
-              style={{ backgroundColor: "#6B7280" }}
-            >
-              <Text className="text-white font-bold" style={{ fontSize: 8, letterSpacing: 0.5, textTransform: "uppercase" }}>
+            <View style={{ position: "absolute", top: 8, left: 8, zIndex: 10, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, backgroundColor: "#6B7280" }}>
+              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 8.5, letterSpacing: 0.4, textTransform: "uppercase" }}>
                 Agotado
               </Text>
             </View>
           ) : badgeText ? (
-            <View
-              className="absolute top-2 left-2 z-10 px-2 py-1 rounded"
-              style={{ backgroundColor: badgeColor }}
-            >
-              <Text className="text-white font-bold" style={{ fontSize: 8, letterSpacing: 0.5, textTransform: "uppercase" }}>
+            <View style={{ position: "absolute", top: 8, left: 8, zIndex: 10, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, backgroundColor: badgeColor }}>
+              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 8.5, letterSpacing: 0.4, textTransform: "uppercase" }}>
                 {badgeText}
               </Text>
             </View>
@@ -112,39 +101,33 @@ export function ProductCard({ product, onPress, badge, oferta, priority = "norma
             imageUrl={product.imagen_url}
             fallbackCategory={product.categoria}
             style={{ width: "100%", aspectRatio: 1 }}
-            contentFit="cover"
+            contentFit="contain"
             priority={priority}
           />
         </View>
 
         {/* Info */}
-        <View className="mt-3">
+        <View style={{ marginTop: 10 }}>
           <Text
-            className="text-sm font-bold text-gray-900"
+            style={{ fontSize: 12, fontWeight: "700", color: colors.ink, lineHeight: 15, minHeight: 30 }}
             numberOfLines={2}
           >
             {product.nombre}
           </Text>
 
-          <View className="flex-row items-center justify-between mt-2">
-            <View style={{ gap: 1 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
+            <View>
               {tienePrecioOferta ? (
                 <>
-                  <Text style={{ fontSize: 11, color: "#9E9E9E", textDecorationLine: "line-through" }}>
+                  <Text style={{ fontSize: 10, color: colors.strike, textDecorationLine: "line-through", fontWeight: "600" }}>
                     {formatCOP(precioTachado)}
                   </Text>
-                  <Text
-                    className="font-bold text-lg"
-                    style={{ color: agotado ? "#9CA3AF" : "#D33587" }}
-                  >
+                  <Text style={{ fontSize: 15, fontWeight: "800", color: agotado ? colors.faint : colors.ink }}>
                     {formatCOP(precioEfectivo)}
                   </Text>
                 </>
               ) : (
-                <Text
-                  className="font-bold text-lg"
-                  style={{ color: agotado ? "#9CA3AF" : "#D33587" }}
-                >
+                <Text style={{ fontSize: 15, fontWeight: "800", color: agotado ? colors.faint : colors.ink }}>
                   {formatCOP(product.precio_app)}
                 </Text>
               )}
@@ -158,15 +141,17 @@ export function ProductCard({ product, onPress, badge, oferta, priority = "norma
               disabled={agotado}
               accessibilityRole="button"
               accessibilityLabel={`Agregar ${product.nombre} al carrito`}
-              className="items-center justify-center"
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: agotado ? "#D1D5DB" : "#1FAF55",
+                width: 34,
+                height: 34,
+                borderRadius: radii.pill,
+                backgroundColor: agotado ? "#D1D5DB" : colors.green,
+                alignItems: "center",
+                justifyContent: "center",
+                ...(agotado ? {} : shadows.greenBtn),
               }}
             >
-              <Text className="text-white text-lg font-bold" style={{ marginTop: -1 }}>
+              <Text style={{ color: colors.white, fontSize: 19, fontWeight: "700", marginTop: -2 }}>
                 +
               </Text>
             </Pressable>
