@@ -12,7 +12,7 @@ import { useCartStore } from "../stores/cart";
 import { formatCOP } from "../lib/format";
 import { CARD_SHADOW } from "../constants/styles";
 
-export function CartFloatingBar() {
+export function CartFloatingBar({ bottomOffset = 24 }: { bottomOffset?: number } = {}) {
   const router = useRouter();
 
   // Selectores inline (no metodos del store) — patron documentado en CLAUDE.md.
@@ -31,7 +31,7 @@ export function CartFloatingBar() {
     <View
       style={{
         position: "absolute",
-        bottom: 24,
+        bottom: bottomOffset,
         left: 16,
         right: 16,
         backgroundColor: "#fff",

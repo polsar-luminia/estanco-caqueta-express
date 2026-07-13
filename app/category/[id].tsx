@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import Svg, { Path } from "react-native-svg";
 import { getProductos, type Producto } from "../../src/lib/api";
 import { esCategoriaProhibidaIOS, filtrarProductosIOS } from "../../src/lib/iosFilters";
+import { colors, shadows } from "../../src/constants/theme";
 
 type GridItem = Producto | { id: number; _spacer: true };
 import { tracker } from "../../src/lib/tracker";
@@ -77,46 +78,31 @@ export default function CategoryScreen() {
   }
 
   return (
-    <View className="flex-1" style={{ backgroundColor: "#FAFAF6" }}>
+    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Header propio */}
+      {/* Header propio (Vibrante): botón back redondeado + título */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          paddingTop: insets.top + 12,
-          paddingBottom: 16,
-          paddingHorizontal: 16,
-          backgroundColor: "#FAFAF6",
-          borderBottomWidth: 1,
-          borderBottomColor: "#EFEFEB",
+          gap: 10,
+          paddingTop: insets.top + 10,
+          paddingBottom: 12,
+          paddingHorizontal: 14,
+          backgroundColor: colors.bg,
         }}
       >
         <Pressable
           onPress={() => router.back()}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 4,
-            paddingRight: 16,
-          }}
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+          style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center", ...shadows.soft }}
         >
           <ChevronLeftIcon />
-          <Text style={{ fontSize: 15, fontWeight: "600", color: "#1A1C1A" }}>
-            Volver
-          </Text>
         </Pressable>
-
         <Text
-          style={{
-            flex: 1,
-            fontSize: 17,
-            fontWeight: "800",
-            color: "#1A1C1A",
-            textAlign: "center",
-            marginRight: 60,
-          }}
+          style={{ flex: 1, fontSize: 18, fontWeight: "800", color: colors.ink, letterSpacing: -0.2 }}
           numberOfLines={1}
         >
           {isLoading ? "" : nombreCategoria}

@@ -21,6 +21,7 @@ import { formatCOP } from "../../src/lib/format";
 import { ShimmerImage } from "../../src/components/ShimmerImage";
 import { SkeletonBox } from "../../src/components/skeletons/SkeletonBox";
 import { CartFloatingBar } from "../../src/components/CartFloatingBar";
+import { colors, shadows } from "../../src/constants/theme";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const HEADER_MAX = SCREEN_HEIGHT * 0.45;
@@ -249,13 +250,17 @@ export default function ProductDetailScreen() {
     <View className="flex-1 bg-white">
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 12, paddingHorizontal: 16, backgroundColor: "#fff" }}>
-        <Pressable onPress={() => router.back()} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      {/* Header (Vibrante): botón back redondeado */}
+      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 10, paddingBottom: 10, paddingHorizontal: 14, backgroundColor: "#fff" }}>
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+          style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center", ...shadows.soft }}
+        >
           <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-            <Path d="M15 18l-6-6 6-6" stroke="#1A1C1A" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+            <Path d="M15 18l-6-6 6-6" stroke={colors.ink} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
-          <Text style={{ fontSize: 15, fontWeight: "600", color: "#1A1C1A" }}>Volver</Text>
         </Pressable>
       </View>
 
@@ -264,7 +269,7 @@ export default function ProductDetailScreen() {
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
       >
         {/* Hero image */}
         <Animated.View
@@ -301,7 +306,7 @@ export default function ProductDetailScreen() {
         <View className="px-5 pt-6" style={{ gap: 12 }}>
           {/* Category + Availability row */}
           <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-extrabold uppercase tracking-widest text-magenta-500">
+            <Text className="text-sm font-extrabold uppercase tracking-widest" style={{ color: colors.offer }}>
               {product.categoria}
             </Text>
 
@@ -333,7 +338,7 @@ export default function ProductDetailScreen() {
                 {formatCOP(precioAnteriorParsed)}
               </Text>
             ) : null}
-            <Text className="text-2xl font-extrabold text-brand-500">
+            <Text className="text-2xl font-extrabold" style={{ color: colors.ink }}>
               {formatCOP(precioActivo)}
             </Text>
           </View>
@@ -410,21 +415,7 @@ export default function ProductDetailScreen() {
             </View>
           </View>
 
-          {/* ── Botón agregar al carrito ───────────── */}
-          <View style={{ paddingTop: 16, paddingBottom: sugerencias.length > 0 ? 16 : 48 }}>
-            <Pressable
-              onPress={handleAdd}
-              disabled={!inStock}
-              className={`items-center rounded-xl py-4 ${
-                inStock ? "bg-brand-500" : "bg-gray-300"
-              }`}
-            >
-              <Text className="text-base font-bold text-white">
-                Agregar al carrito
-                {quantity > 1 ? ` (${quantity})` : ""}
-              </Text>
-            </Pressable>
-          </View>
+          {/* El botón "Agregar al carrito" ahora es una barra fija abajo (ver más abajo). */}
           {/* ── También te puede gustar ───────────── */}
           {sugerencias.length > 0 && (
             <View style={{ paddingBottom: 48 }}>
@@ -449,9 +440,42 @@ export default function ProductDetailScreen() {
         </View>
       </Animated.ScrollView>
 
-      {/* Barra flotante del carrito: emerge al agregar items, persiste mientras
-          haya carrito, da CTA rapido a /cart sin perder navegacion. */}
-      <CartFloatingBar />
+      {/* Barra flotante del carrito: emerge al agregar items. Se posiciona por
+          encima del CTA fijo "Agregar" (bottomOffset) para no solaparse. */}
+      <CartFloatingBar bottomOffset={96 + insets.bottom} />
+
+      {/* CTA fijo "Agregar al carrito · $total" (Vibrante) */}
+      <View
+        style={{
+          position: "absolute", left: 0, right: 0, bottom: 0,
+          backgroundColor: "#fff",
+          borderTopWidth: 1, borderTopColor: colors.line,
+          paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 12,
+        }}
+      >
+        <Pressable
+          onPress={handleAdd}
+          disabled={!inStock}
+          accessibilityRole="button"
+          accessibilityLabel="Agregar al carrito"
+          style={{
+            backgroundColor: inStock ? colors.green : "#D1D5DB",
+            borderRadius: 14,
+            paddingVertical: 15, paddingHorizontal: 18,
+            flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+            ...(inStock ? shadows.greenBtn : {}),
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>
+            {inStock ? "Agregar al carrito" : "Agotado"}{inStock && quantity > 1 ? ` · ${quantity}` : ""}
+          </Text>
+          {inStock && (
+            <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>
+              {formatCOP(precioActivo * quantity)}
+            </Text>
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }
