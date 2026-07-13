@@ -1,5 +1,6 @@
 import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { colors } from "../constants/theme";
 import type { Oferta } from "../lib/api";
 
 interface Props {
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   ctaText: {
-    color: "#D33587",
+    color: colors.offer,
     fontSize: 12,
     fontWeight: "800",
   },

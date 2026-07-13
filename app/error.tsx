@@ -4,6 +4,7 @@ import { ErrorBoundaryProps } from "expo-router";
 import { tracker } from "../src/lib/tracker";
 import { useEffect } from "react";
 import * as Sentry from "@sentry/react-native";
+import { colors } from "../src/constants/theme";
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   const router = useRouter();
@@ -23,7 +24,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
         alignItems: "center",
         justifyContent: "center",
         padding: 32,
-        backgroundColor: "#FAFAF6",
+        backgroundColor: colors.bg,
       }}
     >
       <Text style={{ fontSize: 40, marginBottom: 16 }}>😵</Text>

@@ -6,6 +6,7 @@ import MapView, { type Region } from "react-native-maps";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
+import { colors } from "../src/constants/theme";
 import { getCoberturaZona, puntoEnZona, type UbicacionCapturada } from "../src/lib/api";
 import { useUbicacionPicker } from "../src/stores/ubicacionPicker";
 
@@ -131,11 +132,11 @@ export default function UbicacionScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FAFAF6" }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 8, paddingBottom: 12, paddingHorizontal: 12, backgroundColor: "#FAFAF6", borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 8, paddingBottom: 12, paddingHorizontal: 12, backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.line }}>
         <Pressable onPress={onCancelar} hitSlop={10} style={{ padding: 6 }} accessibilityRole="button" accessibilityLabel="Volver">
           <Feather name="arrow-left" size={22} color="#1A1C1A" />
         </Pressable>

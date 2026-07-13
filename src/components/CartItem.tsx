@@ -3,6 +3,7 @@ import Svg, { Path } from "react-native-svg";
 import { useCartStore, type CartItem as CartItemType } from "../stores/cart";
 import { formatCOP } from "../lib/format";
 import { ShimmerImage } from "./ShimmerImage";
+import { colors } from "../constants/theme";
 import Toast from "react-native-toast-message";
 
 function MinusIcon() {
@@ -52,10 +53,10 @@ export function CartItem({ item }: Props) {
 
       {/* Info */}
       <View className="flex-1">
-        <Text style={{ fontWeight: "700", fontSize: 14, color: "#1A1C1A", lineHeight: 18 }} numberOfLines={2}>
+        <Text style={{ fontWeight: "700", fontSize: 14, color: colors.ink, lineHeight: 18 }} numberOfLines={2}>
           {item.nombre}
         </Text>
-        <Text style={{ color: "#D33587", fontWeight: "700", fontSize: 17, marginTop: 4 }}>
+        <Text style={{ color: colors.ink, fontWeight: "800", fontSize: 17, marginTop: 4 }}>
           {formatCOP(item.precioUnitario)}
         </Text>
       </View>
