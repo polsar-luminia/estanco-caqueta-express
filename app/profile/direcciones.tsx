@@ -6,8 +6,9 @@ import { BackButton } from "../../src/components/BackButton";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { getDirecciones, crearDireccion, setPredeterminada, eliminarDireccion } from "../../src/lib/api";
+import { getDirecciones, crearDireccion, setPredeterminada, eliminarDireccion, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
 import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
+import { UbicacionButton } from "../../src/components/UbicacionButton";
 
 export default function DireccionesScreen() {
   const insets = useSafeAreaInsets();
@@ -18,6 +19,7 @@ export default function DireccionesScreen() {
   const [barrioTexto, setBarrioTexto] = useState("");
   const [etiqueta, setEtiqueta] = useState("Casa");
   const [notas, setNotas] = useState("");
+  const [ubicacion, setUbicacion] = useState<UbicacionCapturada | null>(null);
 
   const { data: direcciones = [], isLoading, isError, isFetching } = useQuery({
     queryKey: ["direcciones"],
@@ -31,7 +33,7 @@ export default function DireccionesScreen() {
     onSuccess: () => {
       refetch();
       setMostrarForm(false);
-      setDireccion(""); setBarrioObj(null); setBarrioTexto(""); setNotas(""); setEtiqueta("Casa");
+      setDireccion(""); setBarrioObj(null); setBarrioTexto(""); setNotas(""); setEtiqueta("Casa"); setUbicacion(null);
       Toast.show({ type: "success", text1: "Dirección guardada" });
     },
     onError: (err: Error) => Toast.show({ type: "error", text1: err.message }),
@@ -54,7 +56,7 @@ export default function DireccionesScreen() {
       return;
     }
     const barrioNombre = barrioObj?.nombre || barrioTexto.trim() || undefined;
-    mutCrear.mutate({ etiqueta, direccion: direccion.trim(), barrio: barrioNombre, barrio_id: barrioObj?.id, notas: notas.trim() || undefined });
+    mutCrear.mutate({ etiqueta, direccion: direccion.trim(), barrio: barrioNombre, barrio_id: barrioObj?.id, notas: notas.trim() || undefined, ...ubicacionABody(ubicacion) });
   };
 
   const handleEliminar = (id: number) => {
@@ -141,6 +143,9 @@ export default function DireccionesScreen() {
           <View style={{ backgroundColor: "#fff", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#E5E7EB" }}>
             <Text style={{ fontSize: 15, fontWeight: "700", color: "#1A1C1A", marginBottom: 16 }}>Nueva dirección</Text>
 
+            {/* Ubicación GPS (opcional) — el pin ayuda al domiciliario; la dirección sigue siendo obligatoria */}
+            <UbicacionButton value={ubicacion} onChange={setUbicacion} />
+
             {/* Etiqueta */}
             <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Etiqueta</Text>
             <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
@@ -166,7 +171,7 @@ export default function DireccionesScreen() {
             <TextInput style={{ backgroundColor: "#F4F4F0", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: "#1A1C1A", marginBottom: 16 }} placeholder="Portería, dejar con vigilante..." placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline />
 
             <View style={{ flexDirection: "row", gap: 8 }}>
-              <Pressable onPress={() => setMostrarForm(false)} style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: "#F4F4F0", alignItems: "center" }}>
+              <Pressable onPress={() => { setMostrarForm(false); setUbicacion(null); }} style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: "#F4F4F0", alignItems: "center" }}>
                 <Text style={{ fontSize: 14, fontWeight: "600", color: "#6D7B6C" }}>Cancelar</Text>
               </Pressable>
               <Pressable onPress={handleGuardar} disabled={mutCrear.isPending} style={{ flex: 2, paddingVertical: 12, borderRadius: 12, backgroundColor: "#1FAF55", alignItems: "center" }}>

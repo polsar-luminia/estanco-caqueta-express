@@ -10,7 +10,8 @@ import Toast from "react-native-toast-message";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
-import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, type DireccionGuardada, type CuponValidado } from "../../src/lib/api";
+import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
+import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
 import { tracker } from "../../src/lib/tracker";
@@ -95,6 +96,7 @@ export default function CartScreen() {
   const [nuevoBarrioObj, setNuevoBarrioObj] = useState<BarrioSeleccionado | null>(null);
   const [nuevoBarrioTexto, setNuevoBarrioTexto] = useState("");
   const [nuevasNotas, setNuevasNotas] = useState("");
+  const [nuevaUbicacion, setNuevaUbicacion] = useState<UbicacionCapturada | null>(null);
   const [codigoCupon, setCodigoCupon] = useState("");
   const [cuponValidado, setCuponValidado] = useState<CuponValidado | null>(null);
   const [cuponError, setCuponError] = useState("");
@@ -232,6 +234,20 @@ export default function CartScreen() {
     const barIdFinal = mostrarNueva ? nuevoBarrioId : dirActiva?.barrio_id || undefined;
     const notFinal = mostrarNueva ? nuevasNotas.trim() : not;
 
+    // Snapshot de ubicación para el pedido: pin recién capturado (nueva dirección)
+    // o el pin ya guardado en la dirección seleccionada. El servidor recalcula fuera_zona.
+    const ubicacionSnapshot: UbicacionCapturada | null = mostrarNueva
+      ? nuevaUbicacion
+      : dirActiva?.lat != null && dirActiva?.lng != null
+        ? {
+            lat: dirActiva.lat,
+            lng: dirActiva.lng,
+            precision_m: dirActiva.precision_m ?? null,
+            metodo_ubicacion: dirActiva.metodo_ubicacion === "pin_mapa" ? "pin_mapa" : "gps",
+            geocoded_direccion: dirActiva.geocoded_direccion ?? null,
+          }
+        : null;
+
     if (!barFinal) {
       Toast.show({ type: "error", text1: "Falta el barrio", text2: "Selecciona o escribe el barrio de entrega" });
       return;
@@ -252,7 +268,7 @@ export default function CartScreen() {
       // — si ya la creamos y el pedido falló, el reintento NO la vuelve a crear.
       if (mostrarNueva && dirFinal && direccionCreadaIdRef.current == null) {
         try {
-          const nueva = await crearDireccion({ direccion: dirFinal, barrio: barFinal || undefined, barrio_id: barIdFinal, notas: notFinal || undefined, predeterminada: true });
+          const nueva = await crearDireccion({ direccion: dirFinal, barrio: barFinal || undefined, barrio_id: barIdFinal, notas: notFinal || undefined, predeterminada: true, ...ubicacionABody(nuevaUbicacion) });
           direccionCreadaIdRef.current = nueva.id;
           try {
             await refetchDirs();
@@ -277,10 +293,12 @@ export default function CartScreen() {
         usar_puntos: usarPuntos && puedeUsarPuntos,
         cupon_codigo: cuponValidado?.cupon.codigo || undefined,
         lineas: items.map((i) => ({ producto_id: i.productoId, cantidad: i.cantidad })),
+        ...ubicacionABody(ubicacionSnapshot),
       }, submitIdempotencyKeyRef.current);
       // Éxito: liberar el key y el id de dirección para que el próximo pedido empiece limpio
       submitIdempotencyKeyRef.current = null;
       direccionCreadaIdRef.current = null;
+      setNuevaUbicacion(null);
       tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos }, 'cart');
       metaLogPurchase(pedido.total, { pedidoId: pedido.id, numItems: items.length });
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });
@@ -433,6 +451,8 @@ export default function CartScreen() {
               ) : (
                 <>
                   {/* Nueva dirección */}
+                  {/* Ubicación GPS (opcional): el pin ayuda al domiciliario; la dirección sigue siendo obligatoria */}
+                  <UbicacionButton value={nuevaUbicacion} onChange={setNuevaUbicacion} />
                   <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
                     Dirección
                   </Text>
