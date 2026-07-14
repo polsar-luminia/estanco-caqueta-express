@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -132,8 +132,24 @@ export default function RegisterScreen() {
       metaLogRegistration();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo crear la cuenta";
-      Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "auth", screen: "register" } });
-      Toast.show({ type: "error", text1: "Error", text2: msg });
+      // Caso "número ya registrado": diálogo con acciones directas en vez de
+      // toast seco — el usuario suele no saber que ya tenía cuenta (ej. pruebas
+      // previas) y se atasca intentando adivinar contraseñas.
+      const yaRegistrado = /ya tiene una cuenta|ya está registrado|Ya existe una cuenta/i.test(msg);
+      if (yaRegistrado) {
+        Alert.alert(
+          "Este número ya tiene cuenta",
+          "Parece que ya te habías registrado con este teléfono. ¿Qué quieres hacer?",
+          [
+            { text: "Iniciar sesión", onPress: () => router.push("/(auth)/login") },
+            { text: "Recuperar contraseña", onPress: () => router.push("/(auth)/forgot-password") },
+            { text: "Cancelar", style: "cancel" },
+          ],
+        );
+      } else {
+        Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "auth", screen: "register" } });
+        Toast.show({ type: "error", text1: "No pudimos crear tu cuenta", text2: msg });
+      }
     } finally {
       submittingRef.current = false;
       setLoading(false);
