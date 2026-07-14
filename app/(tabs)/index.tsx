@@ -483,6 +483,8 @@ export default function HomeScreen() {
                     product={item}
                     onPress={() => router.push(`/product/${item.id}`)}
                     badge={item.badge || undefined}
+                    badgeTexto={item.badge_texto}
+                    badgeColor={item.badge_color}
                   />
                 )}
               />

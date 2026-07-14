@@ -364,6 +364,9 @@ export interface Producto {
   categoria_id?: number;
   stock_total: number;
   badge?: string;
+  // Badge editable desde DB/admin (solo lo trae /catalogo/destacados).
+  badge_texto?: string | null;
+  badge_color?: string | null;
 }
 
 export interface Categoria {

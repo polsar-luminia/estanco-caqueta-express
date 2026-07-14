@@ -13,6 +13,8 @@ import { tracker } from "../../src/lib/tracker";
 import { ProductCard } from "../../src/components/ProductCard";
 import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
 import { ErrorState } from "../../src/components/ErrorState";
+import { CartFloatingBar } from "../../src/components/CartFloatingBar";
+import { useCartStore } from "../../src/stores/cart";
 
 function ChevronLeftIcon() {
   return (
@@ -26,6 +28,9 @@ export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // Cantidad total en carrito: decide si mostramos la banda flotante y si el
+  // grid necesita padding inferior extra para que la ultima fila no quede tapada.
+  const cartCount = useCartStore((s) => s.items.reduce((n, i) => n + i.cantidad, 0));
   const categoriaId = id && id.trim() ? Number(id) : NaN;
 
   const PAGE_SIZE = 20;
@@ -127,7 +132,7 @@ export default function CategoryScreen() {
             return gridData;
           })()}
           numColumns={2}
-          contentContainerStyle={{ padding: 16, gap: 12 }}
+          contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: cartCount > 0 ? 96 + insets.bottom : 16 }}
           columnWrapperStyle={{ gap: 12 }}
           keyExtractor={(item) => String(item.id)}
           initialNumToRender={8}
@@ -163,6 +168,9 @@ export default function CategoryScreen() {
           }}
         />
       )}
+
+      {/* Banda flotante "Ver carrito" — pantalla empujada sin tab bar, va abajo */}
+      <CartFloatingBar bottomOffset={24 + insets.bottom} />
     </View>
   );
 }

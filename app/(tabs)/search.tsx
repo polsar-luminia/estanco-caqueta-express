@@ -13,6 +13,8 @@ import { ProductCard } from "../../src/components/ProductCard";
 import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
 import { ErrorState } from "../../src/components/ErrorState";
 import { SearchIcon, CloseIcon, ClockIcon } from "../../src/components/icons/AppIcons";
+import { CartFloatingBar } from "../../src/components/CartFloatingBar";
+import { useCartStore } from "../../src/stores/cart";
 import { colors } from "../../src/constants/theme";
 
 // Sugerencias visibles antes de que el usuario escriba — son recomendaciones
@@ -81,6 +83,9 @@ function CategoryGridItem({ cat, onPress }: { cat: Categoria; onPress: () => voi
 export default function SearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // Si hay items en carrito mostramos la banda flotante; el contenido necesita
+  // padding inferior extra para no quedar tapado por ella (va sobre el tab bar).
+  const cartCount = useCartStore((s) => s.items.reduce((n, i) => n + i.cantidad, 0));
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -241,7 +246,7 @@ export default function SearchScreen() {
           key="resultados-grid"
           data={resultados}
           numColumns={2}
-          contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: 102 }}
+          contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: cartCount > 0 ? 160 : 102 }}
           columnWrapperStyle={{ gap: 10 }}
           keyboardShouldPersistTaps="handled"
           keyExtractor={(item) => String(item.id)}
@@ -297,7 +302,7 @@ export default function SearchScreen() {
 
       {/* Explore */}
       {showExplore && (
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 120 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: cartCount > 0 ? 170 : 120 }}>
           {/* Recent Searches */}
           <View style={{ paddingHorizontal: 16, marginBottom: 20, paddingTop: 16 }}>
             <Text style={{ fontSize: 10, fontWeight: "700", color: colors.faint, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>
@@ -365,6 +370,10 @@ export default function SearchScreen() {
           )}
         </ScrollView>
       )}
+
+      {/* Banda flotante "Ver carrito" — se posiciona por encima del tab bar
+          flotante (pill a bottom:12, alto 64 → tope ~76px). */}
+      <CartFloatingBar bottomOffset={88} />
     </View>
   );
 }

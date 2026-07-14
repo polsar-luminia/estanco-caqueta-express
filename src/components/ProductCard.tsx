@@ -20,13 +20,18 @@ interface Props {
   product: Producto;
   onPress: () => void;
   badge?: string;
+  // Badge editable desde DB/admin (productos.badge_app / badge_app_color).
+  // badgeTexto = texto libre; badgeColor = "verde" | "coral". Tienen prioridad
+  // sobre `badge` (clave legacy), pero la `oferta` real gana sobre todo.
+  badgeTexto?: string | null;
+  badgeColor?: string | null;
   // Si la card representa un producto en oferta, le pasamos la info para
   // pintar el badge custom y el precio tachado. Tiene prioridad sobre `badge`.
   oferta?: OfertaInfo;
   priority?: "low" | "normal" | "high";
 }
 
-export function ProductCard({ product, onPress, badge, oferta, priority = "normal" }: Props) {
+export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, oferta, priority = "normal" }: Props) {
   const addItem = useCartStore((s) => s.addItem);
   const { animatedStyle, onPressIn, onPressOut } = useScalePress();
 
@@ -55,17 +60,26 @@ export function ProductCard({ product, onPress, badge, oferta, priority = "norma
     });
   };
 
-  // Badge: la oferta gana sobre badge legacy. Texto del badge: titulo de la
-  // oferta si lo trae, "OFERTA" por defecto.
+  // Badge — prioridad: oferta real > badge de DB (texto libre) > badge legacy.
+  const badgeDbText = badgeTexto && badgeTexto.trim().length > 0 ? badgeTexto.trim() : null;
   const badgeText = oferta
     ? (oferta.titulo && oferta.titulo.trim().length > 0 ? oferta.titulo : "Oferta")
-    : badge === "top_ventas"
-      ? "Top Ventas"
-      : badge
-        ? "Oferta"
-        : null;
-  // Coral para ofertas/descuentos, verde para etiquetas de destaque.
-  const badgeColor = oferta || badge === "top_ventas" ? colors.offer : colors.green;
+    : badgeDbText
+      ? badgeDbText
+      : badge === "top_ventas"
+        ? "Top Ventas"
+        : badge
+          ? "Oferta"
+          : null;
+  // Color: oferta = coral; badge de DB respeta su color (verde/coral); legacy
+  // conserva el comportamiento anterior (top_ventas coral, resto verde).
+  const badgeBg = oferta
+    ? colors.offer
+    : badgeDbText
+      ? (badgeColor === "verde" ? colors.green : colors.offer)
+      : badge === "top_ventas"
+        ? colors.offer
+        : colors.green;
 
   return (
     <AnimatedPressable
@@ -91,7 +105,7 @@ export function ProductCard({ product, onPress, badge, oferta, priority = "norma
               </Text>
             </View>
           ) : badgeText ? (
-            <View style={{ position: "absolute", top: 8, left: 8, zIndex: 10, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, backgroundColor: badgeColor }}>
+            <View style={{ position: "absolute", top: 8, left: 8, zIndex: 10, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, backgroundColor: badgeBg }}>
               <Text style={{ color: colors.white, fontWeight: "800", fontSize: 8.5, letterSpacing: 0.4, textTransform: "uppercase" }}>
                 {badgeText}
               </Text>
