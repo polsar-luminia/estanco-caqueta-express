@@ -13,7 +13,6 @@ import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
 import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { nuevoUuidV4 } from "../../src/lib/uuid";
-import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
 import { tracker } from "../../src/lib/tracker";
 import { metaLogPurchase } from "../../src/lib/metaEvents";
 import { TruckIcon, TagIcon } from "../../src/components/icons/AppIcons";
@@ -34,7 +33,6 @@ export default function CartScreen() {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
   const direccion = useCartStore((s) => s.direccion);
-  const barrio = useCartStore((s) => s.barrio);
   const notas = useCartStore((s) => s.notas);
   const direccionId = useCartStore((s) => s.direccionId);
   const setDireccionId = useCartStore((s) => s.setDireccionId);
@@ -94,8 +92,6 @@ export default function CartScreen() {
   const [usarPuntos, setUsarPuntos] = useState(false);
   const [mostrarNueva, setMostrarNueva] = useState(false);
   const [nuevaDireccion, setNuevaDireccion] = useState("");
-  const [nuevoBarrioObj, setNuevoBarrioObj] = useState<BarrioSeleccionado | null>(null);
-  const [nuevoBarrioTexto, setNuevoBarrioTexto] = useState("");
   const [nuevasNotas, setNuevasNotas] = useState("");
   const [nuevaUbicacion, setNuevaUbicacion] = useState<UbicacionCapturada | null>(null);
   const [codigoCupon, setCodigoCupon] = useState("");
@@ -215,24 +211,23 @@ export default function CartScreen() {
     }
 
     const dir = dirActiva?.direccion || direccion.trim();
-    const bar = dirActiva?.barrio || barrio.trim();
     const not = dirActiva?.notas || notas.trim();
 
     if (!dir && !mostrarNueva) {
       Toast.show({ type: "error", text1: "Falta direccion", text2: "Selecciona o agrega una direccion" });
       return;
     }
-    if (mostrarNueva && !nuevaDireccion.trim()) {
-      Toast.show({ type: "error", text1: "Falta direccion", text2: "Ingresa la nueva direccion" });
+    // GPS-first: en una dirección nueva basta con la ubicación capturada O una
+    // dirección escrita. Ya no se pide barrio (la cobertura se calcula del GPS).
+    if (mostrarNueva && !nuevaDireccion.trim() && !nuevaUbicacion) {
+      Toast.show({ type: "error", text1: "Falta la ubicación", text2: "Usa tu ubicación actual o escribe la dirección" });
       return;
     }
     if (items.length === 0) return;
 
-    const dirFinal = mostrarNueva ? nuevaDireccion.trim() : dir;
-    const nuevoBarrioNombre = nuevoBarrioObj?.nombre || nuevoBarrioTexto.trim();
-    const nuevoBarrioId = nuevoBarrioObj?.id || undefined;
-    const barFinal = mostrarNueva ? nuevoBarrioNombre : bar;
-    const barIdFinal = mostrarNueva ? nuevoBarrioId : dirActiva?.barrio_id || undefined;
+    const dirFinal = mostrarNueva
+      ? (nuevaDireccion.trim() || nuevaUbicacion?.geocoded_direccion || "Ubicación en el mapa")
+      : dir;
     const notFinal = mostrarNueva ? nuevasNotas.trim() : not;
 
     // Snapshot de ubicación para el pedido: pin recién capturado (nueva dirección)
@@ -249,11 +244,6 @@ export default function CartScreen() {
           }
         : null;
 
-    if (!barFinal) {
-      Toast.show({ type: "error", text1: "Falta el barrio", text2: "Selecciona o escribe el barrio de entrega" });
-      return;
-    }
-
     submitLockRef.current = true;
     setLoading(true);
     let llegoACrearPedido = false;
@@ -269,7 +259,7 @@ export default function CartScreen() {
       // — si ya la creamos y el pedido falló, el reintento NO la vuelve a crear.
       if (mostrarNueva && dirFinal && direccionCreadaIdRef.current == null) {
         try {
-          const nueva = await crearDireccion({ direccion: dirFinal, barrio: barFinal || undefined, barrio_id: barIdFinal, notas: notFinal || undefined, predeterminada: true, ...ubicacionABody(nuevaUbicacion) });
+          const nueva = await crearDireccion({ direccion: dirFinal, notas: notFinal || undefined, predeterminada: true, ...ubicacionABody(nuevaUbicacion) });
           direccionCreadaIdRef.current = nueva.id;
           try {
             await refetchDirs();
@@ -288,8 +278,6 @@ export default function CartScreen() {
       }
       const { pedido, puntos_ganados } = await crearPedido({
         direccion: dirFinal,
-        barrio: barFinal || undefined,
-        barrio_id: barIdFinal,
         notas_cliente: notFinal || undefined,
         usar_puntos: usarPuntos && puedeUsarPuntos,
         cupon_codigo: cuponValidado?.cupon.codigo || undefined,
@@ -435,7 +423,7 @@ export default function CartScreen() {
                                 )}
                               </View>
                               <Text style={{ fontSize: 12, color: "#6D7B6C", marginTop: 2 }} numberOfLines={1}>
-                                {d.direccion}{d.barrio ? ` - ${d.barrio}` : ""}
+                                {d.direccion}
                               </Text>
                             </View>
                             {selected && <Feather name="check-circle" size={18} color="#1FAF55" />}
@@ -470,23 +458,14 @@ export default function CartScreen() {
                     }}
                   />
                   <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
-                    Dirección
+                    Dirección (referencia)
                   </Text>
                   <TextInput
                     style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: "#1A1C1A", marginBottom: 12 }}
-                    placeholder="Carrera 15 # 12-34"
+                    placeholder="Se llena con tu ubicación (o escríbela)"
                     placeholderTextColor="#BCCABA"
                     value={nuevaDireccion}
                     onChangeText={setNuevaDireccion}
-                  />
-                  <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
-                    Barrio
-                  </Text>
-                  <BarrioSelector
-                    value={nuevoBarrioObj}
-                    onSelect={setNuevoBarrioObj}
-                    textoLibre={nuevoBarrioTexto}
-                    onTextoLibreChange={setNuevoBarrioTexto}
                   />
                   <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
                     Notas (Opcional)

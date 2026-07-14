@@ -8,7 +8,6 @@ import { Feather } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { useRouter } from "expo-router";
 import { getDirecciones, crearDireccion, editarDireccion, setPredeterminada, eliminarDireccion, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
-import { BarrioSelector, type BarrioSeleccionado } from "../../src/components/BarrioSelector";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { colors, shadows } from "../../src/constants/theme";
 import { useUbicacionPicker } from "../../src/stores/ubicacionPicker";
@@ -20,8 +19,6 @@ export default function DireccionesScreen() {
   const abrirPicker = useUbicacionPicker((s) => s.abrir);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [direccion, setDireccion] = useState("");
-  const [barrioObj, setBarrioObj] = useState<BarrioSeleccionado | null>(null);
-  const [barrioTexto, setBarrioTexto] = useState("");
   const [etiqueta, setEtiqueta] = useState("Casa");
   const [notas, setNotas] = useState("");
   const [ubicacion, setUbicacion] = useState<UbicacionCapturada | null>(null);
@@ -38,7 +35,7 @@ export default function DireccionesScreen() {
     onSuccess: () => {
       refetch();
       setMostrarForm(false);
-      setDireccion(""); setBarrioObj(null); setBarrioTexto(""); setNotas(""); setEtiqueta("Casa"); setUbicacion(null);
+      setDireccion(""); setNotas(""); setEtiqueta("Casa"); setUbicacion(null);
       Toast.show({ type: "success", text1: "Dirección guardada" });
     },
     onError: (err: Error) => Toast.show({ type: "error", text1: err.message }),
@@ -74,8 +71,7 @@ export default function DireccionesScreen() {
       Toast.show({ type: "error", text1: "Ingresa una dirección" });
       return;
     }
-    const barrioNombre = barrioObj?.nombre || barrioTexto.trim() || undefined;
-    mutCrear.mutate({ etiqueta, direccion: direccion.trim(), barrio: barrioNombre, barrio_id: barrioObj?.id, notas: notas.trim() || undefined, ...ubicacionABody(ubicacion) });
+    mutCrear.mutate({ etiqueta, direccion: direccion.trim(), notas: notas.trim() || undefined, ...ubicacionABody(ubicacion) });
   };
 
   const handleEliminar = (id: number) => {
@@ -141,7 +137,6 @@ export default function DireccionesScreen() {
                       )}
                     </View>
                     <Text style={{ fontSize: 13, color: "#6D7B6C", marginTop: 2 }}>{d.direccion}</Text>
-                    {d.barrio ? <Text style={{ fontSize: 12, color: "#9E9E9E", marginTop: 1 }}>{d.barrio}</Text> : null}
                     {d.notas ? <Text style={{ fontSize: 11, color: "#9E9E9E", fontStyle: "italic", marginTop: 2 }}>{d.notas}</Text> : null}
                   </View>
                 </View>
@@ -199,14 +194,6 @@ export default function DireccionesScreen() {
 
             <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Dirección *</Text>
             <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontSize: 14, color: colors.ink, marginBottom: 12 }} placeholder="Carrera 15 # 12-34" placeholderTextColor="#BCCABA" value={direccion} onChangeText={setDireccion} />
-
-            <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Barrio</Text>
-            <BarrioSelector
-              value={barrioObj}
-              onSelect={setBarrioObj}
-              textoLibre={barrioTexto}
-              onTextoLibreChange={setBarrioTexto}
-            />
 
             <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Notas (opcional)</Text>
             <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontSize: 14, color: colors.ink, marginBottom: 16 }} placeholder="Portería, dejar con vigilante..." placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline />
