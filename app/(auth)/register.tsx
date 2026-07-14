@@ -9,9 +9,8 @@ import * as Sentry from "@sentry/react-native";
 import { useAuthStore } from "../../src/stores/auth";
 import { tracker } from "../../src/lib/tracker";
 import { metaLogRegistration } from "../../src/lib/metaEvents";
-import { DateSelector, DateValue, toISODate, calcularEdad } from "../../src/components/DateSelector";
+import { DateValue, toISODate, calcularEdad } from "../../src/components/DateSelector";
 import { InputField } from "../../src/components/InputField";
-import { CheckboxRow } from "../../src/components/CheckboxRow";
 import { UserIcon, PhoneIcon, LockIcon } from "../../src/components/icons/AppIcons";
 import { colors, shadows } from "../../src/constants/theme";
 
@@ -23,8 +22,9 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [fecha, setFecha] = useState<DateValue>({});
-  const [aceptaTerminos, setAceptaTerminos] = useState(false);
-  const [aceptaDatos, setAceptaDatos] = useState(false);
+  // Campo único DD/MM/AAAA con auto-formato (reemplaza los 3 selectores con modal)
+  const [fechaTexto, setFechaTexto] = useState("");
+  const [errorFecha, setErrorFecha] = useState("");
   const [loading, setLoading] = useState(false);
   const register = useAuthStore((s) => s.register);
   const submittingRef = useRef(false);
@@ -66,6 +66,40 @@ export default function RegisterScreen() {
     }
   };
 
+  // Auto-formato DD/MM/AAAA: inserta las barras mientras escribe y valida
+  // fecha + edad apenas completa los 8 dígitos.
+  const handleFechaChange = (text: string) => {
+    const digits = text.replace(/\D/g, "").slice(0, 8);
+    let out = digits;
+    if (digits.length > 4) out = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+    else if (digits.length > 2) out = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    setFechaTexto(out);
+
+    if (digits.length === 8) {
+      const v: DateValue = {
+        day: Number(digits.slice(0, 2)),
+        month: Number(digits.slice(2, 4)),
+        year: Number(digits.slice(4)),
+      };
+      if (!toISODate(v)) {
+        setErrorFecha("Fecha inválida (DD/MM/AAAA)");
+        setFecha({});
+        return;
+      }
+      const edad = calcularEdad(v);
+      if (edad === null || edad < 18) {
+        setErrorFecha("Debes tener 18 años o más");
+        setFecha({});
+        return;
+      }
+      setErrorFecha("");
+      setFecha(v);
+    } else {
+      setFecha({});
+      setErrorFecha("");
+    }
+  };
+
   const handleRegister = async () => {
     if (submittingRef.current) return;
     if (!nombre || !telefono || !password) {
@@ -82,20 +116,12 @@ export default function RegisterScreen() {
     }
     const iso = toISODate(fecha);
     if (!iso) {
-      Toast.show({ type: "error", text1: "Fecha de nacimiento incompleta o inválida" });
+      Toast.show({ type: "error", text1: "Fecha de nacimiento inválida", text2: "Escríbela como DD/MM/AAAA (ej: 15/03/1995)" });
       return;
     }
     const edad = calcularEdad(fecha);
     if (edad === null || edad < 18) {
       Toast.show({ type: "error", text1: "Debes tener 18 años o más para registrarte" });
-      return;
-    }
-    if (!aceptaTerminos) {
-      Toast.show({ type: "error", text1: "Debes aceptar los Términos y Condiciones" });
-      return;
-    }
-    if (!aceptaDatos) {
-      Toast.show({ type: "error", text1: "Debes autorizar el tratamiento de datos personales" });
       return;
     }
     submittingRef.current = true;
@@ -216,36 +242,39 @@ export default function RegisterScreen() {
             error={errorPassword}
           />
 
-          {/* Fecha de nacimiento */}
-          <View style={{ marginBottom: 12 }}>
-            <DateSelector value={fecha} onChange={setFecha} />
-          </View>
+          {/* Fecha de nacimiento — un solo campo con auto-formato */}
+          <InputField
+            label="Fecha de Nacimiento"
+            icon={<Feather name="calendar" size={18} color={colors.muted} />}
+            placeholder="DD/MM/AAAA"
+            value={fechaTexto}
+            onChangeText={handleFechaChange}
+            keyboardType="number-pad"
+            error={errorFecha}
+          />
 
-          {/* Checkboxes de políticas */}
-          <View style={{ gap: 10, marginTop: 8 }}>
-            <CheckboxRow checked={aceptaTerminos} onToggle={() => setAceptaTerminos(!aceptaTerminos)}>
-              Acepto los{" "}
-              <Text
-                style={{ color: colors.green, fontWeight: "700" }}
-                onPress={(e) => { e.stopPropagation(); router.push("/support/terms"); }}
-              >
-                Términos y Condiciones
-              </Text>
-            </CheckboxRow>
-
-            <CheckboxRow checked={aceptaDatos} onToggle={() => setAceptaDatos(!aceptaDatos)}>
-              Autorizo el tratamiento de mis{" "}
-              <Text
-                style={{ color: colors.green, fontWeight: "700" }}
-                onPress={(e) => { e.stopPropagation(); router.push("/support/privacy"); }}
-              >
-                Datos Personales
-              </Text>
-            </CheckboxRow>
-          </View>
+          {/* Aceptación implícita de políticas: el toque en "Crear Cuenta" es la
+              aceptación expresa (patrón estándar; reemplaza los 2 checkboxes). */}
+          <Text style={{ fontSize: 11.5, color: colors.muted, textAlign: "center", marginTop: 12, lineHeight: 17, paddingHorizontal: 8 }}>
+            Al crear tu cuenta aceptas los{" "}
+            <Text
+              style={{ color: colors.green, fontWeight: "700" }}
+              onPress={() => router.push("/support/terms")}
+            >
+              Términos y Condiciones
+            </Text>
+            {" "}y autorizas el{" "}
+            <Text
+              style={{ color: colors.green, fontWeight: "700" }}
+              onPress={() => router.push("/support/privacy")}
+            >
+              Tratamiento de tus Datos
+            </Text>
+            .
+          </Text>
 
           {/* CTA — Crear Cuenta */}
-          <Pressable onPress={handleRegister} disabled={loading} style={{ marginTop: 20 }}>
+          <Pressable onPress={handleRegister} disabled={loading} style={{ marginTop: 14 }}>
             <LinearGradient
               colors={loading ? [colors.faint, "#757575"] : [colors.green, colors.greenDeep]}
               start={{ x: 0, y: 0 }}
