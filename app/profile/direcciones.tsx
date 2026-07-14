@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl } from "react-native";
 import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,6 +8,7 @@ import { Feather } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { useRouter } from "expo-router";
 import { getDirecciones, crearDireccion, editarDireccion, setPredeterminada, eliminarDireccion, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
+import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { colors, shadows } from "../../src/constants/theme";
 import { useUbicacionPicker } from "../../src/stores/ubicacionPicker";
@@ -30,9 +31,18 @@ export default function DireccionesScreen() {
 
   const refetch = () => queryClient.invalidateQueries({ queryKey: ["direcciones"] });
 
+  // Idempotency-Key por intento de guardado: un doble-tap o reintento de red
+  // reutiliza la misma key y el servidor devuelve la respuesta original en vez
+  // de crear la dirección dos veces. Se limpia al guardar con éxito.
+  const idemKeyRef = useRef<string | null>(null);
+
   const mutCrear = useMutation({
-    mutationFn: crearDireccion,
+    mutationFn: (data: Parameters<typeof crearDireccion>[0]) => {
+      if (!idemKeyRef.current) idemKeyRef.current = nuevoUuidV4();
+      return crearDireccion(data, idemKeyRef.current);
+    },
     onSuccess: () => {
+      idemKeyRef.current = null;
       refetch();
       setMostrarForm(false);
       setDireccion(""); setNotas(""); setEtiqueta("Casa"); setUbicacion(null);

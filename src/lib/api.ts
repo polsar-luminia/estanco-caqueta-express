@@ -533,10 +533,11 @@ export interface CrearDireccionInput {
   geocoded_direccion?: string | null;
 }
 
-export async function crearDireccion(data: CrearDireccionInput) {
+export async function crearDireccion(data: CrearDireccionInput, idempotencyKey?: string) {
   return apiFetch<DireccionGuardada>("/clientes/direcciones", {
     method: "POST",
     body: JSON.stringify(data),
+    idempotencyKey,
   });
 }
 

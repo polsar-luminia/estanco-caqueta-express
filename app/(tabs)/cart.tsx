@@ -195,6 +195,9 @@ export default function CartScreen() {
   // M-CART-18: id de la dirección creada en este intento. Evita que un reintento
   // (tras timeout/stock) vuelva a crear la misma dirección una y otra vez.
   const direccionCreadaIdRef = useRef<number | null>(null);
+  // Idempotency-Key propia para crear la dirección (NUNCA compartir la del
+  // pedido: el middleware replay-earía la respuesta del endpoint equivocado).
+  const direccionIdemKeyRef = useRef<string | null>(null);
 
   const handlePedir = async () => {
     if (submitLockRef.current) return;
@@ -259,7 +262,8 @@ export default function CartScreen() {
       // — si ya la creamos y el pedido falló, el reintento NO la vuelve a crear.
       if (mostrarNueva && dirFinal && direccionCreadaIdRef.current == null) {
         try {
-          const nueva = await crearDireccion({ direccion: dirFinal, notas: notFinal || undefined, predeterminada: true, ...ubicacionABody(nuevaUbicacion) });
+          if (!direccionIdemKeyRef.current) direccionIdemKeyRef.current = nuevoUuidV4();
+          const nueva = await crearDireccion({ direccion: dirFinal, notas: notFinal || undefined, predeterminada: true, ...ubicacionABody(nuevaUbicacion) }, direccionIdemKeyRef.current);
           direccionCreadaIdRef.current = nueva.id;
           try {
             await refetchDirs();
@@ -287,6 +291,7 @@ export default function CartScreen() {
       // Éxito: liberar el key y el id de dirección para que el próximo pedido empiece limpio
       submitIdempotencyKeyRef.current = null;
       direccionCreadaIdRef.current = null;
+      direccionIdemKeyRef.current = null;
       setNuevaUbicacion(null);
       tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos }, 'cart');
       metaLogPurchase(pedido.total, { pedidoId: pedido.id, numItems: items.length });
