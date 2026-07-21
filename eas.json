@@ -47,6 +47,16 @@
       "ios": {
         "buildConfiguration": "Release"
       }
+    },
+    "emulator": {
+      "distribution": "internal",
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.estancocaqueta.com/api/v1"
+      },
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {
