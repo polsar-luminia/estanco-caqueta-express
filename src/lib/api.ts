@@ -131,10 +131,16 @@ export async function apiFetch<T = any>(
     };
     let msg: string;
     const errorField = bodyParsed && typeof body.error === 'string' ? body.error : undefined;
-    // Fail-closed: solo se muestran al usuario los mensajes whitelisteados.
+    // El backend puede marcar un error como `mostrable: true` cuando el mensaje es
+    // seguro y dinámico (ej. "solo puedes llevar 2 unidades de X", "solo hay 3
+    // disponibles"). Esos no caben en una whitelist fija, así que se muestran tal cual.
+    const mostrable = bodyParsed && body.mostrable === true;
+    // Fail-closed: fuera de eso, solo se muestran los mensajes whitelisteados.
     // Cualquier otro body.error se loguea para debug pero se enmascara con un fallback
     // genérico por status code (evita filtrar internals del backend al cliente).
-    if (errorField && ERRORES_USUARIO[errorField]) {
+    if (errorField && mostrable) {
+      msg = errorField;
+    } else if (errorField && ERRORES_USUARIO[errorField]) {
       msg = ERRORES_USUARIO[errorField];
     } else if (res.status === 404) {
       msg = 'Servicio no disponible (404)';
@@ -363,6 +369,9 @@ export interface Producto {
   categoria: string;
   categoria_id?: number;
   stock_total: number;
+  // Máximo de unidades por cliente. El backend lo expone (non-null) SOLO cuando
+  // el producto tiene una oferta activa; fuera de oferta llega null y no aplica.
+  max_unidades_por_cliente?: number | null;
   badge?: string;
   // Badge editable desde DB/admin (solo lo trae /catalogo/destacados).
   badge_texto?: string | null;

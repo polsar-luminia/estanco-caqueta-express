@@ -51,6 +51,7 @@ export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, o
       precioUnitario: precioEfectivo,
       imagenUrl: product.imagen_url || undefined,
       stockMaximo: product.stock_total,
+      maxPorCliente: product.max_unidades_por_cliente ?? undefined,
     });
     Toast.show({
       type: "success",

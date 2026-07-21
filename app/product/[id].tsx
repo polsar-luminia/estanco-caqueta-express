@@ -211,6 +211,10 @@ export default function ProductDetailScreen() {
 
   const inStock = product.stock_total > 0;
   const stockMax = product.stock_total;
+  // Máximo por cliente (solo llega non-null con oferta activa). El tope efectivo
+  // del selector es el menor entre el stock y este límite.
+  const maxCliente = product.max_unidades_por_cliente ?? undefined;
+  const topeEfectivo = Math.min(stockMax, maxCliente ?? Infinity);
 
   const ofertaParseada = ofertaPrecio ? Number(ofertaPrecio) : NaN;
   const ofertaValida = Number.isFinite(ofertaParseada) && ofertaParseada > 0 && ofertaParseada < product.precio_app;
@@ -225,6 +229,7 @@ export default function ProductDetailScreen() {
       precioUnitario: precioActivo,
       imagenUrl: product.imagen_url || undefined,
       stockMaximo: product.stock_total,
+      maxPorCliente: maxCliente,
     }, quantity);
     Toast.show({
       type: "success",
@@ -238,8 +243,13 @@ export default function ProductDetailScreen() {
   const decrement = () => setQuantity((q) => Math.max(1, q - 1));
   const increment = () => {
     setQuantity((q) => {
-      if (q >= stockMax) {
-        Toast.show({ type: "info", text1: `Solo quedan ${Math.floor(stockMax)} unidades` });
+      if (q >= topeEfectivo) {
+        // Distinguir si el tope lo impone el máximo por cliente o el stock.
+        if (maxCliente != null && topeEfectivo === maxCliente) {
+          Toast.show({ type: "info", text1: `Máximo ${maxCliente} por cliente en esta promoción` });
+        } else {
+          Toast.show({ type: "info", text1: `Solo quedan ${Math.floor(stockMax)} unidades` });
+        }
         return q;
       }
       return q + 1;
@@ -342,6 +352,15 @@ export default function ProductDetailScreen() {
               {formatCOP(precioActivo)}
             </Text>
           </View>
+
+          {/* Aviso de máximo por cliente — solo llega con oferta activa */}
+          {maxCliente != null ? (
+            <View className="flex-row items-center self-start rounded-full px-3 py-1" style={{ backgroundColor: "#FDECEF" }}>
+              <Text className="text-xs font-semibold" style={{ color: colors.offer }}>
+                Máximo {maxCliente} {maxCliente === 1 ? "unidad" : "unidades"} por cliente en esta promoción
+              </Text>
+            </View>
+          ) : null}
 
           {/* Description — muestra solo si existe. Shopify no tiene body_html a abr-2026;
               ingresar vía admin.estancocaqueta.com o directamente en Shopify admin.

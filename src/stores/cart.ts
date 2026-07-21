@@ -13,7 +13,14 @@ export interface CartItem {
   cantidad: number;
   imagenUrl?: string;
   stockMaximo?: number;
+  // Máximo de unidades por cliente durante la oferta activa. undefined = sin límite.
+  maxPorCliente?: number;
 }
+
+// Cap efectivo de un ítem: el menor entre el stock disponible y el máximo por
+// cliente (cuando aplica). Enforcea ambos límites con una sola cuenta.
+const capEfectivo = (stockMaximo?: number, maxPorCliente?: number) =>
+  Math.min(stockMaximo ?? Infinity, maxPorCliente ?? Infinity);
 
 interface CartState {
   items: CartItem[];
@@ -59,18 +66,18 @@ export const useCartStore = create<CartState>()(
           tracker.track('carrito_agregado', { producto_id: product.productoId, nombre: product.nombre, precio: product.precioUnitario });
           metaLogAddToCart(product.productoId, product.precioUnitario);
           if (existing) {
-            // Respetar stockMaximo si ya lo conocemos
-            const max = existing.stockMaximo ?? Infinity;
+            // Respetar stock y máximo por cliente si ya los conocemos
+            const max = capEfectivo(existing.stockMaximo, product.maxPorCliente ?? existing.maxPorCliente);
             const nueva = Math.min(existing.cantidad + 1, max);
             return {
               items: state.items.map((i) =>
                 i.productoId === product.productoId
-                  ? { ...i, cantidad: nueva, stockMaximo: product.stockMaximo ?? i.stockMaximo }
+                  ? { ...i, cantidad: nueva, stockMaximo: product.stockMaximo ?? i.stockMaximo, maxPorCliente: product.maxPorCliente ?? i.maxPorCliente }
                   : i
               ),
             };
           }
-          const max = product.stockMaximo ?? Infinity;
+          const max = capEfectivo(product.stockMaximo, product.maxPorCliente);
           return { items: [...state.items, { ...product, cantidad: Math.min(1, max) }] };
         });
       },
@@ -83,17 +90,17 @@ export const useCartStore = create<CartState>()(
           tracker.track('carrito_agregado', { producto_id: product.productoId, nombre: product.nombre, precio: product.precioUnitario, cantidad });
           metaLogAddToCart(product.productoId, product.precioUnitario);
           if (existing) {
-            const max = existing.stockMaximo ?? product.stockMaximo ?? Infinity;
+            const max = capEfectivo(product.stockMaximo ?? existing.stockMaximo, product.maxPorCliente ?? existing.maxPorCliente);
             const nueva = Math.min(existing.cantidad + cantidad, max);
             return {
               items: state.items.map((i) =>
                 i.productoId === product.productoId
-                  ? { ...i, cantidad: nueva, stockMaximo: product.stockMaximo ?? i.stockMaximo }
+                  ? { ...i, cantidad: nueva, stockMaximo: product.stockMaximo ?? i.stockMaximo, maxPorCliente: product.maxPorCliente ?? i.maxPorCliente }
                   : i
               ),
             };
           }
-          const max = product.stockMaximo ?? Infinity;
+          const max = capEfectivo(product.stockMaximo, product.maxPorCliente);
           return { items: [...state.items, { ...product, cantidad: Math.min(cantidad, max) }] };
         });
       },
@@ -108,7 +115,7 @@ export const useCartStore = create<CartState>()(
           return {
             items: state.items.map((i) => {
               if (i.productoId !== productoId) return i;
-              const max = i.stockMaximo ?? Infinity;
+              const max = capEfectivo(i.stockMaximo, i.maxPorCliente);
               return { ...i, cantidad: Math.min(cantidad, max) };
             }),
           };

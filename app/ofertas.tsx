@@ -49,6 +49,7 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
       precioUnitario: precioOferta,
       imagenUrl: oferta.producto.imagen_url || undefined,
       stockMaximo: oferta.producto.stock_total,
+      maxPorCliente: oferta.producto.max_unidades_por_cliente ?? undefined,
     });
     Toast.show({
       type: "success",

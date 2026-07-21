@@ -177,6 +177,7 @@ function OrderCard({ item }: { item: Pedido }) {
           precioUnitario: producto.precio_app,
           imagenUrl: producto.imagen_url,
           stockMaximo: producto.stock_total,
+          maxPorCliente: producto.max_unidades_por_cliente ?? undefined,
         }, linea.cantidad);
       }
 
