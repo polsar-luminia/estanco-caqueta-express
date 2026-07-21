@@ -19,7 +19,7 @@
  * sitios de evento (registro, carrito, checkout) están debajo de _layout, el
  * orden queda garantizado.
  */
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 import { AppEventsLogger, Settings } from "react-native-fbsdk-next";
 import { requestTrackingPermissionsAsync } from "expo-tracking-transparency";
 
@@ -38,6 +38,24 @@ const EVENT_ADD_TO_CART = "fb_mobile_add_to_cart";
 let initialized = false;
 
 /**
+ * Espera a que la app esté en primer plano (AppState "active"). El prompt de ATT
+ * de iOS SOLO se muestra si la app está activa; si se pide durante el arranque
+ * (splash / estado "inactive") iOS lo descarta en silencio y el revisor de Apple
+ * nunca lo ve. Ese fue el motivo del rechazo 2.1 del build 58.
+ */
+function esperarAppActiva(): Promise<void> {
+  if (AppState.currentState === "active") return Promise.resolve();
+  return new Promise((resolve) => {
+    const sub = AppState.addEventListener("change", (estado) => {
+      if (estado === "active") {
+        sub.remove();
+        resolve();
+      }
+    });
+  });
+}
+
+/**
  * Inicializa el SDK de Meta una sola vez. En iOS pide consentimiento ATT y, si
  * el usuario acepta, habilita el uso del IDFA para atribución. Idempotente.
  */
@@ -46,7 +64,11 @@ export async function initMetaAnalytics(): Promise<void> {
   initialized = true;
   try {
     if (Platform.OS === "ios") {
-      // El prompt ATT debe pedirse con la UI montada (se llama desde un useEffect).
+      // El prompt ATT solo aparece con la app en primer plano y totalmente
+      // presentada. Esperamos "active" + un pequeño respiro antes de pedirlo,
+      // si no iOS lo descarta en silencio (rechazo 2.1 de Apple, build 58).
+      await esperarAppActiva();
+      await new Promise((r) => setTimeout(r, 500));
       const { status } = await requestTrackingPermissionsAsync();
       Settings.setAdvertiserTrackingEnabled(status === "granted");
     }
