@@ -9,6 +9,7 @@
  * Eventos estándar que dispara:
  *   - CompleteRegistration  (registro completado)
  *   - AddedToCart           (agregar al carrito)
+ *   - InitiateCheckout      (toca "Confirmar pedido" — intención de compra)
  *   - Purchase              (pedido creado) -> logPurchase dedicado
  *
  * Todas las funciones son a prueba de fallos: si el módulo nativo no está
@@ -34,6 +35,7 @@ const PARAM_NUM_ITEMS = "fb_num_items";
 
 const EVENT_COMPLETE_REGISTRATION = "fb_mobile_complete_registration";
 const EVENT_ADD_TO_CART = "fb_mobile_add_to_cart";
+const EVENT_INITIATED_CHECKOUT = "fb_mobile_initiated_checkout";
 
 let initialized = false;
 
@@ -129,6 +131,26 @@ export function metaLogAddToCart(productoId: number, precio: number): void {
     });
   } catch (err) {
     if (__DEV__) console.warn("[metaEvents] logAddToCart falló:", err);
+  }
+}
+
+/**
+ * Evento de inicio de checkout (el usuario toca "Confirmar pedido"). Completa
+ * el embudo AddToCart → InitiateCheckout → Purchase que Meta usa para optimizar
+ * campañas de conversión. valor = subtotal del carrito en ese momento.
+ */
+export function metaLogInitiateCheckout(
+  valor: number,
+  opts: { numItems: number },
+): void {
+  try {
+    AppEventsLogger.logEvent(EVENT_INITIATED_CHECKOUT, valor, {
+      [PARAM_NUM_ITEMS]: opts.numItems,
+      [PARAM_CONTENT_TYPE]: "product",
+      [PARAM_CURRENCY]: CURRENCY,
+    });
+  } catch (err) {
+    if (__DEV__) console.warn("[metaEvents] logInitiateCheckout falló:", err);
   }
 }
 

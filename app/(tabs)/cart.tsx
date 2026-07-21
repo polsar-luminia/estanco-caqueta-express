@@ -14,7 +14,7 @@ import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp
 import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { tracker } from "../../src/lib/tracker";
-import { metaLogPurchase } from "../../src/lib/metaEvents";
+import { metaLogInitiateCheckout, metaLogPurchase } from "../../src/lib/metaEvents";
 import { TruckIcon, TagIcon } from "../../src/components/icons/AppIcons";
 import { CartIcon } from "../../src/components/icons/TabIcons";
 import { formatCOP } from "../../src/lib/format";
@@ -198,6 +198,9 @@ export default function CartScreen() {
   // Idempotency-Key propia para crear la dirección (NUNCA compartir la del
   // pedido: el middleware replay-earía la respuesta del endpoint equivocado).
   const direccionIdemKeyRef = useRef<string | null>(null);
+  // InitiateCheckout de Meta: una vez por intento de pedido. Los reintentos tras
+  // un fallo NO lo re-disparan; se resetea junto con el idempotency key al éxito.
+  const initiateCheckoutLogueadoRef = useRef(false);
 
   const handlePedir = async () => {
     if (submitLockRef.current) return;
@@ -249,6 +252,14 @@ export default function CartScreen() {
 
     submitLockRef.current = true;
     setLoading(true);
+
+    // Meta InitiateCheckout: el usuario tocó "Confirmar pedido" con carrito
+    // válido — intención de compra real. Guard de una vez por intento.
+    if (!initiateCheckoutLogueadoRef.current) {
+      initiateCheckoutLogueadoRef.current = true;
+      metaLogInitiateCheckout(subtotal, { numItems: items.length });
+    }
+
     let llegoACrearPedido = false;
     try {
       // S10 - Verificar estado fresco de la tienda antes de crear pedido
@@ -292,6 +303,7 @@ export default function CartScreen() {
       submitIdempotencyKeyRef.current = null;
       direccionCreadaIdRef.current = null;
       direccionIdemKeyRef.current = null;
+      initiateCheckoutLogueadoRef.current = false;
       setNuevaUbicacion(null);
       tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos }, 'cart');
       metaLogPurchase(pedido.total, { pedidoId: pedido.id, numItems: items.length });
