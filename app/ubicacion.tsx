@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, ActivityIndicator, InteractionManager, Platform } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import MapView, { type Region } from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE, type Region } from "react-native-maps";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
@@ -43,6 +43,11 @@ export default function UbicacionScreen() {
 
   const [geocoded, setGeocoded] = useState<string | null>(null);
   const [dentroZona, setDentroZona] = useState(true); // optimista hasta validar
+  // Android: montar el MapView DESPUÉS de la animación de transición evita que
+  // react-native-maps se renderice en blanco/gris (race conocido). El spinner se
+  // muestra hasta que el mapa dispara onMapReady.
+  const [mapaMontado, setMapaMontado] = useState(false);
+  const [mapaListo, setMapaListo] = useState(false);
   const [region] = useState<Region>({
     latitude: inicial?.lat ?? FLORENCIA.latitude,
     longitude: inicial?.lng ?? FLORENCIA.longitude,
@@ -64,6 +69,13 @@ export default function UbicacionScreen() {
     },
     [zona],
   );
+
+  // Montar el mapa solo cuando la transición de navegación termina (evita el
+  // render en blanco de react-native-maps en Android).
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => setMapaMontado(true));
+    return () => task.cancel();
+  }, []);
 
   // Al abrir: si hay permiso ya concedido y no vino un pin inicial, centrar en GPS.
   useEffect(() => {
@@ -147,14 +159,33 @@ export default function UbicacionScreen() {
 
       {/* Mapa con pin fijo al centro */}
       <View style={{ flex: 1 }}>
-        <MapView
-          ref={mapRef}
-          style={{ flex: 1 }}
-          initialRegion={region}
-          onRegionChangeComplete={onRegionChangeComplete}
-          showsUserLocation
-          showsMyLocationButton={false}
-        />
+        {mapaMontado ? (
+          <MapView
+            ref={mapRef}
+            provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
+            style={{ flex: 1 }}
+            initialRegion={region}
+            onMapReady={() => {
+              setMapaListo(true);
+              const c = centroRef.current;
+              mapRef.current?.animateToRegion(
+                { latitude: c.latitude, longitude: c.longitude, ...DELTA },
+                0,
+              );
+            }}
+            onRegionChangeComplete={onRegionChangeComplete}
+            showsUserLocation
+            showsMyLocationButton={false}
+          />
+        ) : null}
+
+        {/* Overlay de carga: cubre el mapa hasta que dispara onMapReady (evita el vacío gris) */}
+        {!mapaListo ? (
+          <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
+            <ActivityIndicator size="large" color="#1FAF55" />
+            <Text style={{ marginTop: 10, color: "#6D7B6C", fontSize: 13 }}>Cargando mapa…</Text>
+          </View>
+        ) : null}
 
         {/* Pin fijo centrado (la punta apunta al centro exacto del mapa) */}
         <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}>
