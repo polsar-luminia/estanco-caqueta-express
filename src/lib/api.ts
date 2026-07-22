@@ -682,9 +682,21 @@ export interface Oferta {
 }
 
 
+// Tipos de aviso de cierre. El backend elige el tipo; el app lo mapea a
+// color/ícono. Retrocompatible: builds viejos ignoran `aviso` y usan el banner
+// genérico con `proximaApertura`.
+export type AvisoTipo = "fuera_horario" | "general" | "ley_seca" | "almuerzo";
+
+export interface AvisoTienda {
+  tipo: AvisoTipo;
+  titulo: string;
+  mensaje: string;
+}
+
 export interface EstadoTienda {
   abierta: boolean;
   proximaApertura: string;
+  aviso?: AvisoTienda | null;
 }
 
 export async function getEstadoTienda(): Promise<EstadoTienda> {
