@@ -8,6 +8,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { buscarProductos, getCategorias, getDestacados, type Categoria } from "../../src/lib/api";
 import { filtrarCategoriasIOS, filtrarProductosIOS } from "../../src/lib/iosFilters";
 import { tracker } from "../../src/lib/tracker";
+import { metaLogSearch } from "../../src/lib/metaEvents";
 import { getCatVisuals } from "../../src/lib/catVisuals";
 import { ProductCard } from "../../src/components/ProductCard";
 import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
@@ -166,6 +167,10 @@ export default function SearchScreen() {
       } else {
         tracker.track("busqueda", { q: debouncedQuery, resultados: totalResultados }, "search");
       }
+      // Meta Search — una vez por búsqueda efectiva (el efecto ya está tras el
+      // debounce de debouncedQuery + gate isLoading, no dispara por cada tecla).
+      // fb_success refleja si la consulta trajo resultados.
+      metaLogSearch(debouncedQuery, totalResultados > 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- totalResultados de primera página, gate isLoading
   }, [debouncedQuery, isLoading]);

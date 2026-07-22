@@ -16,6 +16,7 @@ import { getProducto, getSugerencias } from "../../src/lib/api";
 import { esCategoriaProhibidaIOS, filtrarProductosIOS } from "../../src/lib/iosFilters";
 import { ProductCard } from "../../src/components/ProductCard";
 import { tracker } from "../../src/lib/tracker";
+import { metaLogViewContent } from "../../src/lib/metaEvents";
 import { useCartStore } from "../../src/stores/cart";
 import { formatCOP } from "../../src/lib/format";
 import { ShimmerImage } from "../../src/components/ShimmerImage";
@@ -156,6 +157,14 @@ export default function ProductDetailScreen() {
     if (!product) return;
     const entrada = Date.now();
     tracker.track('producto_visto', { producto_id: product.id, nombre: product.nombre, categoria: product.categoria }, 'product/[id]');
+    // Meta ViewContent — una sola vez por producto (deps [product?.id]). Se omite
+    // en productos bloqueados por tabaco en iOS (cumplimiento §1.4.3): no enviamos
+    // eventos de producto para categorías que la app no puede mostrar en esa
+    // tienda. Usamos precio_app (no la oferta por params) por estabilidad — es la
+    // señal de interés que Meta necesita en la parte alta del embudo.
+    if (!productoBloqueadoIOS) {
+      metaLogViewContent(product.id, product.precio_app);
+    }
     return () => {
       const segundos = Math.round((Date.now() - entrada) / 1000);
       if (segundos > 2) tracker.track('tiempo_en_producto', { producto_id: product.id, segundos }, 'product/[id]');

@@ -8,6 +8,8 @@
  *
  * Eventos estándar que dispara:
  *   - CompleteRegistration  (registro completado)
+ *   - ViewContent           (ver detalle de un producto)
+ *   - Search                (búsqueda efectiva)
  *   - AddedToCart           (agregar al carrito)
  *   - InitiateCheckout      (toca "Confirmar pedido" — intención de compra)
  *   - Purchase              (pedido creado) -> logPurchase dedicado
@@ -32,8 +34,12 @@ const PARAM_CURRENCY = "fb_currency";
 const PARAM_CONTENT_ID = "fb_content_id";
 const PARAM_CONTENT_TYPE = "fb_content_type";
 const PARAM_NUM_ITEMS = "fb_num_items";
+const PARAM_SEARCH_STRING = "fb_search_string";
+const PARAM_SUCCESS = "fb_success";
 
 const EVENT_COMPLETE_REGISTRATION = "fb_mobile_complete_registration";
+const EVENT_VIEW_CONTENT = "fb_mobile_content_view";
+const EVENT_SEARCH = "fb_mobile_search";
 const EVENT_ADD_TO_CART = "fb_mobile_add_to_cart";
 const EVENT_INITIATED_CHECKOUT = "fb_mobile_initiated_checkout";
 
@@ -118,6 +124,43 @@ export function metaLogRegistration(): void {
     });
   } catch (err) {
     if (__DEV__) console.warn("[metaEvents] logRegistration falló:", err);
+  }
+}
+
+/**
+ * Evento de ver contenido (el usuario abre el detalle de un producto). Meta lo
+ * usa como señal de interés en la parte alta del embudo (retargeting / lookalike).
+ * valor = precio que el usuario ve en pantalla (con oferta si aplica). Se dispara
+ * una sola vez por producto visto (no en cada render de lista) — el call-site lo
+ * engancha en el efecto que corre al cambiar el id del producto.
+ */
+export function metaLogViewContent(productoId: number, precio: number): void {
+  try {
+    AppEventsLogger.logEvent(EVENT_VIEW_CONTENT, precio, {
+      [PARAM_CONTENT_ID]: String(productoId),
+      [PARAM_CONTENT_TYPE]: "product",
+      [PARAM_CURRENCY]: CURRENCY,
+    });
+  } catch (err) {
+    if (__DEV__) console.warn("[metaEvents] logViewContent falló:", err);
+  }
+}
+
+/**
+ * Evento de búsqueda. Se dispara una vez por búsqueda EFECTIVA (con debounce en
+ * el call-site, no por cada tecla). `exito` indica si hubo resultados — Meta lo
+ * usa para calibrar la intención. No lleva `value`: la búsqueda no tiene precio.
+ */
+export function metaLogSearch(consulta: string, exito: boolean): void {
+  try {
+    AppEventsLogger.logEvent(EVENT_SEARCH, {
+      [PARAM_SEARCH_STRING]: consulta,
+      [PARAM_CONTENT_TYPE]: "product",
+      [PARAM_SUCCESS]: exito ? 1 : 0,
+      [PARAM_CURRENCY]: CURRENCY,
+    });
+  } catch (err) {
+    if (__DEV__) console.warn("[metaEvents] logSearch falló:", err);
   }
 }
 
