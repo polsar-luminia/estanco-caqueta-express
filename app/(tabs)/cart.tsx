@@ -19,6 +19,7 @@ import { TruckIcon, TagIcon } from "../../src/components/icons/AppIcons";
 import { CartIcon } from "../../src/components/icons/TabIcons";
 import { formatCOP } from "../../src/lib/format";
 import { CartItem } from "../../src/components/CartItem";
+import { BandaCerrado } from "../../src/components/BandaCerrado";
 import { colors, shadows } from "../../src/constants/theme";
 
 function ChevronRightIcon() {
@@ -661,21 +662,8 @@ export default function CartScreen() {
           elevation: 10,
         }}
       >
-        {/* Banner cerrado */}
-        {!tienda.abierta && (
-          <View
-            className="flex-row items-center px-4 py-3 rounded-xl mb-3"
-            style={{ backgroundColor: "#1A1C1A" }}
-          >
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#6B7280", marginRight: 10 }} />
-            <View className="flex-1">
-              <Text style={{ fontSize: 12, fontWeight: "700", color: "#fff" }}>Estamos cerrados ahora</Text>
-              <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 1 }}>
-                {tienda.proximaApertura}
-              </Text>
-            </View>
-          </View>
-        )}
+        {/* Banda de tienda cerrada (versión compacta, sin horario) */}
+        <BandaCerrado tienda={tienda} compact style={{ marginBottom: 12 }} />
 
         <View className="flex-row justify-between items-end mb-4">
           <View>

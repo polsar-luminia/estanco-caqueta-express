@@ -14,6 +14,7 @@ import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
 import { ProductCard } from "../../src/components/ProductCard";
 import { CategoryStrip } from "../../src/components/CategoryStrip";
+import { BandaCerrado } from "../../src/components/BandaCerrado";
 import { ShimmerImage } from "../../src/components/ShimmerImage";
 import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
 import { CategoryStripSkeleton } from "../../src/components/skeletons/CategoryStripSkeleton";
@@ -346,43 +347,8 @@ export default function HomeScreen() {
           </View>
         ) : (
           <>
-            {/* Banner cerrado */}
-            {!tienda.abierta && (
-              <View
-                className="mx-4 mt-3 rounded-xl overflow-hidden"
-                style={{ backgroundColor: "#1A1C1A" }}
-              >
-                {/* Fila principal */}
-                <View className="flex-row items-center px-4 pt-4 pb-3">
-                  <View
-                    style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#6B7280", marginRight: 10 }}
-                  />
-                  <View className="flex-1">
-                    <Text style={{ fontSize: 13, fontWeight: "700", color: "#fff" }}>
-                      Estamos cerrados
-                    </Text>
-                    <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 1 }}>
-                      {tienda.proximaApertura} · Puedes explorar el catálogo
-                    </Text>
-                  </View>
-                </View>
-                {/* Horarios */}
-                <View
-                  style={{ borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)", marginHorizontal: 16, paddingVertical: 10, gap: 5 }}
-                >
-                  {[
-                    { dias: "Lun – Jue", hora: "8:00 am – 7:00 pm" },
-                    { dias: "Vie – Sáb", hora: "8:00 am – 12:00 am" },
-                    { dias: "Domingo",   hora: "9:00 am – 4:30 pm" },
-                  ].map(({ dias, hora }) => (
-                    <View key={dias} style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                      <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>{dias}</Text>
-                      <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: "600" }}>{hora}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
+            {/* Banda de tienda cerrada — motivo/estilo lo decide el backend */}
+            <BandaCerrado tienda={tienda} style={{ marginHorizontal: 16, marginTop: 12 }} />
 
             {/* Categorías — arriba del hero (intención de compra primero) */}
             <View className="px-4 pt-5 pb-2">
