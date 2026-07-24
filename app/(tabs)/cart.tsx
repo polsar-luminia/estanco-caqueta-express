@@ -310,6 +310,10 @@ export default function CartScreen() {
       metaLogPurchase(pedido.total, { pedidoId: pedido.id, numItems: items.length });
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });
       queryClient.invalidateQueries({ queryKey: ["cupones-disponibles"] });
+      // El cupo de los productos con máximo por cliente acaba de consumirse: sin esto
+      // la ficha serviría el cupo viejo (staleTime 5 min) y dejaría agregar de nuevo
+      // para rebotar al pagar.
+      queryClient.invalidateQueries({ queryKey: ["producto"] });
       // Refrescar perfil antes de limpiar carrito (si falla, no afecta el pedido)
       const { getPerfil } = await import("../../src/lib/api");
       let clienteActualizado;

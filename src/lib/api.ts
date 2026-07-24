@@ -369,9 +369,17 @@ export interface Producto {
   categoria: string;
   categoria_id?: number;
   stock_total: number;
-  // Máximo de unidades por cliente. El backend lo expone (non-null) SOLO cuando
-  // el producto tiene una oferta activa; fuera de oferta llega null y no aplica.
+  // Máximo de unidades por cliente. Es atributo del producto: aplica SIEMPRE que
+  // esté configurado, haya o no oferta activa.
   max_unidades_por_cliente?: number | null;
+  // Ventana móvil (días) sobre la que se acumula el máximo. Llega junto al tope.
+  limite_ventana_dias?: number | null;
+  // Consumo del cliente en la ventana. Solo llegan con sesión iniciada (el detalle
+  // de producto usa auth opcional); anónimo llegan undefined y solo se muestra la regla.
+  limite_ya_comprado?: number | null;
+  limite_disponible?: number | null;
+  // ISO. Solo viene cuando limite_disponible === 0: cuándo se le libera cupo.
+  limite_disponible_desde?: string | null;
   badge?: string;
   // Badge editable desde DB/admin (solo lo trae /catalogo/destacados).
   badge_texto?: string | null;

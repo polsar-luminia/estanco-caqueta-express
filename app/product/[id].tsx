@@ -220,10 +220,29 @@ export default function ProductDetailScreen() {
 
   const inStock = product.stock_total > 0;
   const stockMax = product.stock_total;
-  // Máximo por cliente (solo llega non-null con oferta activa). El tope efectivo
-  // del selector es el menor entre el stock y este límite.
+  // Máximo por cliente: aplica siempre que el producto lo tenga configurado, haya o
+  // no oferta activa. Se acumula sobre una ventana móvil de `ventanaDias`.
   const maxCliente = product.max_unidades_por_cliente ?? undefined;
-  const topeEfectivo = Math.min(stockMax, maxCliente ?? Infinity);
+  const ventanaDias = product.limite_ventana_dias ?? undefined;
+  // Con sesión el backend dice cuánto le queda al cliente en la ventana; sin sesión
+  // solo conocemos el tope y asumimos el cupo completo.
+  const cupoRestante = product.limite_disponible ?? maxCliente;
+  const yaComprado = product.limite_ya_comprado ?? 0;
+  // El selector topa en lo que el cliente REALMENTE puede llevar hoy, no en el máximo
+  // teórico: si ya lleva 1 de 2, el tope es 1 (antes dejaba pedir 2 y rebotaba al pagar).
+  const topeEfectivo = Math.min(stockMax, cupoRestante ?? Infinity);
+  const sinCupo = maxCliente != null && cupoRestante === 0;
+  // Sin cupo el botón se bloquea igual que con stock agotado: agregar 1 unidad solo
+  // para que el checkout la rechace es la experiencia que estamos quitando.
+  const puedeAgregar = inStock && !sinCupo;
+
+  // "puedes volver a pedir el 29 de julio" — solo llega cuando ya agotó el cupo.
+  const liberaTexto = product.limite_disponible_desde
+    ? new Date(product.limite_disponible_desde).toLocaleDateString("es-CO", {
+        day: "numeric",
+        month: "long",
+      })
+    : null;
 
   const ofertaParseada = ofertaPrecio ? Number(ofertaPrecio) : NaN;
   const ofertaValida = Number.isFinite(ofertaParseada) && ofertaParseada > 0 && ofertaParseada < product.precio_app;
@@ -254,8 +273,13 @@ export default function ProductDetailScreen() {
     setQuantity((q) => {
       if (q >= topeEfectivo) {
         // Distinguir si el tope lo impone el máximo por cliente o el stock.
-        if (maxCliente != null && topeEfectivo === maxCliente) {
-          Toast.show({ type: "info", text1: `Máximo ${maxCliente} por cliente en esta promoción` });
+        if (maxCliente != null && topeEfectivo === cupoRestante) {
+          Toast.show({
+            type: "info",
+            text1: yaComprado > 0
+              ? `Ya llevaste ${yaComprado} de ${maxCliente} en los últimos ${ventanaDias} días`
+              : `Máximo ${maxCliente} por cliente cada ${ventanaDias} días`,
+          });
         } else {
           Toast.show({ type: "info", text1: `Solo quedan ${Math.floor(stockMax)} unidades` });
         }
@@ -362,11 +386,15 @@ export default function ProductDetailScreen() {
             </Text>
           </View>
 
-          {/* Aviso de máximo por cliente — solo llega con oferta activa */}
+          {/* Aviso de máximo por cliente. Aplica haya o no oferta activa. Con sesión
+              iniciada dice además cuánto le queda y, si ya lo agotó, desde cuándo
+              puede volver a pedir — para que no se entere apenas al pagar. */}
           {maxCliente != null ? (
             <View className="flex-row items-center self-start rounded-full px-3 py-1" style={{ backgroundColor: "#FDECEF" }}>
               <Text className="text-xs font-semibold" style={{ color: colors.offer }}>
-                Máximo {maxCliente} {maxCliente === 1 ? "unidad" : "unidades"} por cliente en esta promoción
+                {sinCupo && liberaTexto
+                  ? `Ya llevaste ${maxCliente} ${maxCliente === 1 ? "unidad" : "unidades"} — puedes volver a pedir el ${liberaTexto}`
+                  : `Máximo ${maxCliente} ${maxCliente === 1 ? "unidad" : "unidades"} por cliente cada ${ventanaDias} días`}
               </Text>
             </View>
           ) : null}
@@ -483,21 +511,22 @@ export default function ProductDetailScreen() {
       >
         <Pressable
           onPress={handleAdd}
-          disabled={!inStock}
+          disabled={!puedeAgregar}
           accessibilityRole="button"
           accessibilityLabel="Agregar al carrito"
           style={{
-            backgroundColor: inStock ? colors.green : "#D1D5DB",
+            backgroundColor: puedeAgregar ? colors.green : "#D1D5DB",
             borderRadius: 14,
             paddingVertical: 15, paddingHorizontal: 18,
             flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-            ...(inStock ? shadows.greenBtn : {}),
+            ...(puedeAgregar ? shadows.greenBtn : {}),
           }}
         >
           <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>
-            {inStock ? "Agregar al carrito" : "Agotado"}{inStock && quantity > 1 ? ` · ${quantity}` : ""}
+            {!inStock ? "Agotado" : sinCupo ? "Límite alcanzado" : "Agregar al carrito"}
+            {puedeAgregar && quantity > 1 ? ` · ${quantity}` : ""}
           </Text>
-          {inStock && (
+          {puedeAgregar && (
             <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>
               {formatCOP(precioActivo * quantity)}
             </Text>
