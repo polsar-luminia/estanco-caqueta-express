@@ -206,7 +206,14 @@ export function metaLogPurchase(
   opts: { pedidoId: number; numItems: number },
 ): void {
   try {
-    AppEventsLogger.logPurchase(total, CURRENCY, {
+    // Defensa: el `total` puede venir como string (numeric de Postgres). logPurchase de
+    // Meta espera un number; con string el evento se cae en silencio y no se mide la venta.
+    const monto = Number(total);
+    if (!Number.isFinite(monto) || monto <= 0) {
+      if (__DEV__) console.warn("[metaEvents] logPurchase: total inválido, se omite", total);
+      return;
+    }
+    AppEventsLogger.logPurchase(monto, CURRENCY, {
       order_id: String(opts.pedidoId),
       [PARAM_NUM_ITEMS]: opts.numItems,
       [PARAM_CONTENT_TYPE]: "product",
