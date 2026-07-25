@@ -172,4 +172,74 @@ describe("useCartStore", () => {
     expect(b?.cantidad).toBe(1);
     expect(b?.stockMaximo).toBeUndefined();
   });
+
+  // ── máximo por cliente ─────────────────────────────────────────────────────
+
+  it("capEfectivo topa por maxPorCliente cuando es menor que el stock", () => {
+    // Caso real: Aguardiente Amarillo, stock 42 pero límite 2 por cliente.
+    useCartStore.getState().addItemWithQuantity(
+      { ...PRODUCT_A, stockMaximo: 42, maxPorCliente: 2 },
+      10,
+    );
+    expect(useCartStore.getState().items[0].cantidad).toBe(2);
+  });
+
+  it("addItem respeta el maxPorCliente al incrementar sobre un ítem existente", () => {
+    useCartStore.getState().addItem({ ...PRODUCT_A, stockMaximo: 42, maxPorCliente: 2 });
+    useCartStore.getState().addItem({ ...PRODUCT_A, stockMaximo: 42, maxPorCliente: 2 });
+    useCartStore.getState().addItem({ ...PRODUCT_A, stockMaximo: 42, maxPorCliente: 2 });
+    expect(useCartStore.getState().items[0].cantidad).toBe(2);
+  });
+
+  it("updateQuantity clampa al maxPorCliente aunque haya stock de sobra", () => {
+    useCartStore.getState().addItemWithQuantity({ ...PRODUCT_A, stockMaximo: 42, maxPorCliente: 2 }, 1);
+    useCartStore.getState().updateQuantity(1, 5);
+    expect(useCartStore.getState().items[0].cantidad).toBe(2);
+  });
+
+  // ── updateLimites ──────────────────────────────────────────────────────────
+
+  it("updateLimites baja la cantidad cuando el cupo restante es menor", () => {
+    // El carrito se armó con el tope teórico (2); el cliente ya llevó 1 esta semana,
+    // así que al refrescar solo puede quedarse con 1.
+    useCartStore.getState().addItemWithQuantity({ ...PRODUCT_A, stockMaximo: 42, maxPorCliente: 2 }, 2);
+    useCartStore.getState().updateLimites(new Map<number, number | null>([[1, 1]]));
+    const { items } = useCartStore.getState();
+    expect(items[0].cantidad).toBe(1);
+    expect(items[0].maxPorCliente).toBe(1);
+  });
+
+  it("updateLimites elimina el ítem cuando el cupo se agotó", () => {
+    useCartStore.getState().addItemWithQuantity({ ...PRODUCT_A, stockMaximo: 42, maxPorCliente: 2 }, 2);
+    useCartStore.getState().addItem(PRODUCT_B);
+    useCartStore.getState().updateLimites(new Map<number, number | null>([[1, 0]]));
+    const { items } = useCartStore.getState();
+    expect(items).toHaveLength(1);
+    expect(items[0].productoId).toBe(2);
+  });
+
+  it("updateLimites con null quita el límite (producto sin tope desde el admin)", () => {
+    useCartStore.getState().addItemWithQuantity({ ...PRODUCT_A, stockMaximo: 42, maxPorCliente: 2 }, 2);
+    useCartStore.getState().updateLimites(new Map<number, number | null>([[1, null]]));
+    const { items } = useCartStore.getState();
+    expect(items[0].maxPorCliente).toBeUndefined();
+    expect(items[0].cantidad).toBe(2);
+  });
+
+  it("updateLimites aplica el cap a un carrito armado sin límite (caso Ofertas)", () => {
+    // GET /ofertas no exponía el tope: el ítem entraba sin cap con 8 unidades.
+    useCartStore.getState().addItemWithQuantity({ ...PRODUCT_A, stockMaximo: 42 }, 8);
+    expect(useCartStore.getState().items[0].cantidad).toBe(8);
+    useCartStore.getState().updateLimites(new Map<number, number | null>([[1, 2]]));
+    expect(useCartStore.getState().items[0].cantidad).toBe(2);
+  });
+
+  it("updateLimites no toca items que no estén en el map", () => {
+    useCartStore.getState().addItemWithQuantity(PRODUCT_A, 2);
+    useCartStore.getState().addItemWithQuantity(PRODUCT_B, 3);
+    useCartStore.getState().updateLimites(new Map<number, number | null>([[1, 1]]));
+    const b = useCartStore.getState().items.find((i) => i.productoId === 2);
+    expect(b?.cantidad).toBe(3);
+    expect(b?.maxPorCliente).toBeUndefined();
+  });
 });
