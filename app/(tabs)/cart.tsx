@@ -42,6 +42,7 @@ export default function CartScreen() {
   const clear = useCartStore((s) => s.clear);
   const updatePrices = useCartStore((s) => s.updatePrices);
   const updateStocks = useCartStore((s) => s.updateStocks);
+  const updateLimites = useCartStore((s) => s.updateLimites);
   const cliente = useAuthStore((s) => s.cliente);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
@@ -59,25 +60,36 @@ export default function CartScreen() {
     if (items.length === 0 || productosCheck.some((q) => q.isLoading)) return;
     const priceMap = new Map<number, number>();
     const stockMap = new Map<number, number>();
+    const limitMap = new Map<number, number | null>();
     let huboCambioPrecio = false;
     let huboCambioStock = false;
+    let huboCambioLimite = false;
     productosCheck.forEach((q, idx) => {
       if (q.data && items[idx]) {
         // M-CART-19: usar precio_vigente (con oferta aplicada) para no revertir
         // el precio de oferta al precio full. Fallback a precio_app si el backend
         // aún no expone el campo.
-        const nuevoPrecio = q.data.precio_vigente ?? q.data.precio_app;
-        const nuevoStock = q.data.stock_total ?? 0;
+        // Number(): node-postgres devuelve los numeric como string ("19999.00"), y
+        // comparar string vs number marcaría "cambió" en cada apertura del carrito.
+        const nuevoPrecio = Number(q.data.precio_vigente ?? q.data.precio_app);
+        const nuevoStock = Number(q.data.stock_total ?? 0);
         if (nuevoPrecio !== items[idx].precioUnitario) huboCambioPrecio = true;
         priceMap.set(items[idx].productoId, nuevoPrecio);
         const stockActual = items[idx].stockMaximo ?? Infinity;
         const cantidadActual = items[idx].cantidad;
         if (nuevoStock !== stockActual || nuevoStock < cantidadActual) huboCambioStock = true;
         stockMap.set(items[idx].productoId, nuevoStock);
+        // Cupo por cliente: el refetch corre con sesión, así que trae limite_disponible.
+        // Antes este dato llegaba y se botaba, y un carrito armado sin cap (p.ej. desde
+        // Ofertas) nunca lo ganaba. null = el producto ya no tiene límite.
+        const nuevoLimite = q.data.limite_disponible ?? q.data.max_unidades_por_cliente ?? null;
+        if (nuevoLimite !== (items[idx].maxPorCliente ?? null)) huboCambioLimite = true;
+        limitMap.set(items[idx].productoId, nuevoLimite);
       }
     });
     if (huboCambioPrecio) updatePrices(priceMap);
     if (huboCambioStock) updateStocks(stockMap);
+    if (huboCambioLimite) updateLimites(limitMap);
     if (huboCambioPrecio || huboCambioStock) {
       Toast.show({
         type: "info",
@@ -314,6 +326,8 @@ export default function CartScreen() {
       // la ficha serviría el cupo viejo (staleTime 5 min) y dejaría agregar de nuevo
       // para rebotar al pagar.
       queryClient.invalidateQueries({ queryKey: ["producto"] });
+      // Mismo motivo para el resumen de cupos que consumen las cards de los listados.
+      queryClient.invalidateQueries({ queryKey: ["mis-limites"] });
       // Refrescar perfil antes de limpiar carrito (si falla, no afecta el pedido)
       const { getPerfil } = await import("../../src/lib/api");
       let clienteActualizado;

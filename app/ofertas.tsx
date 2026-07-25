@@ -15,6 +15,7 @@ import { ProductGridSkeleton } from "../src/components/skeletons/ProductGridSkel
 import { ErrorState } from "../src/components/ErrorState";
 import { useAuthStore } from "../src/stores/auth";
 import { useCartStore } from "../src/stores/cart";
+import { useLimitesCliente } from "../src/hooks/useLimitesCliente";
 import { formatCOP } from "../src/lib/format";
 import { getCatVisuals } from "../src/lib/catVisuals";
 import { colors } from "../src/constants/theme";
@@ -36,20 +37,33 @@ function ChevronLeftIcon() {
 // Card oscura para la sección Relámpago (fondo rojo) — NO usa ProductCard
 function FlashCard({ oferta }: { oferta: Oferta }) {
   const addItem = useCartStore((s) => s.addItem);
+  const { cupoDe, ventanaDias } = useLimitesCliente();
   const { gradient, emoji } = getCatVisuals(oferta.producto.categoria);
   const precioOferta = oferta.precio_oferta ?? oferta.producto.precio_app;
   const precioBase = oferta.precio_anterior ?? oferta.producto.precio_app;
   const saving = precioBase - precioOferta;
+  // Mismo tratamiento que ProductCard: el cupo real manda sobre el tope teórico.
+  const cupo = cupoDe(oferta.producto.id);
+  const sinCupo = cupo === 0;
 
   const handleAdd = () => {
     if ((oferta.producto.stock_total ?? 0) <= 0) return;
+    if (sinCupo) {
+      Toast.show({
+        type: "info",
+        text1: "Ya llevaste el máximo",
+        text2: `Solo puedes llevar ${oferta.producto.max_unidades_por_cliente} cada ${ventanaDias} días`,
+        visibilityTime: 2500,
+      });
+      return;
+    }
     addItem({
       productoId: oferta.producto.id,
       nombre: oferta.producto.nombre,
       precioUnitario: precioOferta,
       imagenUrl: oferta.producto.imagen_url || undefined,
       stockMaximo: oferta.producto.stock_total,
-      maxPorCliente: oferta.producto.max_unidades_por_cliente ?? undefined,
+      maxPorCliente: cupo ?? oferta.producto.max_unidades_por_cliente ?? undefined,
     });
     Toast.show({
       type: "success",

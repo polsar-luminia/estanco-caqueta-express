@@ -19,7 +19,10 @@ export interface CartItem {
 
 // Cap efectivo de un ítem: el menor entre el stock disponible y el máximo por
 // cliente (cuando aplica). Enforcea ambos límites con una sola cuenta.
-const capEfectivo = (stockMaximo?: number, maxPorCliente?: number) =>
+// Exportada porque la UI (CartItem) necesita el MISMO número para decidir si el
+// botón "+" va deshabilitado: si la UI solo mira el stock, el tap llega al store,
+// el store lo clampa y el usuario ve un botón activo que no hace nada.
+export const capEfectivo = (stockMaximo?: number, maxPorCliente?: number) =>
   Math.min(stockMaximo ?? Infinity, maxPorCliente ?? Infinity);
 
 interface CartState {
@@ -40,6 +43,7 @@ interface CartState {
   setDireccionId: (id: number | null) => void;
   updatePrices: (map: Map<number, number>) => void;
   updateStocks: (map: Map<number, number>) => void;
+  updateLimites: (map: Map<number, number | null>) => void;
 
   // Computed
   getTotal: () => number;
@@ -153,6 +157,25 @@ export const useCartStore = create<CartState>()(
             const nuevaCantidad = Math.min(i.cantidad, nuevoStock);
             if (nuevaCantidad === i.cantidad && i.stockMaximo === nuevoStock) return [i];
             return [{ ...i, cantidad: nuevaCantidad, stockMaximo: nuevoStock }];
+          }),
+        })),
+
+      // Refresca el cupo por cliente de los ítems del carrito y re-clampa la cantidad.
+      // El carrito se persiste en AsyncStorage y puede haberse armado desde una pantalla
+      // que no conocía el cupo (o antes de que el cliente gastara parte de él), así que
+      // sin esto un ítem podía quedar con una cantidad que el checkout va a rechazar.
+      // `null` en el mapa = el producto ya no tiene límite (se le quitó desde el admin).
+      updateLimites: (map) =>
+        set((state) => ({
+          items: state.items.flatMap((i) => {
+            if (!map.has(i.productoId)) return [i];
+            const nuevoMax = map.get(i.productoId) ?? undefined;
+            const nuevaCantidad = Math.min(i.cantidad, capEfectivo(i.stockMaximo, nuevoMax));
+            // Cupo agotado: el ítem no puede ir en este pedido. Se saca del carrito,
+            // igual que hace updateStocks con un producto sin stock.
+            if (nuevaCantidad <= 0) return [];
+            if (nuevaCantidad === i.cantidad && i.maxPorCliente === nuevoMax) return [i];
+            return [{ ...i, cantidad: nuevaCantidad, maxPorCliente: nuevoMax }];
           }),
         })),
 

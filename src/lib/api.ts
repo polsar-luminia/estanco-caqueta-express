@@ -711,8 +711,24 @@ export async function getEstadoTienda(): Promise<EstadoTienda> {
   return apiFetch<EstadoTienda>("/tienda/estado");
 }
 
-export async function getConfigApp(): Promise<{ envio_gratis_minimo: number; envio_costo: number; pedido_minimo: number }> {
+export async function getConfigApp(): Promise<{ envio_gratis_minimo: number; envio_costo: number; pedido_minimo: number; limite_ventana_dias?: number }> {
   return apiFetch('/configuracion-app');
+}
+
+// Cupo restante del cliente para los productos con máximo por cliente. Existe porque
+// los listados (inicio, buscar, categoría, ofertas) exponen el tope pero no el consumo:
+// sin esto, un cliente que ya agotó su cupo podía agregar igual desde una card y solo
+// se enteraba del rechazo al pagar. La ficha sigue siendo la fuente detallada.
+export interface LimiteCliente {
+  producto_id: number;
+  max: number;
+  ya_comprado: number;
+  disponible: number;
+}
+
+export async function getMisLimites(): Promise<LimiteCliente[]> {
+  const res = await apiFetch<{ limites: LimiteCliente[] }>("/catalogo/mis-limites");
+  return res.limites ?? [];
 }
 
 export interface Combo {

@@ -177,7 +177,9 @@ function OrderCard({ item }: { item: Pedido }) {
           precioUnitario: producto.precio_app,
           imagenUrl: producto.imagen_url,
           stockMaximo: producto.stock_total,
-          maxPorCliente: producto.max_unidades_por_cliente ?? undefined,
+          // getProducto corre con sesión, así que trae limite_disponible: reordenar un
+          // pedido viejo debe topar en el cupo que le queda hoy, no en el tope teórico.
+          maxPorCliente: producto.limite_disponible ?? producto.max_unidades_por_cliente ?? undefined,
         }, linea.cantidad);
       }
 

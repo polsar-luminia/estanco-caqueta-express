@@ -257,7 +257,10 @@ export default function ProductDetailScreen() {
       precioUnitario: precioActivo,
       imagenUrl: product.imagen_url || undefined,
       stockMaximo: product.stock_total,
-      maxPorCliente: maxCliente,
+      // El cupo REAL (lo que le queda hoy), no el tope teórico: si ya llevó 1 de 2, el
+      // carrito debe topar en 1. Con el tope teórico el selector de la ficha topaba bien
+      // pero el "+" del carrito volvía a dejar subir a 2 y rebotaba al pagar.
+      maxPorCliente: cupoRestante,
     }, quantity);
     Toast.show({
       type: "success",
@@ -462,7 +465,9 @@ export default function ProductDetailScreen() {
                   shadowOpacity: 0.08,
                   shadowRadius: 4,
                   elevation: 2,
-                  opacity: quantity >= stockMax ? 0.4 : 1,
+                  // topeEfectivo (no stockMax): con límite 2 y stock 42 el botón debe
+                  // verse apagado en 2, coherente con lo que el toast ya explicaba.
+                  opacity: quantity >= topeEfectivo ? 0.4 : 1,
                 }}
                 accessibilityLabel="Aumentar cantidad"
               >

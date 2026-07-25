@@ -1,6 +1,7 @@
 import { View, Text, Pressable } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import { useCartStore, type CartItem as CartItemType } from "../stores/cart";
+import { useCartStore, capEfectivo, type CartItem as CartItemType } from "../stores/cart";
+import { useLimitesCliente } from "../hooks/useLimitesCliente";
 import { formatCOP } from "../lib/format";
 import { ShimmerImage } from "./ShimmerImage";
 import { colors } from "../constants/theme";
@@ -28,6 +29,15 @@ interface Props {
 
 export function CartItem({ item }: Props) {
   const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const { ventanaDias } = useLimitesCliente();
+
+  // Tope real del "+": el menor entre stock y cupo por cliente. Antes solo miraba el
+  // stock, así que con límite 2 y stock 42 el botón se veía activo en 2, el tap llegaba
+  // al store, el store lo clampaba y no pasaba nada visible — un tap muerto sin mensaje.
+  const tope = capEfectivo(item.stockMaximo, item.maxPorCliente);
+  const enTope = item.cantidad >= tope;
+  // ¿Quién muerde primero? Define qué mensaje mostrar.
+  const topeEsPorCliente = item.maxPorCliente != null && item.maxPorCliente <= (item.stockMaximo ?? Infinity);
 
   return (
     <View
@@ -90,16 +100,23 @@ export function CartItem({ item }: Props) {
           onPress={() => {
             const current = useCartStore.getState().items.find((i) => i.productoId === item.productoId);
             if (!current) return;
-            const max = current.stockMaximo ?? Infinity;
-            if (current.cantidad >= max) {
-              Toast.show({ type: "info", text1: `Solo quedan ${max} unidades` });
+            const maxActual = capEfectivo(current.stockMaximo, current.maxPorCliente);
+            if (current.cantidad >= maxActual) {
+              Toast.show({
+                type: "info",
+                text1: topeEsPorCliente
+                  ? `Máximo ${current.maxPorCliente} por cliente cada ${ventanaDias} días`
+                  : `Solo quedan ${maxActual} unidades`,
+              });
               return;
             }
             updateQuantity(item.productoId, current.cantidad + 1);
           }}
-          disabled={item.stockMaximo != null && item.cantidad >= item.stockMaximo}
+          // A propósito NO va `disabled`: atenuado pero tappable. Un botón deshabilitado
+          // no dispara onPress y el cliente se queda sin saber POR QUÉ no puede subir.
+          // Mismo patrón que el selector de la ficha de producto.
           className="items-center justify-center"
-          style={{ padding: 4, opacity: item.stockMaximo != null && item.cantidad >= item.stockMaximo ? 0.4 : 1 }}
+          style={{ padding: 4, opacity: enTope ? 0.4 : 1 }}
           accessibilityLabel="Aumentar cantidad"
           accessibilityRole="button"
         >
