@@ -13,6 +13,7 @@
 import { AppState, AppStateStatus } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import { getToken } from './api';
+import { obtenerDeviceId } from './deviceId';
 import { API_URL } from '../constants/config';
 
 const API_BASE = API_URL;
@@ -156,7 +157,7 @@ class Tracker {
       return;
     }
     try {
-      const token = await getToken();
+      const [token, deviceId] = await Promise.all([getToken(), obtenerDeviceId()]);
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5_000);
       try {
@@ -165,6 +166,9 @@ class Tracker {
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            // Sin sesion el backend rechazaba el batch con 401 y se perdia todo el
+            // uso previo al registro. Con este header lo acepta como anonimo.
+            'X-Device-Id': deviceId,
           },
           body,
           signal: controller.signal,
