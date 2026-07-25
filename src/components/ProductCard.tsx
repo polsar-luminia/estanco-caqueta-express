@@ -4,6 +4,7 @@ import Toast from "react-native-toast-message";
 import { formatCOP } from "../lib/format";
 import { useCartStore } from "../stores/cart";
 import { useScalePress } from "../hooks/useScalePress";
+import { useLimitesCliente } from "../hooks/useLimitesCliente";
 import { ShimmerImage } from "./ShimmerImage";
 import { colors, radii, shadows } from "../constants/theme";
 import type { Producto } from "../lib/api";
@@ -34,8 +35,14 @@ interface Props {
 export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, oferta, priority = "normal" }: Props) {
   const addItem = useCartStore((s) => s.addItem);
   const { animatedStyle, onPressIn, onPressOut } = useScalePress();
+  const { cupoDe, ventanaDias } = useLimitesCliente();
 
   const agotado = (product.stock_total ?? 0) <= 0;
+  // Cupo real del cliente en la ventana. Sin sesión llega undefined y caemos al tope
+  // del producto: seguimos topando, solo que sin descontar lo que ya llevó.
+  const cupo = cupoDe(product.id);
+  const maxPorCliente = cupo ?? product.max_unidades_por_cliente ?? undefined;
+  const sinCupo = cupo === 0;
 
   // Precio efectivo: precio_oferta tiene prioridad sobre precio_app si está
   // definido. Para el carrito siempre usamos el efectivo (no doble cargo).
@@ -45,13 +52,24 @@ export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, o
 
   const handleAdd = () => {
     if (agotado) return;
+    // Cupo agotado: no agregar. Meter 1 unidad para que el checkout la rechace es
+    // exactamente la experiencia que estamos quitando.
+    if (sinCupo) {
+      Toast.show({
+        type: "info",
+        text1: "Ya llevaste el máximo",
+        text2: `Solo puedes llevar ${product.max_unidades_por_cliente} cada ${ventanaDias} días`,
+        visibilityTime: 2500,
+      });
+      return;
+    }
     addItem({
       productoId: product.id,
       nombre: product.nombre,
       precioUnitario: precioEfectivo,
       imagenUrl: product.imagen_url || undefined,
       stockMaximo: product.stock_total,
-      maxPorCliente: product.max_unidades_por_cliente ?? undefined,
+      maxPorCliente,
     });
     Toast.show({
       type: "success",
