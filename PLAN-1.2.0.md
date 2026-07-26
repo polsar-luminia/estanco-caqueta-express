@@ -1,12 +1,18 @@
 # Plan de release 1.2.0 — Estanco Caquetá Express
 
-> Acordado 2026-07-25. **Ejecución: semana del 27-jul (lunes).** El fin de semana no se toca nada.
+> Acordado 2026-07-25. **Ejecución: desde el lunes 27-jul.** El fin de semana no se toca nada.
 > Sustituye a `PLAN-3-FUNCIONALIDADES.md`.
+>
+> **Cambio 2026-07-26 — entrega en un solo release.** Nada sale por OTA parcial. Los ocho bloques
+> se construyen completos y salen **juntos en el binario 1.2.0**, listo para la **segunda semana**
+> (3–7 ago). Semana 1 = construir, semana 2 = QA, build y publicación.
+> **Única excepción:** el OTA del candado dormido del bloque G — no es una funcionalidad, es lo que
+> hace que el bloqueo de versión funcione sobre los binarios viejos (ver G).
 
 ## Alcance
 
-Siete bloques. Los tres primeros son lo que pidió el negocio; los demás salieron de la
-investigación y de revisar los datos reales.
+Ocho bloques. Los tres primeros son lo que pidió el negocio; los demás salieron de la
+investigación y de revisar los datos reales. **H se agregó el 26-jul** a pedido del negocio.
 
 | | Bloque | Estado hoy |
 |---|---|---|
@@ -16,7 +22,10 @@ investigación y de revisar los datos reales.
 | **D** | Motor de tiempo estimado (ETA) | 0% |
 | **E** | Accesibilidad Nivel 1 | 25% de cobertura |
 | **F** | Ubicación obligatoria en checkout | Opcional hoy |
+| **H** | **Frío asegurado (+$1.000 opcional)** | 0% |
 | **G** | Release 1.2.0: build + bloqueo de versión | — |
+
+> G va de último porque es el cierre del release, no porque H dependa de él.
 
 ## Estado verificado (2026-07-25)
 
@@ -61,8 +70,10 @@ investigación y de revisar los datos reales.
 | Reseñas | Push al entregar + tarjeta en detalle + banner en Inicio |
 | Tarifa dinámica | **Montada pero apagada** (`NULL` = precio global de hoy) |
 | ETA | Motor completo con override manual; rangos anchos al inicio |
-| Librerías nativas | **Ninguna nueva** — todo debe poder viajar por OTA |
+| Entrega | **Un solo release.** Todo junto en el binario 1.2.0, vivo en la semana del 3-ago |
+| Librerías nativas | **Ninguna nueva** — mantiene la puerta abierta a parchar por OTA post-release |
 | Bloqueo de versión | Sí, tras 1.2.0 vivo en **ambas** tiendas |
+| Frío | **$1.000 por pedido** (no por producto ni por unidad), **un solo check** para todo lo elegible, y **se puede quitar el cargo** si no alcanzó a estar frío |
 
 ---
 
@@ -108,8 +119,15 @@ el envío server-side desde la zona del punto — el servidor es la autoridad, i
 
 ### Telemetría total (regla principal del proyecto — ver CLAUDE.md)
 
-Va en el bloque A porque es lo primero que se construye y porque **los cinco bloques siguientes
-dependen de tener el dato desde el día uno**. Sin esto, el viernes se decide sobre F a ciegas.
+Va en el bloque A porque es lo primero que se construye y porque **todos los bloques siguientes
+tienen que nacer instrumentados** — un evento que se olvida ahora no se recupera después.
+
+**Ojo con el cambio de entrega:** antes esto salía por OTA el día 1 y para el viernes había cinco
+días de números reales con los cuales decidir sobre F y H. Al ir todo en el binario, **los datos
+empiezan a llegar cuando 1.2.0 esté vivo, no antes**. La consecuencia práctica: `exigir_ubicacion`,
+`frio_activo` y `eta_visible_cliente` **no se prenden el día del lanzamiento**. Se publica 1.2.0 con
+las banderas apagadas, se dejan correr unos días de telemetría, y recién ahí se prende una por una.
+Las banderas viven en el servidor, así que esto no cuesta ningún deploy — solo paciencia.
 
 **A.1 — Versión de app en todos los eventos.** Agregar `app_version` (de `Updates.runtimeVersion`,
 que sale del binario y no se puede falsear por OTA) al payload de cada evento. Responde la pregunta
@@ -301,6 +319,133 @@ El único bloque con riesgo de venta. Lo que lo hace seguro es la bandera y las 
 
 ---
 
+# H — Frío asegurado
+
+El cliente paga **$1.000 opcionales** para que su pedido salga frío. Hoy le toca la suerte: si el
+producto que había en la nevera ya se despachó, le llega al clima. El cargo convierte eso en una
+promesa explícita — y por eso el bloque incluye la manera de **incumplirla sin cobrar**.
+
+### Decisiones (acordadas 26-jul)
+| Tema | Decisión | Por qué |
+|---|---|---|
+| Cobro | **$1.000 por pedido**, no por producto ni por unidad | Un cargo fijo se entiende de una; $1.000 × 6 cervezas mata el carrito |
+| Selección | **Un solo check** para todo lo elegible | El carrito es donde más gente se cae; un tap, no seis |
+| Elegibilidad | **Por categoría, con override por producto** | Aguardiente/cervezas/gaseosas sí; whisky de $300k no |
+| Si no alcanza a estar frío | **Quien alista quita el cargo** y el total baja | Es lo que hace que "asegurar" signifique algo |
+| Default | Bandera `frio_activo` **apagada** hasta probar | Es un cargo nuevo en el paso más frágil del funnel |
+
+### Esquema
+```sql
+-- Elegibilidad por categoria (default-deny: nada es frio hasta que alguien lo marque)
+ALTER TABLE categorias ADD COLUMN permite_frio boolean NOT NULL DEFAULT false;
+
+-- Override por producto: NULL = hereda la categoria · true = fuerza si · false = excluye
+ALTER TABLE productos  ADD COLUMN permite_frio boolean;
+
+-- Lo que se cobro de verdad, congelado en el pedido
+ALTER TABLE pedidos
+  ADD COLUMN frio            boolean NOT NULL DEFAULT false,
+  ADD COLUMN frio_costo      integer NOT NULL DEFAULT 0,
+  ADD COLUMN frio_removido_por integer REFERENCES usuarios(id);
+```
+
+**Regla de resolución** (default-deny, igual que la allowlist de telemetría):
+```sql
+COALESCE(p.permite_frio, ca.permite_frio, c.permite_frio, false)
+```
+Usa `categoria_app_id` con fallback a `categoria_id` — **el patrón COALESCE obligatorio** del
+catálogo (ver `Polo Dashboard/CLAUDE.md`). Sin él, marcar "Cervezas" en la categoría de la app no
+tendría efecto sobre productos que solo tienen categoría del ERP.
+
+`permite_frio` en `productos` es **columna protegida**: el sync de Tryton y el de Shopify **no la
+tocan**, igual que `nombre_app` y `categoria_app_id`. Si no se agrega a la lista de protegidas, la
+próxima corrida del sync borra la curaduría a mano.
+
+### Configuración (tabla `configuracion`, sin deploy)
+| Clave | Arranque |
+|---|---|
+| `frio_activo` | `false` — bandera de apagado |
+| `frio_costo` | `1000` |
+
+Se exponen en `GET /configuracion-app` y se editan en `PUT /configuracion-app` + `Configuracion.jsx`,
+siguiendo el mismo patrón `INSERT ... ON CONFLICT` de `envio_costo`.
+
+### Backend
+
+**`POST /catalogo/frio`** — recibe `{ producto_ids: [...] }` del carrito, devuelve
+`{ activo, costo, elegibles: [ids] }`.
+Hace falta porque **`CartItem` no guarda la categoría** (`src/stores/cart.ts:9-18`) y los carritos ya
+persistidos en los teléfonos tampoco la tendrían: la app no puede calcular la elegibilidad sola.
+Que la resuelva el servidor además evita duplicar la regla en dos lados.
+
+**`POST /pedidos`** recibe `quiere_frio: boolean` y **recalcula la elegibilidad server-side** sobre
+las líneas — el cliente nunca manda el precio, igual que con el cupón y el envío:
+```
+frio_cobrado = quiere_frio && frio_activo && (≥1 linea elegible)
+total        = subtotal − descuento + envio + (frio_cobrado ? FRIO_COSTO : 0)
+```
+- Si `quiere_frio` llega `true` y no hay nada elegible → **no cobra y no falla**. Tumbar un pedido
+  por esto sería absurdo.
+- **El frío NO cuenta para `pedido_minimo` ni para `envio_gratis_minimo`, y NO genera puntos.** Sale
+  gratis: los puntos y los mínimos se calculan sobre `subtotal`, que no lo incluye. La regla es
+  *no tocar esas cuentas* — pegarle el frío al subtotal regalaría puntos por un servicio.
+- Los cupones de descuento aplican sobre mercancía; `envio_gratis` no cubre el frío.
+
+**`PUT /pedidos-staff/:id/frio`** (admin/cajero) — "no alcanzó frío": pone `frio = false`,
+`frio_costo = 0`, recalcula `total`, sella `frio_removido_por`. Solo antes de `entregado`.
+Dispara push **transaccional** (`notificaciones.js`, fuera del cap de marketing):
+*"No alcanzamos a tenerlo frío, te quitamos los $1.000."* Sin ese aviso el cliente nunca se entera
+de que cumplimos, y el cargo se siente como una estafa.
+Cancelar el pedido no exige revertir nada extra — el frío no toca puntos ni cupones.
+
+### App — el check (lo que pidió el negocio: que sea claro)
+
+En `cart.tsx`, debajo del cupón y encima del total. El texto tiene que decir **exactamente qué va
+frío y qué no**:
+
+- **Título:** "¿Lo quieres frío? +$1.000"
+- **Algunos elegibles:** *"Aseguramos frío para: Cerveza Águila 330ml y Coca-Cola 400ml.*
+  ***El resto de tu pedido va a temperatura ambiente.***"
+- **Todos elegibles:** *"Todo tu pedido va frío."*
+- **Ninguno elegible:** **el check no se muestra.** Nunca cobrar por aire.
+- Línea "Frío" en el desglose junto a Envío y Descuento, y el total se recalcula al instante.
+
+Reglas:
+- **El check arranca apagado en cada pedido y no se persiste** entre sesiones. Un check pegado que
+  suma $1.000 sin que la gente lo note es una queja garantizada.
+- El total mostrado debe salir de la misma cuenta que hace el servidor. Aplica la lección de
+  `M-CART-17`: si el carrito cambia, revalidar antes de que el cliente vea un número y le cobren otro.
+- Accesibilidad desde el día uno (**bloque E aplica aquí, no después**): objetivo táctil ≥44 pt,
+  `accessibilityRole="checkbox"` + `accessibilityState={{ checked }}`, texto a **14 px mínimo** —
+  es un cargo, no una nota al pie.
+- En `orders/[id]`: mostrar "Frío asegurado" en el desglose, y si se quitó, "Frío — no alcanzó, sin cobro".
+
+### Admin
+- **`Pedidos.jsx`: badge grande `FRÍO`** en la tarjeta. Es una instrucción de alistamiento — tiene
+  que verse antes que cualquier otra cosa, no escondida en el detalle.
+- Botón **"No alcanzó frío — quitar cargo"** en el pedido.
+- `Configuracion.jsx`: `frio_activo` + `frio_costo`.
+- `ProductosApp.jsx`: selector **tri-estado** por producto (*Hereda de la categoría · Sí · No*).
+- **Categorías: hoy no existe CRUD de categorías en el admin.** Hace falta un
+  `GET/PUT /categorias-app` mínimo, solo para este flag — no un CRUD completo.
+
+### Telemetría (obligatoria, misma regla del proyecto)
+| Evento | Pregunta que responde |
+|---|---|
+| `frio_ofrecido` (`n_elegibles`) | ¿A cuántos carritos les aparece siquiera la opción? |
+| `frio_activado` / `frio_desactivado` | Tasa de toma real: ¿el cliente sí paga $1.000 por frío? |
+| `frio_cobrado` (en el pedido) | Ingreso incremental del servicio |
+| `frio_removido_staff` | ¿Con qué frecuencia incumplimos la promesa? |
+
+Cada uno exige tipo + `ALLOWED_KEYS`. Cero PII: solo IDs y conteos.
+
+### Riesgo
+Es **un cargo nuevo en el paso donde más gente se cae**. Por eso arranca con `frio_activo = false`
+y se prende cuando A ya esté midiendo el embudo de checkout: si `checkout_abandonado` se mueve al
+prenderlo, se apaga sin deploy.
+
+---
+
 # G — Release 1.2.0 + bloqueo de versión
 
 ### Bloqueo de versión (force update)
@@ -318,6 +463,12 @@ sin módulo nativo nuevo**.
   4. Recién ahí subir `version_minima` a `1.2.0`.
   5. Opcional: unos días de aviso descartable antes del bloqueo duro.
 
+> **Este OTA es la excepción a "todo sale en el binario", y no es negociable.** El candado tiene
+> que existir *dentro de las versiones viejas* para poder bloquearlas: si solo viaja en el binario
+> 1.2.0, los únicos que sabrían obedecerlo son justamente los que ya están actualizados, y el
+> bloqueo no sirve para nada. No lleva ninguna funcionalidad de A–H: solo el código del candado,
+> dormido en `1.0.0`, sin efecto visible hasta que alguien suba el número en el servidor.
+
 ### Riesgos del bloqueo
 - Activarlo antes de que 1.2.0 esté vivo **deja a la gente encerrada sin app**.
 - Quien tenga un teléfono demasiado viejo para 1.2.0 **pierde la app para siempre** — revisar el
@@ -326,8 +477,11 @@ sin módulo nativo nuevo**.
   vive en el servidor y se puede bajar en segundos.
 
 ### Build
-- Tras cerrar A–F: commitear todo, **taggear**, y construir **desde ese tag** — así el binario vivo
-  es reproducible desde git (deuda que viene de la auditoría del 20-jul).
+- Tras cerrar **A–F y H**: commitear todo, **taggear**, y construir **desde ese tag** — así el
+  binario vivo es reproducible desde git (deuda que viene de la auditoría del 20-jul).
+- **Este build lleva ocho bloques de una sola vez.** No hay red de OTA que atrape un error a mitad
+  de camino: lo que salga mal se corrige con otro build y otra revisión de tienda. Por eso el lunes
+  3-ago es de QA completo y no de código nuevo.
 - `version: 1.2.0`, `buildNumber`/`versionCode` **65**.
 - `eas build --platform all --profile production --auto-submit --non-interactive`.
 - **GOTCHA:** `eas update` NO lee el `env` de `eas.json` (solo los builds) → exportar
@@ -337,20 +491,55 @@ sin módulo nativo nuevo**.
 
 # Orden de ejecución
 
+Dos semanas: **la primera se construye, la segunda se publica.** Nada llega al cliente hasta que
+1.2.0 esté vivo en las tiendas.
+
+### Semana 1 (27–31 jul) — construir
+
 | Día | Bloque | Riesgo |
 |---|---|---|
-| 1 | **A** — zonas + editor + tarifa por zona + **telemetría (OTA el mismo día)** | Ninguno |
-| 2–3 | **B** — domiciliarios | Bajo (aislado del funnel) |
-| 3 | **C** — reseñas | Bajo |
-| 4 | **D** — motor ETA | Bajo (rangos anchos) |
-| 4 | **E** — accesibilidad Nivel 1 | Ninguno |
-| 5 | **F** — ubicación obligatoria | **Alto** — con bandera, día flojo |
-| 5 | **G** — OTA del candado dormido + build 1.2.0 | Bajo |
-| +2–4 días | Activar `version_minima` cuando esté vivo en ambas tiendas | Medio |
+| Lun 27 | **A** — zonas + editor + tarifa por zona + **telemetría completa** | Ninguno |
+| Mar 28 | **H** — frío asegurado (nace con `frio_activo=false`) | Bajo — apagado |
+| Mar 28–Mié 29 | **B** — domiciliarios | Bajo (aislado del funnel) |
+| Mié 29 | **C** — reseñas | Bajo |
+| Jue 30 | **D** — motor ETA (`eta_visible_cliente=false`) | Bajo — apagado |
+| Jue 30 | **E** — accesibilidad Nivel 1 | Ninguno |
+| Vie 31 | **F** — ubicación obligatoria (`exigir_ubicacion=false`) | Bajo mientras esté apagado |
 
-**Racional del orden:** A primero porque D (viaje), F (bloqueo) y la tarifa dependen de las zonas.
-B antes que la calibración de D porque es lo único que produce sellos de tiempo limpios. E antes
-que F por la razón obvia. F de último, con la semana entera de margen y con interruptor de reversa.
+**Backend y admin sí se despliegan a medida que se terminan** — no dependen de la tienda y ninguna
+app viva los consume todavía. Lo único que espera es el binario. Esto además da cuatro días de
+rodaje del backend antes de que le pegue tráfico real.
+
+### Semana 2 (3–7 ago) — publicar
+
+| Día | Qué | Riesgo |
+|---|---|---|
+| Lun 3 | **QA completo** del binario: la matriz entera de *Verificación*, con las banderas prendidas solo en un dispositivo de prueba | — |
+| Lun 3 | **OTA del candado dormido** a los 5 runtimes viejos (`version_minima = "1.0.0"`) — ver G | Bajo |
+| Mar 4 | Congelar, **taggear**, y `eas build` 1.2.0/65 **desde el tag** con `--auto-submit` | Bajo |
+| Mar 4 | Enviar iOS a revisión **a mano** en App Store Connect | — |
+| Mié 5–Jue 6 | Esperar aprobación (**iOS 1–3 días**, Android más rápido) | Fuera de nuestro control |
+| Jue 6–Vie 7 | **Vivo en ambas tiendas.** Ahí empieza a entrar telemetría real | — |
+
+### Después del lanzamiento — prender las banderas de a una
+
+Ninguna se prende el día del lanzamiento: sin datos sería exactamente la decisión a ciegas que este
+plan quería evitar. **Una bandera por vez** — si se prenden juntas y algo se cae, no se sabe cuál fue.
+
+| Cuándo | Qué | Riesgo |
+|---|---|---|
+| +2–3 días de datos | `eta_visible_cliente` | Bajo (rangos anchos) |
+| Con 1.2.0 vivo en **ambas** tiendas | `version_minima = 1.2.0` | Medio |
+| Con el embudo de checkout ya con línea base | `frio_activo`, mirando `checkout_abandonado` | Medio — reversible sin deploy |
+| De último, con la adopción de 1.2.0 medida | `exigir_ubicacion` | **Alto** — reversible sin deploy |
+
+**Racional del orden de construcción:** A primero porque D (viaje), F (bloqueo) y la tarifa dependen
+de las zonas. **H va inmediatamente después de A porque comparten el mismo refactor**: con tarifa por
+zona el carrito deja de calcular el total solo y le pregunta al servidor — el frío se cuelga de esa
+misma cuenta. Hacerlos separados significa tocar el total de `cart.tsx` dos veces, que es exactamente
+donde un error cobra de más. B antes que la calibración de D porque es lo único que produce sellos
+de tiempo limpios. E antes que F por la razón obvia. F de último porque es el más delicado y conviene
+que llegue cuando todo lo demás ya esté estable.
 
 # Verificación
 
@@ -365,19 +554,39 @@ que F por la razón obvia. F de último, con la semana entera de margen y con in
 - **E:** recorrer carrito y checkout con VoiceOver/TalkBack; ningún botón sin nombre.
 - **F:** con `exigir_ubicacion=false`, regresión cero. Con `true`, negar el permiso y confirmar que
   **igual se puede completar el pedido** con el pin manual.
-- Siempre: `npx vitest run` + `npx tsc --noEmit` antes de cada OTA.
+- **H:** con `frio_activo=false`, regresión cero (el check no existe). Carrito solo de productos no
+  elegibles → el check no aparece. Mandar `quiere_frio:true` con carrito no elegible → el pedido
+  entra y **no cobra**. Mandar un `frio_costo` inventado desde el cliente → **ignorado**. Quitar el
+  cargo desde el admin → el total baja y el cliente lo ve en su detalle. Confirmar que el frío
+  **no suma para `pedido_minimo`, no acerca al envío gratis y no genera puntos**. Correr el sync de
+  Shopify después de marcar productos y verificar que `permite_frio` **sobrevive**.
+- Siempre: `npx vitest run` + `npx tsc --noEmit` **antes de taggear**, no después.
+- **QA del lunes 3-ago sobre el binario real, no sobre Expo Go ni sobre un OTA de desarrollo.** Con
+  entrega en un solo release, este es el único filtro antes de la tienda: lo que se escape aquí
+  vuelve a costar un build y otra revisión de Apple. Recorrer la lista completa de arriba en un
+  teléfono de cada plataforma, con las banderas prendidas **solo en el dispositivo de prueba**.
 
 # Riesgos transversales
 
-- **F es el único con riesgo de venta.** La bandera no es opcional: es lo que permite apagarlo sin deploy.
+- **F y H son los dos que tocan el funnel de venta.** En ambos la bandera no es opcional: es lo que
+  permite apagarlos sin deploy. H además mete un cargo nuevo — no prenderlo el mismo día que F.
 - `GET /cobertura/zona` cambia de forma → mantener la vieja en paralelo.
 - Fotos de entrega = dato personal (casas de clientes). UUID mínimo; si crece el volumen, moverlas
   detrás de autenticación.
 - El ETA es una **promesa**: arrancar ancho. Estrechar después se siente como mejora; lo contrario no.
-- **La telemetría del bloque A sale por OTA el lunes mismo**, antes que ninguna otra cosa: cada día
-  que pase sin ella es un día de datos perdidos. Para el viernes, cuando toque decidir sobre F,
-  habrá cinco días de números reales (cuánta gente niega el GPS, dónde caen los intentos fuera de
-  zona, qué versión corre cada quien) en vez de intuición.
+- **Todo en un solo release = un solo tiro.** Se gana coherencia (el cliente ve una app nueva, no
+  siete cambios sueltos) y se pierde la red de seguridad: un bug en el binario no se parcha en
+  minutos, cuesta otro build y otra revisión de Apple. Lo que lo compensa es que **cada bloque
+  riesgoso nace apagado**, así que un binario con problemas se neutraliza desde el servidor sin
+  esperar a la tienda. Ninguna funcionalidad puede quedar sin su bandera.
+- **La telemetría ya no precede al release: llega con él.** Antes salía por OTA el lunes y daba
+  cinco días de números antes de decidir sobre F. Ahora los datos empiezan el 6-ago, cuando 1.2.0
+  esté vivo. Consecuencia concreta: **el lanzamiento no es el momento de prender nada** — se publica
+  con todo apagado, se miran los números unos días, y las banderas se van prendiendo de a una.
+  Si se prenden el mismo día del lanzamiento, se pierde el único beneficio de haber instrumentado.
+- El calendario depende de **Apple, que no es nuestro** (1–3 días de revisión). Si el build se manda
+  el martes 4 y la revisión se demora, la semana 2 se corre. Mitigación: mandarlo el martes y no el
+  jueves, y no prometerle al negocio una fecha exacta de estreno sino la semana.
 - **Play Store está OK** desde el 21-jul (la suspensión por tabaco se levantó antes del lanzamiento
   oficial). Las reglas de filtrado de tabaco siguen vigentes y aplican a cualquier endpoint nuevo
   que sirva productos.
