@@ -294,6 +294,19 @@ export async function crearPedido(pedido: CrearPedidoInput, idempotencyKey?: str
   });
 }
 
+// --- Tiempo estimado (bloque D) ---
+
+// Cuánto se demoraría un pedido hecho AHORA. Devuelve null mientras la bandera
+// `eta_visible_cliente` esté apagada, que es como sale 1.2.0: el motor calcula y
+// guarda desde el día uno, pero no promete nada hasta que haya cumplimiento medido.
+export async function getEtaActual(lat?: number | null, lng?: number | null) {
+  const qs = lat != null && lng != null
+    ? `?${new URLSearchParams({ lat: String(lat), lng: String(lng) })}`
+    : "";
+  const r = await apiFetch<{ eta: { min: number; max: number } | null }>(`/pedidos/eta${qs}`);
+  return r.eta;
+}
+
 // --- Reseñas (bloque C) ---
 
 export interface Resena {
@@ -450,6 +463,10 @@ export interface Pedido {
   // Solo en el listado (bloque C): alimenta el banner de "califica tu pedido" sin
   // tener que pedir la reseña de cada pedido por separado.
   tiene_resena?: boolean;
+  // Tiempo estimado ya resuelto por el servidor (bloque D): trae el override del
+  // staff si existe, y llega en null cuando la bandera está apagada. La app nunca
+  // ve los campos crudos, así que no puede saltarse la bandera pintándolos.
+  eta?: { min: number; max: number; override: boolean } | null;
 }
 
 export interface LineaPedido {

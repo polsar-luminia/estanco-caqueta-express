@@ -10,7 +10,7 @@ import Toast from "react-native-toast-message";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
-import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
+import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, getEtaActual, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
 import { calcularResumen, envioDeZona } from "../../src/lib/resumenPedido";
 import { FrioRecordatorio } from "../../src/components/FrioRecordatorio";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
@@ -212,6 +212,24 @@ export default function CartScreen() {
   useEffect(() => {
     if (quiereFrio && !hayElegibles) setQuiereFrio(false);
   }, [quiereFrio, hayElegibles]);
+
+  // Tiempo estimado (bloque D). Llega null mientras la bandera esté apagada, así
+  // que la app no necesita conocer la bandera: si no hay rango, no se muestra nada.
+  const { data: eta } = useQuery({
+    queryKey: ["eta", puntoEntrega?.lat, puntoEntrega?.lng],
+    queryFn: () => getEtaActual(puntoEntrega?.lat, puntoEntrega?.lng),
+    enabled: items.length > 0,
+    staleTime: 60 * 1000,
+  });
+
+  const etaReportadoRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!eta) return;
+    const clave = `${eta.min}-${eta.max}`;
+    if (etaReportadoRef.current === clave) return;
+    etaReportadoRef.current = clave;
+    tracker.track('eta_mostrado', { min: eta.min, max: eta.max }, 'cart');
+  }, [eta]);
 
   const alternarFrio = (valor: boolean) => {
     setQuiereFrio(valor);
@@ -775,6 +793,14 @@ export default function CartScreen() {
                 <View className="flex-row justify-between">
                   <Text style={{ fontSize: 14, color: "#1FAF55" }}>Descuento cupon</Text>
                   <Text style={{ fontSize: 14, fontWeight: "600", color: "#1FAF55" }}>-{formatCOP(descuentoCupon)}</Text>
+                </View>
+              )}
+              {eta && (
+                <View className="flex-row justify-between items-center">
+                  <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Llega en</Text>
+                  <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1C1A" }}>
+                    {eta.min}–{eta.max} min
+                  </Text>
                 </View>
               )}
               <View className="flex-row justify-between items-center">

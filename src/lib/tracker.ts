@@ -85,7 +85,9 @@ export type EventTipo =
   // C — reseñas
   | 'resena_enviada'
   | 'resena_banner_visto'
-  | 'resena_banner_descartado';
+  | 'resena_banner_descartado'
+  // D — motor de ETA
+  | 'eta_mostrado';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -161,6 +163,11 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // cuántas calificaciones rescata de verdad y si vale la pena tenerlo ahí.
   resena_banner_visto: [],
   resena_banner_descartado: [],
+
+  // --- D (motor de ETA) ---
+  // Base del reporte de cumplimiento visto desde el cliente: qué rango se le
+  // enseñó y dónde. Sin esto solo se sabe qué se guardó, no qué llegó a ver.
+  eta_mostrado: ['min', 'max'],
 };
 
 function aplicarAllowlist(
