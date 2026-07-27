@@ -394,27 +394,30 @@ export default function HomeScreen() {
               />
             </View>
 
-            {/* Hero Banner — debajo de categorías (marketing después de utilidad) */}
-            <View className="mx-4 mt-4">
-              {patrocinados.length > 0 && (
-                heroModo === "carousel" ? (
-                  <HeroCarousel banners={patrocinados} router={router} />
-                ) : (
-                  <HeroSlide
-                    banner={patrocinados[0]}
-                    onPress={() => router.push(patrocinados[0]?.producto?.id ? `/product/${patrocinados[0].producto.id}` : "/ofertas")}
-                  />
-                )
-              )}
-            </View>
-
-            {/* Ofertas — banner card prominente */}
+            {/* Ofertas primero: los precios especiales son plata concreta para el
+                cliente, el banner es marketing. Cuando los dos estan activos manda
+                el descuento. */}
             {ofertas.length > 0 && (
               <View className="px-4 pt-4">
                 <OfertasBannerCard
                   ofertas={ofertas}
                   onPress={() => router.push("/ofertas")}
                 />
+              </View>
+            )}
+
+            {/* Hero Banner — siempre debajo de las ofertas. El contenedor solo
+                existe si hay patrocinados: vacio dejaba un hueco de margen. */}
+            {patrocinados.length > 0 && (
+              <View className="mx-4 mt-4">
+                {heroModo === "carousel" ? (
+                  <HeroCarousel banners={patrocinados} router={router} />
+                ) : (
+                  <HeroSlide
+                    banner={patrocinados[0]}
+                    onPress={() => router.push(patrocinados[0]?.producto?.id ? `/product/${patrocinados[0].producto.id}` : "/ofertas")}
+                  />
+                )}
               </View>
             )}
 

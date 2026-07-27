@@ -1002,39 +1002,39 @@ export default function CartScreen() {
         {/* Banda de tienda cerrada (versión compacta, sin horario) */}
         <BandaCerrado tienda={tienda} compact style={{ marginBottom: 12 }} />
 
-        <View className="flex-row justify-between items-end mb-4">
-          <View>
-            <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5 }}>
-              Total a pagar
-            </Text>
-            <Text style={{ fontSize: 28, fontWeight: "800", color: colors.ink, letterSpacing: -1 }}>
-              {formatCOP(total)}
-            </Text>
-            {(() => {
-              const ahorroEnvio = envio === 0 ? envioCosto : 0;
-              const totalAhorro = descuentoCupon + ahorroEnvio;
-              return totalAhorro > 0 ? (
-                <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55", marginTop: 2 }}>
-                  Ahorras {formatCOP(totalAhorro)} 🎉
-                </Text>
-              ) : null;
-            })()}
-          </View>
-          <View>
-            <Text style={{ fontSize: 12, color: "#6D7B6C", fontStyle: "italic" }}>
-              {envio === 0 ? "Envío gratis con puntos 🎉" : `Incluye domicilio (${formatCOP(envio)})`}
-            </Text>
-            {resumen.frio > 0 && (
-              <Text style={{ fontSize: 12, color: "#0F3A6B", fontWeight: "600", marginTop: 2 }}>
-                Incluye frío asegurado ({formatCOP(resumen.frio)})
+        {/* Las notas van DEBAJO del total, no al lado. Puestas en la misma fila
+            competian por el ancho con un monto de 28 px y se cortaban contra el
+            borde: "Pedido minimo: $30.000 (faltan $10..." sin cerrar el parentesis.
+            Debajo tienen la pantalla entera y ya no dependen de que quepan. */}
+        <View className="mb-4">
+          <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5 }}>
+            Total a pagar
+          </Text>
+          <Text style={{ fontSize: 28, fontWeight: "800", color: colors.ink, letterSpacing: -1 }}>
+            {formatCOP(total)}
+          </Text>
+          {(() => {
+            const ahorroEnvio = envio === 0 ? envioCosto : 0;
+            const totalAhorro = descuentoCupon + ahorroEnvio;
+            return totalAhorro > 0 ? (
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55", marginTop: 2 }}>
+                Ahorras {formatCOP(totalAhorro)} 🎉
               </Text>
-            )}
-            {subtotal < pedidoMinimo && (
-              <Text style={{ fontSize: 12, color: colors.offer, fontWeight: "600", marginTop: 2 }}>
-                Pedido mínimo: {formatCOP(pedidoMinimo)} (faltan {formatCOP(pedidoMinimo - subtotal)})
-              </Text>
-            )}
-          </View>
+            ) : null;
+          })()}
+          <Text style={{ fontSize: 12, color: "#6D7B6C", fontStyle: "italic", marginTop: 4 }}>
+            {envio === 0 ? "Envío gratis con puntos 🎉" : `Incluye domicilio (${formatCOP(envio)})`}
+          </Text>
+          {resumen.frio > 0 && (
+            <Text style={{ fontSize: 12, color: "#0F3A6B", fontWeight: "600", marginTop: 2 }}>
+              Incluye frío asegurado ({formatCOP(resumen.frio)})
+            </Text>
+          )}
+          {subtotal < pedidoMinimo && (
+            <Text style={{ fontSize: 12, color: colors.offer, fontWeight: "600", marginTop: 2 }}>
+              Pedido mínimo: {formatCOP(pedidoMinimo)} (faltan {formatCOP(pedidoMinimo - subtotal)})
+            </Text>
+          )}
         </View>
 
         <Pressable
