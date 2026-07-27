@@ -422,6 +422,9 @@ export interface Pedido {
   frio?: boolean;
   frio_costo?: number;
   frio_removido?: boolean;
+  // Foto que tomó el domiciliario al entregar (bloque B). Solo la ve el dueño del
+  // pedido: el endpoint filtra por cliente_id.
+  foto_entrega_url?: string | null;
 }
 
 export interface LineaPedido {

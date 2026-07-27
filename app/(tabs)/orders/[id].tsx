@@ -1,5 +1,6 @@
 import { View, Text, ScrollView, Pressable, Alert } from "react-native";
 import { useLocalSearchParams } from "expo-router";
+import { Image } from "expo-image";
 import Toast from "react-native-toast-message";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPedido, cancelarPedido } from "../../../src/lib/api";
@@ -178,6 +179,23 @@ export default function OrderDetailScreen() {
           </Text>
         </View>
       </View>
+
+      {/* Foto de la entrega (bloque B). Solo llega si el pedido es del cliente:
+          el endpoint filtra por cliente_id. Es la prueba de que llegó y dónde. */}
+      {pedido.foto_entrega_url && (
+        <View className="bg-white rounded-2xl p-6" style={CARD_SHADOW}>
+          <Text className="text-base font-bold text-on-surface mb-3">
+            Así se entregó tu pedido
+          </Text>
+          <Image
+            source={{ uri: pedido.foto_entrega_url }}
+            accessibilityLabel="Foto de la entrega de tu pedido"
+            contentFit="cover"
+            style={{ width: "100%", height: 200, borderRadius: 12 }}
+            transition={150}
+          />
+        </View>
+      )}
 
       {/* Direccion de entrega */}
       <View className="bg-white rounded-2xl p-6" style={CARD_SHADOW}>
