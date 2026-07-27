@@ -7,7 +7,33 @@ import Constants from "expo-constants";
 import { useRouter, type Href } from "expo-router";
 import NetInfo from "@react-native-community/netinfo";
 import { registrarPushToken } from "../lib/api";
+import { queryClient } from "../lib/query-client";
 import { useAuthStore, registerLogoutHandler } from "../stores/auth";
+
+/**
+ * Un push de pedido ES el aviso de que ese pedido cambió. Si no se usa para
+ * refrescar, la app se queda mostrando el estado viejo hasta que venza el
+ * staleTime (5 min) o toque el sondeo de 15 s — y mientras tanto le dice al
+ * cliente "tu pedido fue entregado" en la barra mientras la pantalla detrás
+ * sigue diciendo "en camino".
+ *
+ * El caso que más molesta es la reseña: la tarjeta para calificar solo aparece en
+ * pedidos entregados, así que con el estado viejo en caché el cliente toca
+ * "Califícanos" y llega a un pedido donde no hay nada que calificar.
+ *
+ * `pedido_id` viaja en payload_extra desde el backend (lib/notificaciones.js lo
+ * mete plano dentro de `data`). Si no viene o no es un número, no se toca nada:
+ * invalidar de más es barato, pero adivinar ids no.
+ */
+function refrescarPedidoDePush(data: unknown) {
+  const pedidoId = (data as { pedido_id?: unknown } | undefined)?.pedido_id;
+  const id = typeof pedidoId === "number" ? pedidoId : Number(pedidoId);
+  if (!Number.isFinite(id) || id <= 0) return;
+  queryClient.invalidateQueries({ queryKey: ["pedido", id] });
+  // La lista alimenta "Mis pedidos" y el banner de reseña del Inicio, que filtra
+  // por estado entregado: sin esto el banner tarda hasta 5 minutos en salir.
+  queryClient.invalidateQueries({ queryKey: ["pedidos"] });
+}
 
 // Estado module-level: persiste entre montajes pero se puede resetear desde
 // fuera (logout). Usar useRef hacía que el ref quedara stale al cambiar de
@@ -163,6 +189,9 @@ export function usePushNotifications() {
     ];
 
     const subResponse = Notifications.addNotificationResponseReceivedListener((response) => {
+      // Refrescar ANTES de navegar: la pantalla destino se monta con la petición
+      // ya en vuelo en vez de pintar el estado viejo y corregirse encima.
+      refrescarPedidoDePush(response.notification.request.content.data);
       const deepLink = response.notification.request.content.data?.deep_link;
       if (typeof deepLink !== "string") return;
       const valido = ALLOWED_DEEP_LINKS.some((r) => r.test(deepLink));
@@ -174,8 +203,12 @@ export function usePushNotifications() {
       router.push(deepLink as Href);
     });
 
-    const subReceived = Notifications.addNotificationReceivedListener((_notification) => {
+    const subReceived = Notifications.addNotificationReceivedListener((notification) => {
       // El handler global (setNotificationHandler) ya muestra el banner en foreground.
+      // Acá lo que importa es que el push llega con la app abierta: quien esté
+      // mirando el pedido ve cambiar el estado —y aparecer la tarjeta de
+      // calificación— sin tocar nada ni esperar al sondeo.
+      refrescarPedidoDePush(notification.request.content.data);
     });
 
     return () => {
