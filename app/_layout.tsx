@@ -1,7 +1,7 @@
 import "../global.css";
 import { useEffect, useState } from "react";
 import { AppState } from "react-native";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter, useSegments, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -60,6 +60,7 @@ export default Sentry.wrap(function RootLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const router = useRouter();
   const segments = useSegments();
+  const pathname = usePathname();
 
   useEffect(() => {
     hydrate();
@@ -68,6 +69,19 @@ export default Sentry.wrap(function RootLayout() {
     initMetaAnalytics();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate es un selector estable de Zustand
   }, []);
+
+  // A.2 — pantalla_vista: responde qué pantallas se usan y cuáles no. Un solo
+  // listener aquí en vez de un track por pantalla: así ninguna se queda sin medir
+  // al agregarla. Los ids de las rutas dinámicas (product/123) se normalizan a
+  // product/[id] para poder agrupar, y de paso no dejar ids sueltos en la tabla.
+  useEffect(() => {
+    if (!pathname) return;
+    const ruta = pathname
+      .split('/')
+      .map((seg) => (/^\d+$/.test(seg) ? '[id]' : seg))
+      .join('/');
+    tracker.track('pantalla_vista', undefined, ruta.slice(0, 128));
+  }, [pathname]);
 
   // Toast de red diferido: el provider de Toast no está montado durante hydrate
   // (el componente retorna null mientras isLoading=true). Se dispara aquí,

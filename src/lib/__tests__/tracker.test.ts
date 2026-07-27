@@ -85,3 +85,42 @@ describe('tracker — allowlist M-OBS-21', () => {
     expect(body.eventos[0].payload).not.toHaveProperty('cupon_codigo');
   });
 });
+
+describe('tracker — release 1.2.0 (A.1 y A.3)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (tracker as any).queue = [];
+  });
+
+  it('fuera_de_zona: las coordenadas salen redondeadas a 3 decimales', async () => {
+    // ~100 m: alcanza para mapear donde abrir cobertura, no alcanza para señalar
+    // una casa. El redondeo vive en el tracker justamente para que no dependa de
+    // que cada llamador se acuerde.
+    tracker.track('fuera_de_zona', { lat: 1.6144567, lng: -75.6062891 }, 'ubicacion');
+    await tracker.flush();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.eventos[0].payload).toEqual({ lat: 1.614, lng: -75.606 });
+  });
+
+  it('manda la version del binario en el header X-App-Version', async () => {
+    tracker.track('app_abierta');
+    await tracker.flush();
+    const headers = (vi.mocked(fetch).mock.calls[0][1] as RequestInit).headers as Record<string, string>;
+    expect(headers['X-App-Version']).toBe('1.2.0-test');
+  });
+
+  it('checkout_abandonado: conserva el paso, que es el dato util', async () => {
+    tracker.track('checkout_abandonado', { paso: 'sin_ubicacion', items_count: 3 }, 'cart');
+    await tracker.flush();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.eventos[0].payload).toEqual({ paso: 'sin_ubicacion', items_count: 3 });
+  });
+
+  it('pantalla_vista: la ruta viaja en `pantalla`, no en el payload', async () => {
+    tracker.track('pantalla_vista', undefined, 'product/[id]');
+    await tracker.flush();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.eventos[0].pantalla).toBe('product/[id]');
+    expect(body.eventos[0].payload).toBeUndefined();
+  });
+});

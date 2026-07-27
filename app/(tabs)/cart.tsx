@@ -10,7 +10,8 @@ import Toast from "react-native-toast-message";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
-import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
+import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
+import { calcularResumen, envioDeZona } from "../../src/lib/resumenPedido";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { tracker } from "../../src/lib/tracker";
@@ -136,11 +137,38 @@ export default function CartScreen() {
   const puntos = cliente?.puntos || 0;
   const puedeUsarPuntos = puntos >= 200;
   const envioGratisMinimo = configApp?.envio_gratis_minimo ?? 150000;
-  const envioCosto = configApp?.envio_costo ?? 5000;
+  const envioCostoGlobal = configApp?.envio_costo ?? 5000;
   const pedidoMinimo = configApp?.pedido_minimo ?? 30000;
-  const envio = (usarPuntos && puedeUsarPuntos) ? 0 : (subtotal >= envioGratisMinimo ? 0 : envioCosto);
+
+  // Punto de entrega actual: el pin recién capturado o el de la dirección elegida.
+  // Se calcula aquí (y no solo dentro de handlePedir) porque la tarifa por zona
+  // tiene que verse ANTES de pedir, no descubrirse en el cobro.
+  const puntoEntrega = mostrarNueva
+    ? (nuevaUbicacion ? { lat: nuevaUbicacion.lat, lng: nuevaUbicacion.lng } : null)
+    : (dirActiva?.lat != null && dirActiva?.lng != null ? { lat: dirActiva.lat, lng: dirActiva.lng } : null);
+
+  // Tarifa de la zona del punto. Sin coordenadas no hay zona que consultar y se
+  // usa el costo global, igual que hace el servidor.
+  const { data: cobertura } = useQuery({
+    queryKey: ["cobertura", puntoEntrega?.lat, puntoEntrega?.lng],
+    queryFn: () => validarCobertura(puntoEntrega!.lat, puntoEntrega!.lng),
+    enabled: !!puntoEntrega,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const envioCosto = envioDeZona(cobertura?.costo_envio, envioCostoGlobal);
   const descuentoCupon = cuponValidado?.descuento || 0;
-  const total = subtotal - descuentoCupon + envio;
+  // Una sola cuenta, la misma que hace el servidor en POST /pedidos.
+  const resumen = calcularResumen({
+    subtotal,
+    descuentoCupon,
+    envioCosto,
+    envioGratisMinimo,
+    usaPuntos: usarPuntos && puedeUsarPuntos,
+    cuponEnvioGratis: cuponValidado?.cupon.tipo === 'envio_gratis',
+  });
+  const envio = resumen.envio;
+  const total = resumen.total;
 
   const handleValidarCupon = async () => {
     if (!codigoCupon.trim()) return;
@@ -214,17 +242,29 @@ export default function CartScreen() {
   // InitiateCheckout de Meta: una vez por intento de pedido. Los reintentos tras
   // un fallo NO lo re-disparan; se resetea junto con el idempotency key al éxito.
   const initiateCheckoutLogueadoRef = useRef(false);
+  // checkout_iniciado: una sola vez por intento de pedido, igual que el de Meta.
+  // Se libera al crear el pedido para que el siguiente pedido vuelva a contarse.
+  const checkoutIniciadoRef = useRef(false);
 
   const handlePedir = async () => {
     if (submitLockRef.current) return;
 
+    // A.2 — base del embudo de checkout: intención real de pedir. Una vez por
+    // intento; un reintento tras un fallo no vuelve a contarlo.
+    if (!checkoutIniciadoRef.current) {
+      checkoutIniciadoRef.current = true;
+      tracker.track('checkout_iniciado', { items_count: items.length, subtotal }, 'cart');
+    }
+
     // Guía 5.1.1(v) — requerir login solo al momento del checkout
     if (!cliente) {
+      tracker.track('checkout_abandonado', { paso: 'login', items_count: items.length }, 'cart');
       router.push("/(auth)/login");
       return;
     }
 
     if (subtotal < pedidoMinimo) {
+      tracker.track('checkout_abandonado', { paso: 'pedido_minimo', items_count: items.length }, 'cart');
       Toast.show({ type: "error", text1: "Pedido mínimo", text2: `Agrega ${formatCOP(pedidoMinimo - subtotal)} más para continuar` });
       return;
     }
@@ -233,12 +273,14 @@ export default function CartScreen() {
     const not = dirActiva?.notas || notas.trim();
 
     if (!dir && !mostrarNueva) {
+      tracker.track('checkout_abandonado', { paso: 'sin_direccion', items_count: items.length }, 'cart');
       Toast.show({ type: "error", text1: "Falta direccion", text2: "Selecciona o agrega una direccion" });
       return;
     }
     // GPS-first: en una dirección nueva basta con la ubicación capturada O una
     // dirección escrita. Ya no se pide barrio (la cobertura se calcula del GPS).
     if (mostrarNueva && !nuevaDireccion.trim() && !nuevaUbicacion) {
+      tracker.track('checkout_abandonado', { paso: 'sin_ubicacion', items_count: items.length }, 'cart');
       Toast.show({ type: "error", text1: "Falta la ubicación", text2: "Usa tu ubicación actual o escribe la dirección" });
       return;
     }
@@ -278,6 +320,7 @@ export default function CartScreen() {
       // S10 - Verificar estado fresco de la tienda antes de crear pedido
       const estadoTienda = await getEstadoTienda();
       if (!estadoTienda.abierta) {
+        tracker.track('checkout_abandonado', { paso: 'tienda_cerrada', items_count: items.length }, 'cart');
         Toast.show({ type: "error", text1: "Tienda cerrada", text2: estadoTienda.proximaApertura || "Ya cerramos por hoy" });
         return;
       }
@@ -289,6 +332,7 @@ export default function CartScreen() {
           if (!direccionIdemKeyRef.current) direccionIdemKeyRef.current = nuevoUuidV4();
           const nueva = await crearDireccion({ direccion: dirFinal, notas: notFinal || undefined, predeterminada: true, ...ubicacionABody(nuevaUbicacion) }, direccionIdemKeyRef.current);
           direccionCreadaIdRef.current = nueva.id;
+          tracker.track('direccion_creada', { con_pin: !!nuevaUbicacion }, 'cart');
           try {
             await refetchDirs();
           } catch {
@@ -317,6 +361,7 @@ export default function CartScreen() {
       direccionCreadaIdRef.current = null;
       direccionIdemKeyRef.current = null;
       initiateCheckoutLogueadoRef.current = false;
+      checkoutIniciadoRef.current = false;
       setNuevaUbicacion(null);
       tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos }, 'cart');
       metaLogPurchase(pedido.total, { pedidoId: pedido.id, numItems: items.length });
@@ -356,6 +401,7 @@ export default function CartScreen() {
       router.push({ pathname: "/(tabs)/orders/[id]", params: { id: String(pedido.id) } });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo crear el pedido";
+      tracker.track('checkout_abandonado', { paso: llegoACrearPedido ? 'error_pedido' : 'error_previo', items_count: items.length }, 'cart');
       Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "checkout" } });
       // Solo limpiar cupón si el pedido llegó a crearse en backend (podría haberse consumido)
       if (llegoACrearPedido) {
@@ -434,7 +480,12 @@ export default function CartScreen() {
                         return (
                           <Pressable
                             key={d.id}
-                            onPress={() => setDireccionId(d.id)}
+                            onPress={() => {
+                              setDireccionId(d.id);
+                              // con_pin responde si la dirección ya tiene coordenadas: es
+                              // el numerador de "cuántas hay que mandar al mapa" (bloque F).
+                              tracker.track('direccion_seleccionada', { direccion_id: d.id, con_pin: d.lat != null }, 'cart');
+                            }}
                             className="flex-row items-center p-3 rounded-xl"
                             style={{
                               backgroundColor: "#fff",

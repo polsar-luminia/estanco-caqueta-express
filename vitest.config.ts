@@ -24,6 +24,10 @@ export default defineConfig({
       { find: "react-native-svg", replacement: path.resolve(__dirname, "./src/__mocks__/react-native-svg.ts") },
       { find: "expo-notifications", replacement: path.resolve(__dirname, "./src/__mocks__/expo-notifications.ts") },
       { find: "expo-image", replacement: path.resolve(__dirname, "./src/__mocks__/expo-image.ts") },
+      // El tracker lee Updates.runtimeVersion para etiquetar cada evento con la
+      // version del binario; expo-updates arrastra expo-modules-core, que no corre en node.
+      { find: "expo-updates", replacement: path.resolve(__dirname, "./src/__mocks__/expo-updates.ts") },
+      { find: "expo-constants", replacement: path.resolve(__dirname, "./src/__mocks__/expo-constants.ts") },
       // Meta SDK: sin módulo nativo en node. Sin estos mocks, cart.test/auth.test
       // (que importan metaEvents vía los stores) fallan al cargar.
       { find: "react-native-fbsdk-next", replacement: path.resolve(__dirname, "./src/__mocks__/react-native-fbsdk-next.ts") },

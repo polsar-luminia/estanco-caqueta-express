@@ -447,7 +447,10 @@ export interface CuponValidado {
     id: number;
     codigo: string;
     descripcion: string;
-    tipo: 'porcentaje' | 'fijo';
+    // 'envio_gratis' viene del backend (cupones.js) y trae descuento 0: lo que
+    // regala es el envío, no mercancía. Faltaba en el tipo, así que el carrito
+    // mostraba envío cobrado en un pedido que el servidor cobraba sin él.
+    tipo: 'porcentaje' | 'fijo' | 'envio_gratis';
     valor: number;
   };
   descuento: number;
@@ -561,9 +564,14 @@ export async function crearDireccion(data: CrearDireccionInput, idempotencyKey?:
 export interface CoberturaResponse {
   dentro: boolean;
   zona: string | null;
+  // Tarifa de la zona. null = usar el envio_costo global de configuración.
+  // Ojo: null NO es envío gratis. Los servidores viejos no mandan estos campos.
+  costo_envio?: number | null;
+  tiempo_viaje_min?: number | null;
 }
 
-// GET /cobertura?lat=&lng= — el servidor decide si el punto está dentro de la zona.
+// GET /cobertura?lat=&lng= — el servidor decide si el punto está dentro de la zona
+// y con qué tarifa. El carrito lo consulta para mostrar el mismo envío que se cobra.
 export async function validarCobertura(lat: number, lng: number) {
   const qs = new URLSearchParams({ lat: String(lat), lng: String(lng) });
   return apiFetch<CoberturaResponse>(`/cobertura?${qs}`);
@@ -572,14 +580,45 @@ export async function validarCobertura(lat: number, lng: number) {
 // Punto del polígono como [lat, lng].
 export type PuntoZona = [number, number];
 
-export interface ZonaCobertura {
+export interface ZonaMapa {
+  id: number;
   nombre: string;
   poligono: PuntoZona[];
+  // 'excluida' = zona donde NO se reparte; gana sobre cualquier incluida.
+  tipo: 'incluida' | 'excluida';
+  color?: string | null;
 }
 
-// GET /cobertura/zona — polígono de la zona de reparto para validar en el mapa (Fase 2).
+export interface ZonaCobertura {
+  // Forma histórica (una sola zona), que el servidor mantiene para las apps 1.1.x.
+  nombre: string;
+  poligono: PuntoZona[];
+  // Desde 1.2.0: todas las zonas, incluidas las exclusiones.
+  zonas?: ZonaMapa[];
+}
+
+// GET /cobertura/zona — polígonos de reparto para validar en el mapa (Fase 2).
 export async function getCoberturaZona() {
   return apiFetch<ZonaCobertura>("/cobertura/zona");
+}
+
+// Validación optimista contra TODAS las zonas, con el mismo orden de reglas que el
+// servidor: una exclusión gana siempre. Si el servidor es viejo y no manda `zonas`,
+// cae al polígono único de antes. El servidor sigue siendo la autoridad al guardar.
+export function evaluarZonasCliente(lat: number, lng: number, zona: ZonaCobertura | undefined): boolean {
+  if (!zona) return true;
+  const zonas = zona.zonas;
+  if (Array.isArray(zonas) && zonas.length > 0) {
+    const excluidas = zonas.filter((z) => z.tipo === 'excluida');
+    if (excluidas.some((z) => puntoEnZona(lat, lng, z.poligono))) return false;
+    const incluidas = zonas.filter((z) => z.tipo !== 'excluida');
+    // Sin incluidas dibujadas no hay nada contra qué validar: se deja pasar y
+    // decide el servidor, igual que hace él con su bounding box.
+    if (incluidas.length === 0) return true;
+    return incluidas.some((z) => puntoEnZona(lat, lng, z.poligono));
+  }
+  if (!Array.isArray(zona.poligono) || zona.poligono.length < 3) return true;
+  return puntoEnZona(lat, lng, zona.poligono);
 }
 
 // Point-in-polygon (ray-casting) para feedback instantáneo en el mapa. El

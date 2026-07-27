@@ -14,9 +14,11 @@ import {
   ubicacionABody,
   validarCobertura,
   puntoEnZona,
+  evaluarZonasCliente,
   PRECISION_APROXIMADA_M,
   type PuntoZona,
   type UbicacionCapturada,
+  type ZonaCobertura,
 } from "../api";
 
 function mockResponse(status: number, body: unknown) {
@@ -132,5 +134,52 @@ describe("validarCobertura", () => {
     const r = await validarCobertura(4.71, -74.07);
     expect(r.dentro).toBe(false);
     expect(r.zona).toBeNull();
+  });
+});
+
+// Validación multi-zona en el cliente (bloque A, release 1.2.0). Es feedback
+// instantáneo en el mapa: el servidor revalida al guardar y sigue siendo la
+// autoridad. Lo que se protege aquí es que el ORDEN de las reglas sea el mismo
+// que el del servidor — si divergen, el mapa deja confirmar un punto que el
+// pedido después rechaza.
+describe("evaluarZonasCliente", () => {
+  const CENTRO: PuntoZona[] = [[1.60, -75.62], [1.60, -75.60], [1.62, -75.60], [1.62, -75.62]];
+  const PELIGROSO: PuntoZona[] = [[1.605, -75.615], [1.605, -75.605], [1.615, -75.605], [1.615, -75.615]];
+
+  const conZonas = (zonas: ZonaCobertura["zonas"]): ZonaCobertura => ({
+    nombre: "Centro",
+    poligono: CENTRO,
+    zonas,
+  });
+
+  it("una exclusión gana sobre la incluida que la contiene", () => {
+    const zona = conZonas([
+      { id: 1, nombre: "Centro", poligono: CENTRO, tipo: "incluida" },
+      { id: 2, nombre: "Peligroso", poligono: PELIGROSO, tipo: "excluida" },
+    ]);
+    expect(evaluarZonasCliente(1.61, -75.61, zona)).toBe(false);
+    // Vecino: dentro de la incluida, fuera de la exclusión.
+    expect(evaluarZonasCliente(1.618, -75.618, zona)).toBe(true);
+  });
+
+  it("con incluidas dibujadas, lo que no cae en ninguna queda fuera", () => {
+    const zona = conZonas([{ id: 1, nombre: "Centro", poligono: CENTRO, tipo: "incluida" }]);
+    expect(evaluarZonasCliente(1.57, -75.67, zona)).toBe(false);
+  });
+
+  it("solo exclusiones: el resto pasa y decide el servidor", () => {
+    const zona = conZonas([{ id: 2, nombre: "Peligroso", poligono: PELIGROSO, tipo: "excluida" }]);
+    expect(evaluarZonasCliente(1.61, -75.61, zona)).toBe(false);
+    expect(evaluarZonasCliente(1.618, -75.618, zona)).toBe(true);
+  });
+
+  it("servidor viejo sin `zonas`: cae al polígono único de antes", () => {
+    const zona: ZonaCobertura = { nombre: "Florencia", poligono: CENTRO };
+    expect(evaluarZonasCliente(1.61, -75.61, zona)).toBe(true);
+    expect(evaluarZonasCliente(4.71, -74.07, zona)).toBe(false);
+  });
+
+  it("sin datos de zona no bloquea: el servidor es la autoridad", () => {
+    expect(evaluarZonasCliente(1.61, -75.61, undefined)).toBe(true);
   });
 });

@@ -7,8 +7,9 @@ import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { colors } from "../src/constants/theme";
-import { getCoberturaZona, puntoEnZona, type UbicacionCapturada } from "../src/lib/api";
+import { getCoberturaZona, evaluarZonasCliente, type UbicacionCapturada } from "../src/lib/api";
 import { useUbicacionPicker } from "../src/stores/ubicacionPicker";
+import { tracker } from "../src/lib/tracker";
 
 // Centro de Florencia (fallback si no hay GPS ni pin inicial).
 const FLORENCIA = { latitude: 1.6144, longitude: -75.6062 };
@@ -61,11 +62,26 @@ export default function UbicacionScreen() {
     staleTime: Infinity,
   });
 
+  // Cada bloqueo dice dónde falta cobertura, pero solo se registra una vez por
+  // coordenada redondeada: arrastrar el mapa dentro de una zona excluida no debe
+  // llenar la cola de eventos repetidos.
+  const fueraReportadoRef = useRef<Set<string>>(new Set());
+  const pinMovidoRef = useRef(false);
+
   const validar = useCallback(
     (lat: number, lng: number) => {
-      const poly = zona?.poligono;
-      // Sin polígono cargado → no bloqueamos (el servidor es la autoridad).
-      setDentroZona(poly && poly.length >= 3 ? puntoEnZona(lat, lng, poly) : true);
+      // Evalúa contra TODAS las zonas, exclusiones incluidas, con el mismo orden de
+      // reglas del servidor. El servidor revalida al guardar y sigue mandando.
+      const dentro = evaluarZonasCliente(lat, lng, zona);
+      setDentroZona(dentro);
+      if (!dentro) {
+        const clave = `${lat.toFixed(3)},${lng.toFixed(3)}`;
+        if (!fueraReportadoRef.current.has(clave)) {
+          fueraReportadoRef.current.add(clave);
+          // El tracker redondea lat/lng a 3 decimales antes de enviarlas.
+          tracker.track('fuera_de_zona', { lat, lng }, 'ubicacion');
+        }
+      }
     },
     [zona],
   );
@@ -108,6 +124,12 @@ export default function UbicacionScreen() {
   // Al soltar el mapa: el centro es el nuevo punto. Debounce del reverse geocode.
   const onRegionChangeComplete = (r: Region) => {
     centroRef.current = { latitude: r.latitude, longitude: r.longitude };
+    // Una sola vez por visita: la pregunta es "¿usan el mapa o se rinden?", no
+    // cuántas veces lo arrastraron. Medir el gesto continuo no responde nada.
+    if (!pinMovidoRef.current) {
+      pinMovidoRef.current = true;
+      tracker.track('ubicacion_pin_movido', undefined, 'ubicacion');
+    }
     validar(r.latitude, r.longitude);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -116,8 +138,15 @@ export default function UbicacionScreen() {
   };
 
   const recentrar = async () => {
+    // El diálogo nativo de permisos solo se puede mostrar UNA vez: medir aquí es lo
+    // que después permite decidir si `exigir_ubicacion` (bloque F) es viable.
+    tracker.track('ubicacion_permiso_pedido', undefined, 'ubicacion');
     const perm = await Location.requestForegroundPermissionsAsync();
-    if (!perm.granted) return;
+    if (!perm.granted) {
+      tracker.track('ubicacion_permiso_negado', undefined, 'ubicacion');
+      return;
+    }
+    tracker.track('ubicacion_permiso_concedido', undefined, 'ubicacion');
     const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }).catch(() => null);
     if (pos) {
       mapRef.current?.animateToRegion({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, ...DELTA }, 350);
@@ -126,6 +155,7 @@ export default function UbicacionScreen() {
 
   const onConfirmar = () => {
     if (!dentroZona) return;
+    tracker.track('ubicacion_pin_confirmado', { dentro_zona: true }, 'ubicacion');
     const c = centroRef.current;
     const u: UbicacionCapturada = {
       lat: c.latitude,

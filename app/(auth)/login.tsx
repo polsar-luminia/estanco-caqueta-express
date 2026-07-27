@@ -33,11 +33,17 @@ export default function LoginScreen() {
     submittingRef.current = true;
     setLoading(true);
     setLoginError(false);
+    // A.2 — el login es un paso del checkout: si se pierde gente aquí, se pierden
+    // pedidos. Sin estos dos eventos no hay forma de saberlo.
+    tracker.track("login_iniciado", { origen: "login" }, "login");
     try {
       await login(telefono.trim(), password);
       tracker.track("sesion_iniciada", {}, "login");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo iniciar sesión";
+      // El mensaje del backend es una etiqueta acotada (credenciales, bloqueo,
+      // red), no texto del usuario: no lleva PII.
+      tracker.track("login_fallido", { motivo: msg.slice(0, 80) }, "login");
       Sentry.captureException(err instanceof Error ? err : new Error(msg), {
         tags: { flow: "auth", screen: "login" },
       });

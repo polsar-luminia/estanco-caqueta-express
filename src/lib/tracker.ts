@@ -12,6 +12,8 @@
 
 import { AppState, AppStateStatus } from 'react-native';
 import * as Sentry from '@sentry/react-native';
+import * as Updates from 'expo-updates';
+import Constants from 'expo-constants';
 import { getToken } from './api';
 import { obtenerDeviceId } from './deviceId';
 import { API_URL } from '../constants/config';
@@ -20,6 +22,30 @@ const API_BASE = API_URL;
 const FLUSH_INTERVAL_MS = 30_000;
 const MAX_QUEUE = 20;
 const MAX_QUEUE_SIZE = 200;
+
+/**
+ * Versión del binario (A.1). Sale de `Updates.runtimeVersion`, que viaja dentro del
+ * binario y NO se puede cambiar por OTA: por eso sirve para decidir cuándo subir
+ * `version_minima` o prender `exigir_ubicacion` sin dejar gente encerrada.
+ * `Constants.expoConfig.version` es el respaldo para Expo Go y desarrollo.
+ *
+ * Viaja como header del batch, no dentro de cada evento: es la misma para todo el
+ * lote y repetirla por fila serían bytes de más en planes de datos limitados.
+ */
+const APP_VERSION: string = Updates.runtimeVersion || Constants.expoConfig?.version || '';
+
+// Cero PII (M-OBS-21): las coordenadas se redondean a 3 decimales (~100 m) antes de
+// salir del teléfono. Alcanza para mapear dónde abrir cobertura y no alcanza para
+// señalar una casa. Se aplica en el tracker y no en cada llamador a propósito:
+// olvidarlo en un solo sitio sería una fuga.
+const DECIMALES_COORDENADA = 3;
+const KEYS_COORDENADA = new Set(['lat', 'lng']);
+
+function redondearCoordenada(v: unknown): unknown {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return v;
+  const f = 10 ** DECIMALES_COORDENADA;
+  return Math.round(v * f) / f;
+}
 
 export type EventTipo =
   | 'app_error'
@@ -41,7 +67,22 @@ export type EventTipo =
   | 'carrito_eliminado'
   | 'carrito_cantidad_cambiada'
   | 'interstitial_mostrado'
-  | 'interstitial_completado';
+  | 'interstitial_completado'
+  // A.2 (release 1.2.0) — cierre de los huecos del embudo.
+  | 'pantalla_vista'
+  | 'checkout_iniciado'
+  | 'checkout_abandonado'
+  | 'ubicacion_permiso_pedido'
+  | 'ubicacion_permiso_concedido'
+  | 'ubicacion_permiso_negado'
+  | 'ubicacion_pin_movido'
+  | 'ubicacion_pin_confirmado'
+  | 'fuera_de_zona'
+  | 'direccion_creada'
+  | 'direccion_seleccionada'
+  | 'login_iniciado'
+  | 'login_fallido'
+  | 'producto_agotado_visto';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -69,6 +110,31 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   carrito_cantidad_cambiada: ['producto_id', 'cantidad_nueva'],
   interstitial_mostrado: ['interstitial_id'],
   interstitial_completado: ['interstitial_id'],
+
+  // --- A.2 (release 1.2.0) ---
+  // La ruta viaja en el campo `pantalla`, que ya existe: no hace falta duplicarla
+  // en el payload. ¿Qué pantallas se usan y cuáles no?
+  pantalla_vista: [],
+  // ¿Dónde exactamente se cae el pedido? `paso` es el punto del checkout.
+  checkout_iniciado: ['items_count', 'subtotal'],
+  checkout_abandonado: ['paso', 'items_count'],
+  // Crítico para el bloque F: cuánta gente niega el GPS. Sin este número, exigir
+  // ubicación sería apostar el checkout a ciegas.
+  ubicacion_permiso_pedido: [],
+  ubicacion_permiso_concedido: [],
+  ubicacion_permiso_negado: [],
+  // ¿Usan el mapa o se rinden? `_movido` se emite UNA vez por visita, no por
+  // arrastre: los gestos continuos inflan la cola y gastan batería y datos.
+  ubicacion_pin_movido: [],
+  ubicacion_pin_confirmado: ['dentro_zona'],
+  // Dónde abrir cobertura. Las coordenadas salen redondeadas a 3 decimales.
+  fuera_de_zona: ['lat', 'lng'],
+  direccion_creada: ['con_pin'],
+  direccion_seleccionada: ['direccion_id', 'con_pin'],
+  login_iniciado: ['origen'],
+  login_fallido: ['motivo'],
+  // Demanda insatisfecha por producto.
+  producto_agotado_visto: ['producto_id', 'nombre'],
 };
 
 function aplicarAllowlist(
@@ -80,7 +146,10 @@ function aplicarAllowlist(
   if (allowed.length === 0) return undefined;
   const filtered: Record<string, unknown> = {};
   for (const key of allowed) {
-    if (key in payload) filtered[key] = payload[key];
+    if (!(key in payload)) continue;
+    filtered[key] = KEYS_COORDENADA.has(key)
+      ? redondearCoordenada(payload[key])
+      : payload[key];
   }
   return Object.keys(filtered).length > 0 ? filtered : undefined;
 }
@@ -169,6 +238,7 @@ class Tracker {
             // Sin sesion el backend rechazaba el batch con 401 y se perdia todo el
             // uso previo al registro. Con este header lo acepta como anonimo.
             'X-Device-Id': deviceId,
+            ...(APP_VERSION ? { 'X-App-Version': APP_VERSION } : {}),
           },
           body,
           signal: controller.signal,

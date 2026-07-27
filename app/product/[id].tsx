@@ -157,6 +157,11 @@ export default function ProductDetailScreen() {
     if (!product) return;
     const entrada = Date.now();
     tracker.track('producto_visto', { producto_id: product.id, nombre: product.nombre, categoria: product.categoria }, 'product/[id]');
+    // A.2 — demanda insatisfecha: alguien quiso ver algo que no se puede vender.
+    // Es la lista de qué reponer, ordenada por interés real y no por intuición.
+    if (product.stock_total <= 0) {
+      tracker.track('producto_agotado_visto', { producto_id: product.id, nombre: product.nombre }, 'product/[id]');
+    }
     // Meta ViewContent — una sola vez por producto (deps [product?.id]). Se omite
     // en productos bloqueados por tabaco en iOS (cumplimiento §1.4.3): no enviamos
     // eventos de producto para categorías que la app no puede mostrar en esa
