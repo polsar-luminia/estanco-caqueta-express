@@ -71,6 +71,13 @@ export default function OrderDetailScreen() {
     // M-ORD-11: no seguir haciendo polling si el pedido ya está en estado final.
     refetchInterval: (query) =>
       ["entregado", "cancelado"].includes(query.state.data?.estado ?? "") ? false : 15000,
+    // Esta pantalla existe para mostrar en qué va el pedido, así que servir una
+    // copia de hace rato es servir lo contrario de lo que promete. El staleTime
+    // global es de 5 minutos: si el pedido pasó a entregado mientras el cliente
+    // estaba en otro lado, al volver seguía viendo "en camino" —y con él, la
+    // tarjeta de calificación escondida, porque solo sale en pedidos entregados.
+    // Justo el caso de quien llega desde el push de reseña.
+    staleTime: 0,
     enabled: Number.isFinite(pedidoId) && pedidoId > 0,
   });
 

@@ -72,14 +72,14 @@ export interface FrioRecordatorioProps {
   enviando?: boolean;
 }
 
-// "Águila y Poker" — lista corta en lenguaje natural. Con más de tres, se corta:
-// el cliente no necesita el inventario, necesita entender qué le va frío.
+// "Águila y Poker" — lista corta en lenguaje natural. Se corta pronto porque cada
+// línea de más empuja el bloque hacia arriba, hacia el arte: el cliente no
+// necesita el inventario, necesita entender qué le va frío.
 function listaLegible(nombres: string[]): string {
   if (nombres.length === 0) return "";
   if (nombres.length === 1) return nombres[0];
   if (nombres.length === 2) return `${nombres[0]} y ${nombres[1]}`;
-  if (nombres.length === 3) return `${nombres[0]}, ${nombres[1]} y ${nombres[2]}`;
-  return `${nombres[0]}, ${nombres[1]} y ${nombres.length - 2} más`;
+  return `${nombres[0]} y ${nombres.length - 1} más`;
 }
 
 export function FrioRecordatorio({
@@ -126,9 +126,11 @@ export function FrioRecordatorio({
     ancho = altoMax * ratio;
   }
 
+  // "Al clima" es como se dice acá, y ahorra media línea frente a "a temperatura
+  // ambiente". Cada línea cuenta: el bloque crece hacia arriba, contra el arte.
   const textoElegibles = todosElegibles
     ? "Todo tu pedido va frío."
-    : `Podemos asegurar frío para: ${listaLegible(nombresElegibles)}. El resto va a temperatura ambiente.`;
+    : `Solo va frío: ${listaLegible(nombresElegibles)}. El resto, al clima.`;
 
   return (
     <Modal
@@ -171,95 +173,102 @@ export function FrioRecordatorio({
               real de la tarjeta detrás de un elemento vacío. */}
           <Pressable style={{ flex: 1 }} onPress={() => {}} accessible={false} accessibilityViewIsModal>
             {hayImagen && (
-              <>
-                <Image
-                  source={{ uri: imagenUrl! }}
-                  // Sin este label, el lector de pantalla anuncia una tarjeta muda.
-                  accessibilityLabel="Asegura el frío de tus bebidas"
-                  contentFit="cover"
-                  style={StyleSheet.absoluteFill}
-                  transition={120}
-                  onLoad={(e) => {
-                    const w = e.source?.width;
-                    const h = e.source?.height;
-                    if (w && h) setRatio(w / h);
-                  }}
-                />
-                {/* Velo suave, solo en la parte baja. La pieza deja esa zona libre de
-                    arte, pero la textura del barril no es plana y el texto blanco
-                    encima quedaría a merced de la próxima imagen que suban. */}
-                <LinearGradient
-                  colors={["transparent", "rgba(8,28,52,0.55)", "rgba(8,28,52,0.88)"]}
-                  locations={[0.45, 0.72, 1]}
-                  style={StyleSheet.absoluteFill}
-                  pointerEvents="none"
-                />
-              </>
+              <Image
+                source={{ uri: imagenUrl! }}
+                // Sin este label, el lector de pantalla anuncia una tarjeta muda.
+                accessibilityLabel="Asegura el frío de tus bebidas"
+                contentFit="cover"
+                style={StyleSheet.absoluteFill}
+                transition={120}
+                onLoad={(e) => {
+                  const w = e.source?.width;
+                  const h = e.source?.height;
+                  if (w && h) setRatio(w / h);
+                }}
+              />
             )}
 
             <View
               style={{
                 flex: 1,
-                paddingHorizontal: 20,
-                paddingTop: hayImagen ? 16 : 28,
-                paddingBottom: hayImagen ? 22 : 20,
                 // Con imagen el contenido se apoya abajo, sobre la zona que la pieza
                 // dejó libre. Sin imagen no hay nada que respetar y va centrado.
                 justifyContent: hayImagen ? "flex-end" : "center",
               }}
             >
-              {/* Sin imagen la tarjeta pierde el gancho visual, así que el titular
-                  pasa a ser texto. El pedido se completa igual. */}
-              {!hayImagen && (
+              <View
+                style={{
+                  paddingHorizontal: 20,
+                  paddingTop: hayImagen ? 16 : 28,
+                  paddingBottom: hayImagen ? 22 : 20,
+                }}
+              >
+                {/* El velo va pegado al bloque de texto, no a una fracción fija de
+                    la tarjeta. Esa era la falla: con un nombre de producto largo el
+                    texto crece hacia arriba y se salía de la zona velada, quedando
+                    encima del titular del arte. Anclado aquí, el degradado sube
+                    siempre lo mismo por encima del texto, mida lo que mida. */}
+                {hayImagen && (
+                  <LinearGradient
+                    colors={["transparent", "rgba(8,28,52,0.82)", "rgba(8,28,52,0.95)"]}
+                    locations={[0, 0.42, 0.78]}
+                    style={{ position: "absolute", left: 0, right: 0, bottom: 0, top: -72 }}
+                    pointerEvents="none"
+                  />
+                )}
+
+                {/* Sin imagen la tarjeta pierde el gancho visual, así que el titular
+                    pasa a ser texto. El pedido se completa igual. */}
+                {!hayImagen && (
+                  <Text
+                    style={{
+                      fontSize: 22,
+                      fontWeight: "800",
+                      color: colors.white,
+                      textAlign: "center",
+                      marginBottom: 14,
+                    }}
+                  >
+                    Asegura el frío de tus bebidas
+                  </Text>
+                )}
+
                 <Text
                   style={{
-                    fontSize: 22,
+                    fontSize: 16,
                     fontWeight: "800",
-                    color: colors.white,
+                    color: AZUL_HIELO,
                     textAlign: "center",
-                    marginBottom: 14,
                   }}
                 >
-                  Asegura el frío de tus bebidas
+                  Recargo de {formatCOP(costo)}
                 </Text>
-              )}
 
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: "800",
-                  color: AZUL_HIELO,
-                  textAlign: "center",
-                }}
-              >
-                Recargo de {formatCOP(costo)}
-              </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    lineHeight: 19,
+                    color: colors.white,
+                    textAlign: "center",
+                    marginTop: 8,
+                  }}
+                >
+                  {textoElegibles}
+                </Text>
 
-              <Text
-                style={{
-                  fontSize: 14,
-                  lineHeight: 20,
-                  color: colors.white,
-                  textAlign: "center",
-                  marginTop: 10,
-                }}
-              >
-                {textoElegibles}
-              </Text>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: "700",
+                    color: colors.white,
+                    textAlign: "center",
+                    marginTop: 10,
+                  }}
+                >
+                  Tu total quedaría en {formatCOP(totalConFrio)}
+                </Text>
 
-              <Text
-                style={{
-                  fontSize: 15,
-                  fontWeight: "700",
-                  color: colors.white,
-                  textAlign: "center",
-                  marginTop: 14,
-                }}
-              >
-                Tu total quedaría en {formatCOP(totalConFrio)}
-              </Text>
-
-              <View style={{ marginTop: 18 }}>
+                <View style={{ marginTop: 14 }}>
                 <Pressable
                   onPress={onAceptar}
                   disabled={enviando}
@@ -303,6 +312,7 @@ export function FrioRecordatorio({
                     No me interesa
                   </Text>
                 </Pressable>
+                </View>
               </View>
             </View>
           </Pressable>

@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "co.estancocaqueta.express",
-      "buildNumber": "69",
+      "buildNumber": "70",
       "associatedDomains": [
         "applinks:estancocaqueta.com"
       ],
@@ -35,7 +35,7 @@
         "backgroundColor": "#1FAF55"
       },
       "package": "co.estancocaqueta.express",
-      "versionCode": 69
+      "versionCode": 70
     },
     "plugins": [
       "expo-router",
