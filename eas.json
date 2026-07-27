@@ -82,6 +82,16 @@
       "ios": {
         "ascAppId": "6769148116"
       }
+    },
+    "pruebas": {
+      "android": {
+        "serviceAccountKeyPath": "./play-service-account.json",
+        "track": "internal",
+        "releaseStatus": "completed"
+      },
+      "ios": {
+        "ascAppId": "6769148116"
+      }
     }
   }
 }
