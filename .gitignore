@@ -55,3 +55,8 @@ code-signing/private-key.pem
 
 # Google Play service account (EAS submit) — clave privada, NUNCA commitear
 play-service-account.json
+
+# Artefactos de build local (eas build --local)
+*.ipa
+*.aab
+*.apk
