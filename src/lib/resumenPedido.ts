@@ -27,12 +27,17 @@ export interface EntradaResumen {
   usaPuntos?: boolean;
   /** El cupon aplicado es de tipo envio_gratis. */
   cuponEnvioGratis?: boolean;
+  /** Frio asegurado: el check esta marcado Y hay al menos un producto elegible. */
+  frio?: boolean;
+  /** Cargo por pedido del frio, desde configuracion. Nunca hardcodeado. */
+  frioCosto?: number;
 }
 
 export interface ResumenPedido {
   subtotal: number;
   descuento: number;
   envio: number;
+  frio: number;
   total: number;
   /** Para explicarle al cliente por que no le cobramos envio. */
   motivoEnvioGratis: 'monto' | 'puntos' | 'cupon' | null;
@@ -56,11 +61,21 @@ export function calcularResumen(e: EntradaResumen): ResumenPedido {
 
   const envio = motivoEnvioGratis ? 0 : Math.max(0, e.envioCosto || 0);
 
+  // El frio se suma AL FINAL, fuera del subtotal. Esa es toda la regla:
+  //  - no acerca a nadie al envio gratis (que se mide contra el subtotal),
+  //  - no cuenta para el pedido minimo,
+  //  - no genera puntos,
+  //  - y ningun cupon de descuento lo toca, porque los cupones son sobre mercancia.
+  // Pegarlo al subtotal regalaria puntos por un servicio. Mismo orden que el
+  // servidor en POST /pedidos.
+  const frio = e.frio ? Math.max(0, e.frioCosto || 0) : 0;
+
   return {
     subtotal,
     descuento,
     envio,
-    total: subtotal - descuento + envio,
+    frio,
+    total: subtotal - descuento + envio + frio,
     motivoEnvioGratis,
   };
 }

@@ -148,6 +148,28 @@ export default function OrderDetailScreen() {
           </View>
         ))}
 
+        {/* Frío asegurado. Cuando el cargo se quitó porque no alcanzó a estar
+            frío, el cliente tiene que verlo aquí: sin eso nunca se entera de que
+            cumplimos y el cobro se siente como una estafa. */}
+        {pedido.frio && (pedido.frio_costo ?? 0) > 0 && (
+          <View className="border-t border-gray-100 mt-2 pt-3 flex-row justify-between items-center">
+            <Text className="text-sm text-gray-600">Frío asegurado</Text>
+            <Text className="text-sm font-semibold" style={{ color: "#0F3A6B" }}>
+              {formatCOP(pedido.frio_costo ?? 0)}
+            </Text>
+          </View>
+        )}
+        {pedido.frio_removido && (
+          <View className="border-t border-gray-100 mt-2 pt-3">
+            <Text className="text-sm font-semibold" style={{ color: "#0F3A6B" }}>
+              Frío — no alcanzó, sin cobro
+            </Text>
+            <Text className="text-xs text-gray-500 mt-0.5">
+              No alcanzamos a tenerlo frío, así que te quitamos el cargo.
+            </Text>
+          </View>
+        )}
+
         {/* Total */}
         <View className="border-t border-gray-200 mt-2 pt-4 flex-row justify-between items-center">
           <Text className="text-base font-bold text-on-surface">Total</Text>

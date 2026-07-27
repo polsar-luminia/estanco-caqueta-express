@@ -12,10 +12,9 @@
 
 import { AppState, AppStateStatus } from 'react-native';
 import * as Sentry from '@sentry/react-native';
-import * as Updates from 'expo-updates';
-import Constants from 'expo-constants';
 import { getToken } from './api';
 import { obtenerDeviceId } from './deviceId';
+import { APP_VERSION } from './appVersion';
 import { API_URL } from '../constants/config';
 
 const API_BASE = API_URL;
@@ -23,16 +22,9 @@ const FLUSH_INTERVAL_MS = 30_000;
 const MAX_QUEUE = 20;
 const MAX_QUEUE_SIZE = 200;
 
-/**
- * Versión del binario (A.1). Sale de `Updates.runtimeVersion`, que viaja dentro del
- * binario y NO se puede cambiar por OTA: por eso sirve para decidir cuándo subir
- * `version_minima` o prender `exigir_ubicacion` sin dejar gente encerrada.
- * `Constants.expoConfig.version` es el respaldo para Expo Go y desarrollo.
- *
- * Viaja como header del batch, no dentro de cada evento: es la misma para todo el
- * lote y repetirla por fila serían bytes de más en planes de datos limitados.
- */
-const APP_VERSION: string = Updates.runtimeVersion || Constants.expoConfig?.version || '';
+// APP_VERSION (A.1) viaja como header del batch, no dentro de cada evento: es la
+// misma para todo el lote y repetirla por fila serían bytes de más en planes de
+// datos limitados. Definición y origen en ./appVersion.
 
 // Cero PII (M-OBS-21): las coordenadas se redondean a 3 decimales (~100 m) antes de
 // salir del teléfono. Alcanza para mapear dónde abrir cobertura y no alcanza para
@@ -82,7 +74,14 @@ export type EventTipo =
   | 'direccion_seleccionada'
   | 'login_iniciado'
   | 'login_fallido'
-  | 'producto_agotado_visto';
+  | 'producto_agotado_visto'
+  // H — frío asegurado
+  | 'frio_ofrecido'
+  | 'frio_activado'
+  | 'frio_desactivado'
+  | 'frio_recordatorio_visto'
+  | 'frio_recordatorio_aceptado'
+  | 'frio_recordatorio_rechazado';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -135,6 +134,20 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   login_fallido: ['motivo'],
   // Demanda insatisfecha por producto.
   producto_agotado_visto: ['producto_id', 'nombre'],
+
+  // --- H (frío asegurado) ---
+  // ¿A cuántos carritos les aparece siquiera la opción? Es el denominador de la
+  // tasa de toma: sin él, "20 personas pagaron frío" no dice nada.
+  frio_ofrecido: ['n_elegibles', 'n_items'],
+  // Tasa de toma real: ¿el cliente sí paga $1.000 por frío?
+  frio_activado: ['n_elegibles'],
+  frio_desactivado: ['n_elegibles'],
+  // La tarjeta previa a "Realizar pedido".
+  frio_recordatorio_visto: ['n_elegibles'],
+  // La pregunta del millón: ¿el recordatorio rescata ventas o espanta pedidos?
+  // Se lee cruzado contra checkout_abandonado, nunca solo.
+  frio_recordatorio_aceptado: ['n_elegibles'],
+  frio_recordatorio_rechazado: ['n_elegibles'],
 };
 
 function aplicarAllowlist(

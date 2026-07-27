@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import { API_URL } from "../constants/config";
+import { APP_VERSION } from "./appVersion";
 
 const TOKEN_KEY = "auth_token";
 
@@ -38,6 +39,11 @@ export async function apiFetch<T = any>(
     // el header indica ios. Es defensa server-side; el frontend tiene su
     // propio filtro defensivo en src/lib/iosFilters.ts.
     "X-Platform": Platform.OS,
+    // Versión del binario. El servidor la usa para no cobrarle a un cliente algo
+    // que su versión no sabe mostrar: 1.1.5 sigue vivo en las tiendas y pinta el
+    // envío con el costo global, así que el servidor le cobra el global aunque la
+    // zona tenga tarifa propia. La ausencia del header significa "app vieja".
+    ...(APP_VERSION ? { "X-App-Version": APP_VERSION } : {}),
     ...(rest.headers as Record<string, string>),
   };
 
@@ -412,6 +418,10 @@ export interface Pedido {
   despachado_at?: string;
   entregado_at?: string;
   lineas: LineaPedido[];
+  // Frío asegurado. `frio_removido` = no alcanzó a estar frío y no se cobró.
+  frio?: boolean;
+  frio_costo?: number;
+  frio_removido?: boolean;
 }
 
 export interface LineaPedido {
@@ -437,6 +447,9 @@ export interface CrearPedidoInput {
   precision_m?: number | null;
   metodo_ubicacion?: Exclude<MetodoUbicacion, "manual">;
   geocoded_direccion?: string | null;
+  // Frío asegurado (bloque H): solo la INTENCIÓN. El servidor recalcula la
+  // elegibilidad y el precio desde la base — el cliente nunca manda el monto.
+  quiere_frio?: boolean;
 }
 
 // --- Cupones ---
@@ -551,6 +564,9 @@ export interface CrearDireccionInput {
   precision_m?: number | null;
   metodo_ubicacion?: Exclude<MetodoUbicacion, "manual">;
   geocoded_direccion?: string | null;
+  // Frío asegurado (bloque H): solo la INTENCIÓN. El servidor recalcula la
+  // elegibilidad y el precio desde la base — el cliente nunca manda el monto.
+  quiere_frio?: boolean;
 }
 
 export async function crearDireccion(data: CrearDireccionInput, idempotencyKey?: string) {
@@ -663,6 +679,9 @@ export function ubicacionABody(u: UbicacionCapturada | null | undefined): {
   precision_m?: number | null;
   metodo_ubicacion?: Exclude<MetodoUbicacion, "manual">;
   geocoded_direccion?: string | null;
+  // Frío asegurado (bloque H): solo la INTENCIÓN. El servidor recalcula la
+  // elegibilidad y el precio desde la base — el cliente nunca manda el monto.
+  quiere_frio?: boolean;
 } {
   if (!u || !Number.isFinite(u.lat) || !Number.isFinite(u.lng)) return {};
   return {
@@ -750,8 +769,39 @@ export async function getEstadoTienda(): Promise<EstadoTienda> {
   return apiFetch<EstadoTienda>("/tienda/estado");
 }
 
-export async function getConfigApp(): Promise<{ envio_gratis_minimo: number; envio_costo: number; pedido_minimo: number; limite_ventana_dias?: number }> {
+export interface ConfigApp {
+  envio_gratis_minimo: number;
+  envio_costo: number;
+  pedido_minimo: number;
+  limite_ventana_dias?: number;
+  // Frío asegurado (bloque H). Nacen apagadas y se prenden desde el servidor.
+  frio_activo?: boolean;
+  frio_costo?: number;
+  frio_recordatorio_activo?: boolean;
+  frio_imagen_url?: string | null;
+}
+
+export async function getConfigApp(): Promise<ConfigApp> {
   return apiFetch('/configuracion-app');
+}
+
+// POST /catalogo/frio — qué productos del carrito pueden ir fríos.
+//
+// Existe un endpoint porque CartItem no guarda la categoría (y los carritos ya
+// persistidos en los teléfonos tampoco la tendrían): la app no puede resolver la
+// elegibilidad sola. Que la resuelva el servidor evita además tener la misma
+// regla escrita en dos lados.
+export interface FrioCarrito {
+  activo: boolean;
+  costo: number;
+  elegibles: number[];
+}
+
+export async function getFrioCarrito(productoIds: number[]): Promise<FrioCarrito> {
+  return apiFetch<FrioCarrito>("/catalogo/frio", {
+    method: "POST",
+    body: JSON.stringify({ producto_ids: productoIds }),
+  });
 }
 
 // Cupo restante del cliente para los productos con máximo por cliente. Existe porque

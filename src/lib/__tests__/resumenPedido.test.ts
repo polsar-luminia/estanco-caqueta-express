@@ -46,6 +46,45 @@ describe('calcularResumen', () => {
   });
 });
 
+describe('calcularResumen — frío asegurado', () => {
+  it('suma el cargo al total cuando está activo', () => {
+    const r = calcularResumen({ ...BASE, frio: true, frioCosto: 1000 });
+    expect(r).toMatchObject({ frio: 1000, total: 56000 });
+  });
+
+  it('sin frío el cargo es cero y el total no cambia', () => {
+    expect(calcularResumen(BASE)).toMatchObject({ frio: 0, total: 55000 });
+    expect(calcularResumen({ ...BASE, frio: false, frioCosto: 1000 }).frio).toBe(0);
+  });
+
+  it('el frío NO acerca al envío gratis: no entra al subtotal', () => {
+    // Subtotal a $1.000 del mínimo. Aunque el frío sume $1.000 al total, el envío
+    // se sigue cobrando: el umbral se mide contra la mercancía, no contra el total.
+    const r = calcularResumen({
+      ...BASE, subtotal: 149000, frio: true, frioCosto: 1000,
+    });
+    expect(r.motivoEnvioGratis).toBeNull();
+    expect(r.envio).toBe(5000);
+    expect(r.total).toBe(149000 + 5000 + 1000);
+  });
+
+  it('el descuento del cupón no muerde el frío', () => {
+    // Los cupones aplican sobre mercancía. Un cupón que se comiera el frío
+    // regalaría el servicio.
+    const r = calcularResumen({ ...BASE, descuentoCupon: 10000, frio: true, frioCosto: 1000 });
+    expect(r.total).toBe(50000 - 10000 + 5000 + 1000);
+  });
+
+  it('el envío gratis no cubre el frío', () => {
+    const r = calcularResumen({ ...BASE, subtotal: 150000, frio: true, frioCosto: 1000 });
+    expect(r).toMatchObject({ envio: 0, frio: 1000, total: 151000 });
+  });
+
+  it('el precio del frío sale de la configuración, no de un valor fijo', () => {
+    expect(calcularResumen({ ...BASE, frio: true, frioCosto: 1500 }).frio).toBe(1500);
+  });
+});
+
 describe('envioDeZona', () => {
   it('null significa usar el global, no envio gratis', () => {
     expect(envioDeZona(null, 5000)).toBe(5000);

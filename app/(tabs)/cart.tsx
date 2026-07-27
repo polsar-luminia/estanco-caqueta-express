@@ -10,8 +10,9 @@ import Toast from "react-native-toast-message";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
-import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
+import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
 import { calcularResumen, envioDeZona } from "../../src/lib/resumenPedido";
+import { FrioRecordatorio } from "../../src/components/FrioRecordatorio";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { tracker } from "../../src/lib/tracker";
@@ -29,6 +30,14 @@ function ChevronRightIcon() {
       <Path d="M9 18l6-6-6-6" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
+}
+
+// Lo ya validado del pedido, para poder crearlo desde el carrito o desde los
+// botones del recordatorio de frío sin repetir las validaciones.
+interface DatosPedido {
+  dirFinal: string;
+  notFinal: string;
+  ubicacionSnapshot: UbicacionCapturada | null;
 }
 
 export default function CartScreen() {
@@ -108,6 +117,9 @@ export default function CartScreen() {
   const [nuevaDireccion, setNuevaDireccion] = useState("");
   const [nuevasNotas, setNuevasNotas] = useState("");
   const [nuevaUbicacion, setNuevaUbicacion] = useState<UbicacionCapturada | null>(null);
+  // Frío asegurado: intención del cliente. No se persiste entre sesiones.
+  const [quiereFrio, setQuiereFrio] = useState(false);
+  const [mostrarRecordatorioFrio, setMostrarRecordatorioFrio] = useState(false);
   const [codigoCupon, setCodigoCupon] = useState("");
   const [cuponValidado, setCuponValidado] = useState<CuponValidado | null>(null);
   const [cuponError, setCuponError] = useState("");
@@ -158,6 +170,28 @@ export default function CartScreen() {
 
   const envioCosto = envioDeZona(cobertura?.costo_envio, envioCostoGlobal);
   const descuentoCupon = cuponValidado?.descuento || 0;
+
+  // --- Frío asegurado (bloque H) ---
+  // El servidor resuelve la elegibilidad porque CartItem no guarda la categoría y
+  // los carritos ya persistidos en los teléfonos tampoco la tendrían.
+  const productoIds = items.map((i) => i.productoId);
+  const { data: frioInfo } = useQuery({
+    queryKey: ["frio-carrito", productoIds.slice().sort((a, b) => a - b).join(",")],
+    queryFn: () => getFrioCarrito(productoIds),
+    enabled: items.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const frioActivo = !!frioInfo?.activo;
+  const frioCosto = frioInfo?.costo ?? configApp?.frio_costo ?? 1000;
+  const itemsElegibles = frioInfo?.elegibles?.length
+    ? items.filter((i) => frioInfo.elegibles.includes(i.productoId))
+    : [];
+  const hayElegibles = itemsElegibles.length > 0;
+  const todosElegibles = hayElegibles && itemsElegibles.length === items.length;
+  // Solo se cobra si el check está marcado Y hay algo elegible. Nunca cobrar por aire.
+  const frioAplicado = quiereFrio && frioActivo && hayElegibles;
+
   // Una sola cuenta, la misma que hace el servidor en POST /pedidos.
   const resumen = calcularResumen({
     subtotal,
@@ -166,9 +200,40 @@ export default function CartScreen() {
     envioGratisMinimo,
     usaPuntos: usarPuntos && puedeUsarPuntos,
     cuponEnvioGratis: cuponValidado?.cupon.tipo === 'envio_gratis',
+    frio: frioAplicado,
+    frioCosto,
   });
   const envio = resumen.envio;
   const total = resumen.total;
+
+  // El check arranca apagado en cada pedido y no se persiste entre sesiones. Un
+  // check pegado que suma $1.000 sin que la gente lo note es una queja garantizada.
+  // Si el carrito deja de tener elegibles, se apaga solo para no cobrar por aire.
+  useEffect(() => {
+    if (quiereFrio && !hayElegibles) setQuiereFrio(false);
+  }, [quiereFrio, hayElegibles]);
+
+  const alternarFrio = (valor: boolean) => {
+    setQuiereFrio(valor);
+    // Tasa de toma real: ¿el cliente sí paga por frío? Se mide el tap, que es la
+    // decisión, no el estado.
+    tracker.track(
+      valor ? 'frio_activado' : 'frio_desactivado',
+      { n_elegibles: itemsElegibles.length },
+      'cart',
+    );
+  };
+
+  // ¿A cuántos carritos les aparece siquiera la opción? Es el denominador de la
+  // tasa de toma. Una vez por composición de carrito, no en cada render.
+  const frioOfrecidoRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!frioActivo || !hayElegibles) return;
+    const clave = productoIds.slice().sort((a, b) => a - b).join(",");
+    if (frioOfrecidoRef.current === clave) return;
+    frioOfrecidoRef.current = clave;
+    tracker.track('frio_ofrecido', { n_elegibles: itemsElegibles.length, n_items: items.length }, 'cart');
+  }, [frioActivo, hayElegibles, itemsElegibles.length, items.length, productoIds]);
 
   const handleValidarCupon = async () => {
     if (!codigoCupon.trim()) return;
@@ -245,6 +310,12 @@ export default function CartScreen() {
   // checkout_iniciado: una sola vez por intento de pedido, igual que el de Meta.
   // Se libera al crear el pedido para que el siguiente pedido vuelva a contarse.
   const checkoutIniciadoRef = useRef(false);
+  // Composición de carrito para la que ya se mostró el recordatorio de frío. Un
+  // modal que reaparece encima del botón de comprar es la forma más rápida de que
+  // desinstalen la app.
+  const recordatorioMostradoRef = useRef<string | null>(null);
+  // Datos ya validados del pedido, a la espera de que el cliente responda la tarjeta.
+  const datosPedidoRef = useRef<DatosPedido | null>(null);
 
   const handlePedir = async () => {
     if (submitLockRef.current) return;
@@ -305,6 +376,39 @@ export default function CartScreen() {
           }
         : null;
 
+    const datos: DatosPedido = { dirFinal, notFinal, ubicacionSnapshot };
+
+    // Recordatorio de frío: se intercepta el tap y el pedido NO se crea todavía.
+    // Solo si la bandera está prendida, hay algo elegible y el check está apagado
+    // — si ya dijo que sí, volvérselo a preguntar es tratarlo de distraído y
+    // arriesgar que se arrepienta. Una sola vez por carrito: si el pedido falla y
+    // el cliente reintenta, la tarjeta no reaparece.
+    const claveCarrito = productoIds.slice().sort((a, b) => a - b).join(",");
+    const debeRecordar =
+      !!configApp?.frio_recordatorio_activo &&
+      frioActivo &&
+      hayElegibles &&
+      !quiereFrio &&
+      recordatorioMostradoRef.current !== claveCarrito;
+
+    if (debeRecordar) {
+      recordatorioMostradoRef.current = claveCarrito;
+      datosPedidoRef.current = datos;
+      tracker.track('frio_recordatorio_visto', { n_elegibles: itemsElegibles.length }, 'cart');
+      setMostrarRecordatorioFrio(true);
+      return;
+    }
+
+    await ejecutarPedido(datos, frioAplicado);
+  };
+
+  // Creación real del pedido. Vive aparte de handlePedir porque los dos botones
+  // del recordatorio terminan aquí: la tarjeta es una bifurcación, no un desvío.
+  // Se toca una vez y se compra; nadie vuelve al carrito.
+  const ejecutarPedido = async (datos: DatosPedido, conFrio: boolean) => {
+    if (submitLockRef.current) return;
+    const { dirFinal, notFinal, ubicacionSnapshot } = datos;
+
     submitLockRef.current = true;
     setLoading(true);
 
@@ -354,6 +458,9 @@ export default function CartScreen() {
         usar_puntos: usarPuntos && puedeUsarPuntos,
         cupon_codigo: cuponValidado?.cupon.codigo || undefined,
         lineas: items.map((i) => ({ producto_id: i.productoId, cantidad: i.cantidad })),
+        // Solo la intención. El servidor recalcula la elegibilidad y el precio
+        // desde la base: si no hay nada elegible, no cobra y no falla.
+        quiere_frio: conFrio,
         ...ubicacionABody(ubicacionSnapshot),
       }, submitIdempotencyKeyRef.current);
       // Éxito: liberar el key y el id de dirección para que el próximo pedido empiece limpio
@@ -362,6 +469,9 @@ export default function CartScreen() {
       direccionIdemKeyRef.current = null;
       initiateCheckoutLogueadoRef.current = false;
       checkoutIniciadoRef.current = false;
+      recordatorioMostradoRef.current = null;
+      setMostrarRecordatorioFrio(false);
+      setQuiereFrio(false);
       setNuevaUbicacion(null);
       tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos }, 'cart');
       metaLogPurchase(pedido.total, { pedidoId: pedido.id, numItems: items.length });
@@ -401,6 +511,9 @@ export default function CartScreen() {
       router.push({ pathname: "/(tabs)/orders/[id]", params: { id: String(pedido.id) } });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo crear el pedido";
+      // El error del pedido no se mezcla con la pregunta del frío: se cierra la
+      // tarjeta y el mensaje sale en el carrito, como siempre.
+      setMostrarRecordatorioFrio(false);
       tracker.track('checkout_abandonado', { paso: llegoACrearPedido ? 'error_pedido' : 'error_previo', items_count: items.length }, 'cart');
       Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "checkout" } });
       // Solo limpiar cupón si el pedido llegó a crearse en backend (podría haberse consumido)
@@ -670,6 +783,55 @@ export default function CartScreen() {
                   {envio === 0 ? "¡Gratis!" : formatCOP(envio)}
                 </Text>
               </View>
+
+              {/* Frío asegurado. Si no hay nada elegible el check no se muestra:
+                  nunca cobrar por aire. El texto dice exactamente qué va frío y
+                  qué no, que es lo que pidió el negocio. */}
+              {frioActivo && hayElegibles && (
+                <View
+                  className="rounded-xl p-3"
+                  style={{ backgroundColor: quiereFrio ? "rgba(15,58,107,0.08)" : colors.lowfill }}
+                >
+                  {/* El Switch va como hermano del Pressable, no dentro: anidado,
+                      un tap sobre él dispararía los dos handlers y el check
+                      quedaría igual que antes. */}
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                    <Pressable
+                      onPress={() => alternarFrio(!quiereFrio)}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: quiereFrio }}
+                      accessibilityLabel={`Asegurar frío por ${formatCOP(frioCosto)}`}
+                      // Es un cargo, no una nota al pie: 44 pt de objetivo táctil.
+                      style={{ flex: 1, minHeight: 44, justifyContent: "center" }}
+                    >
+                      <Text style={{ fontSize: 15, fontWeight: "700", color: "#1A1C1A" }}>
+                        ¿Lo quieres frío? +{formatCOP(frioCosto)}
+                      </Text>
+                      <Text style={{ fontSize: 14, lineHeight: 19, color: "#6D7B6C", marginTop: 3 }}>
+                        {todosElegibles
+                          ? "Todo tu pedido va frío."
+                          : `Aseguramos frío para: ${itemsElegibles.map((i) => i.nombre).slice(0, 3).join(", ")}${itemsElegibles.length > 3 ? ` y ${itemsElegibles.length - 3} más` : ""}. El resto de tu pedido va a temperatura ambiente.`}
+                      </Text>
+                    </Pressable>
+                    <Switch
+                      value={quiereFrio}
+                      onValueChange={alternarFrio}
+                      accessibilityLabel={`Asegurar frío por ${formatCOP(frioCosto)}`}
+                      trackColor={{ false: "#E2E3DF", true: "#0F3A6B" }}
+                      thumbColor="#fff"
+                    />
+                  </View>
+                </View>
+              )}
+
+              {resumen.frio > 0 && (
+                <View className="flex-row justify-between items-center">
+                  <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Frío asegurado</Text>
+                  <Text style={{ fontSize: 14, fontWeight: "600", color: "#0F3A6B" }}>
+                    {formatCOP(resumen.frio)}
+                  </Text>
+                </View>
+              )}
               {puedeUsarPuntos && subtotal < envioGratisMinimo && (
                 <View className="flex-row justify-between items-center rounded-xl p-3" style={{ backgroundColor: colors.lowfill }}>
                   <View className="flex-1">
@@ -756,6 +918,11 @@ export default function CartScreen() {
             <Text style={{ fontSize: 11, color: "#6D7B6C", fontStyle: "italic" }}>
               {envio === 0 ? "Envío gratis con puntos 🎉" : `Incluye domicilio (${formatCOP(envio)})`}
             </Text>
+            {resumen.frio > 0 && (
+              <Text style={{ fontSize: 11, color: "#0F3A6B", fontWeight: "600", marginTop: 2 }}>
+                Incluye frío asegurado ({formatCOP(resumen.frio)})
+              </Text>
+            )}
             {subtotal < pedidoMinimo && (
               <Text style={{ fontSize: 11, color: colors.offer, fontWeight: "600", marginTop: 2 }}>
                 Pedido mínimo: {formatCOP(pedidoMinimo)} (faltan {formatCOP(pedidoMinimo - subtotal)})
@@ -797,6 +964,29 @@ export default function CartScreen() {
           </LinearGradient>
         </Pressable>
       </View>
+
+      {/* Última pregunta antes de cobrar. Los dos botones crean el pedido: la
+          tarjeta es una bifurcación, no un desvío. */}
+      <FrioRecordatorio
+        visible={mostrarRecordatorioFrio}
+        imagenUrl={configApp?.frio_imagen_url}
+        costo={frioCosto}
+        nombresElegibles={itemsElegibles.map((i) => i.nombre)}
+        todosElegibles={todosElegibles}
+        totalConFrio={total + (frioAplicado ? 0 : frioCosto)}
+        enviando={loading}
+        onAceptar={() => {
+          tracker.track('frio_recordatorio_aceptado', { n_elegibles: itemsElegibles.length }, 'cart');
+          setQuiereFrio(true);
+          const datos = datosPedidoRef.current;
+          if (datos) ejecutarPedido(datos, true);
+        }}
+        onRechazar={() => {
+          tracker.track('frio_recordatorio_rechazado', { n_elegibles: itemsElegibles.length }, 'cart');
+          const datos = datosPedidoRef.current;
+          if (datos) ejecutarPedido(datos, false);
+        }}
+      />
     </View>
     </KeyboardAvoidingView>
   );
