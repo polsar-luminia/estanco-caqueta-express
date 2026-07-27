@@ -10,6 +10,7 @@ import Toast from "react-native-toast-message";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
+import { useTecladoVisible } from "../../src/hooks/useTecladoVisible";
 import { crearPedido, getDirecciones, crearDireccion, editarDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, getEtaActual, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
 import { useUbicacionPicker } from "../../src/stores/ubicacionPicker";
 import { calcularResumen, envioDeZona } from "../../src/lib/resumenPedido";
@@ -130,6 +131,7 @@ export default function CartScreen() {
   const queryClient = useQueryClient();
 
   const tienda = useTiendaAbierta();
+  const tecladoVisible = useTecladoVisible();
 
   const { data: configApp } = useQuery({
     queryKey: ['config-app'],
@@ -610,10 +612,13 @@ export default function CartScreen() {
     );
   }
 
+  // En iOS el desplazamiento lo hace `automaticallyAdjustKeyboardInsets` de la lista,
+  // que sube solo el contenido scrolleable. Antes ademas habia un behavior="padding"
+  // aqui, y entre los dos levantaban la pantalla entera —barra del total incluida—
+  // hasta tapar media vista. Android si necesita el ajuste porque no tiene equivalente.
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={80}
+      behavior={Platform.OS === 'android' ? 'height' : undefined}
       style={{ flex: 1 }}
     >
     <View className="flex-1" style={{ backgroundColor: colors.bg }}>
@@ -977,7 +982,10 @@ export default function CartScreen() {
         }
       />
 
-      {/* Sticky Bottom */}
+      {/* Barra inferior. Se esconde con el teclado abierto: el total y el boton de
+          pedir no aportan nada mientras se escribe, y en cambio tapan las
+          sugerencias de direccion, que es lo que la persona esta mirando. */}
+      {!tecladoVisible && (
       <View
         className="bg-white px-6 pt-4"
         style={{
@@ -1065,6 +1073,7 @@ export default function CartScreen() {
           </LinearGradient>
         </Pressable>
       </View>
+      )}
 
       {/* Última pregunta antes de cobrar. Los dos botones crean el pedido: la
           tarjeta es una bifurcación, no un desvío. */}
