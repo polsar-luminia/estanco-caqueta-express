@@ -5,9 +5,10 @@
  * actual y al mapa. El cliente escribe, toca una sugerencia, y el pin queda puesto
  * sin arrastrar nada.
  *
- * Si no hay llave de Places configurada, se comporta como el campo de texto de
- * siempre: sin sugerencias, sin errores, sin diferencia visible. Los otros dos
- * caminos siguen intactos.
+ * Las sugerencias las sirve nuestro backend, no Google directamente (la llave es
+ * facturable y no puede viajar en el binario — ver src/lib/places.ts). Si el
+ * servidor no tiene llave, devuelve lista vacía y esto se comporta como el campo
+ * de texto de siempre: sin sugerencias, sin errores, sin diferencia visible.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -16,7 +17,6 @@ import { Feather } from "@expo/vector-icons";
 import {
   buscarDirecciones,
   resolverDireccion,
-  placesDisponible,
   type SugerenciaDireccion,
 } from "../lib/places";
 import { nuevoUuidV4 } from "../lib/uuid";
@@ -52,7 +52,9 @@ export function BuscadorDireccion({
   const ignorarProximaRef = useRef(false);
 
   useEffect(() => {
-    if (!placesDisponible) return;
+    // La app ya no sabe —ni necesita saber— si el backend tiene llave de Places
+    // configurada: si no la tiene, devuelve lista vacía y aquí simplemente no se
+    // muestra nada. Un dato menos que mantener sincronizado entre los dos lados.
     if (ignorarProximaRef.current) {
       ignorarProximaRef.current = false;
       return;
