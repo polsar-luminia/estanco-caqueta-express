@@ -332,7 +332,8 @@ promesa explícita — y por eso el bloque incluye la manera de **incumplirla si
 | Selección | **Un solo check** para todo lo elegible | El carrito es donde más gente se cae; un tap, no seis |
 | Elegibilidad | **Por categoría, con override por producto** | Aguardiente/cervezas/gaseosas sí; whisky de $300k no |
 | Si no alcanza a estar frío | **Quien alista quita el cargo** y el total baja | Es lo que hace que "asegurar" signifique algo |
-| Default | Bandera `frio_activo` **apagada** hasta probar | Es un cargo nuevo en el paso más frágil del funnel |
+| Recordatorio | **Tarjeta al 70% de la pantalla** antes de *Realizar pedido* si el check está apagado (26-jul) | Es la última oportunidad de vender el frío, sin taparle la pantalla al cliente |
+| Default | Banderas `frio_activo` y `frio_recordatorio_activo` **apagadas** hasta probar | Es un cargo nuevo en el paso más frágil del funnel |
 
 ### Esquema
 ```sql
@@ -366,6 +367,8 @@ próxima corrida del sync borra la curaduría a mano.
 |---|---|
 | `frio_activo` | `false` — bandera de apagado |
 | `frio_costo` | `1000` |
+| `frio_recordatorio_activo` | `false` — bandera aparte para la tarjeta previa al pedido |
+| `frio_imagen_url` | URL de la pieza gráfica, servida desde `descarga.estancocaqueta.com` |
 
 Se exponen en `GET /configuracion-app` y se editan en `PUT /configuracion-app` + `Configuracion.jsx`,
 siguiendo el mismo patrón `INSERT ... ON CONFLICT` de `envio_costo`.
@@ -420,11 +423,108 @@ Reglas:
   es un cargo, no una nota al pie.
 - En `orders/[id]`: mostrar "Frío asegurado" en el desglose, y si se quitó, "Frío — no alcanzó, sin cobro".
 
+### App — recordatorio antes de "Realizar pedido"
+
+Pieza gráfica aprobada el 26-jul (`Recargo de Mil Pesos listoo.mp4`, 1080×1920): marco de hielo
+irregular, botellas sobre una repisa de hielo, fondo azul de barriles y el titular
+**"ASEGURA EL FRIO DE TUS BEBIDAS"** en blanco con contorno negro. Paleta: azul profundo
+(#0F3A6B–#1B4B8F), azul hielo (#9DD8F5) y blanco.
+
+**Cuándo aparece.** Al tocar *Realizar pedido* — **no antes**, no al abrir el carrito — y solo si se
+cumplen las tres: `frio_activo`, hay ≥1 producto elegible, y **el check está apagado**. Se intercepta
+el tap, se muestra la tarjeta, y el pedido **no se crea todavía**.
+
+**Si el check ya está marcado, la tarjeta no sale.** Ya dijo que sí; volvérselo a preguntar es
+tratarlo de distraído y arriesgar que se arrepienta.
+
+**Los dos botones terminan en un pedido creado.** La tarjeta es una bifurcación, no un desvío: se
+toca una vez y se compra. Nadie vuelve al carrito.
+
+| El cliente toca | Qué pasa |
+|---|---|
+| **"¡Sí, lo quiero asegurar!"** | Se suman los $1.000 y **el pedido se crea de una**, ya con el frío cobrado |
+| **"No me interesa"** | **El pedido se crea de una**, sin los $1.000 |
+| Overlay o botón atrás de Android | Igual que "No me interesa" |
+
+Como el cliente **no regresa al carrito a ver el total nuevo**, la tarjeta tiene que mostrárselo
+antes de que toque: *"Tu total quedaría en $X"*. Cobrar $1.000 extra sin que el número aparezca en
+la misma pantalla donde se acepta es exactamente el tipo de detalle que después llega como queja.
+
+**Forma.** Overlay azul oscuro al ~75%. Tarjeta **centrada al 70% del alto** de la pantalla,
+ancho ~88%, `borderRadius: 28`, `overflow: 'hidden'`. Arriba la imagen (`resizeMode: 'cover'`,
+~60% de la tarjeta); abajo un bloque nativo con el texto y los botones. Entra con fade + escala
+corta; **sin animación de rebote** — es una pregunta de cobro, no una promoción.
+
+#### Qué va DENTRO de la imagen y qué NO (lo más importante de esta sección)
+
+La pieza actual trae texto quemado que **va a mentir apenas cambie la configuración**. Hay que
+re-exportarla recortada: **del marco de hielo hasta el titular, y nada más.**
+
+| Elemento de la pieza | ¿En la imagen? | Por qué |
+|---|---|---|
+| Marco de hielo, botellas, repisa, titular | **Sí** | Es el gancho visual y no depende de nada |
+| *"Válido solo para aguardiente y cerveza"* | **No — texto nativo** | La elegibilidad se configura por categoría y por producto desde el admin. El día que marquen gaseosas, la imagen miente |
+| *"Recargo de Mil Pesos (+$1.000)"* | **No — texto nativo** | El precio es `frio_costo`, editable sin deploy. Si sube a $1.500, la imagen miente |
+| *"¡Sí, lo quiero asegurar!"* y *"No me interesa"* | **No — botones nativos** | Un botón pintado no se puede tocar, ni deshabilitar, ni leer con VoiceOver, ni cumple los 44 pt |
+
+**Y hay una razón de fondo, no solo de mantenimiento:** el requisito del negocio es que el cliente
+vea **cuáles de los productos de SU carrito** se pueden asegurar. Una imagen estática no puede
+decir eso. El titular vende; el texto nativo debajo es el que cumple la promesa.
+
+#### Bloque nativo (debajo de la imagen)
+- **Precio:** "Recargo de {`frio_costo` formateado}" — del servidor, nunca hardcodeado.
+- **Dinámico, según el carrito:**
+  - Algunos: *"Podemos asegurar frío para: Cerveza Águila 330ml y Poker 330ml. El resto va a temperatura ambiente."*
+  - Todos: *"Todo tu pedido va frío."*
+- **Total resultante:** *"Tu total quedaría en $X"* — el número que se va a cobrar, en la misma
+  pantalla donde se acepta.
+- **Primario:** pill blanca de ancho completo, texto azul oscuro, **"¡Sí, lo quiero asegurar!"** →
+  `quiere_frio = true` y **dispara `POST /pedidos` de inmediato**. Un solo tap: acepta y compra.
+- **Secundario:** texto blanco, sin fondo, **"No me interesa"** → `quiere_frio = false` y **dispara
+  `POST /pedidos` de inmediato**, sin el recargo.
+- Tocar el overlay o el botón atrás de Android = "No me interesa". Nunca dejarlo sin salida.
+- Mientras el pedido viaja: **botones deshabilitados con spinner**, tarjeta abierta. Sin esto, un
+  doble tap manda dos pedidos y choca contra el guardia de 60 s de `POST /pedidos` — el cliente
+  vería un 409 confuso justo después de aceptar un cargo.
+- Si el pedido falla (sin stock, tienda cerrada, sin red): cerrar la tarjeta y mostrar el error
+  **en el carrito, como hoy**. El error del pedido no se mezcla con la pregunta del frío.
+
+#### Dónde vive la imagen
+`frio_imagen_url` en `configuracion`, servida desde `descarga.estancocaqueta.com` — **el mismo
+patrón de `interstitiales.imagen_url`**, que ya existe y ya tiene subida desde el admin.
+**No empaquetarla en el binario:** con entrega en un solo release, una imagen bundleada solo se
+cambia con otro build y otra revisión de Apple. Así marketing la cambia cuando quiera.
+- `Image.prefetch` al abrir el carrito, para que no salga en blanco en el momento clave.
+- **Si la imagen no carga, la tarjeta muestra solo el bloque nativo y el flujo sigue.**
+  Jamás bloquear un pedido por una imagen.
+
+#### Frecuencia — regla dura
+**Una sola vez por intento de pedido.** Como los dos botones compran, en el camino normal la
+tarjeta se ve exactamente una vez y se acabó. El caso a cuidar es el pedido que **falla** y el
+cliente reintenta: ahí **no vuelve a salir para ese mismo carrito**. Si el check está marcado, si
+no hay elegibles o si `frio_activo=false`, no sale nunca.
+
+Esto no es un anuncio: es la última pregunta antes de cobrar. Un modal que reaparece encima del
+botón de comprar es la forma más rápida de que desinstalen la app.
+
+#### Accesibilidad (bloque E aplica aquí)
+- La imagen lleva `accessibilityLabel` con el titular completo; sin eso el lector anuncia una
+  tarjeta muda.
+- Todo lo que importa —precio, productos elegibles, botones— es **texto nativo, no píxeles**: escala
+  con la fuente del sistema y VoiceOver lo lee. Texto quemado en la imagen no hace ninguna de las dos.
+- Botones ≥44 pt con `accessibilityRole="button"`; el modal atrapa el foco mientras está abierto.
+
+#### Bandera propia
+`frio_recordatorio_activo` (default `false`), **separada de `frio_activo`**. Se puede tener el frío
+funcionando y el recordatorio apagado — que es exactamente cómo se mide si el recordatorio suma
+plata o solo espanta pedidos.
+
 ### Admin
 - **`Pedidos.jsx`: badge grande `FRÍO`** en la tarjeta. Es una instrucción de alistamiento — tiene
   que verse antes que cualquier otra cosa, no escondida en el detalle.
 - Botón **"No alcanzó frío — quitar cargo"** en el pedido.
-- `Configuracion.jsx`: `frio_activo` + `frio_costo`.
+- `Configuracion.jsx`: `frio_activo`, `frio_costo`, `frio_recordatorio_activo` y **subida de
+  `frio_imagen_url`** (reusar el uploader de `Interstitiales.jsx`, no escribir otro).
 - `ProductosApp.jsx`: selector **tri-estado** por producto (*Hereda de la categoría · Sí · No*).
 - **Categorías: hoy no existe CRUD de categorías en el admin.** Hace falta un
   `GET/PUT /categorias-app` mínimo, solo para este flag — no un CRUD completo.
@@ -436,13 +536,21 @@ Reglas:
 | `frio_activado` / `frio_desactivado` | Tasa de toma real: ¿el cliente sí paga $1.000 por frío? |
 | `frio_cobrado` (en el pedido) | Ingreso incremental del servicio |
 | `frio_removido_staff` | ¿Con qué frecuencia incumplimos la promesa? |
+| `frio_recordatorio_visto` | ¿A cuántos les alcanza a salir la tarjeta? |
+| `frio_recordatorio_aceptado` / `_rechazado` | **La pregunta del millón:** ¿el recordatorio rescata ventas o espanta pedidos? |
 
 Cada uno exige tipo + `ALLOWED_KEYS`. Cero PII: solo IDs y conteos.
 
+**Lectura obligatoria del recordatorio:** cruzar `frio_recordatorio_visto` contra
+`checkout_abandonado`. Si la gente que ve la tarjeta abandona más que la que no la ve, el
+recordatorio está costando pedidos y se apaga — por más plata que traigan los que sí aceptan.
+Un pedido perdido vale mucho más que $1.000.
+
 ### Riesgo
-Es **un cargo nuevo en el paso donde más gente se cae**. Por eso arranca con `frio_activo = false`
-y se prende cuando A ya esté midiendo el embudo de checkout: si `checkout_abandonado` se mueve al
-prenderlo, se apaga sin deploy.
+Es **un cargo nuevo en el paso donde más gente se cae**, y el recordatorio además **se interpone en
+el botón de comprar**, que es el punto más caro de toda la app. Por eso son dos banderas separadas:
+`frio_activo` primero, y solo si el check funciona bien se prende `frio_recordatorio_activo`. Si
+`checkout_abandonado` se mueve, se apaga sin deploy.
 
 ---
 
@@ -531,6 +639,7 @@ plan quería evitar. **Una bandera por vez** — si se prenden juntas y algo se 
 | +2–3 días de datos | `eta_visible_cliente` | Bajo (rangos anchos) |
 | Con 1.2.0 vivo en **ambas** tiendas | `version_minima = 1.2.0` | Medio |
 | Con el embudo de checkout ya con línea base | `frio_activo`, mirando `checkout_abandonado` | Medio — reversible sin deploy |
+| Solo si el check ya demostró funcionar | `frio_recordatorio_activo` | Medio-alto — se mete en el botón de comprar |
 | De último, con la adopción de 1.2.0 medida | `exigir_ubicacion` | **Alto** — reversible sin deploy |
 
 **Racional del orden de construcción:** A primero porque D (viaje), F (bloqueo) y la tarifa dependen
@@ -560,6 +669,16 @@ que llegue cuando todo lo demás ya esté estable.
   cargo desde el admin → el total baja y el cliente lo ve en su detalle. Confirmar que el frío
   **no suma para `pedido_minimo`, no acerca al envío gratis y no genera puntos**. Correr el sync de
   Shopify después de marcar productos y verificar que `permite_frio` **sobrevive**.
+- **H — recordatorio:** con `frio_recordatorio_activo=false` no aparece nunca. Con `true` y el check
+  **apagado**, sale al tocar *Realizar pedido*; con el check **marcado**, no sale.
+  **"¡Sí, lo quiero asegurar!" → pedido creado con `frio=true` y `frio_costo=1000`;**
+  **"No me interesa" → pedido creado con `frio=false` y `frio_costo=0`.** En los dos casos el pedido
+  queda hecho de una y el cliente no vuelve al carrito. El total que muestra la tarjeta debe ser
+  **idéntico** al que devuelve el servidor. Doble tap rápido en el botón → un solo pedido, no un 409.
+  Reintentar tras un pedido fallido → la tarjeta **no reaparece**. `frio_imagen_url` rota → sale sin
+  imagen y **el pedido se completa igual**. Cambiar `frio_costo` a $1.500 en el admin y confirmar que
+  la tarjeta dice $1.500 (si dice $1.000, quedó texto quemado en la imagen). Botón atrás de Android
+  cierra sin dejar pedidos a medias. VoiceOver: la tarjeta se anuncia completa.
 - Siempre: `npx vitest run` + `npx tsc --noEmit` **antes de taggear**, no después.
 - **QA del lunes 3-ago sobre el binario real, no sobre Expo Go ni sobre un OTA de desarrollo.** Con
   entrega en un solo release, este es el único filtro antes de la tienda: lo que se escape aquí
