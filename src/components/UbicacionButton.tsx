@@ -183,7 +183,7 @@ export function UbicacionButton({ value, onChange }: Props) {
             ) : (
               <Feather name="check-circle" size={12} color={colors.greenInk} />
             )}
-            <Text style={{ fontSize: 11, fontWeight: "800", color: colors.greenInk }}>
+            <Text style={{ fontSize: 12, fontWeight: "800", color: colors.greenInk }}>
               {refinando ? "Afinando ubicación…" : "Ubicación fijada"}
             </Text>
           </View>
@@ -193,6 +193,7 @@ export function UbicacionButton({ value, onChange }: Props) {
             onPress={abrirMapa}
             accessibilityRole="button"
             accessibilityLabel="Ajustar en el mapa"
+            hitSlop={{ top: 4, bottom: 4 }}
             style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingVertical: 11, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.green }}
           >
             <Feather name="map" size={14} color={colors.greenInk} />
@@ -201,7 +202,8 @@ export function UbicacionButton({ value, onChange }: Props) {
           <Pressable
             onPress={quitar}
             accessibilityRole="button"
-            accessibilityLabel="Quitar ubicación"
+            accessibilityLabel="Quitar la ubicación fijada"
+            hitSlop={{ top: 4, bottom: 4 }}
             style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 12, backgroundColor: colors.lowfill }}
           >
             <Feather name="x" size={12} color={colors.muted} />
@@ -220,6 +222,7 @@ export function UbicacionButton({ value, onChange }: Props) {
         disabled={estado === "capturando"}
         accessibilityRole="button"
         accessibilityLabel="Usar mi ubicación actual"
+        accessibilityState={{ disabled: estado === "capturando" }}
         style={{
           flexDirection: "row",
           alignItems: "center",
@@ -243,7 +246,13 @@ export function UbicacionButton({ value, onChange }: Props) {
       </Pressable>
 
       {estado !== "capturando" ? (
-        <Pressable onPress={abrirMapa} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 8 }}>
+        <Pressable
+          onPress={abrirMapa}
+          hitSlop={14}
+          accessibilityRole="button"
+          accessibilityLabel="Ubicar mi dirección en el mapa"
+          style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 8 }}
+        >
           <Feather name="map" size={13} color="#6D7B6C" />
           <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D7B6C" }}>o ubícalo en el mapa</Text>
         </Pressable>
@@ -253,7 +262,13 @@ export function UbicacionButton({ value, onChange }: Props) {
         <View style={{ marginTop: 6 }}>
           <Text style={{ fontSize: 12, color: "#6D7B6C" }}>{error}</Text>
           {abrirAjustes ? (
-            <Pressable onPress={() => Linking.openSettings()} hitSlop={6} style={{ marginTop: 4 }}>
+            <Pressable
+              onPress={() => Linking.openSettings()}
+              hitSlop={14}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir los ajustes del teléfono para dar permiso de ubicación"
+              style={{ marginTop: 4 }}
+            >
               <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>Abrir Ajustes</Text>
             </Pressable>
           ) : null}

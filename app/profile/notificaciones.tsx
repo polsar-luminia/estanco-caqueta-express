@@ -122,6 +122,9 @@ export default function NotificacionesScreen() {
             </Text>
             <Pressable
               onPress={() => setFetchKey((k) => k + 1)}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel="Reintentar la carga de mis preferencias de notificaciones"
               style={{ backgroundColor: colors.green, paddingHorizontal: 24, paddingVertical: 12, borderRadius: radii.pill }}
             >
               <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}>Reintentar</Text>
@@ -131,7 +134,7 @@ export default function NotificacionesScreen() {
           <>
             {/* Operativas — no se pueden desactivar */}
             <View>
-              <Text style={{ fontSize: 10, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
+              <Text style={{ fontSize: 12, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
                 Tus pedidos
               </Text>
               <View style={{ backgroundColor: colors.surface, borderRadius: radii.card, padding: 16, flexDirection: "row", alignItems: "center", gap: 12, ...shadows.card }}>
@@ -149,6 +152,8 @@ export default function NotificacionesScreen() {
                 <Switch
                   value
                   disabled
+                  accessibilityLabel="Estado de tus pedidos"
+                  accessibilityHint="Estas notificaciones son transaccionales y no se pueden desactivar"
                   trackColor={{ false: colors.line, true: colors.green }}
                   thumbColor="#fff"
                 />
@@ -157,7 +162,7 @@ export default function NotificacionesScreen() {
 
             {/* Marketing */}
             <View>
-              <Text style={{ fontSize: 10, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
+              <Text style={{ fontSize: 12, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
                 Promociones y avisos
               </Text>
               <View style={{ backgroundColor: colors.surface, borderRadius: radii.card, overflow: "hidden", ...shadows.card }}>
@@ -187,6 +192,9 @@ export default function NotificacionesScreen() {
                       <Switch
                         value={prefs ? prefs[item.key] : true}
                         onValueChange={(v) => togglePref(item.key, v)}
+                        // Sin esto el lector anuncia "interruptor, activado" sin
+                        // decir de cual de los cuatro se trata.
+                        accessibilityLabel={item.titulo}
                         trackColor={{ false: colors.line, true: colors.green }}
                         thumbColor="#fff"
                       />
@@ -196,7 +204,7 @@ export default function NotificacionesScreen() {
               </View>
             </View>
 
-            <Text style={{ fontSize: 11, color: colors.faint, textAlign: "center", marginTop: 8, paddingHorizontal: 16 }}>
+            <Text style={{ fontSize: 12, color: colors.faint, textAlign: "center", marginTop: 8, paddingHorizontal: 16 }}>
               Maximo 2 mensajes promocionales por semana. Puedes cambiar tus preferencias cuando quieras.
             </Text>
           </>

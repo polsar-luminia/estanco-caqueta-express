@@ -74,7 +74,7 @@ export function CartItem({ item }: Props) {
       {/* Quantity */}
       <View
         className="flex-row items-center"
-        style={{ backgroundColor: "#F4F4F0", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 8, gap: 10 }}
+        style={{ backgroundColor: "#F4F4F0", borderRadius: 999, paddingHorizontal: 2, gap: 2 }}
       >
         <Pressable
           onPress={() => {
@@ -87,7 +87,10 @@ export function CartItem({ item }: Props) {
             updateQuantity(item.productoId, next);
           }}
           className="items-center justify-center"
-          style={{ padding: 4 }}
+          // 44x44 reales. El contenedor se aprieta con paddings negativos para que
+          // el area tactil crezca sin que la pastilla se vea mas grande.
+          style={{ minWidth: 44, minHeight: 44 }}
+          hitSlop={4}
           accessibilityLabel="Reducir cantidad"
           accessibilityRole="button"
         >
@@ -116,9 +119,14 @@ export function CartItem({ item }: Props) {
           // no dispara onPress y el cliente se queda sin saber POR QUÉ no puede subir.
           // Mismo patrón que el selector de la ficha de producto.
           className="items-center justify-center"
-          style={{ padding: 4, opacity: enTope ? 0.4 : 1 }}
+          style={{ minWidth: 44, minHeight: 44, opacity: enTope ? 0.4 : 1 }}
+          hitSlop={4}
           accessibilityLabel="Aumentar cantidad"
           accessibilityRole="button"
+          // El boton no lleva `disabled` a proposito (ver arriba), pero el lector
+          // de pantalla si tiene que saber que esta en el tope.
+          accessibilityState={{ disabled: enTope }}
+          accessibilityHint={enTope ? "Ya alcanzaste el maximo disponible" : undefined}
         >
           <PlusIcon />
         </Pressable>

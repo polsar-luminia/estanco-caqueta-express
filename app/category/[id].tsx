@@ -101,7 +101,8 @@ export default function CategoryScreen() {
         <Pressable
           onPress={() => router.back()}
           accessibilityRole="button"
-          accessibilityLabel="Volver"
+          accessibilityLabel="Volver a la pantalla anterior"
+          hitSlop={3}
           style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center", ...shadows.soft }}
         >
           <ChevronLeftIcon />

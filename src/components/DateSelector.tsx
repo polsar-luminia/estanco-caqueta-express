@@ -117,7 +117,7 @@ export function DateSelector({ value, onChange }: Props) {
 
   return (
     <View>
-      <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginLeft: 16, marginBottom: 4 }}>
+      <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginLeft: 16, marginBottom: 4 }}>
         Fecha de Nacimiento
       </Text>
 
@@ -129,6 +129,12 @@ export function DateSelector({ value, onChange }: Props) {
               <Pressable
                 key="year"
                 onPress={handleYearOpen}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  value.year
+                    ? `Cambiar el año de nacimiento, actualmente ${value.year}`
+                    : "Escribir el año de nacimiento"
+                }
                 style={{
                   flex: flexMap.year,
                   backgroundColor: "#F4F4F0",
@@ -143,7 +149,7 @@ export function DateSelector({ value, onChange }: Props) {
                 <Text style={{ fontSize: 15, color: selected ? "#1A1C1A" : "#BCCABA", flex: 1 }}>
                   {value.year ? String(value.year) : "Año"}
                 </Text>
-                <Text style={{ fontSize: 10, color: "#6D7B6C", marginLeft: 4 }}>✏️</Text>
+                <Text style={{ fontSize: 12, color: "#6D7B6C", marginLeft: 4 }}>✏️</Text>
               </Pressable>
             );
           }
@@ -151,6 +157,12 @@ export function DateSelector({ value, onChange }: Props) {
             <Pressable
               key={field}
               onPress={() => setOpenField(field)}
+              accessibilityRole="button"
+              accessibilityLabel={
+                selected
+                  ? `Cambiar el ${field === "day" ? "día" : "mes"} de nacimiento, actualmente ${pillLabel(field, value)}`
+                  : `Elegir el ${field === "day" ? "día" : "mes"} de nacimiento`
+              }
               style={{
                 flex: flexMap[field],
                 backgroundColor: "#F4F4F0",
@@ -165,7 +177,7 @@ export function DateSelector({ value, onChange }: Props) {
               <Text style={{ fontSize: 15, color: selected ? "#1A1C1A" : "#BCCABA", flex: 1 }}>
                 {pillLabel(field, value)}
               </Text>
-              <Text style={{ fontSize: 10, color: "#6D7B6C", marginLeft: 4 }}>▾</Text>
+              <Text style={{ fontSize: 12, color: "#6D7B6C", marginLeft: 4 }}>▾</Text>
             </Pressable>
           );
         })}
@@ -179,6 +191,8 @@ export function DateSelector({ value, onChange }: Props) {
         onRequestClose={() => setOpenField(null)}
       >
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar el selector sin elegir"
           style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }}
           onPress={() => setOpenField(null)}
         />
@@ -203,6 +217,13 @@ export function DateSelector({ value, onChange }: Props) {
                   <Pressable
                     key={opt.value}
                     onPress={() => handleSelect(openField, opt.value)}
+                    accessibilityRole="radio"
+                    accessibilityLabel={
+                      openField === "day"
+                        ? `Elegir el día ${opt.label}`
+                        : `Elegir el mes de ${opt.label}`
+                    }
+                    accessibilityState={{ checked: isSelected }}
                     style={{
                       paddingVertical: 14,
                       paddingHorizontal: 24,
@@ -232,6 +253,8 @@ export function DateSelector({ value, onChange }: Props) {
           keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
         >
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar el selector de año"
             style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }}
             onPress={() => setOpenField(null)}
           />
@@ -272,11 +295,13 @@ export function DateSelector({ value, onChange }: Props) {
                 textAlign: "center",
               }}
             />
-            <Text style={{ fontSize: 11, color: "#BCCABA", textAlign: "center", marginTop: 8 }}>
+            <Text style={{ fontSize: 12, color: "#BCCABA", textAlign: "center", marginTop: 8 }}>
               Entre 1920 y {new Date().getFullYear() - 18}
             </Text>
             <Pressable
               onPress={() => setOpenField(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Confirmar el año de nacimiento"
               style={{
                 marginTop: 16,
                 backgroundColor: value.year ? "#1FAF55" : "#E0E0E0",

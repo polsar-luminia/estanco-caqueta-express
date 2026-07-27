@@ -137,8 +137,11 @@ export function FrioRecordatorio({
             ],
           }}
         >
-          {/* El Pressable interno detiene la propagación: tocar la tarjeta no la cierra. */}
-          <Pressable style={{ flex: 1 }} onPress={() => {}} accessibilityViewIsModal>
+          {/* El Pressable interno solo detiene la propagación: tocar la tarjeta no la
+              cierra. `accessible={false}` para que el lector no lo anuncie como un
+              botón — no hace nada al tocarlo, y anunciarlo escondería el contenido
+              real de la tarjeta detrás de un elemento vacío. */}
+          <Pressable style={{ flex: 1 }} onPress={() => {}} accessible={false} accessibilityViewIsModal>
             {hayImagen && (
               <Image
                 source={{ uri: imagenUrl! }}

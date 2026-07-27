@@ -18,6 +18,9 @@ export function ErrorState({ mensaje = "No pudimos cargar la información", onRe
       {onRetry && (
         <Pressable
           onPress={onRetry}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel="Reintentar la carga"
           style={{ backgroundColor: "#1FAF55", paddingHorizontal: 28, paddingVertical: 10, borderRadius: 999 }}
         >
           <Text style={{ color: "white", fontWeight: "600", fontSize: 14 }}>Reintentar</Text>

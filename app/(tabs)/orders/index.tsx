@@ -214,9 +214,14 @@ function OrderCard({ item }: { item: Pedido }) {
     }
   };
 
+  const numeroVisible = item.numero_orden_cliente ?? item.id;
+  const estadoTexto = ESTADO_LABEL[item.estado] ?? item.estado;
+
   return (
     <Pressable
       onPress={() => router.push(`/(tabs)/orders/${item.id}`)}
+      accessibilityRole="button"
+      accessibilityLabel={`Ver pedido número ${numeroVisible}, ${estadoTexto}, total ${formatCOP(item.total)}`}
       className="bg-white rounded-2xl p-6"
       style={CARD_SHADOW}
     >
@@ -260,6 +265,12 @@ function OrderCard({ item }: { item: Pedido }) {
         <View className="flex-row mt-4" style={{ gap: 10 }}>
           <Pressable
             onPress={() => router.push(`/(tabs)/orders/${item.id}`)}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isEnCamino
+                ? `Rastrear el pedido número ${numeroVisible}`
+                : `Ver detalles del pedido número ${numeroVisible}`
+            }
             className={`flex-1 py-3 rounded-xl items-center ${
               isEnCamino ? "bg-brand-600" : "bg-surface-low"
             }`}
@@ -277,6 +288,9 @@ function OrderCard({ item }: { item: Pedido }) {
             <Pressable
               onPress={handleReordenar}
               disabled={reordenando}
+              accessibilityRole="button"
+              accessibilityLabel={`Volver a pedir los productos del pedido número ${numeroVisible}`}
+              accessibilityState={{ disabled: reordenando }}
               className="flex-1 py-3 rounded-xl items-center bg-magenta-50"
             >
               <Text className="text-sm font-semibold text-magenta-600">
@@ -302,6 +316,8 @@ function HelpSection() {
   return (
     <Pressable
       onPress={handleWhatsApp}
+      accessibilityRole="button"
+      accessibilityLabel="Escribirle a soporte por WhatsApp por un problema con un pedido"
       className="bg-brand-900/5 p-6 rounded-2xl flex-row items-center"
     >
       <View className="w-12 h-12 rounded-full bg-brand-600 items-center justify-center mr-4">

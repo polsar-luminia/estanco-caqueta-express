@@ -79,6 +79,10 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
       {/* Trigger */}
       <Pressable
         onPress={() => setAbierto(true)}
+        accessibilityRole="button"
+        accessibilityLabel={
+          triggerText ? `Cambiar el barrio, actualmente ${triggerText}` : "Seleccionar tu barrio"
+        }
         style={{
           backgroundColor: "#fff",
           borderRadius: 12,
@@ -122,7 +126,13 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
           {/* Header modal */}
           <View style={{ flexDirection: "row", alignItems: "center", paddingTop: 16, paddingBottom: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
             <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: "#1A1C1A" }}>Selecciona tu barrio</Text>
-            <Pressable onPress={() => { setAbierto(false); setQuery(""); }} style={{ padding: 4 }}>
+            <Pressable
+              onPress={() => { setAbierto(false); setQuery(""); }}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar el selector de barrio"
+              style={{ padding: 4 }}
+            >
               <Feather name="x" size={20} color="#6D7B6C" />
             </Pressable>
           </View>
@@ -140,7 +150,12 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
                 autoFocus
               />
               {query.length > 0 && (
-                <Pressable onPress={() => setQuery("")}>
+                <Pressable
+                  onPress={() => setQuery("")}
+                  hitSlop={14}
+                  accessibilityRole="button"
+                  accessibilityLabel="Borrar lo escrito en la búsqueda de barrio"
+                >
                   <Feather name="x-circle" size={16} color="#9E9E9E" />
                 </Pressable>
               )}
@@ -162,7 +177,7 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
                 if (item.tipo === "header") {
                   return (
                     <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 6 }}>
-                      <Text style={{ fontSize: 10, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2 }}>
+                      <Text style={{ fontSize: 12, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2 }}>
                         {item.comuna}
                       </Text>
                     </View>
@@ -173,6 +188,9 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
                 return (
                   <Pressable
                     onPress={() => handleSeleccionar(b)}
+                    accessibilityRole="radio"
+                    accessibilityLabel={`Elegir el barrio ${b.nombre}, ${b.comuna}`}
+                    accessibilityState={{ checked: seleccionado }}
                     style={{
                       paddingHorizontal: 16,
                       paddingVertical: 12,
@@ -193,6 +211,8 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
                 onTextoLibreChange ? (
                   <Pressable
                     onPress={() => { handleModoLibre(); setAbierto(false); setQuery(""); }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Escribir mi barrio a mano porque no está en la lista"
                     style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 14, marginTop: 8 }}
                   >
                     <Feather name="edit-2" size={14} color="#9E9E9E" />

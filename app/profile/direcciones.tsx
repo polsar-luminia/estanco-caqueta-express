@@ -113,7 +113,7 @@ export default function DireccionesScreen() {
           <View className="items-center py-12">
             <Feather name="alert-circle" size={40} color="#D1D5DB" />
             <Text style={{ fontSize: 16, fontWeight: "600", color: "#6D7B6C", marginTop: 12 }}>No pudimos cargar tus direcciones</Text>
-            <Pressable onPress={() => refetch()} style={{ marginTop: 12, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: "#1FAF55", borderRadius: 999 }}>
+            <Pressable onPress={() => refetch()} accessibilityRole="button" accessibilityLabel="Reintentar cargar tus direcciones" style={{ marginTop: 12, paddingHorizontal: 24, paddingVertical: 10, minHeight: 44, justifyContent: "center", backgroundColor: "#1FAF55", borderRadius: 999 }}>
               <Text style={{ color: "#fff", fontWeight: "600" }}>Reintentar</Text>
             </Pressable>
           </View>
@@ -136,24 +136,27 @@ export default function DireccionesScreen() {
                       <Text style={{ fontSize: 14, fontWeight: "700", color: "#1A1C1A" }}>{d.etiqueta}</Text>
                       {d.predeterminada && (
                         <View style={{ backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
-                          <Text style={{ fontSize: 8, fontWeight: "700", color: "#1FAF55" }}>PREDETERMINADA</Text>
+                          <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>PREDETERMINADA</Text>
                         </View>
                       )}
                       {d.lat != null && (
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
                           <Feather name="map-pin" size={8} color="#1FAF55" />
-                          <Text style={{ fontSize: 8, fontWeight: "700", color: "#1FAF55" }}>CON UBICACIÓN</Text>
+                          <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>CON UBICACIÓN</Text>
                         </View>
                       )}
                     </View>
                     <Text style={{ fontSize: 13, color: "#6D7B6C", marginTop: 2 }}>{d.direccion}</Text>
-                    {d.notas ? <Text style={{ fontSize: 11, color: "#9E9E9E", fontStyle: "italic", marginTop: 2 }}>{d.notas}</Text> : null}
+                    {d.notas ? <Text style={{ fontSize: 12, color: "#9E9E9E", fontStyle: "italic", marginTop: 2 }}>{d.notas}</Text> : null}
                   </View>
                 </View>
                 <Pressable
                   onPress={() => handleEliminar(d.id)}
                   style={{ padding: 4 }}
-                  accessibilityLabel="Eliminar dirección"
+                  // Icono de 16 px en la esquina de la tarjeta: el hitSlop lo lleva
+                  // a 44 pt sin empujar el texto de la dirección.
+                  hitSlop={12}
+                  accessibilityLabel={`Eliminar dirección ${d.etiqueta}`}
                   accessibilityRole="button"
                 >
                   <Feather name="trash-2" size={16} color="#D33587" />
@@ -161,11 +164,27 @@ export default function DireccionesScreen() {
               </View>
               <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
                 {!d.predeterminada && (
-                  <Pressable onPress={() => mutPredeterminada.mutate(d.id)} style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: colors.lowfill, alignItems: "center" }}>
+                  <Pressable
+                    onPress={() => mutPredeterminada.mutate(d.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Marcar ${d.etiqueta} como dirección predeterminada`}
+                    // Solo vertical: los dos botones de la fila están a 8 px y un
+                    // hitSlop horizontal haría que se solaparan.
+                    hitSlop={{ top: 8, bottom: 8 }}
+                    style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: colors.lowfill, alignItems: "center" }}
+                  >
                     <Text style={{ fontSize: 12, fontWeight: "600", color: "#1FAF55" }}>Predeterminada</Text>
                   </Pressable>
                 )}
-                <Pressable onPress={() => abrirMapaDireccion(d)} disabled={mutEditarUbic.isPending} style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, borderRadius: 8, backgroundColor: colors.lowfill }}>
+                <Pressable
+                  onPress={() => abrirMapaDireccion(d)}
+                  disabled={mutEditarUbic.isPending}
+                  accessibilityRole="button"
+                  accessibilityLabel={d.lat != null ? `Editar la ubicación en el mapa de ${d.etiqueta}` : `Agregar una ubicación en el mapa a ${d.etiqueta}`}
+                  accessibilityState={{ disabled: mutEditarUbic.isPending }}
+                  hitSlop={{ top: 8, bottom: 8 }}
+                  style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, borderRadius: 8, backgroundColor: colors.lowfill }}
+                >
                   <Feather name="map" size={12} color="#1FAF55" />
                   <Text style={{ fontSize: 12, fontWeight: "600", color: "#1FAF55" }}>{d.lat != null ? "Editar ubicación" : "Agregar ubicación"}</Text>
                 </Pressable>
@@ -193,32 +212,58 @@ export default function DireccionesScreen() {
             />
 
             {/* Etiqueta */}
-            <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Etiqueta</Text>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Etiqueta</Text>
             <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
               {etiquetas.map((e) => (
-                <Pressable key={e} onPress={() => setEtiqueta(e)} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: etiqueta === e ? "#1FAF55" : colors.lowfill }}>
+                <Pressable
+                  key={e}
+                  onPress={() => setEtiqueta(e)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: etiqueta === e }}
+                  accessibilityLabel={`Etiquetar la dirección como ${e}`}
+                  // Chips en fila: solo hitSlop vertical para no invadir el chip vecino.
+                  hitSlop={{ top: 8, bottom: 8 }}
+                  style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: etiqueta === e ? "#1FAF55" : colors.lowfill }}
+                >
                   <Text style={{ fontSize: 13, fontWeight: "600", color: etiqueta === e ? "#fff" : "#6D7B6C" }}>{e}</Text>
                 </Pressable>
               ))}
             </View>
 
-            <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Dirección *</Text>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Dirección *</Text>
             <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontSize: 14, color: colors.ink, marginBottom: 12 }} placeholder="Carrera 15 # 12-34" placeholderTextColor="#BCCABA" value={direccion} onChangeText={setDireccion} />
 
-            <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Notas (opcional)</Text>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Notas (opcional)</Text>
             <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontSize: 14, color: colors.ink, marginBottom: 16 }} placeholder="Portería, dejar con vigilante..." placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline />
 
             <View style={{ flexDirection: "row", gap: 8 }}>
-              <Pressable onPress={() => { setMostrarForm(false); setUbicacion(null); }} style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.lowfill, alignItems: "center" }}>
+              <Pressable
+                onPress={() => { setMostrarForm(false); setUbicacion(null); }}
+                accessibilityRole="button"
+                accessibilityLabel="Cancelar y cerrar el formulario de nueva dirección"
+                style={{ flex: 1, paddingVertical: 12, minHeight: 44, justifyContent: "center", borderRadius: 12, backgroundColor: colors.lowfill, alignItems: "center" }}
+              >
                 <Text style={{ fontSize: 14, fontWeight: "600", color: "#6D7B6C" }}>Cancelar</Text>
               </Pressable>
-              <Pressable onPress={handleGuardar} disabled={mutCrear.isPending} style={{ flex: 2, paddingVertical: 12, borderRadius: 12, backgroundColor: "#1FAF55", alignItems: "center" }}>
+              <Pressable
+                onPress={handleGuardar}
+                disabled={mutCrear.isPending}
+                accessibilityRole="button"
+                accessibilityLabel="Guardar la nueva dirección"
+                accessibilityState={{ disabled: mutCrear.isPending }}
+                style={{ flex: 2, paddingVertical: 12, minHeight: 44, justifyContent: "center", borderRadius: 12, backgroundColor: "#1FAF55", alignItems: "center" }}
+              >
                 <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>{mutCrear.isPending ? "Guardando..." : "Guardar"}</Text>
               </Pressable>
             </View>
           </View>
         ) : (
-          <Pressable onPress={() => setMostrarForm(true)} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, borderRadius: 16, borderWidth: 2, borderColor: "#1FAF55", borderStyle: "dashed" }}>
+          <Pressable
+            onPress={() => setMostrarForm(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Agregar una dirección nueva"
+            style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, minHeight: 44, borderRadius: 16, borderWidth: 2, borderColor: "#1FAF55", borderStyle: "dashed" }}
+          >
             <Feather name="plus" size={18} color="#1FAF55" />
             <Text style={{ fontSize: 14, fontWeight: "700", color: "#1FAF55" }}>Agregar dirección</Text>
           </Pressable>

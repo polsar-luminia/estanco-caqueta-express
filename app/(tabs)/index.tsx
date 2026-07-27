@@ -61,19 +61,23 @@ function HeroSlide({ banner, onPress }: { banner: Patrocinado | undefined; onPre
       <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 20, gap: 6 }}>
         <View style={{ width: "58%", gap: 6 }}>
           <View style={{ alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, backgroundColor: cfg.color }}>
-            <Text style={{ color: "#fff", fontSize: 8, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" }}>
+            <Text style={{ color: "#fff", fontSize: 12, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" }}>
               {cfg.label}
             </Text>
           </View>
           <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800", lineHeight: 26 }}>
             {titulo}
           </Text>
-          <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 11 }}>
+          <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
             Domicilio en Florencia
           </Text>
           <Pressable
             style={{ alignSelf: "flex-start", marginTop: 4, paddingHorizontal: 20, paddingVertical: 8, borderRadius: 12, backgroundColor: "#1FAF55" }}
             onPress={onPress}
+            accessibilityRole="button"
+            // El titulo del banner trae saltos de linea; en voz alta molestan.
+            accessibilityLabel={`Pedir ahora: ${titulo.replace(/\n/g, " ")}`}
+            hitSlop={6}
           >
             <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>Pedir ahora</Text>
           </Pressable>
@@ -205,26 +209,38 @@ function HomeHeader({
       <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
         <Pressable
           onPress={() => router.push(isAuthenticated ? "/profile/direcciones" : "/(auth)/login")}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isAuthenticated
+              ? `Cambiar dirección de entrega. Actual: ${dirActiva || "sin dirección"}`
+              : "Iniciar sesión para agregar tu dirección de entrega"
+          }
           style={{ flex: 1, paddingRight: 12 }}
           hitSlop={6}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <Feather name="map-pin" size={11} color="rgba(255,255,255,0.85)" />
-            <Text style={{ fontSize: 10.5, fontWeight: "600", color: "rgba(255,255,255,0.85)" }}>Entregar en</Text>
+            <Text style={{ fontSize: 12.5, fontWeight: "600", color: "rgba(255,255,255,0.85)" }}>Entregar en</Text>
           </View>
           <Text style={{ fontSize: 14, fontWeight: "800", color: "#fff", marginTop: 1 }} numberOfLines={1}>
             {isAuthenticated ? (dirActiva || "Agrega tu dirección") : "Florencia, Caquetá"} ▾
           </Text>
         </Pressable>
         <View style={{ flexDirection: "row", gap: 8 }}>
-          <Pressable onPress={() => router.push("/profile")} style={iconBtn} accessibilityLabel="Mi perfil" accessibilityRole="button">
+          <Pressable onPress={() => router.push("/profile")} style={iconBtn} accessibilityLabel="Abrir mi perfil" accessibilityRole="button" hitSlop={3}>
             <Feather name="user" size={19} color="#fff" />
           </Pressable>
-          <Pressable onPress={() => router.push("/(tabs)/cart")} style={iconBtn} accessibilityLabel="Carrito" accessibilityRole="button">
+          <Pressable
+            onPress={() => router.push("/(tabs)/cart")}
+            style={iconBtn}
+            accessibilityLabel={itemCount > 0 ? `Ver carrito, ${itemCount} productos` : "Ver carrito, vacío"}
+            accessibilityRole="button"
+            hitSlop={3}
+          >
             <Feather name="shopping-bag" size={18} color="#fff" />
             {itemCount > 0 && (
-              <View style={{ position: "absolute", top: -4, right: -4, minWidth: 16, height: 16, paddingHorizontal: 3, borderRadius: 999, backgroundColor: colors.offer, alignItems: "center", justifyContent: "center" }}>
-                <Text style={{ color: "#fff", fontSize: 9, fontWeight: "800" }}>{itemCount > 99 ? "99+" : itemCount}</Text>
+              <View style={{ position: "absolute", top: -5, right: -5, minWidth: 19, height: 19, paddingHorizontal: 4, borderRadius: 999, backgroundColor: colors.offer, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ color: "#fff", fontSize: 12, fontWeight: "800" }}>{itemCount > 99 ? "99+" : itemCount}</Text>
               </View>
             )}
           </Pressable>
@@ -233,8 +249,9 @@ function HomeHeader({
       <Pressable
         onPress={() => router.push("/(tabs)/search")}
         style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#fff", borderRadius: 14, paddingHorizontal: 13, paddingVertical: 11 }}
-        accessibilityLabel="Buscar"
-        accessibilityRole="button"
+        accessibilityLabel="Buscar productos"
+        accessibilityRole="search"
+        hitSlop={4}
       >
         <Feather name="search" size={16} color={colors.faint} />
         <Text style={{ fontSize: 12.5, color: colors.faint, fontWeight: "500" }}>Busca tu licor favorito</Text>
@@ -360,8 +377,13 @@ export default function HomeScreen() {
             <View className="px-4 pt-5 pb-2">
               <View className="flex-row justify-between items-center mb-3">
                 <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Categorías</Text>
-                <Pressable onPress={() => router.push("/(tabs)/search")}>
-                  <Text style={{ fontSize: 11, fontWeight: "700", color: "#1FAF55", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                <Pressable
+                  onPress={() => router.push("/(tabs)/search")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver todas las categorías"
+                  hitSlop={{ top: 15, bottom: 15, left: 8, right: 8 }}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55", textTransform: "uppercase", letterSpacing: 0.5 }}>
                     Ver todas
                   </Text>
                 </Pressable>
@@ -415,6 +437,8 @@ export default function HomeScreen() {
                             : `/product/${productoId}`;
                           router.push(url);
                         }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${combo.nombre}, ${formatCOP(combo.precio_combo)}. Ver detalle`}
                         style={{ width: 180, backgroundColor: '#fff', borderRadius: 16, padding: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
                       >
                         {combo.producto?.imagen_url ? (
@@ -426,11 +450,11 @@ export default function HomeScreen() {
                           />
                         ) : null}
                         {combo.precio_original && (
-                          <Text style={{ fontSize: 10, color: '#9E9E9E', textDecorationLine: 'line-through', marginBottom: 2 }}>{formatCOP(combo.precio_original)}</Text>
+                          <Text style={{ fontSize: 12, color: '#9E9E9E', textDecorationLine: 'line-through', marginBottom: 2 }}>{formatCOP(combo.precio_original)}</Text>
                         )}
                         <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink, marginBottom: 4 }}>{formatCOP(combo.precio_combo)}</Text>
                         <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1C1A', marginBottom: 4 }} numberOfLines={2}>{combo.nombre}</Text>
-                        {combo.descripcion && <Text style={{ fontSize: 11, color: '#6D7B6C' }} numberOfLines={2}>{combo.descripcion}</Text>}
+                        {combo.descripcion && <Text style={{ fontSize: 12, color: '#6D7B6C' }} numberOfLines={2}>{combo.descripcion}</Text>}
                       </Pressable>
                     ))}
                   </View>
@@ -466,13 +490,13 @@ export default function HomeScreen() {
             <View className="mx-4 mb-4 rounded-xl overflow-hidden" style={{ backgroundColor: "#D33587" }}>
               <View className="flex-row items-center p-5">
                 <View className="flex-1" style={{ gap: 4 }}>
-                  <Text style={{ fontSize: 9, fontWeight: "700", color: "rgba(255,255,255,0.7)", letterSpacing: 2, textTransform: "uppercase" }}>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: "rgba(255,255,255,0.7)", letterSpacing: 2, textTransform: "uppercase" }}>
                     Servicio Express
                   </Text>
                   <Text style={{ fontSize: 22, fontWeight: "900", color: "#fff", fontStyle: "italic", textTransform: "uppercase", lineHeight: 26 }}>
                     Domicilio{"\n"}En Florencia
                   </Text>
-                  <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", marginTop: 4 }}>
+                  <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", marginTop: 4 }}>
                     Envío $5.000 • Gratis con puntos
                   </Text>
                 </View>
@@ -487,6 +511,8 @@ export default function HomeScreen() {
       {itemCount > 0 && (
         <Pressable
           onPress={() => router.push("/(tabs)/cart")}
+          accessibilityRole="button"
+          accessibilityLabel={`Ver carrito, ${itemCount} productos, total ${formatCOP(total)}`}
           className="absolute left-4 right-4"
           style={{
             bottom: 80,
@@ -511,7 +537,7 @@ export default function HomeScreen() {
               <Text style={{ color: "#fff", fontWeight: "800", fontSize: 13 }}>{itemCount}</Text>
             </View>
             <View className="ml-3">
-              <Text style={{ fontSize: 9, fontWeight: "700", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 0.5 }}>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 0.5 }}>
                 Tu Pedido
               </Text>
               <Text style={{ fontSize: 14, fontWeight: "800", color: "#1A1C1A" }}>

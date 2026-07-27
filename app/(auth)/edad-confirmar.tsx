@@ -98,6 +98,7 @@ export default function EdadConfirmarScreen() {
             disabled={loading}
             accessibilityRole="button"
             accessibilityLabel="Confirmar que soy mayor de 18 años"
+            accessibilityState={{ disabled: loading }}
             className="items-center rounded-xl mb-3"
             style={{
               backgroundColor: loading ? colors.faint : colors.green,
@@ -116,6 +117,7 @@ export default function EdadConfirmarScreen() {
             disabled={loading}
             accessibilityRole="button"
             accessibilityLabel="No soy mayor de edad, salir de la app"
+            accessibilityState={{ disabled: loading }}
             className="items-center rounded-xl"
             style={{
               backgroundColor: colors.lowfill,
@@ -128,7 +130,7 @@ export default function EdadConfirmarScreen() {
           </Pressable>
         </View>
 
-        <Text style={{ fontSize: 11, color: colors.muted, textAlign: "center", marginTop: 20, lineHeight: 16, paddingHorizontal: 12 }}>
+        <Text style={{ fontSize: 12, color: colors.muted, textAlign: "center", marginTop: 20, lineHeight: 16, paddingHorizontal: 12 }}>
           La venta y consumo de bebidas alcohólicas a menores de edad está prohibida por la ley colombiana (Ley 124 de 1994).
         </Text>
       </ScrollView>

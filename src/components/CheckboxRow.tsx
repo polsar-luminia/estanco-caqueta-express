@@ -4,11 +4,21 @@ interface CheckboxRowProps {
   checked: boolean;
   onToggle: () => void;
   children: React.ReactNode;
+  /** Que se esta aceptando. El lector no puede deducirlo de los hijos si llevan
+   *  enlaces embebidos, que es justo el caso de los terminos del registro. */
+  etiqueta: string;
 }
 
-export function CheckboxRow({ checked, onToggle, children }: CheckboxRowProps) {
+export function CheckboxRow({ checked, onToggle, children, etiqueta }: CheckboxRowProps) {
   return (
-    <Pressable onPress={onToggle} className="flex-row items-center mt-3" style={{ gap: 12 }}>
+    <Pressable
+      onPress={onToggle}
+      accessibilityRole="checkbox"
+      accessibilityLabel={etiqueta}
+      accessibilityState={{ checked }}
+      className="flex-row items-center mt-3"
+      style={{ minHeight: 44, gap: 12 }}
+    >
       <View
         style={{
           width: 22,

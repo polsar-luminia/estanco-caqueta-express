@@ -15,8 +15,10 @@ function HeaderProfileBtn() {
   return (
     <Pressable
       onPress={() => router.push("/profile")}
+      accessibilityRole="button"
+      accessibilityLabel="Mi perfil"
       hitSlop={10}
-      style={{ paddingHorizontal: 16, paddingVertical: 8 }}
+      style={{ minHeight: 44, justifyContent: "center", paddingHorizontal: 16, paddingVertical: 8 }}
     >
       <Feather name="user" size={22} color={MAGENTA} />
     </Pressable>
@@ -28,8 +30,10 @@ function HeaderSearchBtn() {
   return (
     <Pressable
       onPress={() => router.push("/(tabs)/search")}
+      accessibilityRole="button"
+      accessibilityLabel="Buscar productos"
       hitSlop={10}
-      style={{ paddingHorizontal: 16, paddingVertical: 8 }}
+      style={{ minHeight: 44, justifyContent: "center", paddingHorizontal: 16, paddingVertical: 8 }}
     >
       <SearchIcon color={MAGENTA} size={22} />
     </Pressable>
@@ -70,6 +74,12 @@ function TabButton({ onPress, onLongPress, accessibilityState, label, icon: Icon
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
+      accessibilityRole="tab"
+      // `selected` es lo que hace que el lector diga "pestaña 2 de 5, seleccionada".
+      // El badge del carrito va en la etiqueta porque el circulo con el numero es
+      // puramente visual.
+      accessibilityState={{ selected: focused }}
+      accessibilityLabel={badge != null && badge > 0 ? `${label}, ${badge} productos` : label}
       android_ripple={null}
       style={{
         flex: 1,
@@ -92,12 +102,12 @@ function TabButton({ onPress, onLongPress, accessibilityState, label, icon: Icon
           <View style={{
             position: "absolute", top: -4, right: -6,
             backgroundColor: focused ? "#fff" : "#D33587",
-            borderRadius: 8, minWidth: 15, height: 15,
+            borderRadius: 9, minWidth: 18, height: 18,
             alignItems: "center", justifyContent: "center",
-            paddingHorizontal: 3,
+            paddingHorizontal: 4,
           }}>
             <Text style={{
-              fontSize: 8, fontWeight: "800",
+              fontSize: 12, fontWeight: "800",
               color: focused ? "#1FAF55" : "#fff",
             }}>
               {badge > 99 ? "99+" : badge}
@@ -108,7 +118,7 @@ function TabButton({ onPress, onLongPress, accessibilityState, label, icon: Icon
 
       {/* Label */}
       <Text style={{
-        fontSize: 8.5,
+        fontSize: 12,
         fontWeight: focused ? "700" : "500",
         color: focused ? "#fff" : "rgba(26,28,26,0.38)",
         marginTop: 3,

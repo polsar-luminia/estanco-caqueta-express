@@ -241,6 +241,9 @@ export default function OrderDetailScreen() {
         <Pressable
           onPress={handleCancelar}
           disabled={cancelMutation.isPending}
+          accessibilityRole="button"
+          accessibilityLabel={`Cancelar el pedido número ${pedido.numero_orden_cliente ?? pedido.id}`}
+          accessibilityState={{ disabled: cancelMutation.isPending }}
           className="bg-red-50 rounded-2xl py-4 items-center"
           style={CARD_SHADOW}
         >

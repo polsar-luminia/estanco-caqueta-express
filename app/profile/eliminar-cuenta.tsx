@@ -178,6 +178,9 @@ export default function EliminarCuentaScreen() {
           <Pressable
             onPress={handleEliminar}
             disabled={!palabraOk || loading}
+            accessibilityRole="button"
+            accessibilityLabel="Eliminar mi cuenta de forma permanente"
+            accessibilityState={{ disabled: !palabraOk || loading }}
             style={{
               backgroundColor: !palabraOk || loading ? colors.lowfill : colors.danger,
               borderRadius: radii.input,
@@ -198,6 +201,9 @@ export default function EliminarCuentaScreen() {
           <Pressable
             onPress={() => router.back()}
             disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Cancelar y volver sin eliminar la cuenta"
+            accessibilityState={{ disabled: loading }}
             style={{
               marginTop: 12,
               paddingVertical: 16,
@@ -210,7 +216,7 @@ export default function EliminarCuentaScreen() {
           </Pressable>
 
           <Text style={{
-            fontSize: 11, color: colors.faint,
+            fontSize: 12, color: colors.faint,
             marginTop: 24, textAlign: "center", lineHeight: 16, paddingHorizontal: 8,
           }}>
             ¿Solo necesitas cambiar tu información? Vuelve atrás y edita tu perfil — no

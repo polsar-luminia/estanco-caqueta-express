@@ -78,6 +78,6 @@ export const type = {
   title: { fontSize: 15, fontWeight: "800" as const, letterSpacing: -0.1 },
   body: { fontSize: 13.5, fontWeight: "500" as const },
   price: { fontSize: 14, fontWeight: "800" as const },
-  label: { fontSize: 10, fontWeight: "900" as const, letterSpacing: 1.2, textTransform: "uppercase" as const },
-  meta: { fontSize: 10, fontWeight: "500" as const },
+  label: { fontSize: 12, fontWeight: "900" as const, letterSpacing: 1.2, textTransform: "uppercase" as const },
+  meta: { fontSize: 12, fontWeight: "500" as const },
 } as const;

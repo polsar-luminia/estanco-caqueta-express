@@ -60,7 +60,7 @@ export function CartFloatingBar({ bottomOffset = 24 }: { bottomOffset?: number }
         </Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 11, color: "#6D7B6C", fontWeight: "600" }}>
+        <Text style={{ fontSize: 12, color: "#6D7B6C", fontWeight: "600" }}>
           TU PEDIDO
         </Text>
         <Text style={{ fontSize: 16, fontWeight: "700", color: "#1A1C1A" }}>

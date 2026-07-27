@@ -16,7 +16,12 @@ export function OfertasBannerCard({ ofertas, onPress }: Props) {
   const preview = ofertas.slice(0, MAX_PREVIEW);
 
   return (
-    <Pressable onPress={onPress} style={styles.wrapper}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Ver las ${ofertas.length} ofertas de hoy`}
+      style={styles.wrapper}
+    >
       <LinearGradient
         colors={["#1A0D12", "#3D0B2B", "#6B1040"]}
         start={{ x: 0, y: 0 }}
@@ -85,7 +90,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   eyebrow: {
-    fontSize: 9,
+    fontSize: 12,
     fontWeight: "700",
     letterSpacing: 2,
     textTransform: "uppercase",
@@ -101,7 +106,7 @@ const styles = StyleSheet.create({
   },
   sub: {
     color: "rgba(255,255,255,0.45)",
-    fontSize: 11,
+    fontSize: 12,
   },
   right: {
     alignItems: "flex-end",

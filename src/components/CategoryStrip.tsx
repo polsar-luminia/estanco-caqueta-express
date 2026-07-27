@@ -36,6 +36,8 @@ function CategoryItem({ cat, onSelect }: { cat: Categoria; onSelect: (id: number
   return (
     <Pressable
       onPress={() => onSelect(cat.id)}
+      accessibilityRole="button"
+      accessibilityLabel={`Ver productos de ${cat.nombre}`}
       className="items-center"
       style={{ minWidth: 72 }}
     >
@@ -53,7 +55,7 @@ function CategoryItem({ cat, onSelect }: { cat: Categoria; onSelect: (id: number
       </View>
       <Text
         className="font-semibold text-center mt-1.5"
-        style={{ fontSize: 11, color: "#1A1C1A" }}
+        style={{ fontSize: 12, color: "#1A1C1A" }}
         numberOfLines={1}
       >
         {cat.nombre}

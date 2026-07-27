@@ -215,6 +215,9 @@ export default function ProductDetailScreen() {
         </Text>
         <Pressable
           onPress={() => refetch()}
+          accessibilityRole="button"
+          accessibilityLabel="Reintentar cargar el producto"
+          hitSlop={4}
           style={{ backgroundColor: "#1FAF55", paddingHorizontal: 32, paddingVertical: 12, borderRadius: 999 }}
         >
           <Text style={{ color: "white", fontWeight: "600" }}>Reintentar</Text>
@@ -306,7 +309,8 @@ export default function ProductDetailScreen() {
         <Pressable
           onPress={() => router.back()}
           accessibilityRole="button"
-          accessibilityLabel="Volver"
+          accessibilityLabel="Volver a la pantalla anterior"
+          hitSlop={3}
           style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center", ...shadows.soft }}
         >
           <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
@@ -436,6 +440,7 @@ export default function ProductDetailScreen() {
                 onPress={decrement}
                 accessibilityRole="button"
                 accessibilityLabel="Disminuir cantidad"
+                hitSlop={2}
                 className="items-center justify-center rounded-full bg-white"
                 style={{
                   width: 40,
@@ -474,7 +479,9 @@ export default function ProductDetailScreen() {
                   // verse apagado en 2, coherente con lo que el toast ya explicaba.
                   opacity: quantity >= topeEfectivo ? 0.4 : 1,
                 }}
+                accessibilityRole="button"
                 accessibilityLabel="Aumentar cantidad"
+                hitSlop={2}
               >
                 <PlusIcon />
               </Pressable>
@@ -523,7 +530,16 @@ export default function ProductDetailScreen() {
           onPress={handleAdd}
           disabled={!puedeAgregar}
           accessibilityRole="button"
-          accessibilityLabel="Agregar al carrito"
+          // El boton bloqueado no dice por que si solo se lee "Agregar al carrito":
+          // la etiqueta distingue agotado de limite por cliente.
+          accessibilityLabel={
+            !inStock
+              ? "Producto agotado, no se puede agregar"
+              : sinCupo
+                ? "Límite por cliente alcanzado, no se puede agregar"
+                : `Agregar ${quantity} al carrito, ${formatCOP(precioActivo * quantity)}`
+          }
+          accessibilityState={{ disabled: !puedeAgregar }}
           style={{
             backgroundColor: puedeAgregar ? colors.green : "#D1D5DB",
             borderRadius: 14,

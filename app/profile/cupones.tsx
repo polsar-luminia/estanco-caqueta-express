@@ -62,7 +62,13 @@ export default function CuponesScreen() {
           <View className="items-center py-16">
             <Feather name="alert-circle" size={40} color={colors.faint} />
             <Text style={{ fontSize: 16, fontWeight: "600", color: colors.muted, marginTop: 12 }}>No pudimos cargar los cupones</Text>
-            <Pressable onPress={() => refetch()} style={{ marginTop: 12, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: colors.green, borderRadius: radii.pill }}>
+            <Pressable
+              onPress={() => refetch()}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel="Reintentar la carga de los cupones"
+              style={{ marginTop: 12, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: colors.green, borderRadius: radii.pill }}
+            >
               <Text style={{ color: "#fff", fontWeight: "600" }}>Reintentar</Text>
             </Pressable>
           </View>
@@ -80,7 +86,7 @@ export default function CuponesScreen() {
           <>
             {activos.length > 0 && (
               <>
-                <Text style={{ fontSize: 10, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2 }}>
+                <Text style={{ fontSize: 12, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2 }}>
                   Disponibles ({activos.length})
                 </Text>
                 {activos.map((c) => (
@@ -91,7 +97,7 @@ export default function CuponesScreen() {
 
             {usados.length > 0 && (
               <>
-                <Text style={{ fontSize: 10, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginTop: 8 }}>
+                <Text style={{ fontSize: 12, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginTop: 8 }}>
                   Ya usados ({usados.length})
                 </Text>
                 {usados.map((c) => (
@@ -129,7 +135,12 @@ function CuponCard({ cupon, onCopiar, usado }: { cupon: CuponDisponible; onCopia
                 {cupon.codigo}
               </Text>
               {!usado && (
-                <Pressable onPress={() => onCopiar(cupon.codigo)}>
+                <Pressable
+                  onPress={() => onCopiar(cupon.codigo)}
+                  hitSlop={15}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Copiar el cupón ${cupon.codigo}, ${getCuponLabel(cupon)}`}
+                >
                   <Feather name="copy" size={14} color={colors.muted} />
                 </Pressable>
               )}
@@ -149,17 +160,17 @@ function CuponCard({ cupon, onCopiar, usado }: { cupon: CuponDisponible; onCopia
 
           <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
             {Number(cupon.min_pedido) > 0 && (
-              <Text style={{ fontSize: 11, color: colors.faint }}>
+              <Text style={{ fontSize: 12, color: colors.faint }}>
                 Pedido mín. {formatCOP(cupon.min_pedido)}
               </Text>
             )}
             {diasRestantes !== null && (
-              <Text style={{ fontSize: 11, color: diasRestantes <= 3 ? colors.offer : colors.faint }}>
+              <Text style={{ fontSize: 12, color: diasRestantes <= 3 ? colors.offer : colors.faint }}>
                 {diasRestantes === 1 ? "Vence hoy" : `Vence en ${diasRestantes} días`}
               </Text>
             )}
             {usado && (
-              <Text style={{ fontSize: 11, color: colors.faint, fontStyle: "italic" }}>Ya utilizado</Text>
+              <Text style={{ fontSize: 12, color: colors.faint, fontStyle: "italic" }}>Ya utilizado</Text>
             )}
           </View>
         </View>

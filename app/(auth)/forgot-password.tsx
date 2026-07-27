@@ -109,13 +109,20 @@ export default function ForgotPasswordScreen() {
             }}
             accessibilityRole="button"
             accessibilityLabel="Enviar código de verificación"
+            accessibilityState={{ disabled: loading }}
           >
             <Text style={{ color: colors.white, fontWeight: "800", fontSize: 17 }}>
               {loading ? "Enviando..." : "Enviar código"}
             </Text>
           </Pressable>
 
-          <Pressable onPress={() => router.back()} className="items-center mt-6">
+          <Pressable
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Volver al inicio de sesión"
+            hitSlop={16}
+            className="items-center mt-6"
+          >
             <Text style={{ color: colors.muted, fontSize: 13 }}>← Volver al inicio de sesión</Text>
           </Pressable>
 
@@ -123,7 +130,13 @@ export default function ForgotPasswordScreen() {
               backend. Cuando el backend pase al 200 genérico anti-enumeración,
               el CTA condicional de "número no registrado" deja de aparecer, pero
               el usuario sin cuenta igual tiene una salida clara aquí. */}
-          <Pressable onPress={() => router.replace("/(auth)/register")} className="items-center mt-4">
+          <Pressable
+            onPress={() => router.replace("/(auth)/register")}
+            accessibilityRole="button"
+            accessibilityLabel="Crear una cuenta nueva"
+            hitSlop={16}
+            className="items-center mt-4"
+          >
             <Text style={{ color: colors.muted, fontSize: 13 }}>
               ¿No tienes cuenta? <Text style={{ color: colors.offer, fontWeight: "700" }}>Regístrate</Text>
             </Text>

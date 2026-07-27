@@ -52,6 +52,8 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 
       <Pressable
         onPress={retry}
+        accessibilityRole="button"
+        accessibilityLabel="Intentar cargar la pantalla de nuevo"
         style={{
           backgroundColor: "#1FAF55",
           borderRadius: 12,
@@ -69,6 +71,8 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 
       <Pressable
         onPress={() => router.replace("/(tabs)")}
+        accessibilityRole="button"
+        accessibilityLabel="Volver a la pantalla de inicio"
         style={{
           borderRadius: 12,
           paddingVertical: 14,

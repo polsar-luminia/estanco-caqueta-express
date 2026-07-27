@@ -105,12 +105,12 @@ export function BandaCerrado({ tienda, compact = false, style }: Props) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 13, fontWeight: "700", color: "#16241A" }}>{aviso.titulo}</Text>
-          <Text style={{ fontSize: 11, color: "#6E7A6C", marginTop: 1 }} numberOfLines={2}>
+          <Text style={{ fontSize: 12, color: "#6E7A6C", marginTop: 1 }} numberOfLines={2}>
             {aviso.mensaje}
           </Text>
         </View>
         <View style={{ backgroundColor: e.pillBg, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }}>
-          <Text style={{ fontSize: 10, fontWeight: "700", color: e.pillColor }}>{e.pillTexto}</Text>
+          <Text style={{ fontSize: 12, fontWeight: "700", color: e.pillColor }}>{e.pillTexto}</Text>
         </View>
       </View>
 
@@ -124,8 +124,8 @@ export function BandaCerrado({ tienda, compact = false, style }: Props) {
             { dias: "Domingo", hora: "9:00 am – 4:30 pm" },
           ].map(({ dias, hora }) => (
             <View key={dias} style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text style={{ fontSize: 11, color: "#9AA69A" }}>{dias}</Text>
-              <Text style={{ fontSize: 11, color: "#6E7A6C", fontWeight: "600" }}>{hora}</Text>
+              <Text style={{ fontSize: 12, color: "#9AA69A" }}>{dias}</Text>
+              <Text style={{ fontSize: 12, color: "#6E7A6C", fontWeight: "600" }}>{hora}</Text>
             </View>
           ))}
         </View>

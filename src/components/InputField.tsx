@@ -52,7 +52,7 @@ export function InputField({
     <View style={{ marginBottom: 12 }}>
       <Text
         style={{
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: "700",
           color: colors.muted,
           textTransform: "uppercase",
@@ -65,6 +65,8 @@ export function InputField({
       </Text>
       <Pressable
         onPress={focusInput}
+        accessibilityRole="button"
+        accessibilityLabel={`Escribir en el campo ${label}`}
         style={{
           flexDirection: "row",
           alignItems: "center",
@@ -100,7 +102,7 @@ export function InputField({
         {showToggle && onToggleSecure && (
           <Pressable
             onPress={onToggleSecure}
-            hitSlop={8}
+            hitSlop={13}
             accessibilityLabel={secureTextEntry ? "Mostrar contraseña" : "Ocultar contraseña"}
             accessibilityRole="button"
           >
@@ -113,7 +115,7 @@ export function InputField({
       {error ? (
         <Text
           style={{
-            fontSize: 11,
+            fontSize: 12,
             color: colors.danger,
             fontWeight: "500",
             marginLeft: 16,

@@ -42,6 +42,8 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   return (
     <Pressable
       onPress={() => setOpen(!open)}
+      accessibilityRole="button"
+      accessibilityLabel={open ? `Contraer la respuesta de: ${q}` : `Ver la respuesta de: ${q}`}
       className="rounded-2xl overflow-hidden"
       style={{ backgroundColor: colors.surface, ...shadows.card }}
     >
@@ -67,7 +69,12 @@ export default function HelpScreen() {
     <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       {/* Header */}
       <View className="flex-row items-center px-4 pb-2" style={{ gap: 12, paddingTop: insets.top + 8 }}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={11}
+          accessibilityRole="button"
+          accessibilityLabel="Volver a la pantalla anterior"
+        >
           <Feather name="arrow-left" size={22} color={colors.ink} />
         </Pressable>
         <Text style={{ fontSize: 18, fontWeight: "700", color: colors.ink }}>Centro de Ayuda</Text>
@@ -85,6 +92,8 @@ export default function HelpScreen() {
 
           <Pressable
             onPress={() => Linking.openURL("https://wa.me/573189495704")}
+            accessibilityRole="link"
+            accessibilityLabel="Escribirnos por WhatsApp al 318 949 5704"
             className="flex-row items-center justify-center py-3.5 rounded-xl mb-3"
             style={{ backgroundColor: "#25D366" }}
           >
@@ -94,6 +103,8 @@ export default function HelpScreen() {
 
           <Pressable
             onPress={() => Linking.openURL("tel:+573189495704")}
+            accessibilityRole="link"
+            accessibilityLabel="Llamarnos al 318 949 5704"
             className="flex-row items-center justify-center py-3.5 rounded-xl"
             style={{ backgroundColor: colors.surface }}
           >

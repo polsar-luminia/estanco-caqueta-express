@@ -110,7 +110,7 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
               paddingVertical: 3,
             }}
           >
-            <Text style={{ fontSize: 9, fontWeight: "800", color: "#fff" }}>
+            <Text style={{ fontSize: 12, fontWeight: "800", color: "#fff" }}>
               -{formatCOP(saving)}
             </Text>
           </View>
@@ -120,14 +120,14 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
       {/* Contenido */}
       <View style={{ padding: 10 }}>
         <Text
-          style={{ fontSize: 11, fontWeight: "700", color: "#fff", lineHeight: 15, marginBottom: 6 }}
+          style={{ fontSize: 12, fontWeight: "700", color: "#fff", lineHeight: 15, marginBottom: 6 }}
           numberOfLines={2}
         >
           {oferta.producto.nombre}
         </Text>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <View>
-            <Text style={{ fontSize: 9, color: "rgba(255,255,255,0.40)", textDecorationLine: "line-through" }}>
+            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.40)", textDecorationLine: "line-through" }}>
               {formatCOP(precioBase)}
             </Text>
             <Text style={{ fontSize: 17, fontWeight: "800", color: "#fff" }}>
@@ -137,6 +137,11 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
           <Pressable
             onPress={handleAdd}
             disabled={agotado}
+            accessibilityRole="button"
+            accessibilityLabel={`Agregar ${oferta.producto.nombre} al carrito, ${formatCOP(precioOferta)}`}
+            accessibilityState={{ disabled: agotado }}
+            // El botón mide 32 pt; el hitSlop lo lleva a 44 sin tocar el diseño.
+            hitSlop={6}
             style={{
               width: 32,
               height: 32,
@@ -221,7 +226,13 @@ export default function OfertasScreen() {
           gap: 8,
         }}
       >
-        <Pressable onPress={() => router.back()} style={{ paddingRight: 8 }}>
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Volver a la pantalla anterior"
+          hitSlop={12}
+          style={{ paddingRight: 8 }}
+        >
           <ChevronLeftIcon />
         </Pressable>
         <Text style={{ fontSize: 17, fontWeight: "800", color: colors.ink }}>Ofertas de hoy</Text>
@@ -235,7 +246,7 @@ export default function OfertasScreen() {
               paddingVertical: 4,
             }}
           >
-            <Text style={{ fontSize: 11, fontWeight: "700", color: "#1FAF55" }}>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>
               {ofertas.length} activas
             </Text>
           </View>
@@ -281,7 +292,7 @@ export default function OfertasScreen() {
                   >
                     Ofertas Relámpago
                   </Text>
-                  <Text style={{ fontSize: 10, color: "rgba(255,255,255,0.65)", marginTop: 1 }}>
+                  <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 1 }}>
                     Solo por tiempo limitado
                   </Text>
                 </View>
@@ -316,7 +327,7 @@ export default function OfertasScreen() {
                 <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: "700",
                     color: colors.muted,
                     textTransform: "uppercase",
@@ -373,6 +384,8 @@ export default function OfertasScreen() {
       {itemCount > 0 && (
         <Pressable
           onPress={() => router.push("/(tabs)/cart")}
+          accessibilityRole="button"
+          accessibilityLabel={`Ver carrito, ${itemCount} productos, total ${formatCOP(total)}`}
           style={{
             position: "absolute",
             left: 16,
@@ -405,7 +418,7 @@ export default function OfertasScreen() {
               <Text style={{ color: "#fff", fontWeight: "800", fontSize: 13 }}>{itemCount}</Text>
             </View>
             <View style={{ marginLeft: 12 }}>
-              <Text style={{ fontSize: 9, fontWeight: "700", color: colors.faint, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: colors.faint, textTransform: "uppercase", letterSpacing: 0.5 }}>
                 Tu Pedido
               </Text>
               <Text style={{ fontSize: 14, fontWeight: "800", color: colors.ink }}>

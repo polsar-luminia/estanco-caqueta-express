@@ -220,7 +220,7 @@ export default function RegisterScreen() {
             />
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 }}>
               <View style={{ width: 16, height: 1, backgroundColor: colors.line }} />
-              <Text style={{ fontSize: 11, color: colors.faint }}>Crea tu cuenta gratis</Text>
+              <Text style={{ fontSize: 12, color: colors.faint }}>Crea tu cuenta gratis</Text>
               <View style={{ width: 16, height: 1, backgroundColor: colors.line }} />
             </View>
           </View>
@@ -271,11 +271,13 @@ export default function RegisterScreen() {
 
           {/* Aceptación implícita de políticas: el toque en "Crear Cuenta" es la
               aceptación expresa (patrón estándar; reemplaza los 2 checkboxes). */}
-          <Text style={{ fontSize: 11.5, color: colors.muted, textAlign: "center", marginTop: 12, lineHeight: 17, paddingHorizontal: 8 }}>
+          <Text style={{ fontSize: 12.5, color: colors.muted, textAlign: "center", marginTop: 12, lineHeight: 17, paddingHorizontal: 8 }}>
             Al crear tu cuenta aceptas los{" "}
             <Text
               style={{ color: colors.green, fontWeight: "700" }}
               onPress={() => router.push("/support/terms")}
+              accessibilityRole="link"
+              accessibilityLabel="Leer los Términos y Condiciones"
             >
               Términos y Condiciones
             </Text>
@@ -283,6 +285,8 @@ export default function RegisterScreen() {
             <Text
               style={{ color: colors.green, fontWeight: "700" }}
               onPress={() => router.push("/support/privacy")}
+              accessibilityRole="link"
+              accessibilityLabel="Leer la política de Tratamiento de Datos"
             >
               Tratamiento de tus Datos
             </Text>
@@ -290,7 +294,14 @@ export default function RegisterScreen() {
           </Text>
 
           {/* CTA — Crear Cuenta */}
-          <Pressable onPress={handleRegister} disabled={loading} style={{ marginTop: 14 }}>
+          <Pressable
+            onPress={handleRegister}
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Crear cuenta"
+            accessibilityState={{ disabled: loading }}
+            style={{ marginTop: 14 }}
+          >
             <LinearGradient
               colors={loading ? [colors.faint, "#757575"] : [colors.green, colors.greenDeep]}
               start={{ x: 0, y: 0 }}
@@ -314,7 +325,11 @@ export default function RegisterScreen() {
             <View style={{ flexDirection: "row" }}>
               <Text style={{ color: colors.muted, fontSize: 13 }}>¿Ya tienes una cuenta? </Text>
               <Link href="/(auth)/login" asChild>
-                <Pressable>
+                <Pressable
+                  accessibilityRole="link"
+                  accessibilityLabel="Iniciar sesión con una cuenta existente"
+                  hitSlop={16}
+                >
                   <Text style={{ color: colors.offer, fontSize: 13, fontWeight: "700" }}>Inicia sesión</Text>
                 </Pressable>
               </Link>

@@ -45,7 +45,7 @@ export default function MetodosPagoScreen() {
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}>
         <View style={{ backgroundColor: colors.ink, borderRadius: radii.card, padding: 20, marginBottom: 4 }}>
-          <Text style={{ fontSize: 10, fontWeight: "700", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
+          <Text style={{ fontSize: 12, fontWeight: "700", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
             Todo contra entrega
           </Text>
           <Text style={{ fontSize: 16, fontWeight: "700", color: "#fff", lineHeight: 22 }}>

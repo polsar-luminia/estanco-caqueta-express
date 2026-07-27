@@ -39,7 +39,12 @@ export default function PrivacyScreen() {
     <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       {/* Header */}
       <View className="flex-row items-center px-4 pb-2" style={{ gap: 12, paddingTop: insets.top + 8 }}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={11}
+          accessibilityRole="button"
+          accessibilityLabel="Volver a la pantalla anterior"
+        >
           <Feather name="arrow-left" size={22} color={colors.ink} />
         </Pressable>
         <Text style={{ fontSize: 18, fontWeight: "700", color: colors.ink }}>Política de Privacidad</Text>
@@ -48,7 +53,7 @@ export default function PrivacyScreen() {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         {/* Header info */}
         <View className="rounded-2xl p-5 mb-5" style={{ backgroundColor: colors.lowfill }}>
-          <Text style={{ fontSize: 10, fontWeight: "700", color: colors.muted, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>
+          <Text style={{ fontSize: 12, fontWeight: "700", color: colors.muted, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>
             Última actualización
           </Text>
           <Text style={{ fontSize: 14, fontWeight: "600", color: colors.ink }}>13 de julio de 2026</Text>
@@ -73,10 +78,10 @@ export default function PrivacyScreen() {
 
         {/* Footer */}
         <View className="items-center mt-8">
-          <Text style={{ fontSize: 10, color: colors.faint, textAlign: "center", letterSpacing: 1, textTransform: "uppercase" }}>
+          <Text style={{ fontSize: 12, color: colors.faint, textAlign: "center", letterSpacing: 1, textTransform: "uppercase" }}>
             Organización Polo & Salazar ZOMAC S.A.S.
           </Text>
-          <Text style={{ fontSize: 10, color: colors.faint, marginTop: 2 }}>
+          <Text style={{ fontSize: 12, color: colors.faint, marginTop: 2 }}>
             NIT 901.327.818-0 • Florencia, Caquetá
           </Text>
         </View>

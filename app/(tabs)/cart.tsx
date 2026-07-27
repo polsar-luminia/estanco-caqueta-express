@@ -594,7 +594,14 @@ export default function CartScreen() {
                   <TruckIcon color="#1A1C1A" size={20} />
                   <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Entrega</Text>
                 </View>
-                <Pressable onPress={() => setMostrarNueva(!mostrarNueva)}>
+                <Pressable
+                  onPress={() => setMostrarNueva(!mostrarNueva)}
+                  accessibilityRole="button"
+                  accessibilityLabel={mostrarNueva ? "Usar una dirección guardada" : "Agregar una dirección nueva"}
+                  // Es solo un texto de 12 px dentro del encabezado: crece el
+                  // objetivo táctil sin mover la fila.
+                  hitSlop={12}
+                >
                   <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>
                     {mostrarNueva ? "Usar guardada" : "+ Nueva"}
                   </Text>
@@ -617,11 +624,15 @@ export default function CartScreen() {
                               // el numerador de "cuántas hay que mandar al mapa" (bloque F).
                               tracker.track('direccion_seleccionada', { direccion_id: d.id, con_pin: d.lat != null }, 'cart');
                             }}
+                            accessibilityRole="radio"
+                            accessibilityState={{ checked: selected }}
+                            accessibilityLabel={`Entregar en ${d.etiqueta}: ${d.direccion}`}
                             className="flex-row items-center p-3 rounded-xl"
                             style={{
                               backgroundColor: "#fff",
                               borderWidth: 2,
                               borderColor: selected ? "#1FAF55" : "transparent",
+                              minHeight: 44,
                             }}
                           >
                             <Feather name="map-pin" size={16} color={selected ? "#1FAF55" : "#9E9E9E"} />
@@ -630,13 +641,13 @@ export default function CartScreen() {
                                 <Text style={{ fontSize: 13, fontWeight: "700", color: "#1A1C1A" }}>{d.etiqueta}</Text>
                                 {d.predeterminada && (
                                   <View style={{ backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
-                                    <Text style={{ fontSize: 8, fontWeight: "700", color: "#1FAF55" }}>DEFAULT</Text>
+                                    <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>DEFAULT</Text>
                                   </View>
                                 )}
                                 {d.lat != null && (
                                   <View style={{ flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
                                     <Feather name="map-pin" size={8} color="#1FAF55" />
-                                    <Text style={{ fontSize: 8, fontWeight: "700", color: "#1FAF55" }}>CON UBICACIÓN</Text>
+                                    <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>CON UBICACIÓN</Text>
                                   </View>
                                 )}
                               </View>
@@ -652,6 +663,8 @@ export default function CartScreen() {
                   ) : (
                     <Pressable
                       onPress={() => setMostrarNueva(true)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Agregar una dirección de entrega"
                       className="items-center py-6 rounded-xl bg-white"
                     >
                       <Feather name="plus-circle" size={24} color="#1FAF55" />
@@ -675,7 +688,7 @@ export default function CartScreen() {
                       }
                     }}
                   />
-                  <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
                     Dirección (referencia)
                   </Text>
                   <TextInput
@@ -685,7 +698,7 @@ export default function CartScreen() {
                     value={nuevaDireccion}
                     onChangeText={setNuevaDireccion}
                   />
-                  <Text style={{ fontSize: 10, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
                     Notas (Opcional)
                   </Text>
                   <TextInput
@@ -715,11 +728,11 @@ export default function CartScreen() {
                     <Text style={{ fontSize: 13, fontWeight: "700", color: "#1FAF55" }}>
                       {cuponValidado.cupon.codigo}
                     </Text>
-                    <Text style={{ fontSize: 11, color: "#6D7B6C" }}>
+                    <Text style={{ fontSize: 12, color: "#6D7B6C" }}>
                       {cuponValidado.cupon.descripcion || (cuponValidado.cupon.tipo === "porcentaje" ? `${cuponValidado.cupon.valor}% de descuento` : `${formatCOP(cuponValidado.cupon.valor)} de descuento`)}
                     </Text>
                   </View>
-                  <Pressable onPress={handleQuitarCupon} accessibilityRole="button" accessibilityLabel="Quitar cupón">
+                  <Pressable onPress={handleQuitarCupon} accessibilityRole="button" accessibilityLabel="Quitar cupón" hitSlop={14}>
                     <Feather name="x-circle" size={18} color="#9E9E9E" />
                   </Pressable>
                 </View>
@@ -747,10 +760,14 @@ export default function CartScreen() {
                   <Pressable
                     onPress={handleValidarCupon}
                     disabled={validandoCupon || !codigoCupon.trim()}
+                    accessibilityRole="button"
+                    accessibilityLabel="Aplicar cupón"
+                    accessibilityState={{ disabled: validandoCupon || !codigoCupon.trim() }}
                     style={{
                       backgroundColor: codigoCupon.trim() ? "#1FAF55" : "#E2E3DF",
                       borderRadius: 12,
                       paddingHorizontal: 16,
+                      minHeight: 44,
                       justifyContent: "center",
                     }}
                   >
@@ -762,7 +779,7 @@ export default function CartScreen() {
               )}
 
               {cuponError ? (
-                <Text style={{ fontSize: 11, color: colors.danger, marginTop: 6, marginLeft: 4 }}>{cuponError}</Text>
+                <Text style={{ fontSize: 12, color: colors.danger, marginTop: 6, marginLeft: 4 }}>{cuponError}</Text>
               ) : null}
             </View>
 
@@ -862,7 +879,7 @@ export default function CartScreen() {
                 <View className="flex-row justify-between items-center rounded-xl p-3" style={{ backgroundColor: colors.lowfill }}>
                   <View className="flex-1">
                     <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1C1A" }}>Usar 200 puntos</Text>
-                    <Text style={{ fontSize: 11, color: "#6D7B6C" }}>Envío gratis (tienes {puntos} pts)</Text>
+                    <Text style={{ fontSize: 12, color: "#6D7B6C" }}>Envío gratis (tienes {puntos} pts)</Text>
                   </View>
                   <Switch
                     value={usarPuntos}
@@ -873,7 +890,7 @@ export default function CartScreen() {
                 </View>
               )}
               {!puedeUsarPuntos && puntos > 0 && subtotal < envioGratisMinimo && (
-                <Text style={{ fontSize: 11, color: "#6D7B6C", fontStyle: "italic" }}>
+                <Text style={{ fontSize: 12, color: "#6D7B6C", fontStyle: "italic" }}>
                   Tienes {puntos} pts. Necesitas 200 para envío gratis.
                 </Text>
               )}
@@ -888,7 +905,7 @@ export default function CartScreen() {
             >
               <View className="flex-row items-center">
                 <View className="flex-1">
-                  <Text style={{ fontSize: 9, fontWeight: "700", color: "rgba(255,255,255,0.7)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: "rgba(255,255,255,0.7)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>
                     Express Delivery
                   </Text>
                   <Text style={{ fontSize: 17, fontWeight: "700", color: "#fff", lineHeight: 22 }}>
@@ -924,7 +941,7 @@ export default function CartScreen() {
 
         <View className="flex-row justify-between items-end mb-4">
           <View>
-            <Text style={{ fontSize: 10, fontWeight: "600", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5 }}>
+            <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5 }}>
               Total a pagar
             </Text>
             <Text style={{ fontSize: 28, fontWeight: "800", color: colors.ink, letterSpacing: -1 }}>
@@ -941,16 +958,16 @@ export default function CartScreen() {
             })()}
           </View>
           <View>
-            <Text style={{ fontSize: 11, color: "#6D7B6C", fontStyle: "italic" }}>
+            <Text style={{ fontSize: 12, color: "#6D7B6C", fontStyle: "italic" }}>
               {envio === 0 ? "Envío gratis con puntos 🎉" : `Incluye domicilio (${formatCOP(envio)})`}
             </Text>
             {resumen.frio > 0 && (
-              <Text style={{ fontSize: 11, color: "#0F3A6B", fontWeight: "600", marginTop: 2 }}>
+              <Text style={{ fontSize: 12, color: "#0F3A6B", fontWeight: "600", marginTop: 2 }}>
                 Incluye frío asegurado ({formatCOP(resumen.frio)})
               </Text>
             )}
             {subtotal < pedidoMinimo && (
-              <Text style={{ fontSize: 11, color: colors.offer, fontWeight: "600", marginTop: 2 }}>
+              <Text style={{ fontSize: 12, color: colors.offer, fontWeight: "600", marginTop: 2 }}>
                 Pedido mínimo: {formatCOP(pedidoMinimo)} (faltan {formatCOP(pedidoMinimo - subtotal)})
               </Text>
             )}
@@ -960,6 +977,9 @@ export default function CartScreen() {
         <Pressable
           onPress={handlePedir}
           disabled={loading || !tienda.abierta || subtotal < pedidoMinimo}
+          accessibilityRole="button"
+          accessibilityLabel={`Confirmar pedido por ${formatCOP(total)}`}
+          accessibilityState={{ disabled: loading || !tienda.abierta || subtotal < pedidoMinimo }}
         >
           <LinearGradient
             colors={

@@ -14,7 +14,7 @@ import { getCuponesDisponibles } from "../../src/lib/api";
 import { CopyIcon } from "../../src/components/icons/AppIcons";
 import { colors } from "../../src/constants/theme";
 
-function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string; badge?: string; onPress?: () => void }) {
+function MenuItem({ icon, label, badge, onPress, a11yLabel }: { icon: string; label: string; badge?: string; onPress?: () => void; a11yLabel: string }) {
   const iconMap: Record<string, keyof typeof Feather.glyphMap> = {
     "person": "map-pin",
     "payments": "credit-card",
@@ -40,6 +40,10 @@ function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      // El badge ("2 disponibles") se anexa a la etiqueta porque es información
+      // que solo existe visualmente en la fila.
+      accessibilityLabel={badge ? `${a11yLabel}, ${badge}` : a11yLabel}
       style={{
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
         padding: 13, borderBottomWidth: 0.5, borderBottomColor: colors.line,
@@ -54,7 +58,7 @@ function MenuItem({ icon, label, badge, onPress }: { icon: string; label: string
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         {badge && (
           <View style={{ backgroundColor: colors.pink, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
-            <Text style={{ color: "#fff", fontSize: 9, fontWeight: "700", textTransform: "uppercase" }}>{badge}</Text>
+            <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700", textTransform: "uppercase" }}>{badge}</Text>
           </View>
         )}
         <Feather name="chevron-right" size={18} color="#CBD3C7" />
@@ -133,6 +137,8 @@ export default function ProfileScreen() {
         <Pressable
           onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)"))}
           hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel="Volver a la pantalla anterior"
           style={{
             position: "absolute",
             top: insets.top + 8,
@@ -192,13 +198,13 @@ export default function ProfileScreen() {
               borderLeftWidth: i > 0 ? 1 : 0, borderLeftColor: "#E2E3DF",
             }}>
               <Text style={{
-                fontSize: 10, fontWeight: "700", color: stat.color,
+                fontSize: 12, fontWeight: "700", color: stat.color,
                 textTransform: "uppercase", letterSpacing: 1, marginBottom: 3,
               }}>
                 {stat.label}
               </Text>
               <Text style={{ fontSize: 18, fontWeight: "800", color: "#1A1C1A" }}>{stat.value}</Text>
-              <Text style={{ fontSize: 9, color: "#BCCABA", marginTop: 1 }}>{stat.sub}</Text>
+              <Text style={{ fontSize: 12, color: "#BCCABA", marginTop: 1 }}>{stat.sub}</Text>
             </View>
           ))}
         </View>
@@ -228,8 +234,8 @@ export default function ProfileScreen() {
           />
         </View>
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 5 }}>
-          <Text style={{ fontSize: 9, color: "#BCCABA" }}>0 pts</Text>
-          <Text style={{ fontSize: 9, color: "#BCCABA" }}>100 pts</Text>
+          <Text style={{ fontSize: 12, color: "#BCCABA" }}>0 pts</Text>
+          <Text style={{ fontSize: 12, color: "#BCCABA" }}>100 pts</Text>
         </View>
       </View>
 
@@ -242,7 +248,7 @@ export default function ProfileScreen() {
         }}>
           <View style={{ flex: 1 }}>
             <Text style={{
-              fontSize: 10, fontWeight: "700", color: "#6D7B6C",
+              fontSize: 12, fontWeight: "700", color: "#6D7B6C",
               textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4,
             }}>
               Código de referido
@@ -250,7 +256,7 @@ export default function ProfileScreen() {
             <Text style={{ fontSize: 20, fontWeight: "900", color: "#1A1C1A", letterSpacing: 3 }}>
               {cliente.codigo_referido}
             </Text>
-            <Text style={{ fontSize: 11, color: "#BCCABA", marginTop: 3 }}>
+            <Text style={{ fontSize: 12, color: "#BCCABA", marginTop: 3 }}>
               Comparte y gana puntos
             </Text>
           </View>
@@ -259,6 +265,9 @@ export default function ProfileScreen() {
               Clipboard.setStringAsync(cliente.codigo_referido!);
               Toast.show({ type: "success", text1: "Código copiado", visibilityTime: 1500 });
             }}
+            hitSlop={6}
+            accessibilityRole="button"
+            accessibilityLabel={`Copiar tu código de referido ${cliente.codigo_referido}`}
             style={{
               backgroundColor: "#1FAF55", borderRadius: 10,
               paddingHorizontal: 14, paddingVertical: 10,
@@ -273,30 +282,32 @@ export default function ProfileScreen() {
 
       {/* ── Información Personal ─────────────────────────────── */}
       <View style={{ marginHorizontal: 24, marginBottom: 24 }}>
-        <Text style={{ fontSize: 10, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
+        <Text style={{ fontSize: 12, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
           Información Personal
         </Text>
         <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: "#F4F4F0" }}>
-          <MenuItem icon="person" label="Mis Direcciones" onPress={() => router.push("/profile/direcciones")} />
-          <MenuItem icon="payments" label="Métodos de Pago" onPress={() => router.push("/profile/metodos-pago")} />
-          <MenuItem icon="notifications" label="Notificaciones" onPress={() => router.push("/profile/notificaciones")} />
+          <MenuItem icon="person" label="Mis Direcciones" a11yLabel="Ver y editar mis direcciones de entrega" onPress={() => router.push("/profile/direcciones")} />
+          <MenuItem icon="payments" label="Métodos de Pago" a11yLabel="Ver los métodos de pago aceptados" onPress={() => router.push("/profile/metodos-pago")} />
+          <MenuItem icon="notifications" label="Notificaciones" a11yLabel="Configurar mis preferencias de notificaciones" onPress={() => router.push("/profile/notificaciones")} />
         </View>
       </View>
 
       {/* ── Pedidos y Promociones ────────────────────────────── */}
       <View style={{ marginHorizontal: 24, marginBottom: 24 }}>
-        <Text style={{ fontSize: 10, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
+        <Text style={{ fontSize: 12, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
           Pedidos y Promociones
         </Text>
         <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: "#F4F4F0" }}>
           <MenuItem
             icon="receipt_long"
             label="Historial de Pedidos"
+            a11yLabel="Ver el historial de mis pedidos"
             onPress={() => router.push("/(tabs)/orders")}
           />
           <MenuItem
             icon="confirmation_number"
             label="Cupones y Descuentos"
+            a11yLabel="Ver mis cupones y descuentos"
             badge={cuponesNuevos > 0 ? `${cuponesNuevos} disponible${cuponesNuevos > 1 ? "s" : ""}` : undefined}
             onPress={() => router.push("/profile/cupones")}
           />
@@ -305,28 +316,32 @@ export default function ProfileScreen() {
 
       {/* ── Soporte ──────────────────────────────────────────── */}
       <View style={{ marginHorizontal: 24, marginBottom: 24 }}>
-        <Text style={{ fontSize: 10, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
+        <Text style={{ fontSize: 12, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
           Soporte
         </Text>
         <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: "#F4F4F0" }}>
           <MenuItem
             icon="chat"
             label="Soporte WhatsApp"
+            a11yLabel="Escribirle a soporte por WhatsApp"
             onPress={() => Linking.openURL(WHATSAPP_SOPORTE)}
           />
           <MenuItem
             icon="help_center"
             label="Centro de Ayuda"
+            a11yLabel="Abrir el centro de ayuda y preguntas frecuentes"
             onPress={() => router.push("/support/help")}
           />
           <MenuItem
             icon="policy"
             label="Términos y Condiciones"
+            a11yLabel="Leer los términos y condiciones"
             onPress={() => router.push("/support/terms")}
           />
           <MenuItem
             icon="policy"
             label="Eliminar cuenta"
+            a11yLabel="Eliminar mi cuenta de forma permanente"
             onPress={() => router.push("/profile/eliminar-cuenta")}
           />
         </View>
@@ -336,6 +351,8 @@ export default function ProfileScreen() {
       <View style={{ marginHorizontal: 24, marginTop: 8 }}>
         <Pressable
           onPress={handleLogout}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar sesión y salir de mi cuenta"
           style={{
             backgroundColor: "#1A1C1A",
             borderRadius: 14,
@@ -355,7 +372,7 @@ export default function ProfileScreen() {
 
       {/* ── Branding Polo & Salazar — NO MODIFICAR ───────────── */}
       <View style={{ alignItems: "center", marginTop: 16, gap: 4 }}>
-        <Text style={{ fontSize: 10, color: "#BCCABA", textTransform: "uppercase", letterSpacing: 2 }}>
+        <Text style={{ fontSize: 12, color: "#BCCABA", textTransform: "uppercase", letterSpacing: 2 }}>
           Un producto de
         </Text>
         <Image
@@ -367,14 +384,16 @@ export default function ProfileScreen() {
 
       {/* ── Versión y créditos — NO MODIFICAR ────────────────── */}
       <View style={{ alignItems: "center", marginBottom: 24, gap: 2 }}>
-        <Text style={{ textAlign: "center", fontSize: 9, color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2 }}>
+        <Text style={{ textAlign: "center", fontSize: 12, color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2 }}>
           Versión {Constants.expoConfig?.version ?? "1.0.0"}
         </Text>
-        <Text style={{ textAlign: "center", fontSize: 9, color: "#9E9E9E" }}>
+        <Text style={{ textAlign: "center", fontSize: 12, color: "#9E9E9E" }}>
           Creado por{" "}
           <Text
             style={{ color: "#D33587", fontWeight: "700" }}
             onPress={() => Linking.openURL("https://hola.luminiatech.digital")}
+            accessibilityRole="link"
+            accessibilityLabel="Abrir el sitio web de LuminIA"
           >
             LuminIA
           </Text>

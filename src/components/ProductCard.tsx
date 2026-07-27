@@ -105,6 +105,10 @@ export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, o
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
+      accessibilityRole="button"
+      // El lector de pantalla no ve el badge ni el precio tachado: la etiqueta
+      // los resume para que la tarjeta se entienda sin mirarla.
+      accessibilityLabel={`${product.nombre}, ${formatCOP(precioEfectivo)}${agotado ? ", agotado" : ""}. Ver detalle`}
       style={[animatedStyle, { flex: 1, opacity: agotado ? 0.6 : 1 }]}
     >
       <View
@@ -119,13 +123,13 @@ export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, o
         <View style={{ borderRadius: 12, backgroundColor: colors.white, overflow: "hidden", position: "relative" }}>
           {agotado ? (
             <View style={{ position: "absolute", top: 8, left: 8, zIndex: 10, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, backgroundColor: "#6B7280" }}>
-              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 8.5, letterSpacing: 0.4, textTransform: "uppercase" }}>
+              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 12.5, letterSpacing: 0.4, textTransform: "uppercase" }}>
                 Agotado
               </Text>
             </View>
           ) : badgeText ? (
             <View style={{ position: "absolute", top: 8, left: 8, zIndex: 10, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, backgroundColor: badgeBg }}>
-              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 8.5, letterSpacing: 0.4, textTransform: "uppercase" }}>
+              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 12.5, letterSpacing: 0.4, textTransform: "uppercase" }}>
                 {badgeText}
               </Text>
             </View>
@@ -152,7 +156,7 @@ export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, o
             <View>
               {tienePrecioOferta ? (
                 <>
-                  <Text style={{ fontSize: 10, color: colors.strike, textDecorationLine: "line-through", fontWeight: "600" }}>
+                  <Text style={{ fontSize: 12, color: colors.strike, textDecorationLine: "line-through", fontWeight: "600" }}>
                     {formatCOP(precioTachado)}
                   </Text>
                   <Text style={{ fontSize: 15, fontWeight: "800", color: agotado ? colors.faint : colors.ink }}>
@@ -174,6 +178,9 @@ export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, o
               disabled={agotado}
               accessibilityRole="button"
               accessibilityLabel={`Agregar ${product.nombre} al carrito`}
+              accessibilityState={{ disabled: agotado }}
+              // El botón mide 34 pt; el hitSlop lo lleva a 44 sin tocar el diseño.
+              hitSlop={5}
               style={{
                 width: 34,
                 height: 34,

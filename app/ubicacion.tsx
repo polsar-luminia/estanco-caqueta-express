@@ -245,10 +245,18 @@ export default function UbicacionScreen() {
         </View>
 
         {!dentroZona ? (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, backgroundColor: "rgba(239,68,68,0.08)", borderRadius: 8, padding: 8 }}>
-            <Feather name="alert-triangle" size={14} color="#DC2626" />
-            <Text style={{ flex: 1, fontSize: 12, color: "#DC2626", fontWeight: "600" }}>
-              Fuera de la zona de reparto de Florencia
+          // accessibilityLiveRegion: el mensaje aparece al mover el mapa, sin que
+          // el foco cambie. Sin esto el lector de pantalla no lo anuncia nunca y
+          // la persona solo descubre el problema cuando el botón no responde.
+          <View
+            accessibilityLiveRegion="polite"
+            style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8, backgroundColor: "rgba(239,68,68,0.08)", borderRadius: 8, padding: 10 }}
+          >
+            <Feather name="alert-triangle" size={16} color="#DC2626" />
+            {/* Lenguaje llano: "fuera de la zona de reparto" es jerga de logística.
+                Lo que el cliente necesita saber es que hoy no le llegamos ahí. */}
+            <Text style={{ flex: 1, fontSize: 14, lineHeight: 19, color: "#DC2626", fontWeight: "600" }}>
+              Por ahora no llegamos hasta aquí
             </Text>
           </View>
         ) : null}
@@ -256,12 +264,23 @@ export default function UbicacionScreen() {
         <Pressable
           onPress={onConfirmar}
           disabled={!dentroZona}
-          style={{ marginTop: 12, paddingVertical: 14, borderRadius: 12, backgroundColor: dentroZona ? "#1FAF55" : "#D1D5DB", alignItems: "center" }}
+          accessibilityRole="button"
+          accessibilityLabel="Confirmar este punto de entrega"
+          // Sin el estado, el lector anuncia como activo un boton que no responde
+          // y la persona se queda sin entender por que no pasa nada.
+          accessibilityState={{ disabled: !dentroZona }}
+          accessibilityHint={!dentroZona ? "Por ahora no llegamos hasta aqui. Mueve el mapa a otro punto." : undefined}
+          style={{ minHeight: 48, marginTop: 12, paddingVertical: 14, borderRadius: 12, backgroundColor: dentroZona ? "#1FAF55" : "#D1D5DB", alignItems: "center", justifyContent: "center" }}
         >
           <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>Confirmar este punto</Text>
         </Pressable>
 
-        <Pressable onPress={onCancelar} style={{ marginTop: 8, paddingVertical: 10, alignItems: "center" }}>
+        <Pressable
+          onPress={onCancelar}
+          accessibilityRole="button"
+          accessibilityLabel="Escribir la direccion manualmente en vez de usar el mapa"
+          style={{ minHeight: 44, marginTop: 8, paddingVertical: 10, alignItems: "center", justifyContent: "center" }}
+        >
           <Text style={{ fontSize: 13, fontWeight: "600", color: "#6D7B6C" }}>Escribir dirección manualmente</Text>
         </Pressable>
       </View>

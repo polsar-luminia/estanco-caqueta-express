@@ -163,7 +163,7 @@ export default function LoginScreen() {
           {/* Campo Teléfono */}
           <View style={{ gap: 6, marginBottom: 16 }}>
             <Text style={{
-              fontSize: 10, fontWeight: "700", color: colors.muted,
+              fontSize: 12, fontWeight: "700", color: colors.muted,
               textTransform: "uppercase", letterSpacing: 1.2,
               marginBottom: 6, marginLeft: 4,
             }}>
@@ -188,7 +188,7 @@ export default function LoginScreen() {
           {/* Campo Contraseña */}
           <View style={{ gap: 6, marginBottom: 8 }}>
             <Text style={{
-              fontSize: 10, fontWeight: "700", color: colors.muted,
+              fontSize: 12, fontWeight: "700", color: colors.muted,
               textTransform: "uppercase", letterSpacing: 1.2,
               marginBottom: 6, marginLeft: 4,
             }}>
@@ -211,7 +211,10 @@ export default function LoginScreen() {
               />
               <Pressable
                 onPress={() => setShowPass(!showPass)}
-                accessibilityLabel="Mostrar contraseña"
+                accessibilityRole="button"
+                accessibilityLabel={showPass ? "Ocultar contraseña" : "Mostrar contraseña"}
+                // Icono de 18 px dentro del campo: hitSlop para no ensanchar el input.
+                hitSlop={13}
               >
                 {showPass
                   ? <EyeOffIcon color={colors.muted} size={18} />
@@ -220,7 +223,7 @@ export default function LoginScreen() {
             </View>
 
             {loginError && (
-              <Text style={{ fontSize: 11, color: colors.danger, fontWeight: "500", marginTop: 4, marginLeft: 4 }}>
+              <Text style={{ fontSize: 12, color: colors.danger, fontWeight: "500", marginTop: 4, marginLeft: 4 }}>
                 {loginErrorMsg || "Teléfono o contraseña incorrectos"}
               </Text>
             )}
@@ -228,6 +231,9 @@ export default function LoginScreen() {
             {/* Olvidaste contraseña */}
             <Pressable
               onPress={() => router.push("/(auth)/forgot-password")}
+              accessibilityRole="button"
+              accessibilityLabel="Recuperar tu contraseña"
+              hitSlop={16}
               style={{ alignSelf: "flex-end", marginTop: 4 }}
             >
               <Text style={{ fontSize: 12, color: colors.green, fontWeight: "600" }}>
@@ -237,7 +243,14 @@ export default function LoginScreen() {
           </View>
 
           {/* Botón Ingresar */}
-          <Pressable onPress={handleLogin} disabled={loading} style={{ marginTop: 8 }}>
+          <Pressable
+            onPress={handleLogin}
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Iniciar sesión"
+            accessibilityState={{ disabled: loading }}
+            style={{ marginTop: 8 }}
+          >
             <LinearGradient
               colors={loading ? [colors.faint, "#757575"] : [colors.green, colors.greenDeep]}
               start={{ x: 0, y: 0 }}
@@ -259,13 +272,15 @@ export default function LoginScreen() {
           {/* Divider ¿Eres nuevo? */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 28 }}>
             <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
-            <Text style={{ fontSize: 11, color: colors.faint }}>¿Eres nuevo?</Text>
+            <Text style={{ fontSize: 12, color: colors.faint }}>¿Eres nuevo?</Text>
             <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
           </View>
 
           {/* Botón Crear cuenta — ghost coral */}
           <Pressable
             onPress={() => router.push("/(auth)/register")}
+            accessibilityRole="button"
+            accessibilityLabel="Crear una cuenta nueva"
             style={{
               borderWidth: 1.5,
               borderColor: "rgba(240,101,63,0.30)",

@@ -156,6 +156,9 @@ export default function VerifyOtpScreen() {
           <Pressable
             onPress={handleVerificar}
             disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Cambiar la contraseña"
+            accessibilityState={{ disabled: loading }}
             className="items-center mt-4"
             style={{
               backgroundColor: loading ? colors.faint : colors.green,
@@ -169,20 +172,40 @@ export default function VerifyOtpScreen() {
             </Text>
           </Pressable>
 
-          <Pressable onPress={handleReenviar} disabled={reenviando || cooldownSegundos > 0} className="items-center mt-5">
+          <Pressable
+            onPress={handleReenviar}
+            disabled={reenviando || cooldownSegundos > 0}
+            accessibilityRole="button"
+            accessibilityLabel="Reenviar el código de verificación"
+            accessibilityState={{ disabled: reenviando || cooldownSegundos > 0 }}
+            hitSlop={16}
+            className="items-center mt-5"
+          >
             <Text style={{ color: cooldownSegundos > 0 ? colors.faint : colors.green, fontSize: 13, fontWeight: "600" }}>
               {reenviando ? "Reenviando..." : cooldownSegundos > 0 ? `Reenviar en ${cooldownSegundos}s` : "¿No recibiste el código? Reenviar"}
             </Text>
           </Pressable>
 
-          <Pressable onPress={() => router.back()} className="items-center mt-3">
+          <Pressable
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Volver a la pantalla anterior"
+            hitSlop={16}
+            className="items-center mt-3"
+          >
             <Text style={{ color: colors.muted, fontSize: 13 }}>← Volver</Text>
           </Pressable>
 
           {/* M-AUTH-17: salida clara si el número no tenía cuenta. Con el backend
               anti-enumeración (200 genérico), quien escribió un número sin cuenta
               aterriza aquí esperando un código que no llega — este link lo rescata. */}
-          <Pressable onPress={() => router.replace("/(auth)/register")} className="items-center mt-4">
+          <Pressable
+            onPress={() => router.replace("/(auth)/register")}
+            accessibilityRole="button"
+            accessibilityLabel="Crear una cuenta nueva"
+            hitSlop={16}
+            className="items-center mt-4"
+          >
             <Text style={{ color: colors.muted, fontSize: 13 }}>
               ¿No tienes cuenta? <Text style={{ color: colors.offer, fontWeight: "700" }}>Regístrate</Text>
             </Text>

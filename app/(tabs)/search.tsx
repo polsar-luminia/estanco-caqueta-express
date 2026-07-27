@@ -32,6 +32,8 @@ function CategoryGridItem({ cat, onPress }: { cat: Categoria; onPress: () => voi
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Ver productos de ${cat.nombre}`}
       style={{
         width: COL_WIDTH,
         marginBottom: 12,
@@ -70,10 +72,13 @@ function CategoryGridItem({ cat, onPress }: { cat: Categoria; onPress: () => voi
         )}
       </LinearGradient>
 
+      {/* Sin adjustsFontSizeToFit: encogia el texto por debajo del piso de 12 px
+          para que cupiera, que es exactamente lo contrario de lo que se busca.
+          Un nombre largo ahora se corta con puntos suspensivos y se sigue leyendo. */}
       <Text
         style={{ flex: 1, fontSize: 12, fontWeight: "700", color: colors.ink }}
         numberOfLines={1}
-        adjustsFontSizeToFit
+        ellipsizeMode="tail"
       >
         {cat.nombre}
       </Text>
@@ -193,6 +198,8 @@ export default function SearchScreen() {
       >
         <Pressable
           onPress={() => inputRef.current?.focus()}
+          accessibilityRole="search"
+          accessibilityLabel="Buscar licores o snacks"
           style={{
             flexDirection: "row",
             alignItems: "center",
@@ -230,7 +237,10 @@ export default function SearchScreen() {
                 setQuery("");
                 setDebouncedQuery("");
               }}
-              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Borrar lo escrito en la búsqueda"
+              // El icono mide 16 pt; el hitSlop lo lleva a 44.
+              hitSlop={14}
             >
               <CloseIcon color={colors.faint} size={16} />
             </Pressable>
@@ -310,7 +320,7 @@ export default function SearchScreen() {
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: cartCount > 0 ? 170 : 120 }}>
           {/* Recent Searches */}
           <View style={{ paddingHorizontal: 16, marginBottom: 20, paddingTop: 16 }}>
-            <Text style={{ fontSize: 10, fontWeight: "700", color: colors.faint, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: colors.faint, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>
               Búsquedas Populares
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
@@ -318,6 +328,9 @@ export default function SearchScreen() {
                 <Pressable
                   key={term}
                   onPress={() => handleRecentSearch(term)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Buscar ${term}`}
+                  hitSlop={7}
                   style={{
                     backgroundColor: "#FFFFFF",
                     borderRadius: 9999,
@@ -360,7 +373,12 @@ export default function SearchScreen() {
             <View style={{ paddingHorizontal: 16 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <Text style={{ fontSize: 18, fontWeight: "800", color: colors.ink }}>Sugerencias de Hoy</Text>
-                <Pressable onPress={() => router.push("/(tabs)/")}>
+                <Pressable
+                  onPress={() => router.push("/(tabs)/")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver todos los destacados en el inicio"
+                  hitSlop={{ top: 15, bottom: 15, left: 8, right: 8 }}
+                >
                   <Text style={{ fontSize: 12, fontWeight: "700", color: colors.greenInk }}>Ver Todo</Text>
                 </Pressable>
               </View>
