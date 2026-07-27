@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { View, Text, ScrollView, Pressable, Alert } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
@@ -45,6 +46,24 @@ export default function OrderDetailScreen() {
   const { id, calificar } = useLocalSearchParams<{ id: string; calificar?: string }>();
   const pedidoId = id && id.trim() ? Number(id) : NaN;
   const queryClient = useQueryClient();
+
+  // Bajar hasta la tarjeta de calificación cuando se llega con `calificar=1`.
+  // Antes ese parámetro solo le pintaba un borde verde, y la tarjeta vive al final
+  // de la pantalla: el cliente tocaba "Califícanos en 10 segundos", aterrizaba
+  // arriba del todo y tenía que ponerse a buscar. Es exactamente lo que la tarjeta
+  // dice que no le va a tocar hacer.
+  const scrollRef = useRef<ScrollView>(null);
+  const [yResena, setYResena] = useState<number | null>(null);
+  const yaBajoRef = useRef(false);
+
+  useEffect(() => {
+    if (calificar !== "1" || yResena === null || yaBajoRef.current) return;
+    // Una sola vez: si vuelve a medirse (rotación, la reseña se envía y la tarjeta
+    // cambia de alto) no se le arrastra la pantalla al cliente otra vez.
+    yaBajoRef.current = true;
+    // El margen de 16 deja ver que hay algo encima y que no es el tope.
+    scrollRef.current?.scrollTo({ y: Math.max(0, yResena - 16), animated: true });
+  }, [calificar, yResena]);
 
   const { data: pedido, isLoading, isError, refetch } = useQuery({
     queryKey: ["pedido", pedidoId],
@@ -105,6 +124,7 @@ export default function OrderDetailScreen() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       className="flex-1 bg-surface-low"
       // paddingBottom 112 = tab bar flotante (64) + offset (12) + margen (36) para que el botón
       // "Cancelar pedido" no quede tapado por la barra de tabs flotante.
@@ -198,7 +218,9 @@ export default function OrderDetailScreen() {
       {/* Calificación (bloque C). Solo en pedidos entregados: preguntarle a alguien
           que todavía está esperando cómo le fue es la peor forma de preguntarlo. */}
       {pedido.estado === "entregado" && (
-        <TarjetaResena pedidoId={pedido.id} abrirAlEntrar={calificar === "1"} />
+        <View onLayout={(e) => setYResena(e.nativeEvent.layout.y)}>
+          <TarjetaResena pedidoId={pedido.id} abrirAlEntrar={calificar === "1"} />
+        </View>
       )}
 
       {/* Foto de la entrega (bloque B). Solo llega si el pedido es del cliente:

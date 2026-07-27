@@ -82,6 +82,7 @@ export type EventTipo =
   | 'frio_recordatorio_visto'
   | 'frio_recordatorio_aceptado'
   | 'frio_recordatorio_rechazado'
+  | 'frio_recordatorio_cerrado'
   // C — reseñas
   | 'resena_enviada'
   | 'resena_banner_visto'
@@ -156,6 +157,10 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // Se lee cruzado contra checkout_abandonado, nunca solo.
   frio_recordatorio_aceptado: ['n_elegibles'],
   frio_recordatorio_rechazado: ['n_elegibles'],
+  // Cerro sin decidir (toco fuera o el boton atras). Separado de 'rechazado'
+  // porque no es lo mismo: rechazar es una respuesta, cerrar es irse. Si esto
+  // se dispara mucho, la tarjeta no se esta entendiendo como pregunta.
+  frio_recordatorio_cerrado: ['n_elegibles'],
 
   // --- C (reseñas) ---
   // Satisfacción medible por primera vez. Solo las estrellas: el comentario es

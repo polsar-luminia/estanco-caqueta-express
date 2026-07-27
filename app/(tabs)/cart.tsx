@@ -103,15 +103,12 @@ export default function CartScreen() {
     if (huboCambioPrecio) updatePrices(priceMap);
     if (huboCambioStock) updateStocks(stockMap);
     if (huboCambioLimite) updateLimites(limitMap);
-    if (huboCambioPrecio || huboCambioStock) {
-      Toast.show({
-        type: "info",
-        text1: huboCambioStock && !huboCambioPrecio ? "Stock actualizado" : "Carrito actualizado",
-        text2: huboCambioStock
-          ? "Algunos productos cambiaron de stock o precio"
-          : "Algunos productos cambiaron de precio",
-      });
-    }
+    // Sin aviso. El carrito ya se refrescó solo y los precios y el stock que se ven
+    // en pantalla son los nuevos: el toast no le pedía nada al cliente ni le
+    // señalaba qué cambió, solo salía cada vez que se revalidaba —incluso al
+    // agregar un producto, donde no había cambiado nada para el— y tapaba el
+    // botón. Si algún dia hay que avisar de un cambio de precio, tiene que ser en
+    // la linea del producto, no en una banda que se va sola.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productosCheck.map((q) => q.dataUpdatedAt).join(","), items.length]);
   const [loading, setLoading] = useState(false);
@@ -487,6 +484,11 @@ export default function CartScreen() {
       // S10 - Verificar estado fresco de la tienda antes de crear pedido
       const estadoTienda = await getEstadoTienda();
       if (!estadoTienda.abierta) {
+        // Cerrar la tarjeta del frío ANTES del toast. Este `return` temprano se
+        // saltaba el cierre que sí hacen el éxito y el catch, y el Modal nativo
+        // se dibuja encima de todo: el aviso salía detrás y la tarjeta quedaba
+        // ahí, sin explicación. Se veía como que el pedido se colgó.
+        setMostrarRecordatorioFrio(false);
         tracker.track('checkout_abandonado', { paso: 'tienda_cerrada', items_count: items.length }, 'cart');
         Toast.show({ type: "error", text1: "Tienda cerrada", text2: estadoTienda.proximaApertura || "Ya cerramos por hoy" });
         return;
@@ -1095,6 +1097,13 @@ export default function CartScreen() {
           tracker.track('frio_recordatorio_rechazado', { n_elegibles: itemsElegibles.length }, 'cart');
           const datos = datosPedidoRef.current;
           if (datos) ejecutarPedido(datos, false);
+        }}
+        // Tocar fuera o el botón atrás: solo cierra. No es "no me interesa" —
+        // eso crea el pedido, y un roce en el borde no puede mover plata. Si
+        // vuelve a darle a Confirmar, el pedido sale sin frío sin repreguntar.
+        onCerrar={() => {
+          tracker.track('frio_recordatorio_cerrado', { n_elegibles: itemsElegibles.length }, 'cart');
+          setMostrarRecordatorioFrio(false);
         }}
       />
     </View>

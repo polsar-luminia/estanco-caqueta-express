@@ -7,21 +7,27 @@
  * no sale: volvérselo a preguntar es tratarlo de distraído y arriesgar que se
  * arrepienta.
  *
- * REGLA CENTRAL: los dos botones terminan en un pedido creado. Es una bifurcación,
- * no un desvío — se toca una vez y se compra. Nadie vuelve al carrito. Por eso la
- * tarjeta tiene que mostrar el total resultante ANTES de que toque: cobrar $1.000
- * extra sin que el número aparezca en la misma pantalla donde se acepta es
- * exactamente el tipo de detalle que después llega como queja.
+ * REGLA CENTRAL: los dos BOTONES terminan en un pedido creado. Es una bifurcación,
+ * no un desvío — se toca una vez y se compra. Por eso la tarjeta tiene que mostrar
+ * el total resultante ANTES de que toque: cobrar $1.000 extra sin que el número
+ * aparezca en la misma pantalla donde se acepta es exactamente el tipo de detalle
+ * que después llega como queja.
  *
- * Lo que va en la imagen y lo que no: la imagen es solo el gancho (marco de hielo,
- * botellas, titular). El precio, los productos elegibles y los botones son texto y
- * componentes nativos, porque todo eso es configurable desde el admin y una imagen
- * estática mentiría apenas alguien cambie `frio_costo` o marque otra categoría.
- * Además, un botón pintado no se puede tocar, ni deshabilitar, ni leer con
- * VoiceOver, ni cumple los 44 pt.
+ * Tocar FUERA de la tarjeta no es ninguna de las dos cosas: solo cierra y devuelve
+ * al carrito. Antes equivalía a "No me interesa" y creaba el pedido, así que un
+ * roce en el borde bastaba para comprar sin haber decidido nada. Un toque
+ * accidental no puede mover plata.
+ *
+ * La imagen es TODA la tarjeta: la pieza viene diseñada con su tercio inferior
+ * libre de arte justamente para que el texto y los botones vayan encima. La
+ * tarjeta toma la proporción real del archivo, así que no se recorta ni deja
+ * franjas. El precio, los elegibles y los botones son nativos porque todo eso es
+ * configurable desde el admin — una imagen estática mentiría apenas alguien cambie
+ * `frio_costo`— y porque un botón pintado no se puede tocar, ni deshabilitar, ni
+ * leer con VoiceOver, ni cumple los 44 pt.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Modal,
   View,
@@ -29,9 +35,11 @@ import {
   Pressable,
   ActivityIndicator,
   Animated,
+  StyleSheet,
   useWindowDimensions,
 } from "react-native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../constants/theme";
 import { formatCOP } from "../lib/format";
 
@@ -39,6 +47,11 @@ import { formatCOP } from "../lib/format";
 const AZUL_PROFUNDO = "#0F3A6B";
 const AZUL_MEDIO = "#1B4B8F";
 const AZUL_HIELO = "#9DD8F5";
+
+// Proporción de la pieza actual (1080x1920). Solo es el valor de arranque: al
+// cargar, la imagen reporta su tamaño real y la tarjeta se ajusta. Si mañana
+// suben otra pieza con otra forma, esto no hay que tocarlo.
+const RATIO_INICIAL = 1080 / 1920;
 
 export interface FrioRecordatorioProps {
   visible: boolean;
@@ -53,6 +66,8 @@ export interface FrioRecordatorioProps {
   totalConFrio: number;
   onAceptar: () => void;
   onRechazar: () => void;
+  /** Cerrar sin decidir (tocar fuera, botón atrás). NO crea el pedido. */
+  onCerrar: () => void;
   /** El pedido está viajando: botones bloqueados con spinner. */
   enviando?: boolean;
 }
@@ -76,10 +91,12 @@ export function FrioRecordatorio({
   totalConFrio,
   onAceptar,
   onRechazar,
+  onCerrar,
   enviando = false,
 }: FrioRecordatorioProps) {
-  const { height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const anim = useRef(new Animated.Value(0)).current;
+  const [ratio, setRatio] = useState(RATIO_INICIAL);
 
   // Fade + escala corta. Sin rebote a propósito: es una pregunta de cobro, no una
   // promoción.
@@ -95,8 +112,19 @@ export function FrioRecordatorio({
     }).start();
   }, [visible, anim]);
 
-  const alturaTarjeta = Math.round(height * 0.7);
   const hayImagen = !!imagenUrl;
+
+  // La tarjeta cabe entera en la pantalla y respeta la proporción de la pieza: se
+  // ajusta por el lado que primero se quede sin espacio. Sin esto, en pantallas
+  // bajas (SE) una pieza 9:16 se saldría por abajo y se comería los botones.
+  const anchoMax = Math.min(width * 0.88, 420);
+  const altoMax = height * 0.84;
+  let ancho = anchoMax;
+  let alto = anchoMax / ratio;
+  if (alto > altoMax) {
+    alto = altoMax;
+    ancho = altoMax * ratio;
+  }
 
   const textoElegibles = todosElegibles
     ? "Todo tu pedido va frío."
@@ -107,14 +135,14 @@ export function FrioRecordatorio({
       visible={visible}
       transparent
       animationType="none"
-      // El botón atrás de Android cae aquí. Nunca dejar la tarjeta sin salida.
-      onRequestClose={enviando ? undefined : onRechazar}
+      // El botón atrás de Android cae aquí. Cierra, no decide.
+      onRequestClose={enviando ? undefined : onCerrar}
     >
       <Pressable
-        // Tocar el overlay equivale a "No me interesa": el pedido se crea igual.
-        onPress={enviando ? undefined : onRechazar}
+        // Tocar fuera cierra y devuelve al carrito, sin crear nada.
+        onPress={enviando ? undefined : onCerrar}
         accessibilityRole="button"
-        accessibilityLabel="Cerrar y pedir sin frío"
+        accessibilityLabel="Cerrar y volver al carrito"
         style={{
           flex: 1,
           backgroundColor: "rgba(8,28,52,0.75)",
@@ -125,9 +153,9 @@ export function FrioRecordatorio({
       >
         <Animated.View
           style={{
-            width: "88%",
+            width: hayImagen ? ancho : "88%",
             maxWidth: 420,
-            height: alturaTarjeta,
+            height: hayImagen ? alto : undefined,
             borderRadius: 28,
             overflow: "hidden",
             backgroundColor: AZUL_PROFUNDO,
@@ -143,14 +171,30 @@ export function FrioRecordatorio({
               real de la tarjeta detrás de un elemento vacío. */}
           <Pressable style={{ flex: 1 }} onPress={() => {}} accessible={false} accessibilityViewIsModal>
             {hayImagen && (
-              <Image
-                source={{ uri: imagenUrl! }}
-                // Sin este label, el lector de pantalla anuncia una tarjeta muda.
-                accessibilityLabel="Asegura el frío de tus bebidas"
-                contentFit="cover"
-                style={{ width: "100%", height: "58%" }}
-                transition={120}
-              />
+              <>
+                <Image
+                  source={{ uri: imagenUrl! }}
+                  // Sin este label, el lector de pantalla anuncia una tarjeta muda.
+                  accessibilityLabel="Asegura el frío de tus bebidas"
+                  contentFit="cover"
+                  style={StyleSheet.absoluteFill}
+                  transition={120}
+                  onLoad={(e) => {
+                    const w = e.source?.width;
+                    const h = e.source?.height;
+                    if (w && h) setRatio(w / h);
+                  }}
+                />
+                {/* Velo suave, solo en la parte baja. La pieza deja esa zona libre de
+                    arte, pero la textura del barril no es plana y el texto blanco
+                    encima quedaría a merced de la próxima imagen que suban. */}
+                <LinearGradient
+                  colors={["transparent", "rgba(8,28,52,0.55)", "rgba(8,28,52,0.88)"]}
+                  locations={[0.45, 0.72, 1]}
+                  style={StyleSheet.absoluteFill}
+                  pointerEvents="none"
+                />
+              </>
             )}
 
             <View
@@ -158,8 +202,10 @@ export function FrioRecordatorio({
                 flex: 1,
                 paddingHorizontal: 20,
                 paddingTop: hayImagen ? 16 : 28,
-                paddingBottom: 20,
-                justifyContent: hayImagen ? "flex-start" : "center",
+                paddingBottom: hayImagen ? 22 : 20,
+                // Con imagen el contenido se apoya abajo, sobre la zona que la pieza
+                // dejó libre. Sin imagen no hay nada que respetar y va centrado.
+                justifyContent: hayImagen ? "flex-end" : "center",
               }}
             >
               {/* Sin imagen la tarjeta pierde el gancho visual, así que el titular
@@ -213,7 +259,7 @@ export function FrioRecordatorio({
                 Tu total quedaría en {formatCOP(totalConFrio)}
               </Text>
 
-              <View style={{ flex: 1, justifyContent: "flex-end", marginTop: 16 }}>
+              <View style={{ marginTop: 18 }}>
                 <Pressable
                   onPress={onAceptar}
                   disabled={enviando}

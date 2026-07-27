@@ -151,7 +151,12 @@ export function usePushNotifications() {
     // M-NAV-18: el backend siempre envía data.deep_link. Validar contra allowlist antes de navegar.
     // Si se añade una ruta nueva en notificaciones.js o crons-notificaciones.js, registrarla aquí.
     const ALLOWED_DEEP_LINKS = [
-      /^\/\(tabs\)\/orders\/\d+$/,
+      // `?calificar=1` lo manda el push de reseña para abrir el detalle ya con el
+      // formulario. Sin contemplarlo, el `$` del patrón hacía que la ruta no
+      // pasara el filtro y el tap se descartaba en silencio: el cliente tocaba
+      // "Califícanos" y no ocurría nada. Se acepta ESE parámetro y ninguno más —
+      // la allowlist es la defensa contra un deep link fabricado, no una guía.
+      /^\/\(tabs\)\/orders\/\d+(\?calificar=1)?$/,
       /^\/\(tabs\)\/cart$/,
       /^\/\(tabs\)\/index$/,
       /^\/product\/\d+$/,
