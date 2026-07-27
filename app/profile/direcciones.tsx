@@ -10,6 +10,7 @@ import { useRouter } from "expo-router";
 import { getDirecciones, crearDireccion, editarDireccion, setPredeterminada, eliminarDireccion, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
 import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
+import { BuscadorDireccion } from "../../src/components/BuscadorDireccion";
 import { colors, shadows } from "../../src/constants/theme";
 import { useUbicacionPicker } from "../../src/stores/ubicacionPicker";
 
@@ -79,6 +80,21 @@ export default function DireccionesScreen() {
   const handleGuardar = () => {
     if (!direccion.trim()) {
       Toast.show({ type: "error", text1: "Ingresa una dirección" });
+      return;
+    }
+    // El punto es obligatorio para direcciones NUEVAS. Una dirección sin
+    // coordenadas es una dirección que el domiciliario tiene que adivinar, y hoy
+    // el 61% de las guardadas está así. Las que ya existen no se tocan: se
+    // completan cuando el cliente las use.
+    //
+    // No deja a nadie sin salida: el mapa funciona sin ningún permiso de
+    // ubicación, así que siempre hay forma de poner el punto.
+    if (!ubicacion || ubicacion.lat == null) {
+      Toast.show({
+        type: "error",
+        text1: "Falta el punto de entrega",
+        text2: "Usa tu ubicación o ubícala en el mapa para que el domiciliario llegue exacto",
+      });
       return;
     }
     mutCrear.mutate({ etiqueta, direccion: direccion.trim(), notas: notas.trim() || undefined, ...ubicacionABody(ubicacion) });
@@ -198,7 +214,9 @@ export default function DireccionesScreen() {
           <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, ...shadows.card }}>
             <Text style={{ fontSize: 16, fontWeight: "800", color: colors.ink, marginBottom: 16 }}>Nueva dirección</Text>
 
-            {/* Ubicación GPS (opcional): al capturar, auto-llena la dirección (editable). */}
+            {/* El punto es OBLIGATORIO al crear (ver handleGuardar). Va primero
+                porque es lo que define la dirección; el texto de abajo es la
+                referencia para el último tramo. */}
             <UbicacionButton
               value={ubicacion}
               onChange={(u) => {
@@ -231,7 +249,18 @@ export default function DireccionesScreen() {
             </View>
 
             <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Dirección *</Text>
-            <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontSize: 14, color: colors.ink, marginBottom: 12 }} placeholder="Carrera 15 # 12-34" placeholderTextColor="#BCCABA" value={direccion} onChangeText={setDireccion} />
+            {/* Tercer camino para fijar el punto: escribir y elegir una sugerencia
+                de Google, que trae las coordenadas puestas. Sin llave configurada
+                se comporta como el campo de texto de siempre. */}
+            <View style={{ marginBottom: 12 }}>
+              <BuscadorDireccion
+                value={direccion}
+                onChangeText={setDireccion}
+                onUbicacion={setUbicacion}
+                placeholder="Carrera 15 # 12-34"
+                accessibilityLabel="Dirección"
+              />
+            </View>
 
             <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Notas (opcional)</Text>
             <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontSize: 14, color: colors.ink, marginBottom: 16 }} placeholder="Portería, dejar con vigilante..." placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline />

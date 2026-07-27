@@ -14,6 +14,7 @@ import { crearPedido, getDirecciones, crearDireccion, editarDireccion, validarCu
 import { useUbicacionPicker } from "../../src/stores/ubicacionPicker";
 import { calcularResumen, envioDeZona } from "../../src/lib/resumenPedido";
 import { FrioRecordatorio } from "../../src/components/FrioRecordatorio";
+import { BuscadorDireccion } from "../../src/components/BuscadorDireccion";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { tracker } from "../../src/lib/tracker";
@@ -731,16 +732,19 @@ export default function CartScreen() {
                     }}
                   />
                   <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
-                    Referencia para llegar
+                    Dirección
                   </Text>
-                  <TextInput
-                    style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: "#1A1C1A", marginBottom: 4 }}
-                    placeholder="Apto 301, portería azul, casa de reja blanca"
-                    placeholderTextColor="#BCCABA"
-                    value={nuevaDireccion}
-                    onChangeText={setNuevaDireccion}
-                    accessibilityLabel="Referencia para llegar a tu dirección"
-                  />
+                  {/* Tercer camino, junto al botón de ubicación y al mapa: escribir
+                      y elegir una sugerencia, que llega con las coordenadas puestas. */}
+                  <View style={{ marginBottom: 4 }}>
+                    <BuscadorDireccion
+                      value={nuevaDireccion}
+                      onChangeText={setNuevaDireccion}
+                      onUbicacion={setNuevaUbicacion}
+                      placeholder="Carrera 15 # 12-34"
+                      accessibilityLabel="Dirección de entrega"
+                    />
+                  </View>
                   {/* El texto ya no es una alternativa al punto: es lo que el
                       domiciliario lee cuando ya llegó a la cuadra. Decirlo evita que
                       la gente escriba la dirección completa creyendo que reemplaza

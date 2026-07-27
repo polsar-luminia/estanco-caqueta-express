@@ -496,9 +496,11 @@ export default function HomeScreen() {
                   <Text style={{ fontSize: 22, fontWeight: "900", color: "#fff", fontStyle: "italic", textTransform: "uppercase", lineHeight: 26 }}>
                     Domicilio{"\n"}En Florencia
                   </Text>
-                  <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", marginTop: 4 }}>
-                    Envío $5.000 • Gratis con puntos
-                  </Text>
+                  {/* Sin precio de envio: era texto fijo y ya mentia al cambiar
+                      `envio_costo` en el admin. Con tarifa por zona deja de existir
+                      "el precio del envio" — hay uno por zona — asi que afirmar un
+                      numero aqui seria incorrecto por diseño. El precio real se ve
+                      en el carrito, calculado para la direccion de la persona. */}
                 </View>
                 <Text style={{ fontSize: 50, opacity: 0.25 }}>🛵</Text>
               </View>
