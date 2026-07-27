@@ -10,3 +10,10 @@ export const WHATSAPP_NEGOCIO = "573180427695";
 export const WHATSAPP_NEGOCIO_LINK = `https://wa.me/${WHATSAPP_NEGOCIO}?text=${encodeURIComponent(
   "Solicito mi codigo de verificacion - Estanco Caqueta Express"
 )}`;
+
+// Fichas de la app en las tiendas. Las usa la pantalla de actualizacion obligatoria
+// (bloque G): el boton tiene que llevar a la tienda correcta segun la plataforma,
+// o el bloqueo deja a la persona sin salida.
+// El id de iOS es el `ascAppId` de App Store Connect; el de Android, el package.
+export const APP_STORE_URL = "https://apps.apple.com/app/id6769148116";
+export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=co.estancocaqueta.express";

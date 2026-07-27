@@ -828,6 +828,9 @@ export interface ConfigApp {
   // apagadas y se prenden desde el servidor, de a una.
   eta_visible_cliente?: boolean;
   exigir_ubicacion?: boolean;
+  // Bloqueo de versión (bloque G). '1.0.0' = dormido: toda versión lo cumple.
+  version_minima?: string;
+  version_minima_mensaje?: string;
 }
 
 export async function getConfigApp(): Promise<ConfigApp> {

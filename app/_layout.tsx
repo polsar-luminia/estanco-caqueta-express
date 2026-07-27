@@ -18,6 +18,11 @@ import { toastConfig } from "../src/components/ToastConfig";
 import { OfflineBanner } from "../src/components/OfflineBanner";
 import { Interstitial } from "../src/components/Interstitial";
 import { SplashBranded } from "../src/components/SplashBranded";
+import { PantallaActualizar } from "../src/components/PantallaActualizar";
+import { debeBloquear } from "../src/lib/bloqueoVersion";
+import { APP_VERSION } from "../src/lib/appVersion";
+import { getConfigApp } from "../src/lib/api";
+import { useQuery } from "@tanstack/react-query";
 
 // Rutas exentas del age gate (autenticación pública). Todo lo demás requiere edad confirmada.
 const RUTAS_EXENTAS_EDAD = ["(auth)"];
@@ -48,6 +53,33 @@ if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
 } else if (!__DEV__) {
   // En un build de producción sin DSN la cobertura de Sentry es cero y nadie se entera.
   console.warn('[sentry] EXPO_PUBLIC_SENTRY_DSN no configurado — monitoreo deshabilitado');
+}
+
+/**
+ * Bloqueo de versión (bloque G). Envuelve toda la app.
+ *
+ * Nace DORMIDO: el servidor devuelve `version_minima: '1.0.0'` mientras nadie lo
+ * suba, y toda versión instalada cumple ese mínimo. Para que bloquee a alguien hay
+ * que subir ese número a mano en el backend — no hay forma de que se active solo.
+ *
+ * Y ante la duda no bloquea: si la consulta falla, si todavía está cargando, o si
+ * alguna de las dos versiones no se puede leer, la app sigue funcionando normal.
+ * `debeBloquear` sólo devuelve true con dos versiones bien formadas y la instalada
+ * estrictamente por debajo.
+ */
+function GuardVersion({ children }: { children: React.ReactNode }) {
+  const { data: config } = useQuery({
+    queryKey: ["config-app"],
+    queryFn: getConfigApp,
+    staleTime: 5 * 60 * 1000,
+    // Sin reintentos agresivos: mientras no haya respuesta, no se bloquea a nadie.
+    retry: 1,
+  });
+
+  if (config && debeBloquear(APP_VERSION, config.version_minima)) {
+    return <PantallaActualizar mensaje={config.version_minima_mensaje} />;
+  }
+  return <>{children}</>;
 }
 
 export default Sentry.wrap(function RootLayout() {
@@ -158,6 +190,7 @@ export default Sentry.wrap(function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <StatusBar style="light" />
+        <GuardVersion>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
@@ -203,6 +236,7 @@ export default Sentry.wrap(function RootLayout() {
         {!interstitialDone && (
           <Interstitial onFinish={() => setInterstitialDone(true)} />
         )}
+        </GuardVersion>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );
