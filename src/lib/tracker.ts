@@ -81,7 +81,11 @@ export type EventTipo =
   | 'frio_desactivado'
   | 'frio_recordatorio_visto'
   | 'frio_recordatorio_aceptado'
-  | 'frio_recordatorio_rechazado';
+  | 'frio_recordatorio_rechazado'
+  // C — reseñas
+  | 'resena_enviada'
+  | 'resena_banner_visto'
+  | 'resena_banner_descartado';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -148,6 +152,15 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // Se lee cruzado contra checkout_abandonado, nunca solo.
   frio_recordatorio_aceptado: ['n_elegibles'],
   frio_recordatorio_rechazado: ['n_elegibles'],
+
+  // --- C (reseñas) ---
+  // Satisfacción medible por primera vez. Solo las estrellas: el comentario es
+  // texto libre del cliente y no tiene por qué salir del teléfono en un evento.
+  resena_enviada: ['estrellas'],
+  // El banner de Inicio se mide aparte del formulario del detalle, para saber
+  // cuántas calificaciones rescata de verdad y si vale la pena tenerlo ahí.
+  resena_banner_visto: [],
+  resena_banner_descartado: [],
 };
 
 function aplicarAllowlist(

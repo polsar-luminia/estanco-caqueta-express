@@ -294,6 +294,28 @@ export async function crearPedido(pedido: CrearPedidoInput, idempotencyKey?: str
   });
 }
 
+// --- Reseñas (bloque C) ---
+
+export interface Resena {
+  id: number;
+  estrellas: number;
+  comentario: string | null;
+  created_at: string;
+}
+
+// Devuelve null si el cliente todavía no ha calificado ese pedido. No calificar
+// no es un error, así que el backend responde 200 con null.
+export async function getResena(pedidoId: number) {
+  return apiFetch<Resena | null>(`/pedidos/${pedidoId}/resena`);
+}
+
+export async function crearResena(pedidoId: number, estrellas: number, comentario?: string) {
+  return apiFetch<Resena>(`/pedidos/${pedidoId}/resena`, {
+    method: "POST",
+    body: JSON.stringify({ estrellas, comentario: comentario?.trim() || undefined }),
+  });
+}
+
 export async function getPedidos() {
   return apiFetch<Pedido[]>("/pedidos");
 }
@@ -425,6 +447,9 @@ export interface Pedido {
   // Foto que tomó el domiciliario al entregar (bloque B). Solo la ve el dueño del
   // pedido: el endpoint filtra por cliente_id.
   foto_entrega_url?: string | null;
+  // Solo en el listado (bloque C): alimenta el banner de "califica tu pedido" sin
+  // tener que pedir la reseña de cada pedido por separado.
+  tiene_resena?: boolean;
 }
 
 export interface LineaPedido {

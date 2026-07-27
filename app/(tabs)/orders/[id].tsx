@@ -7,6 +7,7 @@ import { getPedido, cancelarPedido } from "../../../src/lib/api";
 import { tracker } from "../../../src/lib/tracker";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline";
+import { TarjetaResena } from "../../../src/components/TarjetaResena";
 import { SkeletonBox } from "../../../src/components/skeletons/SkeletonBox";
 import { ErrorState } from "../../../src/components/ErrorState";
 
@@ -39,7 +40,9 @@ function OrderDetailSkeleton() {
 /* ── Pantalla de detalle ─────────────────────────────────── */
 
 export default function OrderDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // `calificar=1` llega del deep link del push de reseña: abre el formulario ya
+  // desplegado. Si el cliente tiene que buscar dónde calificar, no califica.
+  const { id, calificar } = useLocalSearchParams<{ id: string; calificar?: string }>();
   const pedidoId = id && id.trim() ? Number(id) : NaN;
   const queryClient = useQueryClient();
 
@@ -179,6 +182,12 @@ export default function OrderDetailScreen() {
           </Text>
         </View>
       </View>
+
+      {/* Calificación (bloque C). Solo en pedidos entregados: preguntarle a alguien
+          que todavía está esperando cómo le fue es la peor forma de preguntarlo. */}
+      {pedido.estado === "entregado" && (
+        <TarjetaResena pedidoId={pedido.id} abrirAlEntrar={calificar === "1"} />
+      )}
 
       {/* Foto de la entrega (bloque B). Solo llega si el pedido es del cliente:
           el endpoint filtra por cliente_id. Es la prueba de que llegó y dónde. */}

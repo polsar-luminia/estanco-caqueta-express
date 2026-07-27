@@ -15,6 +15,7 @@ import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
 import { ProductCard } from "../../src/components/ProductCard";
 import { CategoryStrip } from "../../src/components/CategoryStrip";
 import { BandaCerrado } from "../../src/components/BandaCerrado";
+import { BannerResena } from "../../src/components/BannerResena";
 import { ShimmerImage } from "../../src/components/ShimmerImage";
 import { ProductGridSkeleton } from "../../src/components/skeletons/ProductGridSkeleton";
 import { CategoryStripSkeleton } from "../../src/components/skeletons/CategoryStripSkeleton";
@@ -349,6 +350,11 @@ export default function HomeScreen() {
           <>
             {/* Banda de tienda cerrada — motivo/estilo lo decide el backend */}
             <BandaCerrado tienda={tienda} style={{ marginHorizontal: 16, marginTop: 12 }} />
+
+            {/* Segunda oportunidad para calificar: el push llega una vez y muchas
+                veces se descarta sin leer. Solo sale si hay un pedido entregado
+                reciente sin reseña, y se puede quitar para siempre. */}
+            <BannerResena habilitado={isAuthenticated} />
 
             {/* Categorías — arriba del hero (intención de compra primero) */}
             <View className="px-4 pt-5 pb-2">
