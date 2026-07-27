@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { View, Text, Pressable, ActivityIndicator, InteractionManager, Platform } from "react-native";
+import { View, Text, Pressable, ActivityIndicator, InteractionManager, Platform, Linking } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MapView, { PROVIDER_GOOGLE, type Region } from "react-native-maps";
@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { colors } from "../src/constants/theme";
 import { getCoberturaZona, evaluarZonasCliente, type UbicacionCapturada } from "../src/lib/api";
 import { useUbicacionPicker } from "../src/stores/ubicacionPicker";
+import { WHATSAPP_SOPORTE } from "../src/constants/config";
 import { tracker } from "../src/lib/tracker";
 
 // Centro de Florencia (fallback si no hay GPS ni pin inicial).
@@ -49,6 +50,7 @@ export default function UbicacionScreen() {
   // muestra hasta que el mapa dispara onMapReady.
   const [mapaMontado, setMapaMontado] = useState(false);
   const [mapaListo, setMapaListo] = useState(false);
+  const [avisoPermiso, setAvisoPermiso] = useState<string | null>(null);
   const [region] = useState<Region>({
     latitude: inicial?.lat ?? FLORENCIA.latitude,
     longitude: inicial?.lng ?? FLORENCIA.longitude,
@@ -144,12 +146,23 @@ export default function UbicacionScreen() {
     const perm = await Location.requestForegroundPermissionsAsync();
     if (!perm.granted) {
       tracker.track('ubicacion_permiso_negado', undefined, 'ubicacion');
+      // Antes esto era un `return` a secas: se tocaba el botón, no pasaba
+      // absolutamente nada, y la persona no tenía forma de saber por qué. El mapa
+      // sigue funcionando sin permiso — solo hay que decirlo.
+      setAvisoPermiso(
+        perm.canAskAgain === false
+          ? "Sin acceso a tu ubicación. Mueve el mapa hasta tu casa, o actívalo en Ajustes."
+          : "Sin acceso a tu ubicación. Mueve el mapa hasta tu casa.",
+      );
       return;
     }
     tracker.track('ubicacion_permiso_concedido', undefined, 'ubicacion');
+    setAvisoPermiso(null);
     const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }).catch(() => null);
     if (pos) {
       mapRef.current?.animateToRegion({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, ...DELTA }, 350);
+    } else {
+      setAvisoPermiso("No pudimos ubicarte. Mueve el mapa hasta tu casa.");
     }
   };
 
@@ -259,6 +272,31 @@ export default function UbicacionScreen() {
               Por ahora no llegamos hasta aquí
             </Text>
           </View>
+        ) : null}
+
+        {avisoPermiso ? (
+          <View accessibilityLiveRegion="polite" style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8, backgroundColor: colors.lowfill, borderRadius: 8, padding: 10 }}>
+            <Feather name="info" size={16} color="#6D7B6C" />
+            <Text style={{ flex: 1, fontSize: 14, lineHeight: 19, color: "#6D7B6C" }}>{avisoPermiso}</Text>
+          </View>
+        ) : null}
+
+        {/* Cada bloqueo es una pista de dónde abrir cobertura (ya se registra el
+            evento `fuera_de_zona` con la coordenada redondeada). El botón de
+            WhatsApp convierte ese callejón sin salida en una conversación: sin
+            él, la persona solo ve que el botón no funciona y se va. */}
+        {!dentroZona ? (
+          <Pressable
+            onPress={() => Linking.openURL(WHATSAPP_SOPORTE).catch(() => {})}
+            accessibilityRole="button"
+            accessibilityLabel="Escribirnos por WhatsApp para preguntar por esta zona"
+            style={{ minHeight: 44, marginTop: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.lowfill }}
+          >
+            <Feather name="message-circle" size={16} color={colors.greenInk} />
+            <Text style={{ fontSize: 14, fontWeight: "700", color: colors.greenInk }}>
+              Escríbenos y te avisamos cuando lleguemos
+            </Text>
+          </Pressable>
         ) : null}
 
         <Pressable

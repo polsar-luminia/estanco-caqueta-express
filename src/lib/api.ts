@@ -824,6 +824,10 @@ export interface ConfigApp {
   frio_costo?: number;
   frio_recordatorio_activo?: boolean;
   frio_imagen_url?: string | null;
+  // Motor de ETA (bloque D) y ubicación obligatoria (bloque F). Ambas nacen
+  // apagadas y se prenden desde el servidor, de a una.
+  eta_visible_cliente?: boolean;
+  exigir_ubicacion?: boolean;
 }
 
 export async function getConfigApp(): Promise<ConfigApp> {

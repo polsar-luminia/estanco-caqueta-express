@@ -10,7 +10,8 @@ import Toast from "react-native-toast-message";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
-import { crearPedido, getDirecciones, crearDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, getEtaActual, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
+import { crearPedido, getDirecciones, crearDireccion, editarDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, getEtaActual, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
+import { useUbicacionPicker } from "../../src/stores/ubicacionPicker";
 import { calcularResumen, envioDeZona } from "../../src/lib/resumenPedido";
 import { FrioRecordatorio } from "../../src/components/FrioRecordatorio";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
@@ -231,6 +232,27 @@ export default function CartScreen() {
     tracker.track('eta_mostrado', { min: eta.min, max: eta.max }, 'cart');
   }, [eta]);
 
+  // Una dirección guardada sin punto se completa abriendo el mapa: al confirmar,
+  // el pin se guarda contra ESA dirección para que la próxima vez ya lo tenga.
+  // Hoy solo el 39% de las direcciones activas tiene coordenadas, así que este
+  // camino es el que hace viable prender `exigir_ubicacion` sin dejar a nadie fuera.
+  const abrirPicker = useUbicacionPicker((s) => s.abrir);
+  const abrirMapaParaDireccion = (dir: DireccionGuardada) => {
+    abrirPicker(async (u) => {
+      try {
+        await editarDireccion(dir.id, ubicacionABody(u));
+        await refetchDirs();
+        Toast.show({ type: "success", text1: "Punto guardado", text2: "Ya puedes confirmar tu pedido" });
+      } catch {
+        // Si no se pudo guardar contra la dirección, el punto igual sirve para
+        // este pedido: se usa como si fuera una dirección nueva.
+        setNuevaUbicacion(u);
+        setMostrarNueva(true);
+      }
+    }, dir.lat != null && dir.lng != null ? { lat: dir.lat, lng: dir.lng } : null);
+    router.push("/ubicacion");
+  };
+
   const alternarFrio = (valor: boolean) => {
     setQuiereFrio(valor);
     // Tasa de toma real: ¿el cliente sí paga por frío? Se mide el tap, que es la
@@ -370,7 +392,27 @@ export default function CartScreen() {
     // dirección escrita. Ya no se pide barrio (la cobertura se calcula del GPS).
     if (mostrarNueva && !nuevaDireccion.trim() && !nuevaUbicacion) {
       tracker.track('checkout_abandonado', { paso: 'sin_ubicacion', items_count: items.length }, 'cart');
-      Toast.show({ type: "error", text1: "Falta la ubicación", text2: "Usa tu ubicación actual o escribe la dirección" });
+      Toast.show({ type: "error", text1: "Falta la ubicación", text2: "Ubica tu punto en el mapa o usa tu ubicación actual" });
+      return;
+    }
+
+    // Bloque F: con la bandera prendida el punto es obligatorio. Se valida ACÁ y no
+    // solo en el servidor porque rebotar el pedido después de tocar "Confirmar" es
+    // la peor forma de enterarse — y porque desde aquí se puede abrir el mapa, que
+    // es la salida que sí funciona sin ningún permiso.
+    const puntoActual = mostrarNueva ? nuevaUbicacion : (dirActiva?.lat != null ? dirActiva : null);
+    if (configApp?.exigir_ubicacion && !puntoActual) {
+      tracker.track('checkout_abandonado', { paso: 'sin_pin', items_count: items.length }, 'cart');
+      Toast.show({
+        type: "error",
+        text1: "Falta el punto de entrega",
+        text2: "Ubícalo en el mapa para que el domiciliario llegue exacto",
+      });
+      // Una dirección guardada sin punto se completa abriendo el mapa; el resultado
+      // se guarda contra esa misma dirección al volver.
+      if (!mostrarNueva && dirActiva) {
+        abrirMapaParaDireccion(dirActiva);
+      }
       return;
     }
     if (items.length === 0) return;
@@ -689,15 +731,24 @@ export default function CartScreen() {
                     }}
                   />
                   <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
-                    Dirección (referencia)
+                    Referencia para llegar
                   </Text>
                   <TextInput
-                    style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: "#1A1C1A", marginBottom: 12 }}
-                    placeholder="Se llena con tu ubicación (o escríbela)"
+                    style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: "#1A1C1A", marginBottom: 4 }}
+                    placeholder="Apto 301, portería azul, casa de reja blanca"
                     placeholderTextColor="#BCCABA"
                     value={nuevaDireccion}
                     onChangeText={setNuevaDireccion}
+                    accessibilityLabel="Referencia para llegar a tu dirección"
                   />
+                  {/* El texto ya no es una alternativa al punto: es lo que el
+                      domiciliario lee cuando ya llegó a la cuadra. Decirlo evita que
+                      la gente escriba la dirección completa creyendo que reemplaza
+                      el mapa. */}
+                  <Text style={{ fontSize: 12, color: "#9AA69A", marginBottom: 12, marginLeft: 4 }}>
+                    El punto del mapa es el que usa el domiciliario. Esto le ayuda a
+                    identificar la casa cuando ya está cerca.
+                  </Text>
                   <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
                     Notas (Opcional)
                   </Text>

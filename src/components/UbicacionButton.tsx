@@ -6,6 +6,8 @@ import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { type UbicacionCapturada } from "../lib/api";
 import { useUbicacionPicker } from "../stores/ubicacionPicker";
+import { tracker } from "../lib/tracker";
+import { PermisoUbicacion } from "./PermisoUbicacion";
 import { colors, radii, shadows } from "../constants/theme";
 
 // Botón "Usar mi ubicación actual" (Geolocalización Fase 1).
@@ -64,9 +66,26 @@ export function UbicacionButton({ value, onChange }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [abrirAjustes, setAbrirAjustes] = useState(false);
   const [refinando, setRefinando] = useState(false);
+  const [mostrarPriming, setMostrarPriming] = useState(false);
   // Cada captura tiene un id; los updates en segundo plano de una captura vieja
   // (o cancelada con "Quitar") se descartan.
   const sesionRef = useRef(0);
+
+  // Tocar el botón ya NO dispara el diálogo del sistema. Primero se explica para
+  // qué, porque ese diálogo solo se puede mostrar una vez en la vida de la app:
+  // quemarlo con quien habría dicho que sí de haber entendido es irreversible.
+  // Si el permiso ya está resuelto (concedido, o negado sin poder volver a pedir),
+  // la hoja no aporta nada y se salta.
+  const onTocarUsarUbicacion = async () => {
+    if (estado === "capturando") return;
+    const perm = await Location.getForegroundPermissionsAsync().catch(() => null);
+    if (perm?.granted || perm?.canAskAgain === false) {
+      capturar();
+      return;
+    }
+    tracker.track("ubicacion_permiso_pedido", undefined, "carrito");
+    setMostrarPriming(true);
+  };
 
   const capturar = async () => {
     if (estado === "capturando") return;
@@ -79,19 +98,24 @@ export function UbicacionButton({ value, onChange }: Props) {
     try {
       const perm = await Location.requestForegroundPermissionsAsync();
       if (!perm.granted) {
+        tracker.track("ubicacion_permiso_negado", undefined, "carrito");
+        // El texto ya no manda a "escribir la dirección": con el bloque F el texto
+        // libre es una REFERENCIA, no un sustituto del punto. La salida real es el
+        // mapa, que funciona sin ningún permiso.
         if (perm.canAskAgain === false) {
           setAbrirAjustes(true);
-          setError("Sin acceso a tu ubicación. Actívalo en Ajustes o escribe tu dirección normalmente.");
+          setError("Sin acceso a tu ubicación. Puedes ponerlo a mano en el mapa, o activarlo en Ajustes.");
         } else {
-          setError("Sin acceso a tu ubicación — puedes escribir la dirección normalmente.");
+          setError("Sin acceso a tu ubicación — ponlo a mano en el mapa.");
         }
         return;
       }
+      tracker.track("ubicacion_permiso_concedido", undefined, "carrito");
 
       // ¿Los servicios de ubicación del sistema están encendidos?
       const serviciosOn = await Location.hasServicesEnabledAsync().catch(() => true);
       if (!serviciosOn) {
-        setError("Activa la Ubicación del teléfono e inténtalo de nuevo, o escribe tu dirección normalmente.");
+        setError("Activa la Ubicación del teléfono e inténtalo de nuevo, o ponlo a mano en el mapa.");
         return;
       }
 
@@ -119,7 +143,7 @@ export function UbicacionButton({ value, onChange }: Props) {
         );
       } catch {
         if (!entregada && vigente()) {
-          setError("No pudimos obtener tu ubicación a tiempo. Escribe tu dirección normalmente.");
+          setError("No pudimos obtener tu ubicación a tiempo. Ponlo a mano en el mapa.");
         }
         return;
       }
@@ -129,7 +153,7 @@ export function UbicacionButton({ value, onChange }: Props) {
         if (vigente()) onChange(aUbicacion(fresh, g));
       }
     } catch {
-      if (vigente()) setError("No pudimos obtener tu ubicación. Escribe tu dirección normalmente.");
+      if (vigente()) setError("No pudimos obtener tu ubicación. Ponlo a mano en el mapa.");
     } finally {
       if (vigente()) {
         setEstado("idle");
@@ -218,7 +242,7 @@ export function UbicacionButton({ value, onChange }: Props) {
   return (
     <View style={{ marginBottom: 12 }}>
       <Pressable
-        onPress={capturar}
+        onPress={onTocarUsarUbicacion}
         disabled={estado === "capturando"}
         accessibilityRole="button"
         accessibilityLabel="Usar mi ubicación actual"
@@ -257,6 +281,20 @@ export function UbicacionButton({ value, onChange }: Props) {
           <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D7B6C" }}>o ubícalo en el mapa</Text>
         </Pressable>
       ) : null}
+
+      <PermisoUbicacion
+        visible={mostrarPriming}
+        onUsarUbicacion={() => {
+          setMostrarPriming(false);
+          capturar();
+        }}
+        onPonerAMano={() => {
+          setMostrarPriming(false);
+          tracker.track("ubicacion_pin_manual_elegido", undefined, "carrito");
+          abrirMapa();
+        }}
+        onCerrar={() => setMostrarPriming(false)}
+      />
 
       {error ? (
         <View style={{ marginTop: 6 }}>

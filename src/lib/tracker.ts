@@ -87,7 +87,9 @@ export type EventTipo =
   | 'resena_banner_visto'
   | 'resena_banner_descartado'
   // D — motor de ETA
-  | 'eta_mostrado';
+  | 'eta_mostrado'
+  // F — ubicación obligatoria
+  | 'ubicacion_pin_manual_elegido';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -168,6 +170,13 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // Base del reporte de cumplimiento visto desde el cliente: qué rango se le
   // enseñó y dónde. Sin esto solo se sabe qué se guardó, no qué llegó a ver.
   eta_mostrado: ['min', 'max'],
+
+  // --- F (ubicación obligatoria) ---
+  // Cuánta gente prefiere poner el punto a mano antes que dar GPS. Junto con
+  // ubicacion_permiso_negado es lo que dice si exigir la ubicación es viable o
+  // va a costar pedidos: si casi nadie elige el mapa y muchos niegan el permiso,
+  // la bandera no se prende.
+  ubicacion_pin_manual_elegido: [],
 };
 
 function aplicarAllowlist(
