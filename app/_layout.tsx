@@ -211,9 +211,14 @@ export default Sentry.wrap(function RootLayout() {
             name="ubicacion"
             options={{
               headerShown: false,
-              presentation: "modal",
-              // gestureEnabled:false → el swipe-para-cerrar del modal ya no se roba
-              // el arrastre vertical del mapa (si no, el mapa se siente "congelado").
+              // fullScreenModal y no "modal": en iOS, `modal` presenta una hoja
+              // (pageSheet) y esa hoja tiene su propio gesto de deslizar-para-cerrar,
+              // que compite con el arrastre del mapa y lo deja sintiéndose congelado.
+              // `gestureEnabled:false` no lo arregla —eso controla el swipe-atrás del
+              // stack, no el descarte interactivo de la hoja nativa—, que es por lo
+              // que el intento anterior no sirvió. fullScreenModal no crea hoja, así
+              // que no hay gesto que competir. En Android se comporta igual que antes.
+              presentation: "fullScreenModal",
               // Se cierra con la flecha atrás o "Escribir dirección manualmente".
               gestureEnabled: false,
             }}
