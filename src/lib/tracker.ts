@@ -83,6 +83,9 @@ export type EventTipo =
   | 'frio_recordatorio_aceptado'
   | 'frio_recordatorio_rechazado'
   | 'frio_recordatorio_cerrado'
+  | 'direccion_inicial_vista'
+  | 'direccion_inicial_guardada'
+  | 'direccion_inicial_saltada'
   // C — reseñas
   | 'resena_enviada'
   | 'resena_banner_visto'
@@ -161,6 +164,13 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // porque no es lo mismo: rechazar es una respuesta, cerrar es irse. Si esto
   // se dispara mucho, la tarjeta no se esta entendiendo como pregunta.
   frio_recordatorio_cerrado: ['n_elegibles'],
+  // Onboarding de direccion. Sin payload: la pregunta es cuantos la guardan y
+  // cuantos la saltan, no con que datos — y esos son datos personales.
+  // Guardada/saltada suman a vista: si saltan muchos, la pantalla estorba mas
+  // de lo que ayuda y hay que replantearla.
+  direccion_inicial_vista: [],
+  direccion_inicial_guardada: [],
+  direccion_inicial_saltada: [],
 
   // --- C (reseñas) ---
   // Satisfacción medible por primera vez. Solo las estrellas: el comentario es

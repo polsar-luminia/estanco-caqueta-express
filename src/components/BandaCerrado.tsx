@@ -6,7 +6,17 @@
 import type { ReactElement } from "react";
 import { View, Text } from "react-native";
 import Svg, { Path, Circle } from "react-native-svg";
-import type { EstadoTienda, AvisoTipo, AvisoTienda } from "../lib/api";
+import type { EstadoTienda, AvisoTipo, AvisoTienda, HorarioFila } from "../lib/api";
+
+// Fallback para builds corriendo contra un backend que todavía no manda
+// `horario`. Es el horario vigente al 27-jul-2026; el que manda es el del
+// admin, este solo evita una banda vacía.
+export const HORARIO_FALLBACK: HorarioFila[] = [
+  { dias: "Lun – Jue", horas: ["7:00 am – 12:00 pm", "2:00 pm – 7:00 pm"] },
+  { dias: "Vie", horas: ["7:00 am – 12:00 pm", "2:00 pm – 12:00 am"] },
+  { dias: "Sáb", horas: ["7:00 am – 12:00 am"] },
+  { dias: "Dom", horas: ["9:00 am – 4:30 pm"] },
+];
 
 interface IconProps {
   color: string;
@@ -87,6 +97,7 @@ export function BandaCerrado({ tienda, compact = false, style }: Props) {
   if (tienda.abierta) return null;
 
   const aviso = resolverAviso(tienda);
+  const horario = tienda.horario?.length ? tienda.horario : HORARIO_FALLBACK;
   const e = ESTILO[aviso.tipo];
   const { Icono } = e;
 
@@ -118,14 +129,17 @@ export function BandaCerrado({ tienda, compact = false, style }: Props) {
           horario (no tiene sentido junto a ley seca / almuerzo). */}
       {!compact && aviso.tipo === "fuera_horario" && (
         <View style={{ borderTopWidth: 1, borderTopColor: "#EBEFE9", marginTop: 12, paddingTop: 10, gap: 5 }}>
-          {[
-            { dias: "Lun – Jue", hora: "8:00 am – 7:00 pm" },
-            { dias: "Vie – Sáb", hora: "8:00 am – 12:00 am" },
-            { dias: "Domingo", hora: "9:00 am – 4:30 pm" },
-          ].map(({ dias, hora }) => (
-            <View key={dias} style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          {horario.map(({ dias, horas }) => (
+            <View key={dias} style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
               <Text style={{ fontSize: 12, color: "#9AA69A" }}>{dias}</Text>
-              <Text style={{ fontSize: 12, color: "#6E7A6C", fontWeight: "600" }}>{hora}</Text>
+              {/* Los días con pausa traen dos franjas: se apilan a la derecha. */}
+              <View style={{ alignItems: "flex-end" }}>
+                {horas.map((hora) => (
+                  <Text key={hora} style={{ fontSize: 12, color: "#6E7A6C", fontWeight: "600" }}>
+                    {hora}
+                  </Text>
+                ))}
+              </View>
             </View>
           ))}
         </View>

@@ -804,10 +804,23 @@ export interface AvisoTienda {
   mensaje: string;
 }
 
+/** Fila del horario semanal, ya agrupada y formateada por el backend. */
+export interface HorarioFila {
+  /** "Lun – Jue", "Sáb", ... */
+  dias: string;
+  /** Una entrada por franja: ["7:00 am – 12:00 pm", "2:00 pm – 7:00 pm"]. */
+  horas: string[];
+}
+
 export interface EstadoTienda {
   abierta: boolean;
   proximaApertura: string;
   aviso?: AvisoTienda | null;
+  /**
+   * Horario configurado desde el admin. Opcional porque un backend viejo no lo
+   * manda; en ese caso la app cae a su tabla quemada.
+   */
+  horario?: HorarioFila[] | null;
 }
 
 export async function getEstadoTienda(): Promise<EstadoTienda> {

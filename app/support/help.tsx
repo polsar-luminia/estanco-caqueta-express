@@ -1,19 +1,17 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { View, Text, ScrollView, Pressable, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { MessageIcon } from "../../src/components/icons/AppIcons";
 import { colors, shadows } from "../../src/constants/theme";
+import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
+import { HORARIO_FALLBACK } from "../../src/components/BandaCerrado";
 
 const FAQ = [
   {
     q: "¿Cuál es el pedido mínimo?",
     a: "El pedido mínimo es de $30.000 COP para entregas a domicilio en Florencia.",
-  },
-  {
-    q: "¿Cuáles son los horarios de entrega?",
-    a: "Lunes a Jueves: 8:00 a.m. – 7:00 p.m.\nViernes y Sábado: 8:00 a.m. – 12:00 a.m.\nDomingos: 9:00 a.m. – 4:30 p.m.\nFestivos: 9:30 a.m. – 5:00 p.m.\n\nPedidos después del cierre se despachan al siguiente día.",
   },
   {
     q: "¿Qué métodos de pago aceptan?",
@@ -64,6 +62,24 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 export default function HelpScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // El horario lo configura el admin: se pide al backend en vez de quemarlo,
+  // que es lo que hacía que esta pantalla quedara mintiendo tras cada cambio.
+  const tienda = useTiendaAbierta();
+  const horario = tienda.horario?.length ? tienda.horario : HORARIO_FALLBACK;
+
+  // La pregunta de horarios se arma con el mismo dato que ve la banda de
+  // cerrado, para que no puedan contradecirse.
+  const faq = useMemo(() => {
+    const lineas = horario.map(({ dias, horas }) => `${dias}: ${horas.join(" y ")}`).join("\n");
+    return [
+      FAQ[0],
+      {
+        q: "¿Cuáles son los horarios de entrega?",
+        a: `${lineas}\n\nPedidos después del cierre se despachan al siguiente día.`,
+      },
+      ...FAQ.slice(1),
+    ];
+  }, [horario]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg }}>
@@ -129,10 +145,11 @@ export default function HelpScreen() {
             <View className="flex-row" style={{ gap: 10 }}>
               <Feather name="clock" size={16} color={colors.green} style={{ marginTop: 2 }} />
               <View>
-                <Text style={{ fontSize: 13, color: colors.muted }}>Lun-Jue: 8am – 7pm</Text>
-                <Text style={{ fontSize: 13, color: colors.muted }}>Vie-Sáb: 8am – 12am</Text>
-                <Text style={{ fontSize: 13, color: colors.muted }}>Dom: 9am – 4:30pm</Text>
-                <Text style={{ fontSize: 13, color: colors.muted }}>Festivos: 9:30am – 5pm</Text>
+                {horario.map(({ dias, horas }) => (
+                  <Text key={dias} style={{ fontSize: 13, color: colors.muted }}>
+                    {dias}: {horas.join(" y ")}
+                  </Text>
+                ))}
               </View>
             </View>
           </View>
@@ -144,7 +161,7 @@ export default function HelpScreen() {
             Preguntas Frecuentes
           </Text>
           <View style={{ gap: 10 }}>
-            {FAQ.map((item, i) => (
+            {faq.map((item, i) => (
               <FaqItem key={i} q={item.q} a={item.a} />
             ))}
           </View>

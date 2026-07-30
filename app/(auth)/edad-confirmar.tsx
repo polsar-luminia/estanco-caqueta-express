@@ -26,7 +26,9 @@ export default function EdadConfirmarScreen() {
         return;
       }
       setCliente(perfil);
-      router.replace("/(tabs)");
+      // Encadena a la direccion: se pide UNA vez, recien creada la cuenta, y no en
+      // el carrito. La pantalla se salta sola si el cliente ya tiene una.
+      router.replace("/(auth)/direccion-inicial");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo confirmar tu edad";
       Sentry.captureException(err instanceof Error ? err : new Error(msg), { tags: { flow: "auth", screen: "edad-confirmar" } });
