@@ -26,3 +26,21 @@ code-signing/private-key.pem
 .gstack/
 .idea/
 *.tsbuildinfo
+
+# Carpetas nativas generadas por `expo prebuild` (4,5 GB y 3,6 GB con sus
+# artefactos de compilacion). OJO: `.easignore` REEMPLAZA a `.gitignore` para
+# EAS — que esten ignoradas en git no basta, hay que listarlas aqui.
+#
+# El 31-jul-2026 el build fallo con "Project archive is too big (2,7 GB, maximo
+# 2,0 GB)" justo despues de generarlas en local para las pruebas E2E. EAS corre
+# `prebuild` en sus servidores y las regenera desde app.json; subirlas no aporta
+# nada y ademas convierte el proyecto en bare workflow sin querer.
+#
+# El `google-services.json` de la RAIZ sigue subiendo (no esta excluido): es el
+# que consume el prebuild. El de android/app/ es una copia generada.
+ios/
+android/
+
+# Artefactos de las pruebas locales
+scripts/monkey-logs/
+.maestro/
