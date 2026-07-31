@@ -8,7 +8,7 @@
     "scheme": "estancocaqueta",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo-estanco.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
