@@ -15,27 +15,33 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "co.estancocaqueta.express",
-      "buildNumber": "74",
+      "buildNumber": "75",
       "associatedDomains": [
         "applinks:estancocaqueta.com"
       ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIViewControllerBasedStatusBarAppearance": true,
-        "LSApplicationQueriesSchemes": ["whatsapp"],
+        "LSApplicationQueriesSchemes": [
+          "whatsapp"
+        ],
         "SKAdNetworkItems": [
-          { "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork" },
-          { "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork" }
+          {
+            "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork"
+          }
         ]
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1FAF55"
+        "backgroundColor": "#FFFFFF"
       },
       "package": "co.estancocaqueta.express",
-      "versionCode": 74
+      "versionCode": 75
     },
     "plugins": [
       "expo-router",
