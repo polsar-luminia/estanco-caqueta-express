@@ -41,7 +41,11 @@ yarn-error.*
 /android
 
 # Secrets — never commit
-google-services.json
+# google-services.json NO se ignora: EAS empaqueta el proyecto respetando este
+# archivo, asi que ignorarlo lo deja fuera del build y el prebuild de Android
+# falla con ENOENT. Ademas no es un secreto — viaja dentro de cada APK
+# publicado y cualquiera lo puede extraer. El secreto de verdad es la llave de
+# servicio FCM, que vive en las credenciales de Expo y NO en el repositorio.
 GoogleService-Info.plist
 code-signing/private-key.pem
 
