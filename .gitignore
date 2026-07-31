@@ -64,3 +64,6 @@ play-service-account.json
 *.ipa
 *.aab
 *.apk
+
+# Artefactos del monkey (scripts/monkey-android.sh): logs por semilla, no se versionan
+scripts/monkey-logs/
