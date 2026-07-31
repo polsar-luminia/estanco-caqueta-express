@@ -21,37 +21,71 @@ appId: co.estancocaqueta.express
 - launchApp:
     clearState: true
 
+# iOS: el dialogo de App Tracking Transparency aparece en el primer arranque
+# y tapa toda la app. Se responde "no rastrear" (la opcion conservadora; los
+# flujos no prueban tracking). En Android el paso no matchea y sigue de largo.
+- runFlow:
+    when:
+      visible: "Solicitar a la app no rastrear"
+    commands:
+      - tapOn: "Solicitar a la app no rastrear"
+
+# Arranque en el login en vez del catalogo: en iOS el token viejo sobrevive en el
+# Keychain a `clearState`, la app intenta restaurar la sesion, el servidor la
+# rechaza (revocada) y redirige al login. Se vuelve al catalogo, que es el
+# estado de invitado que esperan los flujos.
+- runFlow:
+    when:
+      visible: "Volver al catálogo"
+    commands:
+      - tapOn: "Volver al catálogo"
+
 # El primer bundle de Metro en frio puede tardar minutos: esperar a que la UI
-# real exista antes de tocar nada.
+# real exista antes de tocar nada. Se espera el accessibilityLabel del header y
+# no el placeholder del buscador: iOS no expone los placeholders en el arbol de
+# accesibilidad, asi que "Busca tu licor favorito" solo matchea en Android.
 - extendedWaitUntil:
-    visible: "Busca tu licor favorito"
+    visible: "Buscar productos"
     timeout: 180000
+
+# Arranque en frio: el catalogo se pide mientras el bundle todavia carga y el
+# timeout de 10 s de apiFetch alcanza a vencer. Es estado de red, no un bug:
+# se reintenta como haria una persona.
+- runFlow:
+    when:
+      visible: "Reintentar la carga"
+    commands:
+      - tapOn: "Reintentar la carga"
+      - extendedWaitUntil:
+          notVisible: "No pudimos cargar el catálogo"
+          timeout: 30000
 
 - runFlow: lib/login.yaml
 
 # Buscar
 # La barra del home navega a la pantalla de busqueda (el tab "Buscar" es
 # ambiguo para el matcher: choca con "Buscar productos" del header).
-- tapOn: "Busca tu licor favorito"
+- tapOn: "Buscar productos"
 - extendedWaitUntil:
-    visible: "Busca licores o snacks..."
+    visible: "Buscar licores o snacks"
     timeout: 10000
-- tapOn: "Busca licores o snacks..."
+- tapOn: "Buscar licores o snacks"
 - inputText: "Ron"
 - extendedWaitUntil:
-    visible: "Ron Viejo de Caldas 750ml"
+    visible: "Ron Viejo de Caldas 750ml.*"
     timeout: 10000
-- hideKeyboard
-- tapOn: "Ron Viejo de Caldas 750ml"
+- tapOn:
+    point: "50%,12%"
+- tapOn: "Ron Viejo de Caldas 750ml.*"
 
 # Ficha de producto → carrito
 - extendedWaitUntil:
-    visible: "Agregar al carrito"
+    visible: "Agregar \\d+ al carrito.*"
     timeout: 10000
 # OJO: este tap solo funciona porque Metro corre con EXPO_PUBLIC_E2E=1. Sin
 # eso, el toast de LogBox ("Open debugger...") se dibuja ENCIMA de esta barra
 # fija y se traga el tap sin que Maestro lo note (el paso sale COMPLETED).
-- tapOn: "Agregar al carrito"
+- tapOn: "Agregar \\d+ al carrito.*"
 # Al agregar aparece la barra "TU PEDIDO / VER CARRITO": camino directo al carrito.
 - extendedWaitUntil:
     visible: "VER CARRITO"
@@ -60,7 +94,12 @@ appId: co.estancocaqueta.express
 
 # La cuenta de prueba trae dirección predeterminada (la crea servidor-local:
 # agregarla desde la app pasa por el mapa y no es terreno para el robot).
-- assertVisible: "Calle 16.*"
+# Se verifica que el checkout este disponible y no el texto de la direccion:
+# iOS no expone el texto de la opcion elegida, solo "radio button, checked".
+# Si faltara la direccion, el propio "Confirmar pedido" fallaria despues.
+- extendedWaitUntil:
+    visible: "Confirmar pedido.*"
+    timeout: 15000
 
 # Confirmar. El precio del producto ($42.000) supera el mínimo ($30.000).
 - tapOn: "Confirmar pedido.*"

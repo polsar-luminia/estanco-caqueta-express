@@ -20,25 +20,63 @@ appId: co.estancocaqueta.express
 - launchApp:
     clearState: true
 
+# iOS: el dialogo de App Tracking Transparency aparece en el primer arranque
+# y tapa toda la app. Se responde "no rastrear" (la opcion conservadora; los
+# flujos no prueban tracking). En Android el paso no matchea y sigue de largo.
+- runFlow:
+    when:
+      visible: "Solicitar a la app no rastrear"
+    commands:
+      - tapOn: "Solicitar a la app no rastrear"
+
+# Arranque en el login en vez del catalogo: en iOS el token viejo sobrevive en el
+# Keychain a `clearState`, la app intenta restaurar la sesion, el servidor la
+# rechaza (revocada) y redirige al login. Se vuelve al catalogo, que es el
+# estado de invitado que esperan los flujos.
+- runFlow:
+    when:
+      visible: "Volver al catálogo"
+    commands:
+      - tapOn: "Volver al catálogo"
+
 # El primer bundle de Metro en frio puede tardar minutos: esperar a que la UI
-# real exista antes de tocar nada.
+# real exista antes de tocar nada. Se espera el accessibilityLabel del header y
+# no el placeholder del buscador: iOS no expone los placeholders en el arbol de
+# accesibilidad, asi que "Busca tu licor favorito" solo matchea en Android.
 - extendedWaitUntil:
-    visible: "Busca tu licor favorito"
+    visible: "Buscar productos"
     timeout: 180000
+
+# Arranque en frio: el catalogo se pide mientras el bundle todavia carga y el
+# timeout de 10 s de apiFetch alcanza a vencer. Es estado de red, no un bug:
+# se reintenta como haria una persona.
+- runFlow:
+    when:
+      visible: "Reintentar la carga"
+    commands:
+      - tapOn: "Reintentar la carga"
+      - extendedWaitUntil:
+          notVisible: "No pudimos cargar el catálogo"
+          timeout: 30000
 
 - runFlow: lib/login.yaml
 
 # Al pedido más reciente (el que creó el flujo 03)
 - tapOn: "Pedidos"
+# El listado expone cada pedido como "Ver pedido numero N, <estado>, total $X"
+# (es el accessibilityLabel de la tarjeta). Se busca el primero en estado
+# Recibido, que es el que creo el flujo 03 y el unico cancelable.
 - extendedWaitUntil:
-    visible: "Recibido"
-    timeout: 10000
-- tapOn: "Recibido"
+    visible: "Ver pedido .*Recibido.*"
+    timeout: 15000
+- tapOn: "Ver pedido .*Recibido.*"
 
 # Botón al fondo del detalle (paddingBottom>=100 existe para que no lo tape el tab bar)
+# iOS expone el boton como "Cancelar el pedido numero N" (su accessibilityLabel);
+# Android muestra ademas el texto "Cancelar pedido". El patron cubre ambos.
 - scrollUntilVisible:
-    element: "Cancelar pedido"
-- tapOn: "Cancelar pedido"
+    element: "Cancelar (el pedido|pedido).*"
+- tapOn: "Cancelar (el pedido|pedido).*"
 
 # Alert nativo de confirmación
 - tapOn: "Si, cancelar"

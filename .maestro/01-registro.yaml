@@ -1,7 +1,7 @@
 # Registro completo → confirmar edad → pantalla de dirección → catálogo.
 #
 # Qué fallo caza: el onboarding es el paso más caro del funnel. Este flujo
-# verifica ADEMÁS que "Lo hago después" en la pantalla de dirección funciona:
+# verifica ADEMÁS que "Lo hago después, ir al catálogo" en la pantalla de dirección funciona:
 # si esa salida se rompe, el usuario nuevo queda ATRAPADO sin llegar jamás
 # al catálogo, y ningún test unitario lo nota.
 #
@@ -24,46 +24,104 @@ appId: co.estancocaqueta.express
 - launchApp:
     clearState: true
 
+# iOS: el dialogo de App Tracking Transparency aparece en el primer arranque
+# y tapa toda la app. Se responde "no rastrear" (la opcion conservadora; los
+# flujos no prueban tracking). En Android el paso no matchea y sigue de largo.
+- runFlow:
+    when:
+      visible: "Solicitar a la app no rastrear"
+    commands:
+      - tapOn: "Solicitar a la app no rastrear"
+
+# Arranque en el login en vez del catalogo: en iOS el token viejo sobrevive en el
+# Keychain a `clearState`, la app intenta restaurar la sesion, el servidor la
+# rechaza (revocada) y redirige al login. Se vuelve al catalogo, que es el
+# estado de invitado que esperan los flujos.
+- runFlow:
+    when:
+      visible: "Volver al catálogo"
+    commands:
+      - tapOn: "Volver al catálogo"
+
 # El primer bundle de Metro en frio puede tardar minutos: esperar a que la UI
-# real exista antes de tocar nada.
+# real exista antes de tocar nada. Se espera el accessibilityLabel del header y
+# no el placeholder del buscador: iOS no expone los placeholders en el arbol de
+# accesibilidad, asi que "Busca tu licor favorito" solo matchea en Android.
 - extendedWaitUntil:
-    visible: "Busca tu licor favorito"
+    visible: "Buscar productos"
     timeout: 180000
+
+# Arranque en frio: el catalogo se pide mientras el bundle todavia carga y el
+# timeout de 10 s de apiFetch alcanza a vencer. Es estado de red, no un bug:
+# se reintenta como haria una persona.
+- runFlow:
+    when:
+      visible: "Reintentar la carga"
+    commands:
+      - tapOn: "Reintentar la carga"
+      - extendedWaitUntil:
+          notVisible: "No pudimos cargar el catálogo"
+          timeout: 30000
 
 # Invitado → login → "Crear cuenta"
 - tapOn: "Abrir mi perfil"
-- assertVisible: "Ingresar"
-- tapOn: "Crear cuenta"
+
+# Si quedo una sesion viva (en iOS el Keychain sobrevive a clearState y hasta a
+# la desinstalacion en el simulador), cerrarla para volver al estado invitado.
+- runFlow:
+    when:
+      # Se condiciona a NO estar en el login, no a ver el boton de cerrar
+      # sesion: ese boton vive al final del perfil, bajo el pliegue, y `visible`
+      # no lo encuentra sin hacer scroll antes.
+      notVisible: "Iniciar sesión"
+    commands:
+      - scrollUntilVisible:
+          element: "Cerrar sesión y salir de mi cuenta"
+      - tapOn: "Cerrar sesión y salir de mi cuenta"
+      - tapOn: "Sí"
+      - extendedWaitUntil:
+          visible: "Iniciar sesión"
+          timeout: 15000
+- assertVisible: "Iniciar sesión"
+- tapOn: "Crear una cuenta nueva"
 
 # Formulario de registro (los placeholders son los selectores estables)
-- tapOn: "Ej. Juan Pérez"
+- tapOn:
+    below: "Nombre Completo"
 - inputText: "Cliente Maestro"
-- hideKeyboard
-- tapOn: "+57 300 000 0000"
+- tapOn:
+    point: "50%,12%"
+- tapOn:
+    below: "Número de Teléfono"
 - inputText: ${output.telefono}
-- hideKeyboard
-- tapOn: "••••••••"
+- tapOn:
+    point: "50%,12%"
+- tapOn:
+    below: "Contraseña"
 - inputText: "password-maestro-8"
-- hideKeyboard
-- tapOn: "DD/MM/AAAA"
+- tapOn:
+    point: "50%,12%"
+- tapOn:
+    below: "Fecha de Nacimiento"
 - inputText: "10/05/1990"
-- hideKeyboard
+- tapOn:
+    point: "50%,12%"
 - tapOn: "Crear cuenta"
 
 # Confirmación de mayoría de edad (Apple §1.4.3)
 - extendedWaitUntil:
     visible: "Confirma tu mayoría de edad"
     timeout: 10000
-- tapOn: "Sí, soy mayor de 18 años"
+- tapOn: "Confirmar que soy mayor de 18 años"
 
 # Pantalla de dirección: DEBE poder saltarse sin quedar atrapado
 - extendedWaitUntil:
-    visible: "Lo hago después"
+    visible: "Lo hago después, ir al catálogo"
     timeout: 10000
-- tapOn: "Lo hago después"
+- tapOn: "Lo hago después, ir al catálogo"
 
 # Catálogo: la señal de que el onboarding terminó de verdad
 - extendedWaitUntil:
     visible: "Inicio"
     timeout: 10000
-- assertNotVisible: "Lo hago después"
+- assertNotVisible: "Lo hago después, ir al catálogo"

@@ -9,21 +9,75 @@ appId: co.estancocaqueta.express
 - launchApp:
     clearState: true
 
+# iOS: el dialogo de App Tracking Transparency aparece en el primer arranque
+# y tapa toda la app. Se responde "no rastrear" (la opcion conservadora; los
+# flujos no prueban tracking). En Android el paso no matchea y sigue de largo.
+- runFlow:
+    when:
+      visible: "Solicitar a la app no rastrear"
+    commands:
+      - tapOn: "Solicitar a la app no rastrear"
+
+# Arranque en el login en vez del catalogo: en iOS el token viejo sobrevive en el
+# Keychain a `clearState`, la app intenta restaurar la sesion, el servidor la
+# rechaza (revocada) y redirige al login. Se vuelve al catalogo, que es el
+# estado de invitado que esperan los flujos.
+- runFlow:
+    when:
+      visible: "Volver al catálogo"
+    commands:
+      - tapOn: "Volver al catálogo"
+
 # El primer bundle de Metro en frio puede tardar minutos: esperar a que la UI
-# real exista antes de tocar nada.
+# real exista antes de tocar nada. Se espera el accessibilityLabel del header y
+# no el placeholder del buscador: iOS no expone los placeholders en el arbol de
+# accesibilidad, asi que "Busca tu licor favorito" solo matchea en Android.
 - extendedWaitUntil:
-    visible: "Busca tu licor favorito"
+    visible: "Buscar productos"
     timeout: 180000
 
+# Arranque en frio: el catalogo se pide mientras el bundle todavia carga y el
+# timeout de 10 s de apiFetch alcanza a vencer. Es estado de red, no un bug:
+# se reintenta como haria una persona.
+- runFlow:
+    when:
+      visible: "Reintentar la carga"
+    commands:
+      - tapOn: "Reintentar la carga"
+      - extendedWaitUntil:
+          notVisible: "No pudimos cargar el catálogo"
+          timeout: 30000
+
 - tapOn: "Abrir mi perfil"
-- assertVisible: "Ingresar"
-- tapOn: "300 000 0000"
+
+# Si quedo una sesion viva (en iOS el Keychain sobrevive a clearState y hasta a
+# la desinstalacion en el simulador), cerrarla para volver al estado invitado.
+- runFlow:
+    when:
+      # Se condiciona a NO estar en el login, no a ver el boton de cerrar
+      # sesion: ese boton vive al final del perfil, bajo el pliegue, y `visible`
+      # no lo encuentra sin hacer scroll antes.
+      notVisible: "Iniciar sesión"
+    commands:
+      - scrollUntilVisible:
+          element: "Cerrar sesión y salir de mi cuenta"
+      - tapOn: "Cerrar sesión y salir de mi cuenta"
+      - tapOn: "Sí"
+      - extendedWaitUntil:
+          visible: "Iniciar sesión"
+          timeout: 15000
+- assertVisible: "Iniciar sesión"
+- tapOn:
+    below: "Teléfono"
 - inputText: "3009999999"
-- hideKeyboard
-- tapOn: "••••••••"
+- tapOn:
+    point: "50%,12%"
+- tapOn:
+    below: "Contraseña"
 - inputText: "clave-equivocada"
-- hideKeyboard
-- tapOn: "Ingresar"
+- tapOn:
+    point: "50%,12%"
+- tapOn: "Iniciar sesión"
 
 # El mensaje real, con la pista de recuperación — no un código.
 - extendedWaitUntil:

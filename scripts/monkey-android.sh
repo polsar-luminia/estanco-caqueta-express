@@ -14,6 +14,13 @@
 # Requiere: emulador/dispositivo con la app instalada (npx expo run:android).
 # Reporta SOLO las sesiones que rompieron; los logs completos quedan en
 # scripts/monkey-logs/ para la autopsia.
+#
+# CORRERLO EN UNA MAQUINA DESOCUPADA. Con el Mac cargado (builds, tests,
+# Maestro en paralelo) aparecen ANR falsos del tipo "Input dispatching timed
+# out (Application does not have a focused window)": el 30-jul-2026 las
+# semillas 1004 y 1005 "rompieron" con load 10 y pasaron limpias al repetirlas
+# en reposo. Ante un ANR, lo primero es repetir esa semilla sin nada mas
+# corriendo — es exactamente para lo que la semilla es fija.
 set -uo pipefail
 
 PAQUETE="co.estancocaqueta.express"

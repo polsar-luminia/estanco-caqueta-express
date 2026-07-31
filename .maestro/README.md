@@ -45,8 +45,9 @@ export JAVA_HOME=~/.local/share/mise/installs/java/temurin-17
 cd android && ./gradlew assembleDebug && cd ..
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 # 3. Túneles: 127.0.0.1 del emulador → el Mac (backend y Metro).
-#    OJO: se pierden si el daemon de adb se reinicia; re-correrlos ante
-#    "Network request failed" en la app.
+#    Se pierden cuando el daemon de adb se reinicia. El wrapper del paso 4 los
+#    verifica y restaura solo — sin ellos la app arranca en pantalla roja y
+#    Maestro lo reporta como "no encontré el elemento X", que es una pista falsa.
 adb reverse tcp:3999 tcp:3999
 adb reverse tcp:8081 tcp:8081
 # 4. La suite entera, en orden y de a una (para al primer fallo):
@@ -57,7 +58,26 @@ MAESTRO_ENV=local scripts/maestro-suite.sh
 sobre el mismo dispositivo y los cold-starts se pisan entre sí — fallan por
 lentitud, no por bugs. El wrapper existe para eso.
 
-## iPhone (simulador)
+## iPhone (simulador) — NO verificado todavía
+
+**Estado al 2026-07-30: los flujos NO pasan en iOS.** La app compila, instala y
+arranca en el simulador, pero **no logra cargar el catálogo desde el backend de
+pruebas**: la pantalla de inicio muestra "No pudimos cargar el catálogo" y todo
+lo demás se cae en cascada. Lo que ya se descartó:
+
+- No es alcanzabilidad: Safari en el mismo simulador abre
+  `http://127.0.0.1:3999/api/v1/health` y la API de producción sin problema.
+- No es ATS: con `NSAllowsArbitraryLoads = true` en el bundle falla igual.
+- No es el backend: los ocho endpoints que pide la pantalla de inicio responden
+  200 en milisegundos con los headers de iOS (`X-Platform: ios`).
+- Sospecha abierta sin confirmar: `onlineManager` de TanStack Query se alimenta
+  de `NetInfo.isConnected` (`src/lib/query-client.ts`), que en el simulador
+  suele reportar mal.
+
+Los pasos de abajo dejan la app corriendo; falta resolver el catálogo antes de
+que la suite sirva en iOS.
+
+### Cómo compilar e instalar
 
 `npx expo run:ios` muere en este Mac pidiendo firma de dispositivo físico
 aunque se le pase el UDID del simulador. El camino que funciona:
@@ -70,6 +90,11 @@ npx expo prebuild --platform ios --no-install   # solo la primera vez
 cd ios && pod install && xcodebuild -workspace EstancoCaquetExpress.xcworkspace \
   -scheme EstancoCaquetExpress -configuration Debug \
   -destination "id=<UDID>" -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+# El Info.plist que genera el prebuild trae UIViewControllerBasedStatusBarAppearance
+# en true y expo-status-bar lanza un RedBox en debug que tapa toda la app.
+# Se parchea el bundle compilado (no toca app.json en semana de release):
+/usr/libexec/PlistBuddy -c "Set :UIViewControllerBasedStatusBarAppearance false" \
+  build/Build/Products/Debug-iphonesimulator/EstancoCaquetExpress.app/Info.plist
 xcrun simctl install <UDID> build/Build/Products/Debug-iphonesimulator/EstancoCaquetExpress.app
 xcrun simctl launch <UDID> co.estancocaqueta.express
 # (UDID: xcrun simctl list devices available)
@@ -78,6 +103,12 @@ cd .. && MAESTRO_ENV=local scripts/maestro-suite.sh --device <UDID>
 
 El simulador comparte la red del Mac: el mismo Metro y backend sirven sin
 túneles.
+
+Los flujos ya traen dos adaptaciones que iOS sí necesitaba y que en Android son
+inertes: se responde el diálogo de App Tracking Transparency ("Solicitar a la
+app no rastrear") y se espera el `accessibilityLabel` "Buscar productos" en vez
+del placeholder "Busca tu licor favorito" — iOS no expone los placeholders en
+el árbol de accesibilidad.
 
 ## Los flujos
 

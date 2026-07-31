@@ -3,22 +3,57 @@
 appId: co.estancocaqueta.express
 ---
 # Un invitado que toca "Mi perfil" cae en la pantalla de login (Redirect).
+#
+# SELECTORES CROSS-PLATFORM: se usan accessibilityLabel ("Iniciar sesión") y
+# posicion relativa a la etiqueta del campo, NO el texto del boton ("Ingresar")
+# ni los placeholders. iOS colapsa el texto hijo dentro del label del boton y no
+# expone los placeholders en el arbol de accesibilidad; Android expone ambos.
+# Lo que funciona en los dos es el label y el "debajo de la etiqueta".
 - tapOn: "Abrir mi perfil"
-- assertVisible: "Ingresar"
-- tapOn: "300 000 0000"
+
+# Si quedo una sesion viva (en iOS el Keychain sobrevive a clearState y hasta a
+# la desinstalacion en el simulador), cerrarla para volver al estado invitado.
+- runFlow:
+    when:
+      # Se condiciona a NO estar en el login, no a ver el boton de cerrar
+      # sesion: ese boton vive al final del perfil, bajo el pliegue, y `visible`
+      # no lo encuentra sin hacer scroll antes.
+      notVisible: "Iniciar sesión"
+    commands:
+      - scrollUntilVisible:
+          element: "Cerrar sesión y salir de mi cuenta"
+      - tapOn: "Cerrar sesión y salir de mi cuenta"
+      - tapOn: "Sí"
+      - extendedWaitUntil:
+          visible: "Iniciar sesión"
+          timeout: 15000
+- assertVisible: "Iniciar sesión"
+- tapOn:
+    below: "Teléfono"
 - inputText: "3001234567"
-- hideKeyboard
-- tapOn: "••••••••"
+- tapOn:
+    point: "50%,12%"
+- tapOn:
+    below: "Contraseña"
 - inputText: "testpass88"
-- hideKeyboard
-- tapOn: "Ingresar"
+- tapOn:
+    point: "50%,12%"
+- tapOn: "Iniciar sesión"
+
+# iOS ofrece guardar la contrasena en el llavero justo despues del login y ese
+# dialogo tapa la app. En Android no existe y el paso se salta solo.
+- runFlow:
+    when:
+      visible: "Ahora no"
+    commands:
+      - tapOn: "Ahora no"
 # Si "Ingresar" sigue en pantalla, el login no sirvió. A dónde navega después
 # depende de dónde venía el Redirect (a veces Inicio, a veces Perfil), así que
 # la vuelta al Inicio se hace explícita en vez de asumirla.
 - extendedWaitUntil:
-    notVisible: "Ingresar"
+    notVisible: "Iniciar sesión"
     timeout: 30000
 - tapOn: "Inicio"
 - extendedWaitUntil:
-    visible: "Busca tu licor favorito"
+    visible: "Buscar productos"
     timeout: 30000
