@@ -41,7 +41,8 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "co.estancocaqueta.express",
-      "versionCode": 75
+      "versionCode": 75,
+      "googleServicesFile": "./google-services.json"
     },
     "plugins": [
       "expo-router",
