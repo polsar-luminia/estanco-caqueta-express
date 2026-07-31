@@ -39,6 +39,9 @@ export default function DireccionInicialScreen() {
   const [direccion, setDireccion] = useState("");
   const [notas, setNotas] = useState("");
   const [ubicacion, setUbicacion] = useState<UbicacionCapturada | null>(null);
+  // Con el punto ya resuelto, la lista de "esto podria ser tu direccion" no
+  // aporta nada y encima tapa el mapa que lo confirma.
+  const [silenciado, setSilenciado] = useState(false);
   const vistoRef = useRef(false);
 
   // Quien ya tiene dirección no tiene nada que hacer aquí: pasa de largo. Cubre a
@@ -168,8 +171,12 @@ export default function DireccionInicialScreen() {
         </Text>
         <BuscadorDireccion
           value={direccion}
-          onChangeText={setDireccion}
-          onUbicacion={(u) => setUbicacion(u)}
+          // Escribir reactiva las sugerencias: fijar el punto no bloquea corregir
+          // la direccion a mano despues.
+          onChangeText={(t) => { setDireccion(t); setSilenciado(false); }}
+          silenciado={silenciado}
+          // Elegir una sugerencia tambien deja el punto resuelto.
+          onUbicacion={(u) => { setUbicacion(u); setSilenciado(true); }}
           placeholder="Ej: Carrera 10 #16-85"
           accessibilityLabel="Tu dirección de entrega"
         />
@@ -180,6 +187,7 @@ export default function DireccionInicialScreen() {
             value={ubicacion}
             onChange={(u) => {
               setUbicacion(u);
+              setSilenciado(!!u);
               // Si el punto trajo dirección y el campo está vacío, se rellena solo:
               // un toque menos y menos posibilidad de escribir algo que no cuadra.
               if (u?.geocoded_direccion && !direccion.trim()) {

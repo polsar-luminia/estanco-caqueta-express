@@ -32,6 +32,21 @@ export interface BuscadorDireccionProps {
   onUbicacion: (u: UbicacionCapturada) => void;
   placeholder?: string;
   accessibilityLabel?: string;
+  /**
+   * Silencia las sugerencias sin desmontar el campo.
+   *
+   * Lo usa quien ya tiene el punto resuelto —por GPS o por el mapa—. Ahi la lista
+   * de "esto podria ser tu direccion" no aporta nada: el punto exacto ya esta, y
+   * encima tapa el mapa que lo confirma.
+   *
+   * Hace falta porque fijar la ubicacion RELLENA este campo, y ese cambio dispara
+   * la busqueda igual que si el cliente hubiera escrito. El componente no puede
+   * distinguir por si solo quien escribio.
+   *
+   * Vuelve a false apenas el cliente teclea, asi que no bloquea corregir la
+   * direccion a mano despues de poner el pin.
+   */
+  silenciado?: boolean;
 }
 
 export function BuscadorDireccion({
@@ -40,6 +55,7 @@ export function BuscadorDireccion({
   onUbicacion,
   placeholder = "Escribe tu dirección",
   accessibilityLabel = "Dirección",
+  silenciado = false,
 }: BuscadorDireccionProps) {
   const [sugerencias, setSugerencias] = useState<SugerenciaDireccion[]>([]);
   const [buscando, setBuscando] = useState(false);
@@ -59,6 +75,11 @@ export function BuscadorDireccion({
       ignorarProximaRef.current = false;
       return;
     }
+    // Punto ya resuelto: ni se busca ni se deja lista colgando de antes.
+    if (silenciado) {
+      setSugerencias([]);
+      return;
+    }
     if (value.trim().length < 3) {
       setSugerencias([]);
       return;
@@ -76,7 +97,7 @@ export function BuscadorDireccion({
       clearTimeout(t);
       control.abort();
     };
-  }, [value]);
+  }, [value, silenciado]);
 
   const elegir = async (s: SugerenciaDireccion) => {
     setResolviendo(true);
@@ -135,7 +156,7 @@ export function BuscadorDireccion({
         )}
       </View>
 
-      {sugerencias.length > 0 && (
+      {!silenciado && sugerencias.length > 0 && (
         <View
           style={{
             backgroundColor: "#fff",

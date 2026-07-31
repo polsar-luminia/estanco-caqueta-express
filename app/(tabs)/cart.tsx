@@ -117,6 +117,7 @@ export default function CartScreen() {
   const [nuevaDireccion, setNuevaDireccion] = useState("");
   const [nuevasNotas, setNuevasNotas] = useState("");
   const [nuevaUbicacion, setNuevaUbicacion] = useState<UbicacionCapturada | null>(null);
+  const [silenciadoDir, setSilenciadoDir] = useState(false);
   // Frío asegurado: intención del cliente. No se persiste entre sesiones.
   const [quiereFrio, setQuiereFrio] = useState(false);
   const [mostrarRecordatorioFrio, setMostrarRecordatorioFrio] = useState(false);
@@ -746,8 +747,11 @@ export default function CartScreen() {
                   <View style={{ marginBottom: 4 }}>
                     <BuscadorDireccion
                       value={nuevaDireccion}
-                      onChangeText={setNuevaDireccion}
-                      onUbicacion={setNuevaUbicacion}
+                      // Igual que en el onboarding: con el punto puesto las
+                      // sugerencias solo estorban, y escribir las devuelve.
+                      onChangeText={(t) => { setNuevaDireccion(t); setSilenciadoDir(false); }}
+                      silenciado={silenciadoDir}
+                      onUbicacion={(u) => { setNuevaUbicacion(u); setSilenciadoDir(true); }}
                       placeholder="Carrera 15 # 12-34"
                       accessibilityLabel="Dirección de entrega"
                     />

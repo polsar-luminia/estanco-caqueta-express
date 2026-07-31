@@ -24,6 +24,8 @@ export default function DireccionesScreen() {
   const [etiqueta, setEtiqueta] = useState("Casa");
   const [notas, setNotas] = useState("");
   const [ubicacion, setUbicacion] = useState<UbicacionCapturada | null>(null);
+  // Ver BuscadorDireccion: con el punto puesto, las sugerencias estorban.
+  const [silenciado, setSilenciado] = useState(false);
 
   const { data: direcciones = [], isLoading, isError, isFetching } = useQuery({
     queryKey: ["direcciones"],
@@ -221,6 +223,7 @@ export default function DireccionesScreen() {
               value={ubicacion}
               onChange={(u) => {
                 setUbicacion(u);
+                setSilenciado(!!u);
                 // Un punto elegido en el mapa (pin_mapa) siempre reescribe la
                 // dirección; el GPS solo la llena si está vacía (no pisa lo escrito).
                 if (u?.geocoded_direccion && (u.metodo_ubicacion === "pin_mapa" || !direccion.trim())) {
@@ -255,7 +258,8 @@ export default function DireccionesScreen() {
             <View style={{ marginBottom: 12 }}>
               <BuscadorDireccion
                 value={direccion}
-                onChangeText={setDireccion}
+                onChangeText={(t) => { setDireccion(t); setSilenciado(false); }}
+                silenciado={silenciado}
                 onUbicacion={setUbicacion}
                 placeholder="Carrera 15 # 12-34"
                 accessibilityLabel="Dirección"
