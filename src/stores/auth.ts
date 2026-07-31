@@ -63,6 +63,7 @@ interface AuthState {
     nombre: string,
     password: string,
     fecha_nacimiento: string,
+    acepta_mercadeo: boolean,
   ) => Promise<void>;
   logout: () => Promise<void>;
   setCliente: (cliente: Cliente) => void;
@@ -134,8 +135,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     metaIdentify(cliente.id, cliente.telefono);
   },
 
-  register: async (telefono, nombre, password, fecha_nacimiento) => {
-    const { token, cliente } = await registrarCliente(telefono, nombre, password, fecha_nacimiento);
+  register: async (telefono, nombre, password, fecha_nacimiento, acepta_mercadeo) => {
+    const { token, cliente } = await registrarCliente(
+      telefono, nombre, password, fecha_nacimiento, acepta_mercadeo,
+    );
     await setToken(token);
     set({ token, cliente, isAuthenticated: true });
     metaIdentify(cliente.id, cliente.telefono);

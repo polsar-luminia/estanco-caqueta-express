@@ -44,6 +44,7 @@ export type EventTipo =
   | 'app_abierta'
   | 'categoria_abierta'
   | 'registro_completado'
+  | 'consentimiento_mercadeo_cambiado'
   | 'sesion_iniciada'
   | 'cupon_copiado'
   | 'producto_visto'
@@ -103,6 +104,10 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   app_abierta: [],
   categoria_abierta: ['categoria_id', 'nombre'],
   registro_completado: [],
+  // Cuantos autorizan mercadeo al registrarse y cuantos lo revocan despues. Sin
+  // esto no hay forma de saber si la casilla desmarcada mato el canal o no.
+  // `otorgado` y `origen` no son PII: no identifican a nadie por si solos.
+  consentimiento_mercadeo_cambiado: ['otorgado', 'origen'],
   sesion_iniciada: [],
   cupon_copiado: [],
   producto_visto: ['producto_id', 'nombre', 'categoria'],

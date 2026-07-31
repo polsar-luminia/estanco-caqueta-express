@@ -21,6 +21,7 @@ export default function RegisterScreen() {
   const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
+  const [aceptaMercadeo, setAceptaMercadeo] = useState(false);
   const [fecha, setFecha] = useState<DateValue>({});
   // Campo único DD/MM/AAAA con auto-formato (reemplaza los 3 selectores con modal)
   const [fechaTexto, setFechaTexto] = useState("");
@@ -127,8 +128,9 @@ export default function RegisterScreen() {
     submittingRef.current = true;
     setLoading(true);
     try {
-      await register(telefono.trim(), nombre.trim(), password, iso);
+      await register(telefono.trim(), nombre.trim(), password, iso, aceptaMercadeo);
       tracker.track('registro_completado', {}, 'register');
+      tracker.track('consentimiento_mercadeo_cambiado', { otorgado: aceptaMercadeo, origen: 'registro' }, 'register');
       metaLogRegistration();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo crear la cuenta";
@@ -268,6 +270,38 @@ export default function RegisterScreen() {
             keyboardType="number-pad"
             error={errorFecha}
           />
+
+          {/* Mercadeo: casilla APARTE y DESMARCADA por defecto.
+              Aparte, porque no se puede condicionar el servicio a aceptar publicidad:
+              crear la cuenta y recibir ofertas son dos decisiones distintas.
+              Desmarcada, porque una casilla premarcada no es una autorizacion expresa
+              — es una que el usuario no tomo. Si no la toca, no se manda nada. */}
+          <Pressable
+            onPress={() => setAceptaMercadeo((v) => !v)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: aceptaMercadeo }}
+            accessibilityLabel="Quiero recibir ofertas y promociones por WhatsApp y notificaciones"
+            hitSlop={8}
+            style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, marginTop: 18, paddingHorizontal: 4 }}
+          >
+            <View
+              style={{
+                width: 22, height: 22, borderRadius: 6, marginTop: 1,
+                borderWidth: 2,
+                borderColor: aceptaMercadeo ? colors.green : colors.muted,
+                backgroundColor: aceptaMercadeo ? colors.green : "transparent",
+                alignItems: "center", justifyContent: "center",
+              }}
+            >
+              {aceptaMercadeo && <Feather name="check" size={14} color="#fff" />}
+            </View>
+            <Text style={{ flex: 1, fontSize: 12.5, color: colors.muted, lineHeight: 17 }}>
+              Quiero recibir ofertas y promociones por WhatsApp y notificaciones.{" "}
+              <Text style={{ color: colors.faint }}>
+                Opcional — puedes cambiarlo cuando quieras desde tu perfil.
+              </Text>
+            </Text>
+          </Pressable>
 
           {/* Aceptación implícita de políticas: el toque en "Crear Cuenta" es la
               aceptación expresa (patrón estándar; reemplaza los 2 checkboxes). */}

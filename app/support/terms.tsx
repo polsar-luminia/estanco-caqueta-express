@@ -31,7 +31,7 @@ const SECTIONS = [
   },
   {
     title: "7. Protección de Datos Personales",
-    body: "El tratamiento de datos personales se rige por la Ley 1581 de 2012 y el Decreto 1377 de 2013.\n\nDatos recopilados: nombre, teléfono, dirección de entrega, historial de pedidos.\n\nFinalidades: gestión de pedidos, entregas, comunicaciones comerciales y mejora del servicio.\n\nDerechos del titular: conocer, actualizar, rectificar y suprimir datos enviando solicitud a app@estancocaqueta.com.\n\nTiempos de respuesta: consultas 10 días hábiles, reclamos 15 días hábiles.",
+    body: "El tratamiento de datos personales se rige por la Ley 1581 de 2012 y el Decreto 1377 de 2013.\n\nDatos recopilados: nombre, teléfono, dirección de entrega, historial de pedidos.\n\nFinalidades: gestión de pedidos, entregas, comunicación operativa sobre tus pedidos y mejora del servicio.\n\nComunicaciones comerciales: el envío de promociones y ofertas por notificación push o por WhatsApp requiere una autorización aparte, que es opcional. No otorgarla no limita tu uso de la aplicación ni tu posibilidad de comprar, y puedes revocarla cuando quieras desde Perfil › Notificaciones y comunicaciones. Aun sin ella seguirás recibiendo los mensajes operativos de tus pedidos y los códigos de verificación, porque son parte del servicio. El detalle está en la Política de Privacidad.\n\nDerechos del titular: conocer, actualizar, rectificar y suprimir datos enviando solicitud a app@estancocaqueta.com.\n\nTiempos de respuesta: consultas 10 días hábiles, reclamos 15 días hábiles.",
   },
   {
     title: "8. Propiedad Intelectual",

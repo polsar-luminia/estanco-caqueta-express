@@ -180,10 +180,40 @@ export async function registrarCliente(
   nombre: string,
   password: string,
   fecha_nacimiento: string,
+  acepta_mercadeo: boolean,
 ) {
   return apiFetch<{ token: string; cliente: Cliente }>("/clientes/registrar", {
     method: "POST",
-    body: JSON.stringify({ telefono, nombre, password, fecha_nacimiento }),
+    body: JSON.stringify({ telefono, nombre, password, fecha_nacimiento, acepta_mercadeo }),
+  });
+}
+
+export interface ConsentimientoVigente {
+  otorgado: boolean;
+  fecha: string;
+  version: string;
+  origen: string;
+}
+
+/**
+ * Estado vigente. Una finalidad AUSENTE no es lo mismo que revocada: significa que
+ * nunca se le pregunto — el caso de los clientes anteriores a esta pantalla. La UI
+ * tiene que distinguirlo para pedir la autorizacion en vez de asumir un no.
+ */
+export async function getConsentimiento() {
+  return apiFetch<{
+    consentimiento: {
+      mercadeo?: ConsentimientoVigente;
+      tratamiento_datos?: ConsentimientoVigente;
+    };
+    versiones: Record<string, string>;
+  }>("/clientes/me/consentimiento");
+}
+
+export async function actualizarConsentimientoMercadeo(mercadeo: boolean) {
+  return apiFetch<{ ok: true; mercadeo: boolean }>("/clientes/me/consentimiento", {
+    method: "PUT",
+    body: JSON.stringify({ mercadeo }),
   });
 }
 

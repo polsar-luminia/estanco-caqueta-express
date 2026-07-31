@@ -105,15 +105,30 @@ describe("useAuthStore", () => {
         cliente: { id: 10, telefono: "3009876543", nombre: "Luis" } as any,
       });
       await useAuthStore.getState().register(
-        "3009876543", "Luis", "password123", "2000-01-15"
+        "3009876543", "Luis", "password123", "2000-01-15", false
       );
       expect(api.registrarCliente).toHaveBeenCalledWith(
-        "3009876543", "Luis", "password123", "2000-01-15"
+        "3009876543", "Luis", "password123", "2000-01-15", false
       );
       expect(api.setToken).toHaveBeenCalledWith("reg-tok");
       expect(useAuthStore.getState().isAuthenticated).toBe(true);
     });
 
+    // La decision de mercadeo tiene que llegar al backend tal cual. Si el store la
+    // perdiera, el registro guardaria "nunca se le pregunto" a alguien que si dijo
+    // que si — o peor, se perderia el NO de quien lo rechazo.
+    it("propaga la decision de mercadeo sin alterarla", async () => {
+      vi.mocked(api.registrarCliente).mockResolvedValue({
+        token: "reg-tok",
+        cliente: { id: 11, telefono: "3009876544", nombre: "Ana" } as any,
+      });
+      await useAuthStore.getState().register(
+        "3009876544", "Ana", "password123", "2000-01-15", true
+      );
+      expect(api.registrarCliente).toHaveBeenCalledWith(
+        "3009876544", "Ana", "password123", "2000-01-15", true
+      );
+    });
   });
 
   describe("logout", () => {

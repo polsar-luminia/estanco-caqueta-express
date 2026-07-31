@@ -288,7 +288,7 @@ export default function ProfileScreen() {
         <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: "#F4F4F0" }}>
           <MenuItem icon="person" label="Mis Direcciones" a11yLabel="Ver y editar mis direcciones de entrega" onPress={() => router.push("/profile/direcciones")} />
           <MenuItem icon="payments" label="Métodos de Pago" a11yLabel="Ver los métodos de pago aceptados" onPress={() => router.push("/profile/metodos-pago")} />
-          <MenuItem icon="notifications" label="Notificaciones" a11yLabel="Configurar mis preferencias de notificaciones" onPress={() => router.push("/profile/notificaciones")} />
+          <MenuItem icon="notifications" label="Notificaciones y comunicaciones" a11yLabel="Configurar mis notificaciones y si quiero recibir publicidad" onPress={() => router.push("/profile/notificaciones")} />
         </View>
       </View>
 
