@@ -1,6 +1,6 @@
 import "../global.css";
 import { useEffect, useState } from "react";
-import { AppState } from "react-native";
+import { AppState, LogBox } from "react-native";
 import { Stack, useRouter, useSegments, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { QueryClientProvider, focusManager } from "@tanstack/react-query";
@@ -23,6 +23,14 @@ import { debeBloquear } from "../src/lib/bloqueoVersion";
 import { APP_VERSION } from "../src/lib/appVersion";
 import { getConfigApp } from "../src/lib/api";
 import { useQuery } from "@tanstack/react-query";
+
+// En corridas E2E (Maestro) el toast de LogBox "Open debugger to view warnings"
+// se dibuja EXACTAMENTE encima del CTA fijo de la ficha de producto y se traga
+// los taps del robot. Solo aplica a builds de desarrollo con la variable puesta
+// (EXPO_PUBLIC_E2E=1 al arrancar Metro); en producción no existe ni LogBox.
+if (process.env.EXPO_PUBLIC_E2E === "1") {
+  LogBox.ignoreAllLogs(true);
+}
 
 // Rutas exentas del age gate (autenticación pública). Todo lo demás requiere edad confirmada.
 const RUTAS_EXENTAS_EDAD = ["(auth)"];

@@ -1,0 +1,48 @@
+# Cancelar un pedido en estado 'recibido'.
+#
+# Qué fallo caza: la cancelación revierte cupón y puntos en una transacción
+# (B-TRX-01); si el botón, el Alert nativo o el endpoint se desconectan, el
+# cliente queda con un pedido que no quiere y el staff lo alista igual.
+#
+# Requiere un pedido cancelable: correr 03 antes (la carpeta corre en orden).
+appId: co.estancocaqueta.express
+---
+- evalScript: |
+    ${
+      (() => {
+        const seguros = ['staging', 'local', 'ci', 'dev'];
+        if (!seguros.includes(MAESTRO_ENV)) {
+          throw new Error('04-cancelar-pedido muta pedidos reales. Abortado: MAESTRO_ENV=' + (MAESTRO_ENV || 'undefined'));
+        }
+      })()
+    }
+
+- launchApp:
+    clearState: true
+
+# El primer bundle de Metro en frio puede tardar minutos: esperar a que la UI
+# real exista antes de tocar nada.
+- extendedWaitUntil:
+    visible: "Busca tu licor favorito"
+    timeout: 180000
+
+- runFlow: lib/login.yaml
+
+# Al pedido más reciente (el que creó el flujo 03)
+- tapOn: "Pedidos"
+- extendedWaitUntil:
+    visible: "Recibido"
+    timeout: 10000
+- tapOn: "Recibido"
+
+# Botón al fondo del detalle (paddingBottom>=100 existe para que no lo tape el tab bar)
+- scrollUntilVisible:
+    element: "Cancelar pedido"
+- tapOn: "Cancelar pedido"
+
+# Alert nativo de confirmación
+- tapOn: "Si, cancelar"
+
+- extendedWaitUntil:
+    visible: "Pedido cancelado"
+    timeout: 10000

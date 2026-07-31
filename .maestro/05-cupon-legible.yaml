@@ -1,0 +1,87 @@
+# Aplicar un cupón inválido y uno válido: el mensaje debe LEERSE.
+#
+# Qué fallo caza: la combinación de los dos incidentes de julio-2026 — errores
+# enmascarados como "Error NNN" y el cupón envio_gratis que descontaba de más.
+# Un código inexistente tiene que decir "Cupon no encontrado" (texto real del
+# backend, marcado mostrable), no un número de status.
+#
+# No confirma el pedido (deja el carrito armado): así no choca con el guard
+# de 60 segundos si se corre justo después del flujo 03.
+appId: co.estancocaqueta.express
+---
+- evalScript: |
+    ${
+      (() => {
+        const seguros = ['staging', 'local', 'ci', 'dev'];
+        if (!seguros.includes(MAESTRO_ENV)) {
+          throw new Error('05-cupon-legible necesita el backend de pruebas. Abortado: MAESTRO_ENV=' + (MAESTRO_ENV || 'undefined'));
+        }
+      })()
+    }
+
+- launchApp:
+    clearState: true
+
+# El primer bundle de Metro en frio puede tardar minutos: esperar a que la UI
+# real exista antes de tocar nada.
+- extendedWaitUntil:
+    visible: "Busca tu licor favorito"
+    timeout: 180000
+
+- runFlow: lib/login.yaml
+
+# Armar un carrito (el cupón se valida con subtotal > 0)
+# La barra del home navega a la pantalla de busqueda (el tab "Buscar" es
+# ambiguo para el matcher: choca con "Buscar productos" del header).
+- tapOn: "Busca tu licor favorito"
+- extendedWaitUntil:
+    visible: "Busca licores o snacks..."
+    timeout: 10000
+- tapOn: "Busca licores o snacks..."
+- inputText: "Aguardiente"
+- extendedWaitUntil:
+    visible: "Aguardiente Amarillo 375ml.*"
+    timeout: 10000
+- hideKeyboard
+- tapOn: "Aguardiente Amarillo 375ml.*"
+- extendedWaitUntil:
+    visible: "Agregar al carrito"
+    timeout: 10000
+# OJO: este tap solo funciona porque Metro corre con EXPO_PUBLIC_E2E=1. Sin
+# eso, el toast de LogBox ("Open debugger...") se dibuja ENCIMA de esta barra
+# fija y se traga el tap sin que Maestro lo note (el paso sale COMPLETED).
+- tapOn: "Agregar al carrito"
+# Al agregar aparece la barra "TU PEDIDO / VER CARRITO": camino directo al carrito.
+- extendedWaitUntil:
+    visible: "VER CARRITO"
+    timeout: 8000
+- tapOn: "VER CARRITO"
+
+# Primero el cupón VÁLIDO: queda aplicado (aparece "Quitar cupón").
+- scrollUntilVisible:
+    element: "CODIGO"
+- tapOn: "CODIGO"
+- inputText: "PRUEBA10"
+- hideKeyboard
+- tapOn: "Aplicar"
+- extendedWaitUntil:
+    visible: "Quitar cupón"
+    timeout: 10000
+
+# Quitarlo deja el campo limpio (eraseText de Maestro dejaba residuos), y de
+# paso verifica que el cupón se puede remover.
+- tapOn: "Quitar cupón"
+- extendedWaitUntil:
+    visible: "CODIGO"
+    timeout: 10000
+
+# Cupón inválido: mensaje real, no "Error 404" ni "Servicio no disponible"
+- tapOn: "CODIGO"
+- inputText: "INVALIDO-999"
+- hideKeyboard
+- tapOn: "Aplicar"
+- extendedWaitUntil:
+    visible: "Cupon no encontrado"
+    timeout: 10000
+- assertNotVisible: "Error 404"
+- assertNotVisible: "Servicio no disponible.*"

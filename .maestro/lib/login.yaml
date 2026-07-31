@@ -1,0 +1,24 @@
+# Subflujo: iniciar sesión con la cuenta de prueba del servidor local.
+# La crea packages/api (repo del backend): npm run servidor:pruebas
+appId: co.estancocaqueta.express
+---
+# Un invitado que toca "Mi perfil" cae en la pantalla de login (Redirect).
+- tapOn: "Abrir mi perfil"
+- assertVisible: "Ingresar"
+- tapOn: "300 000 0000"
+- inputText: "3001234567"
+- hideKeyboard
+- tapOn: "••••••••"
+- inputText: "testpass88"
+- hideKeyboard
+- tapOn: "Ingresar"
+# Si "Ingresar" sigue en pantalla, el login no sirvió. A dónde navega después
+# depende de dónde venía el Redirect (a veces Inicio, a veces Perfil), así que
+# la vuelta al Inicio se hace explícita en vez de asumirla.
+- extendedWaitUntil:
+    notVisible: "Ingresar"
+    timeout: 30000
+- tapOn: "Inicio"
+- extendedWaitUntil:
+    visible: "Busca tu licor favorito"
+    timeout: 30000

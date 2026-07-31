@@ -1,0 +1,33 @@
+# Iniciar sesión con contraseña incorrecta: el mensaje REAL debe verse.
+#
+# Qué fallo caza: el incidente de julio-2026 en que apiFetch enmascaraba los
+# errores del backend y quien se equivocaba de contraseña veía "Error 401",
+# sin enterarse de que podía recuperarla. Este flujo mira la PANTALLA, que es
+# donde ese bug vivió: el contrato 3.1 del backend no puede ver el render.
+appId: co.estancocaqueta.express
+---
+- launchApp:
+    clearState: true
+
+# El primer bundle de Metro en frio puede tardar minutos: esperar a que la UI
+# real exista antes de tocar nada.
+- extendedWaitUntil:
+    visible: "Busca tu licor favorito"
+    timeout: 180000
+
+- tapOn: "Abrir mi perfil"
+- assertVisible: "Ingresar"
+- tapOn: "300 000 0000"
+- inputText: "3009999999"
+- hideKeyboard
+- tapOn: "••••••••"
+- inputText: "clave-equivocada"
+- hideKeyboard
+- tapOn: "Ingresar"
+
+# El mensaje real, con la pista de recuperación — no un código.
+- extendedWaitUntil:
+    visible: "Teléfono o contraseña incorrectos.*"
+    timeout: 10000
+- assertNotVisible: "Error 401"
+- assertNotVisible: "UNAUTHORIZED"

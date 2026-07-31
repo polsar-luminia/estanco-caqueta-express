@@ -1,0 +1,4 @@
+# Solo los flujos numerados: lib/ contiene subflujos (runFlow) que no deben
+# ejecutarse solos. El orden importa: 03 crea el pedido que 04 cancela.
+flows:
+  - "0*.yaml"

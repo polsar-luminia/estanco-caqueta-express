@@ -1,0 +1,71 @@
+# Buscar producto → agregar al carrito → confirmar pedido → ver el pedido.
+#
+# Qué fallo caza: el camino que produce TODO el ingreso de la app, de punta a
+# punta y con backend real. Si búsqueda, carrito, dirección o checkout se
+# rompen entre capas (contratos, navegación, estado), aquí truena.
+#
+# DESTRUCTIVO (crea un pedido): default-deny. El pedido queda 'recibido' y el
+# flujo 04 lo cancela — correr la carpeta completa deja la base limpia.
+appId: co.estancocaqueta.express
+---
+- evalScript: |
+    ${
+      (() => {
+        const seguros = ['staging', 'local', 'ci', 'dev'];
+        if (!seguros.includes(MAESTRO_ENV)) {
+          throw new Error('03-buscar-y-pedir crea un pedido real. Abortado: MAESTRO_ENV=' + (MAESTRO_ENV || 'undefined'));
+        }
+      })()
+    }
+
+- launchApp:
+    clearState: true
+
+# El primer bundle de Metro en frio puede tardar minutos: esperar a que la UI
+# real exista antes de tocar nada.
+- extendedWaitUntil:
+    visible: "Busca tu licor favorito"
+    timeout: 180000
+
+- runFlow: lib/login.yaml
+
+# Buscar
+# La barra del home navega a la pantalla de busqueda (el tab "Buscar" es
+# ambiguo para el matcher: choca con "Buscar productos" del header).
+- tapOn: "Busca tu licor favorito"
+- extendedWaitUntil:
+    visible: "Busca licores o snacks..."
+    timeout: 10000
+- tapOn: "Busca licores o snacks..."
+- inputText: "Ron"
+- extendedWaitUntil:
+    visible: "Ron Viejo de Caldas 750ml"
+    timeout: 10000
+- hideKeyboard
+- tapOn: "Ron Viejo de Caldas 750ml"
+
+# Ficha de producto → carrito
+- extendedWaitUntil:
+    visible: "Agregar al carrito"
+    timeout: 10000
+# OJO: este tap solo funciona porque Metro corre con EXPO_PUBLIC_E2E=1. Sin
+# eso, el toast de LogBox ("Open debugger...") se dibuja ENCIMA de esta barra
+# fija y se traga el tap sin que Maestro lo note (el paso sale COMPLETED).
+- tapOn: "Agregar al carrito"
+# Al agregar aparece la barra "TU PEDIDO / VER CARRITO": camino directo al carrito.
+- extendedWaitUntil:
+    visible: "VER CARRITO"
+    timeout: 8000
+- tapOn: "VER CARRITO"
+
+# La cuenta de prueba trae dirección predeterminada (la crea servidor-local:
+# agregarla desde la app pasa por el mapa y no es terreno para el robot).
+- assertVisible: "Calle 16.*"
+
+# Confirmar. El precio del producto ($42.000) supera el mínimo ($30.000).
+- tapOn: "Confirmar pedido.*"
+
+# Éxito: la app navega al detalle del pedido recién creado.
+- extendedWaitUntil:
+    visible: "Recibido"
+    timeout: 15000
