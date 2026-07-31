@@ -44,3 +44,11 @@ android/
 # Artefactos de las pruebas locales
 scripts/monkey-logs/
 .maestro/
+
+# Binarios descargados de compilaciones anteriores. Estaban en .gitignore pero
+# no aqui, asi que se subian enteros: 13 archivos, 534 MB, en cada build. No los
+# borramos del disco (sirven para instalar versiones viejas), solo dejan de
+# viajar a EAS.
+*.apk
+*.aab
+*.ipa
