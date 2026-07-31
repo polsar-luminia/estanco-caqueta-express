@@ -6,6 +6,7 @@ import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { type UbicacionCapturada } from "../lib/api";
 import { useUbicacionPicker } from "../stores/ubicacionPicker";
+import { useZonaEntrega } from "../hooks/useZonaEntrega";
 import { tracker } from "../lib/tracker";
 import { PermisoUbicacion } from "./PermisoUbicacion";
 import { colors, radii, shadows } from "../constants/theme";
@@ -62,6 +63,7 @@ function aUbicacion(pos: Location.LocationObject, geocoded: string | null): Ubic
 export function UbicacionButton({ value, onChange }: Props) {
   const router = useRouter();
   const abrirPicker = useUbicacionPicker((s) => s.abrir);
+  const { fueraDeZona } = useZonaEntrega();
   const [estado, setEstado] = useState<Estado>("idle");
   const [error, setError] = useState<string | null>(null);
   const [abrirAjustes, setAbrirAjustes] = useState(false);
@@ -121,9 +123,12 @@ export function UbicacionButton({ value, onChange }: Props) {
 
       // 1) INSTANTÁNEO (como Rappi): mostramos ya la última ubicación conocida y
       //    seguimos afinando en segundo plano. Solo si el SO tiene un fix reciente.
+      //    Si el último fix quedó fuera de la zona de reparto no se muestra nada
+      //    todavía: puede ser un fix viejo de un viaje, y el veredicto lo da el
+      //    fix fresco de abajo.
       const last = await Location.getLastKnownPositionAsync({ maxAge: 300000 }).catch(() => null);
       let entregada = false;
-      if (last && vigente()) {
+      if (last && vigente() && !fueraDeZona(last.coords.latitude, last.coords.longitude)) {
         onChange(aUbicacion(last, null));
         entregada = true;
         setRefinando(true);
@@ -149,6 +154,21 @@ export function UbicacionButton({ value, onChange }: Props) {
       }
 
       if (fresh && vigente()) {
+        // GPS fuera de la zona de reparto: la persona no está en Florencia, así
+        // que su ubicación actual no sirve como punto de entrega. No se fija el
+        // pin (y se retira el provisional si alcanzó a salir del fast-path). El
+        // mapa queda como salida para pedir hacia una dirección que sí esté en
+        // la zona.
+        if (fueraDeZona(fresh.coords.latitude, fresh.coords.longitude)) {
+          tracker.track(
+            "fuera_de_zona",
+            { lat: fresh.coords.latitude, lng: fresh.coords.longitude },
+            "carrito",
+          );
+          if (entregada) onChange(null);
+          setError("Estás fuera de nuestra zona de entrega. Si el pedido es para una dirección en Florencia, ubícala en el mapa.");
+          return;
+        }
         const g = await reverseGeocode(fresh.coords.latitude, fresh.coords.longitude);
         if (vigente()) onChange(aUbicacion(fresh, g));
       }

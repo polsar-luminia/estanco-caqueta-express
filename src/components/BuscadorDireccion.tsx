@@ -22,6 +22,8 @@ import {
 import { nuevoUuidV4 } from "../lib/uuid";
 import { colors, radii } from "../constants/theme";
 import type { UbicacionCapturada } from "../lib/api";
+import { useZonaEntrega } from "../hooks/useZonaEntrega";
+import { tracker } from "../lib/tracker";
 
 const DEBOUNCE_MS = 350;
 
@@ -60,6 +62,10 @@ export function BuscadorDireccion({
   const [sugerencias, setSugerencias] = useState<SugerenciaDireccion[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [resolviendo, setResolviendo] = useState(false);
+  // Dirección elegida fuera de la zona de reparto: se rechaza y se explica aquí
+  // mismo, debajo del campo. Se limpia apenas el cliente vuelve a escribir.
+  const [errorZona, setErrorZona] = useState<string | null>(null);
+  const { fueraDeZona } = useZonaEntrega();
   // Una sola sesión desde que empieza a escribir hasta que elige: Google cobra
   // por sesión, no por tecla. Sin esto, cada letra sería una búsqueda facturable.
   const sesionRef = useRef<string>(nuevoUuidV4());
@@ -108,6 +114,17 @@ export function BuscadorDireccion({
     setResolviendo(false);
     if (!r) return;
 
+    // El proxy de Places restringe las sugerencias a un círculo de 15 km, pero la
+    // zona de reparto es más chica: en ese anillo Google resuelve direcciones a
+    // las que no se llega. Se rechaza aquí, antes de poner el pin — sin esto el
+    // rechazo se lo daría el servidor al final del checkout, que es peor momento.
+    if (fueraDeZona(r.lat, r.lng)) {
+      tracker.track("fuera_de_zona", { lat: r.lat, lng: r.lng }, "buscador_direccion");
+      setErrorZona("Esa dirección está fuera de nuestra zona de entrega. Por ahora no llegamos hasta allá.");
+      return;
+    }
+    setErrorZona(null);
+
     ignorarProximaRef.current = true;
     onChangeText(r.direccion || s.principal);
     onUbicacion({
@@ -140,13 +157,16 @@ export function BuscadorDireccion({
           placeholder={placeholder}
           placeholderTextColor={colors.faint}
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={(t) => {
+            setErrorZona(null);
+            onChangeText(t);
+          }}
           accessibilityLabel={accessibilityLabel}
         />
         {(buscando || resolviendo) && <ActivityIndicator size="small" color={colors.green} />}
         {value.length > 0 && !buscando && !resolviendo && (
           <Pressable
-            onPress={() => { onChangeText(""); setSugerencias([]); }}
+            onPress={() => { onChangeText(""); setSugerencias([]); setErrorZona(null); }}
             hitSlop={12}
             accessibilityRole="button"
             accessibilityLabel="Borrar la dirección escrita"
@@ -155,6 +175,15 @@ export function BuscadorDireccion({
           </Pressable>
         )}
       </View>
+
+      {errorZona && (
+        <Text
+          accessibilityRole="alert"
+          style={{ fontSize: 12, color: colors.danger, marginTop: 6, paddingHorizontal: 4 }}
+        >
+          {errorZona}
+        </Text>
+      )}
 
       {!silenciado && sugerencias.length > 0 && (
         <View
