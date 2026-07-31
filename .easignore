@@ -15,7 +15,10 @@ __tests__
 *.p12
 *.key
 *.mobileprovision
-google-services.json
+# google-services.json NO va aqui: el prebuild de Android lo necesita y sin el
+# falla con ENOENT. Y no es un secreto — viaja dentro de cada APK publicado,
+# cualquiera lo extrae descomprimiendo el paquete. El secreto de verdad es la
+# llave de servicio FCM, que vive en las credenciales de Expo.
 GoogleService-Info.plist
 code-signing/private-key.pem
 
