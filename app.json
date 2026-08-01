@@ -2,7 +2,7 @@
   "expo": {
     "name": "Estanco Caquetá Express",
     "slug": "estanco-caqueta-express",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "estancocaqueta",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "co.estancocaqueta.express",
-      "buildNumber": "77",
+      "buildNumber": "78",
       "associatedDomains": [
         "applinks:estancocaqueta.com"
       ],
@@ -41,7 +41,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "co.estancocaqueta.express",
-      "versionCode": 77,
+      "versionCode": 78,
       "googleServicesFile": "./google-services.json"
     },
     "plugins": [
