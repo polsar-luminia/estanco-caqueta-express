@@ -21,7 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Toast from "react-native-toast-message";
 import { Feather } from "@expo/vector-icons";
 import { getDirecciones, crearDireccion, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
@@ -34,6 +34,7 @@ const ETIQUETAS = ["Casa", "Trabajo", "Otro"];
 
 export default function DireccionInicialScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const [etiqueta, setEtiqueta] = useState("Casa");
   const [direccion, setDireccion] = useState("");
@@ -70,6 +71,10 @@ export default function DireccionInicialScreen() {
     // segundo argumento, y react-query le pasaria ahi su propio contexto.
     mutationFn: (datos: Parameters<typeof crearDireccion>[0]) => crearDireccion(datos),
     onSuccess: () => {
+      // La lista de direcciones se consultó vacía segundos antes de guardar y el
+      // caché la sirve por 5 minutos: sin invalidarla, el carrito y Mis
+      // direcciones muestran "sin direcciones" justo después de guardar una.
+      queryClient.invalidateQueries({ queryKey: ["direcciones"] });
       tracker.track("direccion_inicial_guardada", undefined, "direccion-inicial");
       Toast.show({ type: "success", text1: "Listo, ya tienes tu dirección" });
       router.replace("/(tabs)");
