@@ -7,6 +7,7 @@ import Constants from "expo-constants";
 import { useRouter, type Href } from "expo-router";
 import NetInfo from "@react-native-community/netinfo";
 import { registrarPushToken } from "../lib/api";
+import { tracker } from "../lib/tracker";
 import { queryClient } from "../lib/query-client";
 import { useAuthStore, registerLogoutHandler } from "../stores/auth";
 
@@ -61,12 +62,25 @@ async function obtenerPushToken(): Promise<string | null> {
     return null;
   }
 
-  const { status: existente } = await Notifications.getPermissionsAsync();
-  let status = existente;
+  const previo = await Notifications.getPermissionsAsync();
+  let status = previo.status;
 
   if (status !== "granted") {
+    // Si el SO ya no permite volver a preguntar (denied definitivo),
+    // requestPermissionsAsync devuelve denied SIN mostrar nada: eso no es una
+    // decisión nueva del usuario y registrarla inflaría los rechazos.
+    const huboPrompt = previo.canAskAgain !== false;
+    if (huboPrompt) {
+      tracker.track("push_permiso_pedido", { origen: "sesion" });
+    }
     const { status: nuevo } = await Notifications.requestPermissionsAsync();
     status = nuevo;
+    if (huboPrompt) {
+      tracker.track(
+        status === "granted" ? "push_permiso_concedido" : "push_permiso_negado",
+        { origen: "sesion" }
+      );
+    }
   }
 
   if (status !== "granted") {

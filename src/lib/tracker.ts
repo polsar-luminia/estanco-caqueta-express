@@ -94,7 +94,11 @@ export type EventTipo =
   // D — motor de ETA
   | 'eta_mostrado'
   // F — ubicación obligatoria
-  | 'ubicacion_pin_manual_elegido';
+  | 'ubicacion_pin_manual_elegido'
+  // Fase 0 push (2026-08-05) — opt-in del permiso de notificaciones
+  | 'push_permiso_pedido'
+  | 'push_permiso_concedido'
+  | 'push_permiso_negado';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -197,6 +201,16 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // va a costar pedidos: si casi nadie elige el mapa y muchos niegan el permiso,
   // la bandera no se prende.
   ubicacion_pin_manual_elegido: [],
+
+  // --- Fase 0 push (2026-08-05) ---
+  // El permiso de push por fin se mide, como el de ubicación: sin la tasa de
+  // opt-in no se puede evaluar el push a usuarios sin cuenta. `origen` dice en
+  // qué momento se pidió ('sesion' hoy; 'carrito' cuando exista el opt-in
+  // anónimo de la fase 1). Solo se registra cuando el prompt del SO se mostró
+  // de verdad: un denied heredado no es una decisión nueva.
+  push_permiso_pedido: ['origen'],
+  push_permiso_concedido: ['origen'],
+  push_permiso_negado: ['origen'],
 };
 
 function aplicarAllowlist(
