@@ -9,6 +9,7 @@ import { tracker } from "../../../src/lib/tracker";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline";
 import { TarjetaResena } from "../../../src/components/TarjetaResena";
+import { ChatPedido } from "../../../src/components/ChatPedido";
 import { SkeletonBox } from "../../../src/components/skeletons/SkeletonBox";
 import { ErrorState } from "../../../src/components/ErrorState";
 
@@ -43,7 +44,13 @@ function OrderDetailSkeleton() {
 export default function OrderDetailScreen() {
   // `calificar=1` llega del deep link del push de reseña: abre el formulario ya
   // desplegado. Si el cliente tiene que buscar dónde calificar, no califica.
-  const { id, calificar } = useLocalSearchParams<{ id: string; calificar?: string }>();
+  // `chat=1` llega del deep link del push de mensaje nuevo: abre el hilo ya
+  // desplegado, por el mismo motivo que `calificar=1` baja hasta la reseña.
+  const { id, calificar, chat } = useLocalSearchParams<{
+    id: string;
+    calificar?: string;
+    chat?: string;
+  }>();
   const pedidoId = id && id.trim() ? Number(id) : NaN;
   const queryClient = useQueryClient();
 
@@ -221,6 +228,12 @@ export default function OrderDetailScreen() {
           </Text>
         </View>
       </View>
+
+      {/* Chat con el domiciliario (bloque 5 de la app de operaciones). Quién lo
+          ve y quién puede escribir lo decide el SERVIDOR, con las mismas reglas
+          que aplica la app del domiciliario; el componente se esconde solo
+          cuando no corresponde o cuando la bandera está apagada. */}
+      <ChatPedido pedidoId={pedido.id} estado={pedido.estado} abrirAlEntrar={chat === "1"} />
 
       {/* Calificación (bloque C). Solo en pedidos entregados: preguntarle a alguien
           que todavía está esperando cómo le fue es la peor forma de preguntarlo. */}

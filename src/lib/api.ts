@@ -359,6 +359,45 @@ export async function crearResena(pedidoId: number, estrellas: number, comentari
   });
 }
 
+// --- Chat del pedido (bloque 5 de la app de operaciones) ---
+
+export interface MensajePedido {
+  id: number;
+  autor_tipo: "cliente" | "staff";
+  cuerpo: string;
+  created_at: string;
+  autor_staff_nombre: string | null;
+}
+
+export interface HiloPedido {
+  /** El hilo se puede ver (aunque sea en solo lectura). */
+  visible: boolean;
+  /** Se puede escribir. Solo mientras el pedido va en camino con domiciliario. */
+  escribible: boolean;
+  /** 'aun_no_sale' | 'pedido_cerrado' | null. Es lo que se le explica al cliente. */
+  motivo: string | null;
+  mensajes: MensajePedido[];
+}
+
+/**
+ * Mensajes del hilo, desde `desde` en adelante. Sondeo incremental a propósito:
+ * traer el hilo entero cada pocos segundos sería gastar los datos móviles de
+ * quien los tiene contados.
+ *
+ * Devuelve 503 con `apagado: true` mientras la bandera `chat_pedido_activo` esté
+ * apagada, que es como sale. La UI se esconde entera en ese caso.
+ */
+export async function getMensajesPedido(pedidoId: number, desde = 0) {
+  return apiFetch<HiloPedido>(`/pedidos/${pedidoId}/mensajes?desde=${desde}`);
+}
+
+export async function enviarMensajePedido(pedidoId: number, cuerpo: string) {
+  return apiFetch<MensajePedido>(`/pedidos/${pedidoId}/mensajes`, {
+    method: "POST",
+    body: JSON.stringify({ cuerpo }),
+  });
+}
+
 export async function getPedidos() {
   return apiFetch<Pedido[]>("/pedidos");
 }

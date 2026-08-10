@@ -95,6 +95,9 @@ export type EventTipo =
   | 'eta_mostrado'
   // F — ubicación obligatoria
   | 'ubicacion_pin_manual_elegido'
+  // Chat con el domiciliario (bloque 5 de la app de operaciones)
+  | 'chat_abierto'
+  | 'chat_mensaje_enviado'
   // Fase 0 push (2026-08-05) — opt-in del permiso de notificaciones
   | 'push_permiso_pedido'
   | 'push_permiso_concedido'
@@ -201,6 +204,15 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // va a costar pedidos: si casi nadie elige el mapa y muchos niegan el permiso,
   // la bandera no se prende.
   ubicacion_pin_manual_elegido: [],
+
+  // --- Chat con el domiciliario (bloque 5 de la app de operaciones) ---
+  // ¿Cuánta gente llega siquiera a ver el hilo? Es el denominador: sin él,
+  // "20 mensajes esta semana" no dice si el chat sirve o si nadie lo encuentra.
+  chat_abierto: ['pedido_id'],
+  // Solo el LARGO del mensaje, nunca el contenido. Lo que se hable de una
+  // entrega —la dirección, con quién dejarlo, el nombre del portero— no tiene
+  // por qué salir del teléfono dentro de un evento de analítica.
+  chat_mensaje_enviado: ['pedido_id', 'largo'],
 
   // --- Fase 0 push (2026-08-05) ---
   // El permiso de push por fin se mide, como el de ubicación: sin la tasa de
