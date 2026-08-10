@@ -16,7 +16,7 @@
 
 import { Modal, View, Text, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { colors, radii } from "../constants/theme";
+import { colors } from "../constants/theme";
 
 export interface PermisoUbicacionProps {
   visible: boolean;

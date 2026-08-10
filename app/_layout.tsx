@@ -13,6 +13,7 @@ import { getToken } from "../src/lib/api";
 import { useAuthStore } from "../src/stores/auth";
 import { usePushNotifications } from "../src/hooks/usePushNotifications";
 import { tracker } from "../src/lib/tracker";
+import { debeConfirmarEdad } from "../src/lib/guardEdad";
 import { initMetaAnalytics } from "../src/lib/metaEvents";
 import { toastConfig } from "../src/components/ToastConfig";
 import { OfflineBanner } from "../src/components/OfflineBanner";
@@ -31,9 +32,6 @@ import { useQuery } from "@tanstack/react-query";
 if (process.env.EXPO_PUBLIC_E2E === "1") {
   LogBox.ignoreAllLogs(true);
 }
-
-// Rutas exentas del age gate (autenticación pública). Todo lo demás requiere edad confirmada.
-const RUTAS_EXENTAS_EDAD = ["(auth)"];
 
 // Apple §5.1.1(v) — el catálogo debe ser navegable sin login (guest browsing).
 // Por eso usamos blacklist (rutas que SÍ exigen sesión) en vez de whitelist:
@@ -143,7 +141,8 @@ export default Sentry.wrap(function RootLayout() {
   //     El catálogo, ofertas, product/[id], category/[id] y support son
   //     accesibles como invitado. Cart/orders hacen su propio Redirect interno.
   //   - Con sesión y sin edad confirmada (Apple §1.4.3): salta a /edad-confirmar
-  //     excepto si ya está en (auth).
+  //     excepto en las rutas exentas. La decisión vive en debeConfirmarEdad(),
+  //     que exige un `false` explícito: `cliente` en null NO es "no confirmó".
   useEffect(() => {
     if (isLoading) return;
     const rutaActual = segments[0] as string | undefined;
@@ -155,10 +154,8 @@ export default Sentry.wrap(function RootLayout() {
       return;
     }
 
-    if (!edadConfirmada) {
-      if (rutaActual && !RUTAS_EXENTAS_EDAD.includes(rutaActual)) {
-        router.replace("/(auth)/edad-confirmar");
-      }
+    if (debeConfirmarEdad(rutaActual, edadConfirmada)) {
+      router.replace("/(auth)/edad-confirmar");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [edadConfirmada, isAuthenticated, isLoading, segments]);
