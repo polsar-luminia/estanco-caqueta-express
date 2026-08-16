@@ -21,7 +21,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "../constants/config";
 
-export const STAGING_URL = "https://api.estancocaqueta.com:8443/api/v1";
+// El vhost viejo (api.estancocaqueta.com:8443) sigue sirviendo el mismo staging:
+// el build 80 de TestFlight lo lleva grabado. Los builds desde este commit usan
+// el dominio dedicado.
+export const STAGING_URL = "https://pruebas.estancocaqueta.com/api/v1";
 
 // Numeros que SIEMPRE trabajan contra staging. Solo cuentas del equipo.
 export const TELEFONOS_PRUEBA = ["3183224021"];
