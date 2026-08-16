@@ -576,6 +576,11 @@ export interface Pedido {
   subtotal: number;
   total: number;
   created_at: string;
+  // Desglose del total en el detalle (derivados por el servidor): sin el
+  // renglón del domicilio, el total parecía no cuadrar con los productos.
+  costo_domicilio?: number;
+  descuento?: number;
+  cupon_codigo?: string | null;
   preparado_at?: string;
   listo_at?: string;
   despachado_at?: string;

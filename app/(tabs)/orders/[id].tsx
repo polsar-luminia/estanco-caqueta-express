@@ -219,6 +219,30 @@ export default function OrderDetailScreen() {
           </View>
         ))}
 
+        {/* Domicilio. El total SIEMPRE lo incluyó, pero sin este renglón el
+            desglose no cuadraba a ojo (visto 16-ago: productos + frío ≠ total).
+            $0 se dice "¡Gratis!" — es un logro del cliente, no un vacío. */}
+        {pedido.costo_domicilio != null && (
+          <View className="border-t border-gray-100 mt-2 pt-3 flex-row justify-between items-center">
+            <Text className="text-sm text-gray-600">Domicilio</Text>
+            {pedido.costo_domicilio > 0 ? (
+              <Text className="text-sm font-semibold text-on-surface">{formatCOP(pedido.costo_domicilio)}</Text>
+            ) : (
+              <Text className="text-sm font-bold text-brand-600">¡Gratis!</Text>
+            )}
+          </View>
+        )}
+        {(pedido.descuento ?? 0) > 0 && (
+          <View className="border-t border-gray-100 mt-2 pt-3 flex-row justify-between items-center">
+            <Text className="text-sm text-gray-600">
+              Descuento{pedido.cupon_codigo ? ` (${pedido.cupon_codigo})` : ""}
+            </Text>
+            <Text className="text-sm font-semibold" style={{ color: "#D33587" }}>
+              -{formatCOP(pedido.descuento ?? 0)}
+            </Text>
+          </View>
+        )}
+
         {/* Frío asegurado. Cuando el cargo se quitó porque no alcanzó a estar
             frío, el cliente tiene que verlo aquí: sin eso nunca se entera de que
             cumplimos y el cobro se siente como una estafa. */}
