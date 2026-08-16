@@ -8,7 +8,6 @@ import { type UbicacionCapturada } from "../lib/api";
 import { useUbicacionPicker } from "../stores/ubicacionPicker";
 import { useZonaEntrega } from "../hooks/useZonaEntrega";
 import { tracker } from "../lib/tracker";
-import { PermisoUbicacion } from "./PermisoUbicacion";
 import { colors, radii, shadows } from "../constants/theme";
 
 // Botón "Usar mi ubicación actual" (Geolocalización Fase 1).
@@ -68,25 +67,18 @@ export function UbicacionButton({ value, onChange }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [abrirAjustes, setAbrirAjustes] = useState(false);
   const [refinando, setRefinando] = useState(false);
-  const [mostrarPriming, setMostrarPriming] = useState(false);
   // Cada captura tiene un id; los updates en segundo plano de una captura vieja
   // (o cancelada con "Quitar") se descartan.
   const sesionRef = useRef(0);
 
-  // Tocar el botón ya NO dispara el diálogo del sistema. Primero se explica para
-  // qué, porque ese diálogo solo se puede mostrar una vez en la vida de la app:
-  // quemarlo con quien habría dicho que sí de haber entendido es irreversible.
-  // Si el permiso ya está resuelto (concedido, o negado sin poder volver a pedir),
-  // la hoja no aporta nada y se salta.
-  const onTocarUsarUbicacion = async () => {
+  // Tocar el botón dispara DIRECTO el diálogo del sistema (decisión del dueño,
+  // 16-ago-2026): la hoja explicativa previa era fricción y la finalidad del
+  // dato ya está declarada en la política de privacidad. El costo asumido: el
+  // diálogo de iOS solo se muestra una vez, y un "no" en frío es permanente —
+  // desde ahí el camino es "Abrir Ajustes" o el mapa, que no pide permiso.
+  const onTocarUsarUbicacion = () => {
     if (estado === "capturando") return;
-    const perm = await Location.getForegroundPermissionsAsync().catch(() => null);
-    if (perm?.granted || perm?.canAskAgain === false) {
-      capturar();
-      return;
-    }
-    tracker.track("ubicacion_permiso_pedido", undefined, "carrito");
-    setMostrarPriming(true);
+    capturar();
   };
 
   const capturar = async () => {
@@ -98,9 +90,14 @@ export function UbicacionButton({ value, onChange }: Props) {
     setAbrirAjustes(false);
     setEstado("capturando");
     try {
+      // Solo cuenta como "pedido" si el dialogo del SO se va a mostrar de
+      // verdad: un denied heredado que responde en silencio no es una decision.
+      const previo = await Location.getForegroundPermissionsAsync().catch(() => null);
+      const huboPrompt = !previo?.granted && previo?.canAskAgain !== false;
+      if (huboPrompt) tracker.track("ubicacion_permiso_pedido", undefined, "carrito");
       const perm = await Location.requestForegroundPermissionsAsync();
       if (!perm.granted) {
-        tracker.track("ubicacion_permiso_negado", undefined, "carrito");
+        if (huboPrompt) tracker.track("ubicacion_permiso_negado", undefined, "carrito");
         // El texto ya no manda a "escribir la dirección": con el bloque F el texto
         // libre es una REFERENCIA, no un sustituto del punto. La salida real es el
         // mapa, que funciona sin ningún permiso.
@@ -112,7 +109,7 @@ export function UbicacionButton({ value, onChange }: Props) {
         }
         return;
       }
-      tracker.track("ubicacion_permiso_concedido", undefined, "carrito");
+      if (huboPrompt) tracker.track("ubicacion_permiso_concedido", undefined, "carrito");
 
       // ¿Los servicios de ubicación del sistema están encendidos?
       const serviciosOn = await Location.hasServicesEnabledAsync().catch(() => true);
@@ -291,7 +288,10 @@ export function UbicacionButton({ value, onChange }: Props) {
 
       {estado !== "capturando" ? (
         <Pressable
-          onPress={abrirMapa}
+          onPress={() => {
+            tracker.track("ubicacion_pin_manual_elegido", undefined, "carrito");
+            abrirMapa();
+          }}
           hitSlop={14}
           accessibilityRole="button"
           accessibilityLabel="Ubicar mi dirección en el mapa"
@@ -301,20 +301,6 @@ export function UbicacionButton({ value, onChange }: Props) {
           <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D7B6C" }}>o ubícalo en el mapa</Text>
         </Pressable>
       ) : null}
-
-      <PermisoUbicacion
-        visible={mostrarPriming}
-        onUsarUbicacion={() => {
-          setMostrarPriming(false);
-          capturar();
-        }}
-        onPonerAMano={() => {
-          setMostrarPriming(false);
-          tracker.track("ubicacion_pin_manual_elegido", undefined, "carrito");
-          abrirMapa();
-        }}
-        onCerrar={() => setMostrarPriming(false)}
-      />
 
       {error ? (
         <View style={{ marginTop: 6 }}>

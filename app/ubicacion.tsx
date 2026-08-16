@@ -123,8 +123,14 @@ export default function UbicacionScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar
   }, []);
 
+  // Pista de uso: el pin es fijo y lo que se arrastra es el MAPA. Sin esto,
+  // hasta el dueño de la app intentó arrastrar el pin (16-ago) — desaparece al
+  // primer movimiento real.
+  const [mostrarPista, setMostrarPista] = useState(true);
+
   // Al soltar el mapa: el centro es el nuevo punto. Debounce del reverse geocode.
   const onRegionChangeComplete = (r: Region) => {
+    setMostrarPista(false);
     centroRef.current = { latitude: r.latitude, longitude: r.longitude };
     // Una sola vez por visita: la pregunta es "¿usan el mapa o se rinden?", no
     // cuántas veces lo arrastraron. Medir el gesto continuo no responde nada.
@@ -236,6 +242,15 @@ export default function UbicacionScreen() {
             <Feather name="map-pin" size={36} color="#1FAF55" />
           </View>
         </View>
+
+        {/* Pista: arrastra el MAPA, no el pin */}
+        {mostrarPista && mapaListo ? (
+          <View pointerEvents="none" style={{ position: "absolute", top: 12, left: 0, right: 0, alignItems: "center" }}>
+            <View style={{ backgroundColor: "rgba(26,28,26,0.85)", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 }}>
+              <Text style={{ color: "#fff", fontSize: 12.5, fontWeight: "700" }}>Arrastra el mapa para ajustar el punto</Text>
+            </View>
+          </View>
+        ) : null}
 
         {/* Botón recentrar */}
         <Pressable

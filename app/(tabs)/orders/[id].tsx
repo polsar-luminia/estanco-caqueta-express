@@ -4,7 +4,7 @@ import { useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import Toast from "react-native-toast-message";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getPedido, cancelarPedido } from "../../../src/lib/api";
+import { getConfigApp, getPedido, cancelarPedido } from "../../../src/lib/api";
 import { tracker } from "../../../src/lib/tracker";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline";
@@ -71,6 +71,14 @@ export default function OrderDetailScreen() {
     // El margen de 16 deja ver que hay algo encima y que no es el tope.
     scrollRef.current?.scrollTo({ y: Math.max(0, yResena - 16), animated: true });
   }, [calificar, yResena]);
+
+  // Bandera de estados extendidos: decide si el timeline muestra los 6 pasos
+  // completos desde el arranque. Comparte caché con el carrito.
+  const { data: configApp } = useQuery({
+    queryKey: ['config-app'],
+    queryFn: getConfigApp,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data: pedido, isLoading, isError, refetch } = useQuery({
     queryKey: ["pedido", pedidoId],
@@ -155,7 +163,7 @@ export default function OrderDetailScreen() {
         <Text className="text-xs text-gray-400 mb-4 mt-1">
           Ref. soporte: #{pedido.id}
         </Text>
-        <OrderStatusTimeline estado={pedido.estado} pedido={pedido} />
+        <OrderStatusTimeline estado={pedido.estado} pedido={pedido} estadosExtendidos={configApp?.estados_extendidos_activo === true} />
 
         {/* El servidor ya resolvió el override del staff y la bandera: si llega un
             rango, se muestra; si llega null, no hay nada que prometer. Nunca se

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { View, Text, FlatList, TextInput, Pressable, Switch, KeyboardAvoidingView, Platform } from "react-native";
+import { Image as ImagenExpo } from "expo-image";
 import { useRouter, Redirect } from "expo-router";
 import * as Sentry from "@sentry/react-native";
 import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
@@ -136,6 +137,16 @@ export default function CartScreen() {
     queryFn: getConfigApp,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Precargar la pieza del recordatorio de frío APENAS se conoce su URL: la
+  // tarjeta aparece en el momento más caliente del checkout y antes se veía un
+  // recuadro azul vacío mientras bajaba la imagen. expo-image la deja en el
+  // caché de disco y el modal abre con el arte ya pintado.
+  useEffect(() => {
+    if (configApp?.frio_imagen_url) {
+      ImagenExpo.prefetch(configApp.frio_imagen_url).catch(() => {});
+    }
+  }, [configApp?.frio_imagen_url]);
 
   const { data: direcciones = [], refetch: refetchDirs } = useQuery({
     queryKey: ["direcciones"],
@@ -750,6 +761,11 @@ export default function CartScreen() {
                       if (u?.geocoded_direccion && (u.metodo_ubicacion === "pin_mapa" || !nuevaDireccion.trim())) {
                         setNuevaDireccion(u.geocoded_direccion);
                       }
+                      // Con el punto puesto (GPS o pin) las sugerencias solo
+                      // estorban: el auto-llenado del campo disparaba la
+                      // búsqueda como si el cliente hubiera tecleado. "Quitar"
+                      // (u = null) las devuelve.
+                      setSilenciadoDir(u != null);
                     }}
                   />
                   <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>

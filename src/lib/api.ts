@@ -971,6 +971,9 @@ export interface ConfigApp {
   // Bloqueo de versión (bloque G). '1.0.0' = dormido: toda versión lo cumple.
   version_minima?: string;
   version_minima_mensaje?: string;
+  // Estados extendidos (068): con la bandera prendida el timeline pinta los 6
+  // pasos desde el arranque (preparado y "llegó" incluidos).
+  estados_extendidos_activo?: boolean;
 }
 
 export async function getConfigApp(): Promise<ConfigApp> {

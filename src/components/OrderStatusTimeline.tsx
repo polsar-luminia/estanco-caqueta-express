@@ -9,16 +9,21 @@ import type { Pedido } from "../lib/api";
 // pedido viejo no muestra pasos que jamas paso.
 type Step = { key: string; label: string; timeKey: keyof Pedido };
 
-function stepsDelPedido(estado: string, pedido: Pedido): Step[] {
+function stepsDelPedido(estado: string, pedido: Pedido, extendidos: boolean): Step[] {
   const steps: Step[] = [
     { key: "recibido", label: "Recibido", timeKey: "created_at" },
     { key: "en_preparacion", label: "En preparación", timeKey: "preparado_at" },
   ];
-  if (pedido.listo_at || estado === "preparado") {
+  // Con la bandera del servidor prendida (estados_extendidos_activo, viaja en
+  // /configuracion-app) los 6 pasos se muestran desde el arranque: el cliente
+  // ve el camino completo que le espera. Sin bandera, los dos pasos nuevos solo
+  // aparecen si ocurrieron — un pedido de la operación clásica no muestra pasos
+  // por los que jamás va a pasar.
+  if (extendidos || pedido.listo_at || estado === "preparado") {
     steps.push({ key: "preparado", label: "Preparado", timeKey: "listo_at" });
   }
   steps.push({ key: "en_camino", label: "Despachado", timeKey: "despachado_at" });
-  if (pedido.llego_at || estado === "domiciliario_llego") {
+  if (extendidos || pedido.llego_at || estado === "domiciliario_llego") {
     steps.push({ key: "domiciliario_llego", label: "Tu domiciliario llegó", timeKey: "llego_at" });
   }
   steps.push({ key: "entregado", label: "Entregado", timeKey: "entregado_at" });
@@ -28,9 +33,10 @@ function stepsDelPedido(estado: string, pedido: Pedido): Step[] {
 interface Props {
   estado: string;
   pedido: Pedido;
+  estadosExtendidos?: boolean;
 }
 
-export function OrderStatusTimeline({ estado, pedido }: Props) {
+export function OrderStatusTimeline({ estado, pedido, estadosExtendidos = false }: Props) {
   if (estado === "cancelado") {
     return (
       <View style={{ alignItems: "center", paddingVertical: 16 }}>
@@ -42,7 +48,7 @@ export function OrderStatusTimeline({ estado, pedido }: Props) {
     );
   }
 
-  const STEPS = stepsDelPedido(estado, pedido);
+  const STEPS = stepsDelPedido(estado, pedido, estadosExtendidos);
   let currentIndex = STEPS.findIndex((s) => s.key === estado);
   if (currentIndex === -1) {
     // Estado que este binario no conoce: se resuelve por el ULTIMO paso con

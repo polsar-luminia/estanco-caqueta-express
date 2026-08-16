@@ -150,7 +150,10 @@ export default function DireccionesScreen() {
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
                   <Feather name="map-pin" size={16} color={d.predeterminada ? "#1FAF55" : "#9E9E9E"} />
                   <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    {/* flexWrap: con PREDETERMINADA + CON UBICACIÓN la fila se
+                        desbordaba por encima de la basura de eliminar y la
+                        dejaba intocable. Los chips ahora bajan de línea. */}
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                       <Text style={{ fontSize: 14, fontWeight: "700", color: "#1A1C1A" }}>{d.etiqueta}</Text>
                       {d.predeterminada && (
                         <View style={{ backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
@@ -170,7 +173,7 @@ export default function DireccionesScreen() {
                 </View>
                 <Pressable
                   onPress={() => handleEliminar(d.id)}
-                  style={{ padding: 4 }}
+                  style={{ padding: 4, marginLeft: 8 }}
                   // Icono de 16 px en la esquina de la tarjeta: el hitSlop lo lleva
                   // a 44 pt sin empujar el texto de la dirección.
                   hitSlop={12}
