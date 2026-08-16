@@ -357,6 +357,9 @@ export default function CartScreen() {
   const recordatorioMostradoRef = useRef<string | null>(null);
   // Datos ya validados del pedido, a la espera de que el cliente responda la tarjeta.
   const datosPedidoRef = useRef<DatosPedido | null>(null);
+  // registro_muro_mostrado: una vez por montaje del tab. Sin el guard, cada
+  // re-render del invitado con carrito contaría un rebote nuevo.
+  const muroTrackeadoRef = useRef(false);
 
   const handlePedir = async () => {
     if (submitLockRef.current) return;
@@ -368,10 +371,12 @@ export default function CartScreen() {
       tracker.track('checkout_iniciado', { items_count: items.length, subtotal }, 'cart');
     }
 
-    // Guía 5.1.1(v) — requerir login solo al momento del checkout
+    // Guía 5.1.1(v) — requerir cuenta solo al momento del checkout. A REGISTRO,
+    // no a login: la mayoría de invitados no tiene cuenta todavía, y el pie del
+    // registro ya ofrece "¿Ya tienes una cuenta? Iniciar sesión" para el que sí.
     if (!cliente) {
-      tracker.track('checkout_abandonado', { paso: 'login', items_count: items.length }, 'cart');
-      router.push("/(auth)/login");
+      tracker.track('checkout_abandonado', { paso: 'registro', items_count: items.length }, 'cart');
+      router.push("/(auth)/register");
       return;
     }
 
@@ -595,12 +600,20 @@ export default function CartScreen() {
   };
 
   // Apple §5.1.1(v): el catálogo es público pero el checkout requiere sesión.
-  // Items en el cart (Zustand persistido) sobreviven el login y se mantienen
+  // Items en el cart (Zustand persistido) sobreviven el registro y se mantienen
   // disponibles al volver. Bloqueamos cart únicamente cuando hay items pendientes
   // (un guest que solo abre el tab ve la pantalla vacía y puede volver a explorar).
+  // A REGISTRO, no a login: la mayoría de invitados no tiene cuenta, y el pie del
+  // registro ya ofrece "¿Ya tienes una cuenta? Iniciar sesión" para el que sí.
   if (isAuthLoading) return null;
   if (!isAuthenticated && items.length > 0) {
-    return <Redirect href="/(auth)/login" />;
+    // El rebote se mide UNA vez por montaje: es la base del embudo
+    // muro → codigo_solicitado → registro_completado. Antes era invisible.
+    if (!muroTrackeadoRef.current) {
+      muroTrackeadoRef.current = true;
+      tracker.track('registro_muro_mostrado', { items_count: items.length, subtotal }, 'cart');
+    }
+    return <Redirect href="/(auth)/register" />;
   }
 
   if (items.length === 0) {

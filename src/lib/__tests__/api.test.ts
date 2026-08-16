@@ -8,7 +8,13 @@ vi.mock("expo-secure-store", () => ({
 vi.mock("../../constants/config", () => ({ API_URL: "http://test.local/api/v1" }));
 
 import * as SecureStore from "expo-secure-store";
-import { apiFetch, registerUnauthorizedHandler } from "../api";
+import {
+  apiFetch,
+  registerUnauthorizedHandler,
+  registrarCliente,
+  solicitarCodigoRegistro,
+  type ApiError,
+} from "../api";
 
 // Helper para crear una Response mock
 function mockResponse(
@@ -184,5 +190,62 @@ describe("apiFetch", () => {
     await expect(apiFetch("/x")).rejects.toThrow(
       "Error del servidor, intenta de nuevo"
     );
+  });
+
+  it("el error lleva status y body adjuntos (para distinguir 409/429/503 sin regex)", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
+    vi.mocked(fetch).mockResolvedValue(
+      mockResponse(503, {
+        error: "Servicio de verificación temporalmente no disponible. Escríbenos por WhatsApp y te ayudamos.",
+        soporte_url: "https://wa.me/573155519216",
+        codigo_error: "OTP_UNAVAILABLE",
+        mostrable: true,
+      })
+    );
+    let capturado: ApiError | null = null;
+    try {
+      await apiFetch("/clientes/registrar/solicitar-codigo", { method: "POST", body: "{}" });
+    } catch (e) {
+      capturado = e as ApiError;
+    }
+    expect(capturado?.status).toBe(503);
+    expect(capturado?.body?.soporte_url).toBe("https://wa.me/573155519216");
+    expect(capturado?.body?.codigo_error).toBe("OTP_UNAVAILABLE");
+    // mostrable: el mensaje del backend se muestra tal cual
+    expect(capturado?.message).toMatch(/Escríbenos por WhatsApp/);
+  });
+});
+
+describe("OTP del registro — contratos de request", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", vi.fn());
+    vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("solicitarCodigoRegistro → POST /clientes/registrar/solicitar-codigo con {telefono}", async () => {
+    vi.mocked(fetch).mockResolvedValue(mockResponse(200, { mensaje: "Código enviado por WhatsApp.", canal: "whatsapp" }));
+    const res = await solicitarCodigoRegistro("3001234567");
+    const [url, opts] = vi.mocked(fetch).mock.calls[0];
+    expect(url).toBe("http://test.local/api/v1/clientes/registrar/solicitar-codigo");
+    expect(JSON.parse((opts as any).body)).toEqual({ telefono: "3001234567" });
+    expect(res.canal).toBe("whatsapp");
+  });
+
+  it("registrarCliente CON codigo → el body lo incluye", async () => {
+    vi.mocked(fetch).mockResolvedValue(mockResponse(201, { token: "t", cliente: { id: 1 } }));
+    await registrarCliente("3001234567", "Juan", "password123", "2000-01-15", false, "123456");
+    const [, opts] = vi.mocked(fetch).mock.calls[0];
+    expect(JSON.parse((opts as any).body).codigo).toBe("123456");
+  });
+
+  it("registrarCliente SIN codigo → el body NO lleva la key (contrato de binarios viejos)", async () => {
+    vi.mocked(fetch).mockResolvedValue(mockResponse(201, { token: "t", cliente: { id: 1 } }));
+    await registrarCliente("3001234567", "Juan", "password123", "2000-01-15", false);
+    const [, opts] = vi.mocked(fetch).mock.calls[0];
+    expect("codigo" in JSON.parse((opts as any).body)).toBe(false);
   });
 });

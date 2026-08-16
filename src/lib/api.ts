@@ -132,6 +132,7 @@ export async function apiFetch<T = any>(
       'confirmado debe ser true': 'Debes confirmar para continuar',
       'Este número no está registrado.': 'Este número no está registrado.',
       'Espera 1 minuto antes de pedir otro código.': 'Espera un minuto antes de pedir otro código.',
+      'Demasiados códigos solicitados. Intenta de nuevo en 15 minutos.': 'Demasiados códigos solicitados. Intenta de nuevo en 15 minutos.',
       'Código inválido o expirado': 'Código inválido o expirado',
       'La contraseña debe tener al menos 8 caracteres': 'La contraseña debe tener al menos 8 caracteres',
     };
@@ -160,13 +161,25 @@ export async function apiFetch<T = any>(
     if (__DEV__ && errorField && !ERRORES_USUARIO[errorField]) {
       console.warn(`[apiFetch] body.error sin whitelist → enmascarado. status=${res.status} path=${path} error="${errorField}"`);
     }
-    throw new Error(msg);
+    // status y body viajan en el error (aditivo: quien solo lee .message no
+    // cambia). Permite distinguir 409/429/503 sin regex sobre el texto, y leer
+    // campos como soporte_url del 503 de OTP.
+    const apiError = new Error(msg) as ApiError;
+    apiError.status = res.status;
+    if (bodyParsed) apiError.body = body;
+    throw apiError;
   }
 
   return res.json();
 }
 
 // --- Auth ---
+
+/** Error de apiFetch con el status HTTP y el body original adjuntos. */
+export type ApiError = Error & {
+  status?: number;
+  body?: { error?: string; soporte_url?: string; codigo_error?: string } & Record<string, unknown>;
+};
 
 export async function loginCliente(telefono: string, password: string) {
   return apiFetch<{ token: string; cliente: Cliente }>("/clientes/login", {
@@ -175,16 +188,31 @@ export async function loginCliente(telefono: string, password: string) {
   });
 }
 
+/**
+ * Envía el OTP de verificación del teléfono ANTES de crear la cuenta.
+ * `canal` dice por dónde salió de verdad (WhatsApp, o SMS si la WABA falló):
+ * el copy del paso 2 del registro depende de eso.
+ */
+export async function solicitarCodigoRegistro(telefono: string) {
+  return apiFetch<{ mensaje: string; canal: "whatsapp" | "sms" }>(
+    "/clientes/registrar/solicitar-codigo",
+    { method: "POST", body: JSON.stringify({ telefono }) },
+  );
+}
+
 export async function registrarCliente(
   telefono: string,
   nombre: string,
   password: string,
   fecha_nacimiento: string,
   acepta_mercadeo: boolean,
+  codigo?: string,
 ) {
   return apiFetch<{ token: string; cliente: Cliente }>("/clientes/registrar", {
     method: "POST",
-    body: JSON.stringify({ telefono, nombre, password, fecha_nacimiento, acepta_mercadeo }),
+    // `codigo` solo viaja si viene: el body sin codigo es el contrato que los
+    // binarios viejos siguen usando y el backend trata como registro sin verificar.
+    body: JSON.stringify({ telefono, nombre, password, fecha_nacimiento, acepta_mercadeo, ...(codigo ? { codigo } : {}) }),
   });
 }
 

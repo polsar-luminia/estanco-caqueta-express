@@ -107,11 +107,26 @@ describe("useAuthStore", () => {
       await useAuthStore.getState().register(
         "3009876543", "Luis", "password123", "2000-01-15", false
       );
+      // El sexto argumento (codigo OTP) viaja tal cual; sin codigo va undefined
+      // y api.ts lo omite del body (contrato de compat con binarios viejos).
       expect(api.registrarCliente).toHaveBeenCalledWith(
-        "3009876543", "Luis", "password123", "2000-01-15", false
+        "3009876543", "Luis", "password123", "2000-01-15", false, undefined
       );
       expect(api.setToken).toHaveBeenCalledWith("reg-tok");
       expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    });
+
+    it("propaga el codigo OTP al api (registro con telefono verificado)", async () => {
+      vi.mocked(api.registrarCliente).mockResolvedValue({
+        token: "reg-tok",
+        cliente: { id: 12, telefono: "3009876545", nombre: "Rosa" } as any,
+      });
+      await useAuthStore.getState().register(
+        "3009876545", "Rosa", "password123", "2000-01-15", false, "123456"
+      );
+      expect(api.registrarCliente).toHaveBeenCalledWith(
+        "3009876545", "Rosa", "password123", "2000-01-15", false, "123456"
+      );
     });
 
     // La decision de mercadeo tiene que llegar al backend tal cual. Si el store la
@@ -126,7 +141,7 @@ describe("useAuthStore", () => {
         "3009876544", "Ana", "password123", "2000-01-15", true
       );
       expect(api.registrarCliente).toHaveBeenCalledWith(
-        "3009876544", "Ana", "password123", "2000-01-15", true
+        "3009876544", "Ana", "password123", "2000-01-15", true, undefined
       );
     });
   });

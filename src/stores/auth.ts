@@ -64,6 +64,9 @@ interface AuthState {
     password: string,
     fecha_nacimiento: string,
     acepta_mercadeo: boolean,
+    // OTP de verificación del teléfono. Opcional solo por compatibilidad de
+    // firma: el flujo nuevo de register.tsx siempre lo manda.
+    codigo?: string,
   ) => Promise<void>;
   logout: () => Promise<void>;
   setCliente: (cliente: Cliente) => void;
@@ -135,9 +138,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     metaIdentify(cliente.id, cliente.telefono);
   },
 
-  register: async (telefono, nombre, password, fecha_nacimiento, acepta_mercadeo) => {
+  register: async (telefono, nombre, password, fecha_nacimiento, acepta_mercadeo, codigo) => {
     const { token, cliente } = await registrarCliente(
-      telefono, nombre, password, fecha_nacimiento, acepta_mercadeo,
+      telefono, nombre, password, fecha_nacimiento, acepta_mercadeo, codigo,
     );
     await setToken(token);
     set({ token, cliente, isAuthenticated: true });

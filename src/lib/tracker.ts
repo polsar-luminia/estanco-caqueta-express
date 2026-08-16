@@ -101,7 +101,14 @@ export type EventTipo =
   // Fase 0 push (2026-08-05) — opt-in del permiso de notificaciones
   | 'push_permiso_pedido'
   | 'push_permiso_concedido'
-  | 'push_permiso_negado';
+  | 'push_permiso_negado'
+  // OTP del registro (2026-08-16) — embudo: muro → solicitado → verificado →
+  // registro_completado. El muro es el invitado con carrito rebotado al registro.
+  | 'registro_muro_mostrado'
+  | 'registro_codigo_solicitado'
+  | 'registro_codigo_reenviado'
+  | 'registro_codigo_verificado'
+  | 'registro_codigo_fallido';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -110,7 +117,9 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   app_error: ['message', 'stack'],
   app_abierta: [],
   categoria_abierta: ['categoria_id', 'nombre'],
-  registro_completado: [],
+  // `telefono_verificado`: si la cuenta nació con el número confirmado por OTP.
+  // Cuando la mayoría llegue en true, se puede prender registro_otp_obligatorio.
+  registro_completado: ['telefono_verificado'],
   // Cuantos autorizan mercadeo al registrarse y cuantos lo revocan despues. Sin
   // esto no hay forma de saber si la casilla desmarcada mato el canal o no.
   // `otorgado` y `origen` no son PII: no identifican a nadie por si solos.
@@ -223,6 +232,19 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   push_permiso_pedido: ['origen'],
   push_permiso_concedido: ['origen'],
   push_permiso_negado: ['origen'],
+
+  // --- OTP del registro (2026-08-16) ---
+  // El muro es la base del embudo: invitado con carrito rebotado del tab
+  // Carrito al registro. Sin él no se sabe cuántos ni con cuánta plata llegan.
+  registro_muro_mostrado: ['items_count', 'subtotal'],
+  // `canal` ('whatsapp' | 'sms') porque el copy y la entrega difieren: si los
+  // fallidos se concentran en un canal, el problema es del canal, no del flujo.
+  registro_codigo_solicitado: ['canal'],
+  registro_codigo_reenviado: ['canal'],
+  registro_codigo_verificado: [],
+  // `motivo`: codigo_invalido | envio_fallido | telefono_ya_registrado |
+  // limite_alcanzado. Nunca el código ni el teléfono.
+  registro_codigo_fallido: ['motivo'],
 };
 
 function aplicarAllowlist(
