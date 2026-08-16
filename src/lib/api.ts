@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
-import { API_URL } from "../constants/config";
+import { baseUrlActual, hidratarModoPruebas } from "./backendPruebas";
 import { APP_VERSION } from "./appVersion";
 import { obtenerDeviceId } from "./deviceId";
 
@@ -32,6 +32,10 @@ export async function apiFetch<T = any>(
   options: ApiFetchOptions = {}
 ): Promise<T> {
   const { idempotencyKey, ...rest } = options;
+  // Modo pruebas: esperar la hidratacion del switch ANTES del primer request.
+  // Sin esto, el arranque en frio de una sesion de staging pegaria a prod con
+  // un token de staging -> 401 -> logout fantasma.
+  await hidratarModoPruebas();
   const token = await getToken();
 
   const headers: Record<string, string> = {
@@ -62,7 +66,7 @@ export async function apiFetch<T = any>(
 
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, {
+    res = await fetch(`${baseUrlActual()}${path}`, {
       ...rest,
       headers,
       signal: controller.signal,

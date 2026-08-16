@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/react-native";
 import { InputField } from "../../src/components/InputField";
 import { PhoneIcon } from "../../src/components/icons/AppIcons";
 import { solicitarResetPassword } from "../../src/lib/api";
+import { aplicarModoPorTelefono } from "../../src/lib/backendPruebas";
 import { colors, shadows } from "../../src/constants/theme";
 
 export default function ForgotPasswordScreen() {
@@ -37,6 +38,8 @@ export default function ForgotPasswordScreen() {
     submittingRef.current = true;
     setLoading(true);
     try {
+      // Numero de prueba -> el reset tambien corre contra staging.
+      await aplicarModoPorTelefono(tel);
       await solicitarResetPassword(tel);
       router.push({ pathname: "/(auth)/verify-otp", params: { telefono: tel } });
     } catch (err: unknown) {

@@ -8,6 +8,7 @@ import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { useAuthStore } from "../../src/stores/auth";
 import { tracker } from "../../src/lib/tracker";
+import { aplicarModoPorTelefono } from "../../src/lib/backendPruebas";
 import { PhoneIcon, LockIcon, EyeIcon, EyeOffIcon } from "../../src/components/icons/AppIcons";
 import { colors, radii, shadows } from "../../src/constants/theme";
 
@@ -37,6 +38,10 @@ export default function LoginScreen() {
     // pedidos. Sin estos dos eventos no hay forma de saberlo.
     tracker.track("login_iniciado", { origen: "login" }, "login");
     try {
+      // Numero de prueba -> toda la app pasa a staging ANTES de autenticar (el
+      // token queda emitido por el backend correcto). Cualquier otro numero
+      // devuelve la app a produccion. Ver src/lib/backendPruebas.ts.
+      await aplicarModoPorTelefono(telefono);
       await login(telefono.trim(), password);
       tracker.track("sesion_iniciada", {}, "login");
     } catch (err: unknown) {

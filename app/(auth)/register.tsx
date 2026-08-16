@@ -8,6 +8,7 @@ import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { useAuthStore } from "../../src/stores/auth";
 import { solicitarCodigoRegistro, type ApiError } from "../../src/lib/api";
+import { aplicarModoPorTelefono } from "../../src/lib/backendPruebas";
 import { tracker } from "../../src/lib/tracker";
 import { metaLogRegistration } from "../../src/lib/metaEvents";
 import { DateValue, toISODate, calcularEdad } from "../../src/components/DateSelector";
@@ -179,6 +180,8 @@ export default function RegisterScreen() {
     submittingRef.current = true;
     setLoading(true);
     try {
+      // Numero de prueba -> staging desde el primer paso del registro.
+      await aplicarModoPorTelefono(telefono);
       const res = await solicitarCodigoRegistro(telefono.trim());
       tracker.track('registro_codigo_solicitado', { canal: res.canal }, 'register');
       setCanal(res.canal);

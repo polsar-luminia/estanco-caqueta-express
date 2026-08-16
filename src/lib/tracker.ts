@@ -15,9 +15,11 @@ import * as Sentry from '@sentry/react-native';
 import { getToken } from './api';
 import { obtenerDeviceId } from './deviceId';
 import { APP_VERSION } from './appVersion';
-import { API_URL } from '../constants/config';
+import { baseUrlActual } from './backendPruebas';
 
-const API_BASE = API_URL;
+// La telemetria sigue al backend activo: en modo pruebas los eventos caen en la
+// base de staging y no ensucian los embudos reales.
+const API_BASE = () => baseUrlActual();
 const FLUSH_INTERVAL_MS = 30_000;
 const MAX_QUEUE = 20;
 const MAX_QUEUE_SIZE = 200;
@@ -340,7 +342,7 @@ class Tracker {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5_000);
       try {
-        await fetch(`${API_BASE}/eventos`, {
+        await fetch(`${API_BASE()}/eventos`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

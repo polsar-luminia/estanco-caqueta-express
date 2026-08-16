@@ -9,6 +9,7 @@ import NetInfo from "@react-native-community/netinfo";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { queryClient } from "../src/lib/query-client";
+import { BannerModoPruebas } from "../src/components/BannerModoPruebas";
 import { getToken } from "../src/lib/api";
 import { useAuthStore } from "../src/stores/auth";
 import { usePushNotifications } from "../src/hooks/usePushNotifications";
@@ -246,6 +247,7 @@ export default Sentry.wrap(function RootLayout() {
         </Stack>
         <Toast config={toastConfig} position="bottom" bottomOffset={100} />
         <OfflineBanner />
+        <BannerModoPruebas />
         {!interstitialDone && (
           <Interstitial onFinish={() => setInterstitialDone(true)} />
         )}
