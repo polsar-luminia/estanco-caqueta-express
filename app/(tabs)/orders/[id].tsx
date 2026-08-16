@@ -328,7 +328,7 @@ export default function OrderDetailScreen() {
           lo sigue decidiendo el SERVIDOR dentro de la pantalla del chat. */}
       {(pedido.estado === "en_camino" || pedido.estado === "domiciliario_llego") && (
         <Pressable
-          onPress={() => router.push(`/chat/${pedido.id}?n=${pedido.numero_orden_cliente ?? ""}`)}
+          onPress={() => router.push(`/chat/${pedido.id}?n=${pedido.numero_orden_cliente ?? ""}&v=1`)}
           accessibilityRole="button"
           accessibilityLabel="Abrir el chat con tu domiciliario"
           className="bg-white rounded-2xl p-5"
@@ -341,9 +341,16 @@ export default function OrderDetailScreen() {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 15, fontWeight: "800", color: "#1A1C1A" }}>Chat con tu domiciliario</Text>
               <Text style={{ fontSize: 12.5, color: "#6D7B6C", marginTop: 1 }}>
-                Dile con quién dejar el pedido o acuérdale dónde es.
+                {(pedido.chat_sin_leer ?? 0) > 0
+                  ? `${pedido.chat_sin_leer} mensaje${(pedido.chat_sin_leer ?? 0) > 1 ? "s" : ""} sin leer`
+                  : "Dile con quién dejar el pedido o acuérdale dónde es."}
               </Text>
             </View>
+            {(pedido.chat_sin_leer ?? 0) > 0 && (
+              <View style={{ minWidth: 22, height: 22, borderRadius: 11, backgroundColor: "#D33587", alignItems: "center", justifyContent: "center", paddingHorizontal: 6, marginRight: 4 }}>
+                <Text style={{ color: "#fff", fontSize: 12, fontWeight: "800" }}>{pedido.chat_sin_leer}</Text>
+              </View>
+            )}
             <Feather name="chevron-right" size={20} color="#9E9E9E" />
           </View>
         </Pressable>
@@ -353,7 +360,7 @@ export default function OrderDetailScreen() {
           que todavía está esperando cómo le fue es la peor forma de preguntarlo. */}
       {pedido.estado === "entregado" && (
         <View onLayout={(e) => setYResena(e.nativeEvent.layout.y)}>
-          <TarjetaResena pedidoId={pedido.id} abrirAlEntrar={calificar === "1"} />
+          <TarjetaResena pedidoId={pedido.id} abrirAlEntrar={calificar === "1"} nombreDomiciliario={pedido.domiciliario?.nombre ?? null} />
         </View>
       )}
 

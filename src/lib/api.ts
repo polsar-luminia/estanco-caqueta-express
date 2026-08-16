@@ -396,6 +396,8 @@ export interface Resena {
   estrellas: number;
   comentario: string | null;
   created_at: string;
+  estrellas_domiciliario?: number | null;
+  comentario_domiciliario?: string | null;
 }
 
 // Devuelve null si el cliente todavía no ha calificado ese pedido. No calificar
@@ -404,10 +406,24 @@ export async function getResena(pedidoId: number) {
   return apiFetch<Resena | null>(`/pedidos/${pedidoId}/resena`);
 }
 
-export async function crearResena(pedidoId: number, estrellas: number, comentario?: string) {
+export async function crearResena(
+  pedidoId: number,
+  estrellas: number,
+  comentario?: string,
+  // Calificacion del domiciliario (072): solo viaja si el cliente la dio.
+  estrellasDomiciliario?: number,
+  comentarioDomiciliario?: string,
+) {
   return apiFetch<Resena>(`/pedidos/${pedidoId}/resena`, {
     method: "POST",
-    body: JSON.stringify({ estrellas, comentario: comentario?.trim() || undefined }),
+    body: JSON.stringify({
+      estrellas,
+      comentario: comentario?.trim() || undefined,
+      ...(estrellasDomiciliario ? { estrellas_domiciliario: estrellasDomiciliario } : {}),
+      ...(estrellasDomiciliario && comentarioDomiciliario?.trim()
+        ? { comentario_domiciliario: comentarioDomiciliario.trim() }
+        : {}),
+    }),
   });
 }
 
@@ -581,6 +597,8 @@ export interface Pedido {
   costo_domicilio?: number;
   descuento?: number;
   cupon_codigo?: string | null;
+  /** Mensajes del staff sin leer (para el badge de la tarjeta del chat). */
+  chat_sin_leer?: number;
   // Perfil del domiciliario asignado (070/071). null hasta que Envíos Express
   // asigne y llene perfiles; la tarjeta del detalle solo se pinta si llega.
   domiciliario?: { nombre: string; foto_url: string | null; moto: string | null; placa: string | null } | null;

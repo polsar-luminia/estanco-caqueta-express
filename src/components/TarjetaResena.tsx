@@ -24,12 +24,17 @@ export interface TarjetaResenaProps {
   pedidoId: number;
   /** Llega en 1 desde el deep link del push: abre el formulario ya desplegado. */
   abrirAlEntrar?: boolean;
+  /** Nombre del domiciliario asignado (071). Si llega, la tarjeta pregunta
+      tambien por el — "¿Qué tal estuvo el servicio de NOMBRE?". */
+  nombreDomiciliario?: string | null;
 }
 
-export function TarjetaResena({ pedidoId, abrirAlEntrar = false }: TarjetaResenaProps) {
+export function TarjetaResena({ pedidoId, abrirAlEntrar = false, nombreDomiciliario = null }: TarjetaResenaProps) {
   const queryClient = useQueryClient();
   const [estrellas, setEstrellas] = useState(0);
   const [comentario, setComentario] = useState("");
+  const [estrellasDomi, setEstrellasDomi] = useState(0);
+  const [comentarioDomi, setComentarioDomi] = useState("");
 
   const { data: resena, isLoading } = useQuery({
     queryKey: ["resena", pedidoId],
@@ -38,7 +43,7 @@ export function TarjetaResena({ pedidoId, abrirAlEntrar = false }: TarjetaResena
   });
 
   const mutation = useMutation({
-    mutationFn: () => crearResena(pedidoId, estrellas, comentario),
+    mutationFn: () => crearResena(pedidoId, estrellas, comentario, estrellasDomi || undefined, comentarioDomi || undefined),
     onSuccess: (nueva) => {
       // La satisfacción por fin es medible. Solo las estrellas: el comentario es
       // texto libre del cliente y no tiene por qué salir del teléfono en un evento.
@@ -67,6 +72,17 @@ export function TarjetaResena({ pedidoId, abrirAlEntrar = false }: TarjetaResena
             “{resena.comentario}”
           </Text>
         )}
+        {resena.estrellas_domiciliario ? (
+          <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 10, alignItems: "center" }}>
+            <Text className="text-xs text-gray-500 mb-1">Tu domiciliario</Text>
+            <Estrellas valor={resena.estrellas_domiciliario} readonly tamano={18} />
+            {resena.comentario_domiciliario && (
+              <Text className="text-sm text-gray-600 mt-2 text-center italic">
+                “{resena.comentario_domiciliario}”
+              </Text>
+            )}
+          </View>
+        ) : null}
       </View>
     );
   }
@@ -109,6 +125,41 @@ export function TarjetaResena({ pedidoId, abrirAlEntrar = false }: TarjetaResena
               textAlignVertical: "top",
             }}
           />
+
+          {/* Calificacion del domiciliario (072): solo si el pedido tuvo uno
+              asignado. Opcional — no calificarlo no bloquea la reseña general. */}
+          {nombreDomiciliario ? (
+            <View style={{ marginTop: 18, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 14 }}>
+              <Text className="text-sm font-bold text-on-surface text-center">
+                ¿Qué tal estuvo el servicio de {nombreDomiciliario}?
+              </Text>
+              <View style={{ marginTop: 8 }}>
+                <Estrellas valor={estrellasDomi} onChange={setEstrellasDomi} />
+              </View>
+              {estrellasDomi > 0 && (
+                <TextInput
+                  value={comentarioDomi}
+                  onChangeText={setComentarioDomi}
+                  placeholder={`¿Algo sobre ${nombreDomiciliario}? (opcional)`}
+                  placeholderTextColor={colors.faint}
+                  multiline
+                  maxLength={1000}
+                  accessibilityLabel="Comentario opcional sobre tu domiciliario"
+                  style={{
+                    marginTop: 10,
+                    minHeight: 56,
+                    borderWidth: 1,
+                    borderColor: colors.line,
+                    borderRadius: 12,
+                    padding: 12,
+                    fontSize: 14,
+                    color: colors.ink,
+                    textAlignVertical: "top",
+                  }}
+                />
+              )}
+            </View>
+          ) : null}
 
           <Pressable
             onPress={() => mutation.mutate()}

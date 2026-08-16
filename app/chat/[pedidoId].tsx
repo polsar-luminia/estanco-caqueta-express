@@ -55,14 +55,21 @@ function iniciales(nombre: string): string {
 }
 
 export default function ChatPedidoScreen() {
-  const { pedidoId: pedidoIdParam, n } = useLocalSearchParams<{ pedidoId: string; n?: string }>();
+  // `v=1` llega desde la tarjeta de entrada, que solo se muestra con el pedido
+  // en la calle: la pantalla arranca ASUMIENDO hilo visible y escribible en vez
+  // de un spinner a pantalla completa mientras responde el primer sondeo (se
+  // sentia como que el chat "tardaba en cargar"). El servidor corrige en la
+  // primera respuesta si la suposicion era vieja.
+  const { pedidoId: pedidoIdParam, n, v } = useLocalSearchParams<{ pedidoId: string; n?: string; v?: string }>();
   const pedidoId = Number(pedidoIdParam);
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  const optimista = v === "1";
   const [mensajes, setMensajes] = useState<MensajePedido[]>([]);
-  const [visible, setVisible] = useState<boolean | null>(null); // null = cargando
-  const [escribible, setEscribible] = useState(false);
+  const [visible, setVisible] = useState<boolean | null>(optimista ? true : null); // null = cargando
+  const [escribible, setEscribible] = useState(optimista);
+  const [motivoCierre, setMotivoCierre] = useState<string | null>(null);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const ultimoId = useRef(0);
@@ -74,9 +81,16 @@ export default function ChatPedidoScreen() {
       const r = await getMensajesPedido(pedidoId, ultimoId.current);
       setVisible(r.visible);
       setEscribible(r.escribible);
+      setMotivoCierre(r.motivo);
       if (r.mensajes.length > 0) {
-        ultimoId.current = r.mensajes[r.mensajes.length - 1].id;
-        setMensajes((previos) => [...previos, ...r.mensajes]);
+        ultimoId.current = Math.max(ultimoId.current, r.mensajes[r.mensajes.length - 1].id);
+        // Dedupe por id: un sondeo que ya estaba en vuelo cuando se ENVIO un
+        // mensaje lo trae de nuevo (su `desde` era viejo) y lo duplicaba.
+        setMensajes((previos) => {
+          const vistos = new Set(previos.map((m) => m.id));
+          const nuevos = r.mensajes.filter((m) => !vistos.has(m.id));
+          return nuevos.length > 0 ? [...previos, ...nuevos] : previos;
+        });
       }
     } catch {
       // 503 con la bandera apagada, o sin conexión: se muestra el estado vacío
@@ -111,8 +125,8 @@ export default function ChatPedidoScreen() {
     setEnviando(true);
     try {
       const m = await enviarMensajePedido(pedidoId, cuerpo);
-      ultimoId.current = m.id;
-      setMensajes((previos) => [...previos, m]);
+      ultimoId.current = Math.max(ultimoId.current, m.id);
+      setMensajes((previos) => (previos.some((x) => x.id === m.id) ? previos : [...previos, m]));
       setTexto("");
       // Solo el LARGO, nunca el contenido: lo que se hable de una entrega no
       // tiene por qué salir del teléfono dentro de un evento de analítica.
@@ -195,7 +209,9 @@ export default function ChatPedidoScreen() {
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
             <Feather name="message-circle" size={40} color="#B9B4A8" />
             <Text style={{ color: "#6D7B6C", textAlign: "center", marginTop: 12, fontSize: 14 }}>
-              El chat se abre cuando tu pedido salga a entrega.
+              {motivoCierre === "pedido_cerrado"
+                ? "Este pedido ya fue entregado — el chat se cerró."
+                : "El chat se abre cuando tu pedido salga a entrega."}
             </Text>
           </View>
         ) : (
