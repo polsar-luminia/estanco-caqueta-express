@@ -419,6 +419,8 @@ export interface MensajePedido {
   cuerpo: string;
   created_at: string;
   autor_staff_nombre: string | null;
+  /** Foto de perfil del staff (070). NULL hasta que Envíos Express las suba. */
+  autor_foto_url?: string | null;
 }
 
 export interface HiloPedido {

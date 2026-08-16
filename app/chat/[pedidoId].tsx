@@ -127,7 +127,7 @@ export default function ChatPedidoScreen() {
   // Nombre y (futura) foto del domiciliario: salen del último mensaje del staff.
   const ultimoStaff = [...mensajes].reverse().find((m) => m.autor_tipo === "staff");
   const nombreDomiciliario = ultimoStaff?.autor_staff_nombre ?? null;
-  const fotoDomiciliario = (ultimoStaff as { autor_foto_url?: string | null } | undefined)?.autor_foto_url ?? null;
+  const fotoDomiciliario = ultimoStaff?.autor_foto_url ?? null;
 
   return (
     <View style={{ flex: 1, backgroundColor: "#ECE9E2" }}>
