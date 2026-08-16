@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { View, Text, ScrollView, Pressable, Alert } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import Toast from "react-native-toast-message";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,11 +9,11 @@ import { tracker } from "../../../src/lib/tracker";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline";
 import { TarjetaResena } from "../../../src/components/TarjetaResena";
-import { ChatPedido } from "../../../src/components/ChatPedido";
 import { SkeletonBox } from "../../../src/components/skeletons/SkeletonBox";
 import { ErrorState } from "../../../src/components/ErrorState";
 
 import * as Sentry from "@sentry/react-native";
+import { Feather } from "@expo/vector-icons";
 import { CARD_SHADOW } from "../../../src/constants/styles";
 
 /* ── Skeleton de carga ───────────────────────────────────── */
@@ -54,6 +54,11 @@ export default function OrderDetailScreen() {
   const pedidoId = id && id.trim() ? Number(id) : NaN;
   const queryClient = useQueryClient();
 
+  // `chat=1` (push de mensaje nuevo): ir directo a la pantalla del chat, una
+  // sola vez — al volver con el boton atras no debe rebotar de nuevo.
+  const router = useRouter();
+  const chatAbiertoRef = useRef(false);
+
   // Bajar hasta la tarjeta de calificación cuando se llega con `calificar=1`.
   // Antes ese parámetro solo le pintaba un borde verde, y la tarjeta vive al final
   // de la pantalla: el cliente tocaba "Califícanos en 10 segundos", aterrizaba
@@ -71,6 +76,14 @@ export default function OrderDetailScreen() {
     // El margen de 16 deja ver que hay algo encima y que no es el tope.
     scrollRef.current?.scrollTo({ y: Math.max(0, yResena - 16), animated: true });
   }, [calificar, yResena]);
+
+  useEffect(() => {
+    if (chat === "1" && !chatAbiertoRef.current && Number.isFinite(pedidoId) && pedidoId > 0) {
+      chatAbiertoRef.current = true;
+      router.push(`/chat/${pedidoId}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- una sola vez por entrada con ?chat=1
+  }, [chat, pedidoId]);
 
   // Bandera de estados extendidos: decide si el timeline muestra los 6 pasos
   // completos desde el arranque. Comparte caché con el carrito.
@@ -237,11 +250,31 @@ export default function OrderDetailScreen() {
         </View>
       </View>
 
-      {/* Chat con el domiciliario (bloque 5 de la app de operaciones). Quién lo
-          ve y quién puede escribir lo decide el SERVIDOR, con las mismas reglas
-          que aplica la app del domiciliario; el componente se esconde solo
-          cuando no corresponde o cuando la bandera está apagada. */}
-      <ChatPedido pedidoId={pedido.id} estado={pedido.estado} abrirAlEntrar={chat === "1"} />
+      {/* Chat con el domiciliario: pantalla propia estilo WhatsApp (16-ago).
+          La tarjeta solo aparece con el pedido en la calle; quién puede escribir
+          lo sigue decidiendo el SERVIDOR dentro de la pantalla del chat. */}
+      {(pedido.estado === "en_camino" || pedido.estado === "domiciliario_llego") && (
+        <Pressable
+          onPress={() => router.push(`/chat/${pedido.id}?n=${pedido.numero_orden_cliente ?? ""}`)}
+          accessibilityRole="button"
+          accessibilityLabel="Abrir el chat con tu domiciliario"
+          className="bg-white rounded-2xl p-5"
+          style={CARD_SHADOW}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+            <View style={{ width: 40, height: 40, borderRadius: 999, backgroundColor: "rgba(31,175,85,0.12)", alignItems: "center", justifyContent: "center" }}>
+              <Feather name="message-circle" size={20} color="#1FAF55" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontWeight: "800", color: "#1A1C1A" }}>Chat con tu domiciliario</Text>
+              <Text style={{ fontSize: 12.5, color: "#6D7B6C", marginTop: 1 }}>
+                Dile con quién dejar el pedido o acuérdale dónde es.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={20} color="#9E9E9E" />
+          </View>
+        </Pressable>
+      )}
 
       {/* Calificación (bloque C). Solo en pedidos entregados: preguntarle a alguien
           que todavía está esperando cómo le fue es la peor forma de preguntarlo. */}
