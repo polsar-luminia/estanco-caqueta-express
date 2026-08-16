@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { View, Text, ScrollView, Pressable, Alert } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import Toast from "react-native-toast-message";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,7 @@ import { ErrorState } from "../../../src/components/ErrorState";
 
 import * as Sentry from "@sentry/react-native";
 import { Feather } from "@expo/vector-icons";
+import { Image as ImagenExpo } from "expo-image";
 import { CARD_SHADOW } from "../../../src/constants/styles";
 
 /* ── Skeleton de carga ───────────────────────────────────── */
@@ -158,6 +159,26 @@ export default function OrderDetailScreen() {
   }
 
   return (
+    <>
+    <Stack.Screen
+      options={{
+        // El boton nativo de atras desaparece cuando se llega al detalle sin
+        // pasar por la lista (justo despues de crear el pedido). Este siempre
+        // esta, y sin historial lleva a Mis pedidos.
+        headerLeft: () => (
+          <Pressable
+            onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)/orders"))}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Volver a mis pedidos"
+            style={{ flexDirection: "row", alignItems: "center", paddingRight: 8 }}
+          >
+            <Feather name="chevron-left" size={26} color="#fff" />
+            <Text style={{ color: "#fff", fontSize: 15, fontWeight: "600" }}>Pedidos</Text>
+          </Pressable>
+        ),
+      }}
+    />
     <ScrollView
       ref={scrollRef}
       className="flex-1 bg-surface-low"
@@ -274,6 +295,34 @@ export default function OrderDetailScreen() {
         </View>
       </View>
 
+      {/* Perfil del domiciliario asignado (070/071): foto, nombre, moto y
+          placa. Solo se pinta si el backend lo manda — hoy casi nunca; queda
+          listo para cuando Envíos Express asigne y llene perfiles. */}
+      {pedido.domiciliario && (
+        <View className="bg-white rounded-2xl p-5" style={CARD_SHADOW}>
+          <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 10 }}>
+            Tu domiciliario
+          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+            <View style={{ width: 48, height: 48, borderRadius: 999, backgroundColor: "rgba(31,175,85,0.12)", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+              {pedido.domiciliario.foto_url ? (
+                <ImagenExpo source={{ uri: pedido.domiciliario.foto_url }} style={{ width: 48, height: 48 }} contentFit="cover" />
+              ) : (
+                <Feather name="user" size={22} color="#1FAF55" />
+              )}
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15.5, fontWeight: "800", color: "#1A1C1A" }}>{pedido.domiciliario.nombre}</Text>
+              {(pedido.domiciliario.moto || pedido.domiciliario.placa) && (
+                <Text style={{ fontSize: 12.5, color: "#6D7B6C", marginTop: 1 }}>
+                  {[pedido.domiciliario.moto, pedido.domiciliario.placa].filter(Boolean).join(" · ")}
+                </Text>
+              )}
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* Chat con el domiciliario: pantalla propia estilo WhatsApp (16-ago).
           La tarjeta solo aparece con el pedido en la calle; quién puede escribir
           lo sigue decidiendo el SERVIDOR dentro de la pantalla del chat. */}
@@ -358,5 +407,6 @@ export default function OrderDetailScreen() {
         </Pressable>
       )}
     </ScrollView>
+    </>
   );
 }

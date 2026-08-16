@@ -581,6 +581,9 @@ export interface Pedido {
   costo_domicilio?: number;
   descuento?: number;
   cupon_codigo?: string | null;
+  // Perfil del domiciliario asignado (070/071). null hasta que Envíos Express
+  // asigne y llene perfiles; la tarjeta del detalle solo se pinta si llega.
+  domiciliario?: { nombre: string; foto_url: string | null; moto: string | null; placa: string | null } | null;
   preparado_at?: string;
   listo_at?: string;
   despachado_at?: string;
