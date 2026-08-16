@@ -28,7 +28,9 @@ import { ErrorState } from "../../../src/components/ErrorState";
 const ESTADO_LABEL: Record<string, string> = {
   recibido: "Recibido",
   en_preparacion: "En preparacion",
-  en_camino: "En camino",
+  preparado: "Preparado",
+  en_camino: "Despachado",
+  domiciliario_llego: "Tu domiciliario llegó",
   entregado: "Entregado",
   cancelado: "Cancelado",
 };
@@ -36,7 +38,9 @@ const ESTADO_LABEL: Record<string, string> = {
 const ESTADO_BADGE: Record<string, string> = {
   recibido: "bg-blue-100",
   en_preparacion: "bg-yellow-100",
+  preparado: "bg-teal-100",
   en_camino: "bg-orange-100",
+  domiciliario_llego: "bg-pink-100",
   entregado: "bg-brand-500/10",
   cancelado: "bg-red-100",
 };
@@ -44,10 +48,18 @@ const ESTADO_BADGE: Record<string, string> = {
 const ESTADO_TEXT: Record<string, string> = {
   recibido: "text-blue-700",
   en_preparacion: "text-yellow-800",
+  preparado: "text-teal-700",
   en_camino: "text-orange-700",
+  domiciliario_llego: "text-pink-700",
   entregado: "text-brand-500",
   cancelado: "text-red-700",
 };
+
+// Estados en los que el pedido esta vivo / el domiciliario esta en la calle.
+// Listas y no comparaciones sueltas: cuando el backend agregue otro estado,
+// hay UN sitio que actualizar y un fallback que ya no deja el badge vacio.
+const ESTADOS_ACTIVOS = ["recibido", "en_preparacion", "preparado", "en_camino", "domiciliario_llego"];
+const ESTADOS_EN_CALLE = ["en_camino", "domiciliario_llego"];
 
 import { CARD_SHADOW } from "../../../src/constants/styles";
 
@@ -86,13 +98,16 @@ function PulsingDot() {
 /* ── Badge de estado ─────────────────────────────────────── */
 
 function StatusBadge({ estado }: { estado: string }) {
+  // Un estado que este binario no conoce se muestra CRUDO en gris, nunca un
+  // badge vacio: es la regla de resiliencia para que un estado nuevo del
+  // backend no deje un hueco donde iba el estado.
   return (
     <View
-      className={`flex-row items-center px-3 py-1.5 rounded-full ${ESTADO_BADGE[estado]}`}
+      className={`flex-row items-center px-3 py-1.5 rounded-full ${ESTADO_BADGE[estado] ?? "bg-gray-100"}`}
     >
-      {estado === "en_camino" && <PulsingDot />}
-      <Text className={`text-xs font-semibold ${ESTADO_TEXT[estado]}`}>
-        {ESTADO_LABEL[estado]}
+      {ESTADOS_EN_CALLE.includes(estado) && <PulsingDot />}
+      <Text className={`text-xs font-semibold ${ESTADO_TEXT[estado] ?? "text-gray-600"}`}>
+        {ESTADO_LABEL[estado] ?? estado}
       </Text>
     </View>
   );
@@ -103,9 +118,9 @@ function StatusBadge({ estado }: { estado: string }) {
 function OrderCard({ item }: { item: Pedido }) {
   const router = useRouter();
   const addItemWithQuantity = useCartStore((s) => s.addItemWithQuantity);
-  const isActive = item.estado === "en_camino" || item.estado === "en_preparacion";
+  const isActive = ESTADOS_ACTIVOS.includes(item.estado) && item.estado !== "recibido";
   const isDelivered = item.estado === "entregado";
-  const isEnCamino = item.estado === "en_camino";
+  const isEnCamino = ESTADOS_EN_CALLE.includes(item.estado);
   const reordenandoRef = useRef(false);
   const [reordenando, setReordenando] = useState(false);
 

@@ -2,6 +2,7 @@ import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import { API_URL } from "../constants/config";
 import { APP_VERSION } from "./appVersion";
+import { obtenerDeviceId } from "./deviceId";
 
 const TOKEN_KEY = "auth_token";
 
@@ -257,8 +258,27 @@ export async function updatePerfil(data: Partial<Cliente>) {
 }
 
 export async function registrarPushToken(token: string, plataforma: string) {
+  // X-Device-Id tambien con sesion: es lo que le permite al backend desactivar
+  // tokens anonimos huerfanos del mismo dispositivo al adoptar este.
+  const deviceId = await obtenerDeviceId();
   return apiFetch("/clientes/push-token", {
     method: "POST",
+    headers: { "X-Device-Id": deviceId },
+    body: JSON.stringify({ token, plataforma }),
+  });
+}
+
+/**
+ * Registro de token SIN sesion (069): el opt-in de los ~20s del primer uso.
+ * Mismo endpoint; el backend distingue por la ausencia de Bearer y asocia el
+ * token al device_id. Con la bandera `push_anonimo_activo` apagada responde
+ * ok sin guardar nada — por eso aqui no hay retry especial.
+ */
+export async function registrarPushTokenAnonimo(token: string, plataforma: string) {
+  const deviceId = await obtenerDeviceId();
+  return apiFetch("/clientes/push-token", {
+    method: "POST",
+    headers: { "X-Device-Id": deviceId },
     body: JSON.stringify({ token, plataforma }),
   });
 }
@@ -539,7 +559,11 @@ export interface Pedido {
    * para tracking interno, deep links y referencia con soporte.
    */
   numero_orden_cliente?: number;
-  estado: "recibido" | "en_preparacion" | "en_camino" | "entregado" | "cancelado";
+  // Los dos de la 068 (preparado, domiciliario_llego) solo llegan a binarios
+  // >= 1.3.0: a los anteriores el API les responde el equivalente clasico segun
+  // X-App-Version. La UI igual debe sobrevivir a un estado desconocido (fallback
+  // crudo en badges y timeline por timestamps).
+  estado: "recibido" | "en_preparacion" | "preparado" | "en_camino" | "domiciliario_llego" | "entregado" | "cancelado";
   direccion: string;
   barrio?: string;
   notas_cliente?: string;
@@ -547,7 +571,9 @@ export interface Pedido {
   total: number;
   created_at: string;
   preparado_at?: string;
+  listo_at?: string;
   despachado_at?: string;
+  llego_at?: string;
   entregado_at?: string;
   lineas: LineaPedido[];
   // Frío asegurado. `frio_removido` = no alcanzó a estar frío y no se cobró.

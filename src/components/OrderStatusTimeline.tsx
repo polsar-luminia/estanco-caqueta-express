@@ -3,14 +3,27 @@ import { formatTime } from "../lib/format";
 import { colors } from "../constants/theme";
 import type { Pedido } from "../lib/api";
 
-const STEPS = [
-  { key: "recibido", label: "Recibido", timeKey: "created_at" },
-  { key: "en_preparacion", label: "En preparación", timeKey: "preparado_at" },
-  { key: "en_camino", label: "En camino", timeKey: "despachado_at" },
-  { key: "entregado", label: "Entregado", timeKey: "entregado_at" },
-] as const;
+// Los cuatro pasos clasicos van siempre. Los dos de la 068 (preparado, llego)
+// son OPCIONALES: solo se pintan si ocurrieron (tienen timestamp o son el
+// estado actual). Con la bandera del servidor apagada nunca aparecen, y un
+// pedido viejo no muestra pasos que jamas paso.
+type Step = { key: string; label: string; timeKey: keyof Pedido };
 
-const STEP_ORDER = ["recibido", "en_preparacion", "en_camino", "entregado"];
+function stepsDelPedido(estado: string, pedido: Pedido): Step[] {
+  const steps: Step[] = [
+    { key: "recibido", label: "Recibido", timeKey: "created_at" },
+    { key: "en_preparacion", label: "En preparación", timeKey: "preparado_at" },
+  ];
+  if (pedido.listo_at || estado === "preparado") {
+    steps.push({ key: "preparado", label: "Preparado", timeKey: "listo_at" });
+  }
+  steps.push({ key: "en_camino", label: "Despachado", timeKey: "despachado_at" });
+  if (pedido.llego_at || estado === "domiciliario_llego") {
+    steps.push({ key: "domiciliario_llego", label: "Tu domiciliario llegó", timeKey: "llego_at" });
+  }
+  steps.push({ key: "entregado", label: "Entregado", timeKey: "entregado_at" });
+  return steps;
+}
 
 interface Props {
   estado: string;
@@ -29,7 +42,16 @@ export function OrderStatusTimeline({ estado, pedido }: Props) {
     );
   }
 
-  const currentIndex = STEP_ORDER.indexOf(estado);
+  const STEPS = stepsDelPedido(estado, pedido);
+  let currentIndex = STEPS.findIndex((s) => s.key === estado);
+  if (currentIndex === -1) {
+    // Estado que este binario no conoce: se resuelve por el ULTIMO paso con
+    // timestamp. Antes de esto, un estado nuevo dejaba el timeline entero gris
+    // como si el pedido no hubiera avanzado nada.
+    for (let i = STEPS.length - 1; i >= 0; i--) {
+      if (pedido[STEPS[i].timeKey]) { currentIndex = i; break; }
+    }
+  }
 
   return (
     <View style={{ paddingVertical: 4 }}>

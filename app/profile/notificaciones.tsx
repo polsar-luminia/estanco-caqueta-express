@@ -195,7 +195,7 @@ export default function NotificacionesScreen() {
                     Estado de tus pedidos
                   </Text>
                   <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
-                    Recibido, en camino, entregado. Estas son transaccionales y no se pueden desactivar.
+                    Recibido, despachado, cuando el domiciliario llega y entregado. Estas son transaccionales y no se pueden desactivar.
                   </Text>
                 </View>
                 <Switch

@@ -160,7 +160,7 @@ export default function OrderDetailScreen() {
         {/* El servidor ya resolvió el override del staff y la bandera: si llega un
             rango, se muestra; si llega null, no hay nada que prometer. Nunca se
             recalcula en la app — el ETA no puede moverse hacia adelante. */}
-        {pedido.eta && pedido.estado !== "entregado" && pedido.estado !== "cancelado" && (
+        {pedido.eta && !["entregado", "cancelado", "domiciliario_llego"].includes(pedido.estado) && (
           <View className="mt-4 rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(31,175,85,0.08)" }}>
             <Text className="text-xs" style={{ color: "#6D7B6C" }}>Tiempo estimado de entrega</Text>
             <Text className="text-lg font-extrabold" style={{ color: "#14803E" }}>

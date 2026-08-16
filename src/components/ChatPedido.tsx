@@ -58,7 +58,9 @@ export function ChatPedido({ pedidoId, estado, abrirAlEntrar = false }: Props) {
 
   // Solo se consulta cuando el hilo puede existir. Sondear el chat de un pedido
   // entregado hace tres semanas es gastar batería para recibir siempre lo mismo.
-  const vivo = estado === "en_camino";
+  // domiciliario_llego (068) mantiene el hilo vivo: es cuando mas se escribe
+  // ("ya bajo", "dejalo con el portero").
+  const vivo = estado === "en_camino" || estado === "domiciliario_llego";
 
   const sondear = useCallback(async () => {
     try {

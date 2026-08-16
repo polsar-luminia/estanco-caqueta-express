@@ -185,7 +185,10 @@ export default Sentry.wrap(function RootLayout() {
     });
   }, []);
 
-  usePushNotifications();
+  // interstitialDone: el prompt anonimo de push (a los ~20s) espera a que el
+  // anuncio de apertura cierre — un dialogo del SO encima del Interstitial se
+  // percibe como spam y quema la unica oportunidad de iOS.
+  usePushNotifications({ interstitialDone });
 
   if (isLoading) {
     return <SplashBranded />;

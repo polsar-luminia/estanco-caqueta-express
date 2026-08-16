@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import * as Sentry from "@sentry/react-native";
 import Constants from "expo-constants";
 import { useRouter, type Href } from "expo-router";
 import NetInfo from "@react-native-community/netinfo";
-import { registrarPushToken } from "../lib/api";
+import { registrarPushToken, registrarPushTokenAnonimo } from "../lib/api";
 import { tracker } from "../lib/tracker";
 import { queryClient } from "../lib/query-client";
 import { useAuthStore, registerLogoutHandler } from "../stores/auth";
@@ -39,11 +40,24 @@ function refrescarPedidoDePush(data: unknown) {
 // Estado module-level: persiste entre montajes pero se puede resetear desde
 // fuera (logout). Usar useRef hacía que el ref quedara stale al cambiar de
 // cliente en el mismo proceso.
+//
+// DOS flags, no uno: el registro anónimo (opt-in a los 20s, sin cuenta) y el de
+// cuenta son independientes. Si compartieran flag, un registro anónimo previo
+// impediría que el login re-registrara el token a nombre del cliente — y esa
+// re-registrada ES la adopción de la fila anónima en el backend.
 let registered = false;
+let registeredAnon = false;
 
 registerLogoutHandler(() => {
+  // Solo el de cuenta: el token anónimo sigue siendo del dispositivo y no hay
+  // que volver a pedir permiso ni re-registrar nada al cerrar sesión.
   registered = false;
 });
+
+// Clave de "ya preguntamos" del prompt anónimo. En iOS solo hay UNA oportunidad
+// real (un denied es permanente), así que el prompt se dispara una sola vez por
+// instalación; el guard canAskAgain cubre el caso del denied heredado.
+const PUSH_PROMPT_ANONIMO_KEY = "push_prompt_anonimo_v1";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -54,7 +68,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-async function obtenerPushToken(): Promise<string | null> {
+async function obtenerPushToken(origen: string = "sesion"): Promise<string | null> {
   if (!Device.isDevice) {
     if (__DEV__) {
       console.log("[push] No es dispositivo fisico, omitiendo");
@@ -71,14 +85,14 @@ async function obtenerPushToken(): Promise<string | null> {
     // decisión nueva del usuario y registrarla inflaría los rechazos.
     const huboPrompt = previo.canAskAgain !== false;
     if (huboPrompt) {
-      tracker.track("push_permiso_pedido", { origen: "sesion" });
+      tracker.track("push_permiso_pedido", { origen });
     }
     const { status: nuevo } = await Notifications.requestPermissionsAsync();
     status = nuevo;
     if (huboPrompt) {
       tracker.track(
         status === "granted" ? "push_permiso_concedido" : "push_permiso_negado",
-        { origen: "sesion" }
+        { origen }
       );
     }
   }
@@ -106,9 +120,70 @@ async function obtenerPushToken(): Promise<string | null> {
   return tokenData.data;
 }
 
-export function usePushNotifications() {
+// M-NAV-18: el backend siempre envía data.deep_link. Validar contra allowlist antes de navegar.
+// Si se añade una ruta nueva en notificaciones.js o crons-notificaciones.js, registrarla aquí.
+//
+// El PATH y la QUERY se validan por SEPARADO. Antes la query iba pegada al
+// patrón del path y cada parámetro nuevo la rompía en silencio: pasó con
+// `?calificar=1` (reseñas) y volvió a pasar con `?chat=1` (chat del domiciliario,
+// commit 4826737): el cliente tocaba el push del mensaje y no ocurría NADA. La
+// allowlist sigue siendo la defensa contra un deep link fabricado: paths
+// cerrados y solo los parámetros que la app interpreta.
+const ALLOWED_PATHS = [
+  /^\/\(tabs\)\/orders\/\d+$/,
+  /^\/\(tabs\)\/cart$/,
+  /^\/\(tabs\)\/index$/,
+  /^\/product\/\d+$/,
+];
+const ALLOWED_QUERY = /^(calificar=1|chat=1)$/;
+// Rutas navegables SIN sesión (guest browsing): un push anónimo de oferta tiene
+// que poder abrir el producto. Los pedidos siguen exigiendo cuenta.
+const PATHS_PUBLICOS = [/^\/\(tabs\)\/index$/, /^\/product\/\d+$/];
+
+/** Exportada para poder probarla: la navegación del tap depende de esto. */
+export function deepLinkNavegable(deepLink: string, isAuthenticated: boolean): boolean {
+  const [path, query] = deepLink.split("?");
+  if (!ALLOWED_PATHS.some((r) => r.test(path))) return false;
+  if (query !== undefined && !ALLOWED_QUERY.test(query)) return false;
+  if (!isAuthenticated && !PATHS_PUBLICOS.some((r) => r.test(path))) return false;
+  return true;
+}
+
+export function usePushNotifications({ interstitialDone = true }: { interstitialDone?: boolean } = {}) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const router = useRouter();
+
+  // Opt-in ANONIMO (069): a los ~20 s del primer uso, sin exigir cuenta. El
+  // prompt del SO se lanza directo (decision de producto) pero nunca encima del
+  // Interstitial, y una sola vez por instalacion.
+  useEffect(() => {
+    if (isAuthenticated || registeredAnon || !interstitialDone) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        // Si inicio sesion mientras corria el timer, el flujo de cuenta manda.
+        if (useAuthStore.getState().isAuthenticated) return;
+        if (await AsyncStorage.getItem(PUSH_PROMPT_ANONIMO_KEY)) return;
+
+        const previo = await Notifications.getPermissionsAsync();
+        if (previo.status !== "granted" && previo.canAskAgain === false) return; // denied heredado: no quemar el intento
+
+        // ANTES del prompt, crash-safe: pase lo que pase, jamas doble prompt.
+        await AsyncStorage.setItem(PUSH_PROMPT_ANONIMO_KEY, "1");
+
+        const token = await obtenerPushToken("arranque_20s");
+        if (!token) return;
+
+        await registrarPushTokenAnonimo(token, Platform.OS);
+        registeredAnon = true;
+        if (__DEV__) console.log("[push] Token anonimo registrado");
+      } catch (err: unknown) {
+        Sentry.captureException(err, { tags: { feature: "push_anonimo" } });
+      }
+    }, 20_000);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, interstitialDone]);
 
   useEffect(() => {
     if (!isAuthenticated || registered) return;
@@ -188,32 +263,16 @@ export function usePushNotifications() {
 
   // Listeners de notificaciones: tap navega al destino, foreground solo registra
   useEffect(() => {
-    // M-NAV-18: el backend siempre envía data.deep_link. Validar contra allowlist antes de navegar.
-    // Si se añade una ruta nueva en notificaciones.js o crons-notificaciones.js, registrarla aquí.
-    const ALLOWED_DEEP_LINKS = [
-      // `?calificar=1` lo manda el push de reseña para abrir el detalle ya con el
-      // formulario. Sin contemplarlo, el `$` del patrón hacía que la ruta no
-      // pasara el filtro y el tap se descartaba en silencio: el cliente tocaba
-      // "Califícanos" y no ocurría nada. Se acepta ESE parámetro y ninguno más —
-      // la allowlist es la defensa contra un deep link fabricado, no una guía.
-      /^\/\(tabs\)\/orders\/\d+(\?calificar=1)?$/,
-      /^\/\(tabs\)\/cart$/,
-      /^\/\(tabs\)\/index$/,
-      /^\/product\/\d+$/,
-    ];
-
     const subResponse = Notifications.addNotificationResponseReceivedListener((response) => {
       // Refrescar ANTES de navegar: la pantalla destino se monta con la petición
       // ya en vuelo en vez de pintar el estado viejo y corregirse encima.
       refrescarPedidoDePush(response.notification.request.content.data);
       const deepLink = response.notification.request.content.data?.deep_link;
       if (typeof deepLink !== "string") return;
-      const valido = ALLOWED_DEEP_LINKS.some((r) => r.test(deepLink));
-      if (!valido) {
+      if (!deepLinkNavegable(deepLink, useAuthStore.getState().isAuthenticated)) {
         Sentry.addBreadcrumb({ category: "push", message: "deep_link rechazado", data: { deepLink } });
         return;
       }
-      if (!useAuthStore.getState().isAuthenticated) return;
       router.push(deepLink as Href);
     });
 
