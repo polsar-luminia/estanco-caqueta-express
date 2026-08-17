@@ -9,6 +9,7 @@ import { tracker } from "../../../src/lib/tracker";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline";
 import { TarjetaResena } from "../../../src/components/TarjetaResena";
+import { MapaDomiciliario } from "../../../src/components/MapaDomiciliario";
 import { SkeletonBox } from "../../../src/components/skeletons/SkeletonBox";
 import { ErrorState } from "../../../src/components/ErrorState";
 
@@ -325,6 +326,11 @@ export default function OrderDetailScreen() {
           </View>
         </View>
       )}
+
+      {/* Por donde viene el repartidor. Solo en la calle; el resto de los limites
+          (senal vieja, sin domiciliario, bandera apagada) los decide el SERVIDOR
+          y el componente solo pinta lo que le den. */}
+      {enCalle && <MapaDomiciliario pedidoId={pedido.id} />}
 
       {/* Chat del pedido: pantalla propia estilo WhatsApp (16-ago).
           Desde el 17-ago está vivo durante TODO el pedido, no solo en la calle:

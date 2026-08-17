@@ -468,6 +468,21 @@ export async function getMensajesPedido(pedidoId: number, desde = 0) {
   return apiFetch<HiloPedido>(`/pedidos/${pedidoId}/mensajes?desde=${desde}`);
 }
 
+/** Por donde viene el repartidor. El SERVIDOR decide si hay algo que mostrar. */
+export interface UbicacionDomiciliario {
+  disponible: boolean;
+  /** 'apagado' | 'aun_no_sale' | 'sin_domiciliario' | 'sin_senal' */
+  motivo?: string;
+  lat?: number;
+  lng?: number;
+  actualizado_hace_seg?: number;
+  destino?: { lat: number; lng: number } | null;
+}
+
+export async function getUbicacionDomiciliario(pedidoId: number) {
+  return apiFetch<UbicacionDomiciliario>(`/pedidos/${pedidoId}/ubicacion-domiciliario`);
+}
+
 export async function enviarMensajePedido(pedidoId: number, cuerpo: string, clientMsgId?: string) {
   return apiFetch<MensajePedido>(`/pedidos/${pedidoId}/mensajes`, {
     method: "POST",
