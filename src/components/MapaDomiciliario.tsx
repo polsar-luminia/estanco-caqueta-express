@@ -12,7 +12,7 @@
 // gente que los tiene contados, y nadie está mirando.
 
 import { useEffect, useRef, useState } from "react";
-import { View, Text, AppState } from "react-native";
+import { View, Text, AppState, ActivityIndicator, InteractionManager } from "react-native";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
 import { Feather } from "@expo/vector-icons";
 import { getUbicacionDomiciliario, type UbicacionDomiciliario } from "../lib/api";
@@ -30,6 +30,18 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
   const [ubi, setUbi] = useState<UbicacionDomiciliario | null>(null);
   const mapRef = useRef<MapView>(null);
   const vivo = useRef(true);
+  // El MapView se monta DESPUES de la animacion de entrada y se pinta con
+  // `initialRegion`, no con `region`. Las dos cosas son el mismo arreglo que ya
+  // vive en app/ubicacion.tsx: montarlo durante la transicion lo deja en blanco
+  // (race conocido de react-native-maps) — y asi salio en la primera prueba.
+  const [mapaMontado, setMapaMontado] = useState(false);
+  const [mapaListo, setMapaListo] = useState(false);
+  const regionInicial = useRef<{ latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number } | null>(null);
+
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => setMapaMontado(true));
+    return () => task.cancel();
+  }, []);
 
   useEffect(() => {
     vivo.current = true;
@@ -40,7 +52,13 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
       if (AppState.currentState !== "active") return;
       try {
         const r = await getUbicacionDomiciliario(pedidoId);
-        if (vivo.current) setUbi(r);
+        if (!vivo.current) return;
+        setUbi(r);
+        // Deslizar la camara en vez de saltar: es lo que hace que se SIENTA que
+        // se va acercando, en vez de parpadear de una posicion a otra.
+        if (r.disponible && r.lat != null && r.lng != null && mapRef.current) {
+          mapRef.current.animateCamera({ center: { latitude: r.lat, longitude: r.lng } }, { duration: 900 });
+        }
       } catch {
         // Un fallo de red no borra el último punto conocido: mejor un punto de
         // hace unos segundos que un mapa que parpadea a vacío.
@@ -73,12 +91,14 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
     );
   }
 
-  const region = {
-    latitude: ubi.lat!,
-    longitude: ubi.lng!,
-    latitudeDelta: 0.012,
-    longitudeDelta: 0.012,
-  };
+  if (!regionInicial.current) {
+    regionInicial.current = {
+      latitude: ubi.lat!,
+      longitude: ubi.lng!,
+      latitudeDelta: 0.012,
+      longitudeDelta: 0.012,
+    };
+  }
 
   return (
     <View className="bg-white rounded-2xl overflow-hidden">
@@ -92,32 +112,53 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
         </Text>
       </View>
 
-      <MapView
-        ref={mapRef}
-        provider={PROVIDER_GOOGLE}
-        style={{ height: 200, width: "100%" }}
-        region={region}
-        // El mapa es para MIRAR: sin gestos no se desplaza sin querer al hacer
-        // scroll por el detalle del pedido.
-        scrollEnabled={false}
-        zoomEnabled={false}
-        rotateEnabled={false}
-        pitchEnabled={false}
-        pointerEvents="none"
-      >
-        <Marker coordinate={{ latitude: ubi.lat!, longitude: ubi.lng! }} title="Tu repartidor">
-          <View style={{ backgroundColor: "#1FAF55", padding: 7, borderRadius: 999, borderWidth: 2, borderColor: "#fff" }}>
-            <Feather name="truck" size={14} color="#fff" />
+      <View style={{ height: 200, width: "100%" }}>
+        {/* Tapa el mapa hasta que dispara onMapReady: sin esto se ve el vacio
+            gris/blanco mientras carga, que es lo que salio en la primera prueba. */}
+        {(!mapaMontado || !mapaListo) && (
+          <View
+            style={{
+              position: "absolute",
+              top: 0, left: 0, right: 0, bottom: 0,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "#EEF2EE",
+              zIndex: 2,
+            }}
+          >
+            <ActivityIndicator color="#1FAF55" />
           </View>
-        </Marker>
-        {ubi.destino && (
-          <Marker coordinate={{ latitude: ubi.destino.lat, longitude: ubi.destino.lng }} title="Tu dirección">
-            <View style={{ backgroundColor: "#D33587", padding: 7, borderRadius: 999, borderWidth: 2, borderColor: "#fff" }}>
-              <Feather name="home" size={14} color="#fff" />
-            </View>
-          </Marker>
         )}
-      </MapView>
+
+        {mapaMontado && (
+          <MapView
+            ref={mapRef}
+            provider={PROVIDER_GOOGLE}
+            style={{ height: 200, width: "100%" }}
+            initialRegion={regionInicial.current}
+            onMapReady={() => setMapaListo(true)}
+            // El mapa es para MIRAR: sin gestos no se desplaza sin querer al
+            // hacer scroll por el detalle del pedido.
+            scrollEnabled={false}
+            zoomEnabled={false}
+            rotateEnabled={false}
+            pitchEnabled={false}
+          >
+            <Marker coordinate={{ latitude: ubi.lat!, longitude: ubi.lng! }} title="Tu repartidor">
+              <View style={{ backgroundColor: "#1FAF55", padding: 7, borderRadius: 999, borderWidth: 2, borderColor: "#fff" }}>
+                <Feather name="truck" size={14} color="#fff" />
+              </View>
+            </Marker>
+            {ubi.destino && (
+              <Marker coordinate={{ latitude: ubi.destino.lat, longitude: ubi.destino.lng }} title="Tu dirección">
+                <View style={{ backgroundColor: "#D33587", padding: 7, borderRadius: 999, borderWidth: 2, borderColor: "#fff" }}>
+                  <Feather name="home" size={14} color="#fff" />
+                </View>
+              </Marker>
+            )}
+          </MapView>
+        )}
+      </View>
     </View>
   );
 }
