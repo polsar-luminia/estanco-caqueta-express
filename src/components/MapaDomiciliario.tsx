@@ -204,14 +204,16 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
               title="Tu repartidor"
               // El ancla en el centro-abajo: el punto del mapa es donde tocan las
               // llantas, no el centro de la imagen.
-              anchor={{ x: 0.5, y: 0.9 }}
+              // Vista cenital: el punto del mapa es el CENTRO de la moto.
+              anchor={{ x: 0.5, y: 0.5 }}
               tracksViewChanges={!iconoListo || redibujando}
             >
               <Image
                 source={require("../../assets/repartidor-moto.webp")}
                 style={{
-                  width: 30,
-                  height: 45,
+                  // Cuadrado: el asset trae margen para que la rotacion no recorte.
+                  width: 46,
+                  height: 46,
                   // La moto mira hacia donde VA. Se rota la IMAGEN y no con la
                   // propiedad `rotation` del Marker: en iOS esa propiedad no
                   // aplica cuando el marcador tiene contenido propio — se probo

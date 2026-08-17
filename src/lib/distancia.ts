@@ -55,12 +55,16 @@ export function rumboGrados(
 /**
  * Hacia dónde apunta la moto DIBUJADA, en la imagen sin rotar (0 = arriba).
  *
- * El render es en perspectiva 3/4, así que no hay un valor exacto: 340° salió de
- * medir el eje de la silueta y contrastarlo mirando la imagen rotada contra una
- * flecha vertical. Si en el mapa se ve torcida, este es el único número que hay
- * que mover.
+ * CERO desde el 17-ago: la imagen se reemplazó por una vista cenital (a plomo
+ * desde arriba) que ya apunta hacia arriba. La anterior era una perspectiva 3/4,
+ * y ese es el punto: una vista en perspectiva NO se puede rotar y verse natural
+ * —la moto se acuesta en vez de doblar— y además obligaba a calibrar a ojo un
+ * ángulo que no tenía valor exacto.
+ *
+ * Si algún día se cambia la imagen, lo único que importa es que la moto apunte
+ * hacia arriba y que la vista sea cenital.
  */
-export const MOTO_APUNTA_A = 340;
+export const MOTO_APUNTA_A = 0;
 
 /** Cuánto rotar la imagen para que la moto mire hacia `rumbo`. */
 export function rotacionMoto(rumbo: number): number {

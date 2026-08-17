@@ -141,15 +141,17 @@ export default function SeguimientoScreen() {
           {ubi?.disponible && ubi.lat != null && (
             <Marker
               coordinate={{ latitude: ubi.lat, longitude: ubi.lng! }}
-              anchor={{ x: 0.5, y: 0.9 }}
+              // Vista cenital: el punto del mapa es el CENTRO de la moto.
+              anchor={{ x: 0.5, y: 0.5 }}
               tracksViewChanges={!iconoListo || redibujando}
               title="Tu repartidor"
             >
               <Image
                 source={require("../../assets/repartidor-moto.webp")}
                 style={{
-                  width: 38,
-                  height: 57,
+                  // Cuadrado: el asset trae margen para que la rotacion no recorte.
+                  width: 58,
+                  height: 58,
                   // La moto mira hacia donde VA. Se rota la IMAGEN y no con la
                   // propiedad `rotation` del Marker: en iOS esa propiedad no
                   // aplica cuando el marcador tiene contenido propio — se probo
