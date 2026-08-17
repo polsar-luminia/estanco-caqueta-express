@@ -11,6 +11,7 @@ import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline
 import { TarjetaResena } from "../../../src/components/TarjetaResena";
 import { HojaCancelar } from "../../../src/components/HojaCancelar";
 import { MapaDomiciliario } from "../../../src/components/MapaDomiciliario";
+import { FotoEntrega } from "../../../src/components/FotoEntrega";
 import { SkeletonBox } from "../../../src/components/skeletons/SkeletonBox";
 import { ErrorState } from "../../../src/components/ErrorState";
 
@@ -386,20 +387,17 @@ export default function OrderDetailScreen() {
         </View>
       )}
 
-      {/* Foto de la entrega (bloque B). Solo llega si el pedido es del cliente:
-          el endpoint filtra por cliente_id. Es la prueba de que llegó y dónde. */}
+      {/* Foto de la entrega (bloque B). El enlace ahora exige la sesión del
+          cliente y el servidor comprueba que el pedido sea suyo (078): antes se
+          servía por una URL pública protegida solo por ser difícil de adivinar.
+          El header lo pone FotoEntrega, que tiene que leer el token de
+          SecureStore antes de poder pintar nada. */}
       {pedido.foto_entrega_url && (
         <View className="bg-white rounded-2xl p-6" style={CARD_SHADOW}>
           <Text className="text-base font-bold text-on-surface mb-3">
             Así se entregó tu pedido
           </Text>
-          <Image
-            source={{ uri: pedido.foto_entrega_url }}
-            accessibilityLabel="Foto de la entrega de tu pedido"
-            contentFit="cover"
-            style={{ width: "100%", height: 200, borderRadius: 12 }}
-            transition={150}
-          />
+          <FotoEntrega uri={pedido.foto_entrega_url} />
         </View>
       )}
 
