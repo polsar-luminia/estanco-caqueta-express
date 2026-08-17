@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { View, Text, AppState, ActivityIndicator, InteractionManager, Platform } from "react-native";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
 import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { getUbicacionDomiciliario, type UbicacionDomiciliario } from "../lib/api";
 
 const INTERVALO_MS = 15_000;
@@ -36,6 +37,11 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
   // (race conocido de react-native-maps) — y asi salio en la primera prueba.
   const [mapaMontado, setMapaMontado] = useState(false);
   const [mapaListo, setMapaListo] = useState(false);
+  // Un marcador con contenido propio en iOS puede quedar en blanco si el mapa
+  // deja de vigilar la vista antes de que la imagen cargue. Se vigila hasta que
+  // el icono termina de cargar y ahi se apaga: `tracksViewChanges` permanente
+  // redibuja el marcador en cada frame y calienta el telefono.
+  const [iconoListo, setIconoListo] = useState(false);
   const regionInicial = useRef<{ latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number } | null>(null);
 
   useEffect(() => {
@@ -158,10 +164,20 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
             rotateEnabled={false}
             pitchEnabled={false}
           >
-            <Marker coordinate={{ latitude: ubi.lat!, longitude: ubi.lng! }} title="Tu repartidor">
-              <View style={{ backgroundColor: "#1FAF55", padding: 7, borderRadius: 999, borderWidth: 2, borderColor: "#fff" }}>
-                <Feather name="truck" size={14} color="#fff" />
-              </View>
+            <Marker
+              coordinate={{ latitude: ubi.lat!, longitude: ubi.lng! }}
+              title="Tu repartidor"
+              // El ancla en el centro-abajo: el punto del mapa es donde tocan las
+              // llantas, no el centro de la imagen.
+              anchor={{ x: 0.5, y: 0.9 }}
+              tracksViewChanges={!iconoListo}
+            >
+              <Image
+                source={require("../../assets/repartidor-moto.webp")}
+                style={{ width: 44, height: 66 }}
+                contentFit="contain"
+                onLoadEnd={() => setIconoListo(true)}
+              />
             </Marker>
             {ubi.destino && (
               <Marker coordinate={{ latitude: ubi.destino.lat, longitude: ubi.destino.lng }} title="Tu dirección">
