@@ -461,10 +461,12 @@ export async function getMensajesPedido(pedidoId: number, desde = 0) {
   return apiFetch<HiloPedido>(`/pedidos/${pedidoId}/mensajes?desde=${desde}`);
 }
 
-export async function enviarMensajePedido(pedidoId: number, cuerpo: string) {
+export async function enviarMensajePedido(pedidoId: number, cuerpo: string, clientMsgId?: string) {
   return apiFetch<MensajePedido>(`/pedidos/${pedidoId}/mensajes`, {
     method: "POST",
-    body: JSON.stringify({ cuerpo }),
+    // client_msg_id (073): llave de idempotencia POR mensaje. Un reintento con
+    // el mismo UUID devuelve la fila existente en vez de duplicarla.
+    body: JSON.stringify({ cuerpo, ...(clientMsgId ? { client_msg_id: clientMsgId } : {}) }),
   });
 }
 

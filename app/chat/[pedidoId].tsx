@@ -32,6 +32,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { getMensajesPedido, enviarMensajePedido, type MensajePedido } from "../../src/lib/api";
+import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { tracker } from "../../src/lib/tracker";
 import { colors } from "../../src/constants/theme";
 
@@ -75,6 +76,10 @@ export default function ChatPedidoScreen() {
   const ultimoId = useRef(0);
   const yaMedido = useRef(false);
   const scrollRef = useRef<ScrollView>(null);
+  // Llave de idempotencia del envio EN CURSO (073): se genera al primer intento
+  // y se conserva si fallo — reintentar el mismo texto reusa el mismo UUID y el
+  // servidor no crea una segunda fila. Se limpia solo al exito.
+  const envioUuidRef = useRef<string | null>(null);
 
   const sondear = useCallback(async () => {
     try {
@@ -123,8 +128,10 @@ export default function ChatPedidoScreen() {
     const cuerpo = texto.trim();
     if (!cuerpo || enviando) return;
     setEnviando(true);
+    if (!envioUuidRef.current) envioUuidRef.current = nuevoUuidV4();
     try {
-      const m = await enviarMensajePedido(pedidoId, cuerpo);
+      const m = await enviarMensajePedido(pedidoId, cuerpo, envioUuidRef.current);
+      envioUuidRef.current = null;
       ultimoId.current = Math.max(ultimoId.current, m.id);
       setMensajes((previos) => (previos.some((x) => x.id === m.id) ? previos : [...previos, m]));
       setTexto("");
