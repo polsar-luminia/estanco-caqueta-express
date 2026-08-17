@@ -477,6 +477,24 @@ export interface UbicacionDomiciliario {
   lng?: number;
   actualizado_hace_seg?: number;
   destino?: { lat: number; lng: number } | null;
+  /**
+   * Cuántos pedidos MÁS lleva esa persona en la calle, sin contar el tuyo.
+   *
+   * Existe para explicar por qué la moto puede ir para otro lado. Sin esto, el
+   * cliente ve el pin alejándose de su casa y la única salida es llamar al
+   * mostrador.
+   */
+  otros_pedidos?: number;
+  /** El repartidor está PARADO en la puerta de otro pedido ahora mismo. */
+  entregando_otro?: boolean;
+  /**
+   * El texto ya redactado, o `null` si solo lleva este pedido. Viene del
+   * servidor y no se arma aquí: la app no sabe cuántos pedidos lleva esa
+   * persona, y una copia de la redacción se separaría de la del servidor.
+   *
+   * NO trae ETA a propósito: el motor de ETA no sabe de cadenas de entregas.
+   */
+  aviso?: string | null;
 }
 
 export async function getUbicacionDomiciliario(pedidoId: number) {

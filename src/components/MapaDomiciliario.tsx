@@ -163,6 +163,34 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
         </Text>
       </View>
 
+      {/* POR QUÉ LA MOTO PUEDE IR PARA OTRO LADO.
+          Cuando el repartidor lleva más de un pedido, el cliente ve el pin
+          alejándose de su casa y la única explicación disponible era llamar al
+          mostrador. El texto lo redacta el SERVIDOR: la app no sabe cuántos
+          pedidos lleva esa persona, y una copia de la redacción se separaría.
+          Va ARRIBA del mapa a propósito — debajo se lee después de haber visto
+          la moto irse, que es justo cuando ya preocupó. */}
+      {ubi.aviso ? (
+        <View
+          style={{
+            marginHorizontal: 16,
+            marginBottom: 10,
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            borderRadius: 10,
+            backgroundColor: "rgba(228,164,0,0.12)",
+            flexDirection: "row",
+            alignItems: "flex-start",
+            gap: 8,
+          }}
+        >
+          <Feather name="package" size={13} color="#8A6400" style={{ marginTop: 1 }} />
+          <Text style={{ flex: 1, fontSize: 12.5, color: "#8A6400", lineHeight: 17 }}>
+            {ubi.aviso}
+          </Text>
+        </View>
+      ) : null}
+
       <View style={{ height: 200, width: "100%" }}>
         {/* Tapa el mapa hasta que dispara onMapReady: sin esto se ve el vacio
             gris/blanco mientras carga, que es lo que salio en la primera prueba. */}

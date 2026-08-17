@@ -214,6 +214,14 @@ export default function SeguimientoScreen() {
                 ? "Ubicación de hace un momento"
                 : `Ubicación de hace ${Math.round((ubi.actualizado_hace_seg ?? 0) / 60)} min`}
             </Text>
+            {/* En la pantalla completa el aviso importa MÁS que en la tarjeta:
+                aquí la distancia se lee como "ya casi llega", y sin esto un
+                repartidor que se aleja a dejar otro pedido parece un error. */}
+            {ubi.aviso ? (
+              <Text style={{ fontSize: 13, color: "#8A6400", marginTop: 10, lineHeight: 18 }}>
+                {ubi.aviso}
+              </Text>
+            ) : null}
           </>
         ) : (
           <>
