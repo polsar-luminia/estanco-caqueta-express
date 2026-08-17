@@ -206,8 +206,12 @@ export default function OrderDetailScreen() {
 
         {/* El servidor ya resolvió el override del staff y la bandera: si llega un
             rango, se muestra; si llega null, no hay nada que prometer. Nunca se
-            recalcula en la app — el ETA no puede moverse hacia adelante. */}
-        {pedido.eta && !["entregado", "cancelado", "domiciliario_llego"].includes(pedido.estado) && (
+            recalcula en la app — el ETA no puede moverse hacia adelante.
+            `no_entregado` queda fuera (077): el ETA se calculó para un viaje que
+            ya se hizo y falló, así que seguir prometiendo "llega en 20–30 min"
+            justo cuando el pedido volvió al estanco es la peor de las mentiras
+            posibles — y no fallaría, se vería perfectamente normal. */}
+        {pedido.eta && !["entregado", "cancelado", "domiciliario_llego", "no_entregado"].includes(pedido.estado) && (
           <View className="mt-4 rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(31,175,85,0.08)" }}>
             <Text className="text-xs" style={{ color: "#6D7B6C" }}>Tiempo estimado de entrega</Text>
             <Text className="text-lg font-extrabold" style={{ color: "#14803E" }}>

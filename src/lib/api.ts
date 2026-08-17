@@ -620,7 +620,12 @@ export interface Pedido {
   // >= 1.3.0: a los anteriores el API les responde el equivalente clasico segun
   // X-App-Version. La UI igual debe sobrevivir a un estado desconocido (fallback
   // crudo en badges y timeline por timestamps).
-  estado: "recibido" | "en_preparacion" | "preparado" | "en_camino" | "domiciliario_llego" | "entregado" | "cancelado";
+  //
+  // `no_entregado` (077) es el mismo trato: la entrega fallo y el pedido volvio
+  // al estanco. NO es terminal —de ahi se reprograma o se cancela— y por eso el
+  // sondeo del detalle tiene que seguir corriendo. A los binarios anteriores a
+  // 1.3.0 el API les responde `en_preparacion`.
+  estado: "recibido" | "en_preparacion" | "preparado" | "en_camino" | "domiciliario_llego" | "entregado" | "cancelado" | "no_entregado";
   direccion: string;
   barrio?: string;
   notas_cliente?: string;

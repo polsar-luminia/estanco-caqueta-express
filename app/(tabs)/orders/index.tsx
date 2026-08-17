@@ -33,6 +33,11 @@ const ESTADO_LABEL: Record<string, string> = {
   domiciliario_llego: "Tu domiciliario llegó",
   entregado: "Entregado",
   cancelado: "Cancelado",
+  // El texto NO dice por qué falló. El motivo real puede ser "el cliente no
+  // estaba" o "no tenía con qué pagar", y devolvérselo aquí convierte la lista
+  // de pedidos en un reproche. Lo que el cliente necesita saber es dónde está su
+  // pedido y que alguien lo va a contactar.
+  no_entregado: "Volvió al estanco",
 };
 
 const ESTADO_BADGE: Record<string, string> = {
@@ -43,6 +48,9 @@ const ESTADO_BADGE: Record<string, string> = {
   domiciliario_llego: "bg-pink-100",
   entregado: "bg-brand-500/10",
   cancelado: "bg-red-100",
+  // Ámbar y no rojo: el pedido no se perdió, se reprograma. El rojo lo haría
+  // leer como cancelado y el cliente dejaría de esperarlo.
+  no_entregado: "bg-amber-100",
 };
 
 const ESTADO_TEXT: Record<string, string> = {
@@ -53,12 +61,17 @@ const ESTADO_TEXT: Record<string, string> = {
   domiciliario_llego: "text-pink-700",
   entregado: "text-brand-500",
   cancelado: "text-red-700",
+  no_entregado: "text-amber-800",
 };
 
 // Estados en los que el pedido esta vivo / el domiciliario esta en la calle.
 // Listas y no comparaciones sueltas: cuando el backend agregue otro estado,
 // hay UN sitio que actualizar y un fallback que ya no deja el badge vacio.
-const ESTADOS_ACTIVOS = ["recibido", "en_preparacion", "preparado", "en_camino", "domiciliario_llego"];
+//
+// `no_entregado` cuenta como ACTIVO: el pedido sigue vivo esperando que lo
+// reprogramen. Dejarlo fuera lo sacaría de la sección de pedidos en curso y el
+// cliente creería que ya no existe.
+const ESTADOS_ACTIVOS = ["recibido", "en_preparacion", "preparado", "en_camino", "domiciliario_llego", "no_entregado"];
 const ESTADOS_EN_CALLE = ["en_camino", "domiciliario_llego"];
 
 import { CARD_SHADOW } from "../../../src/constants/styles";

@@ -37,6 +37,31 @@ interface Props {
 }
 
 export function OrderStatusTimeline({ estado, pedido, estadosExtendidos = false }: Props) {
+  // Entrega fallida (077). Va en lugar del timeline y no como un paso mas,
+  // porque no es un avance: el pedido volvio atras. Pintarlo dentro de la
+  // escalera lo dejaria "en curso" en un paso que no existe — que es justo lo
+  // que pasaba antes: el cliente veia "Tu domiciliario llegó" para siempre, con
+  // la tarjeta del domiciliario ya desaparecida y sin ninguna explicacion.
+  //
+  // El texto NO menciona el motivo. Los mas frecuentes son "el cliente no
+  // estaba" y "no tenia con que pagar", y esta pantalla no es donde se discute
+  // eso. Dice que paso con el pedido y que sigue, que es lo que el cliente
+  // necesita para no quedarse esperando.
+  if (estado === "no_entregado") {
+    return (
+      <View style={{ alignItems: "center", paddingVertical: 16 }}>
+        <View style={{ width: 44, height: 44, borderRadius: 999, backgroundColor: "rgba(180,83,9,0.12)", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+          <Text style={{ color: "#B45309", fontSize: 20, fontWeight: "800" }}>!</Text>
+        </View>
+        <Text style={{ color: "#B45309", fontWeight: "700" }}>No pudimos entregarlo</Text>
+        <Text style={{ color: colors.muted, fontSize: 13, marginTop: 6, textAlign: "center", paddingHorizontal: 12, lineHeight: 18 }}>
+          Tu pedido volvió al estanco. Te contactamos para reprogramar la entrega — también puedes
+          escribirnos por el chat de abajo.
+        </Text>
+      </View>
+    );
+  }
+
   if (estado === "cancelado") {
     return (
       <View style={{ alignItems: "center", paddingVertical: 16 }}>
