@@ -12,10 +12,11 @@
 // gente que los tiene contados, y nadie está mirando.
 
 import { useEffect, useRef, useState } from "react";
-import { View, Text, AppState, ActivityIndicator, InteractionManager, Platform } from "react-native";
+import { View, Text, Pressable, AppState, ActivityIndicator, InteractionManager, Platform } from "react-native";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { getUbicacionDomiciliario, type UbicacionDomiciliario } from "../lib/api";
 
 const INTERVALO_MS = 15_000;
@@ -28,6 +29,7 @@ const MENSAJE: Record<string, string> = {
 };
 
 export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
+  const router = useRouter();
   const [ubi, setUbi] = useState<UbicacionDomiciliario | null>(null);
   const mapRef = useRef<MapView>(null);
   const vivo = useRef(true);
@@ -117,10 +119,16 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
   }
 
   return (
-    <View className="bg-white rounded-2xl overflow-hidden">
+    <Pressable
+      onPress={() => router.push(`/seguimiento/${pedidoId}`)}
+      accessibilityRole="button"
+      accessibilityLabel="Ver el mapa completo del repartidor"
+      className="bg-white rounded-2xl overflow-hidden"
+    >
       <View style={{ padding: 16, paddingBottom: 10, flexDirection: "row", alignItems: "center", gap: 8 }}>
         <Feather name="navigation" size={16} color="#1FAF55" />
         <Text style={{ fontSize: 15, fontWeight: "800", color: "#1A1C1A", flex: 1 }}>Por dónde viene</Text>
+        <Feather name="maximize-2" size={13} color="#6D7B6C" style={{ marginRight: 6 }} />
         <Text style={{ fontSize: 11.5, color: "#6D7B6C" }}>
           {(ubi.actualizado_hace_seg ?? 0) < 60
             ? "hace un momento"
@@ -174,7 +182,7 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
             >
               <Image
                 source={require("../../assets/repartidor-moto.webp")}
-                style={{ width: 44, height: 66 }}
+                style={{ width: 30, height: 45 }}
                 contentFit="contain"
                 onLoadEnd={() => setIconoListo(true)}
               />
@@ -189,6 +197,6 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
           </MapView>
         )}
       </View>
-    </View>
+    </Pressable>
   );
 }
