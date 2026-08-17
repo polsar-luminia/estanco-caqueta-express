@@ -12,7 +12,7 @@
 // gente que los tiene contados, y nadie está mirando.
 
 import { useEffect, useRef, useState } from "react";
-import { View, Text, AppState, ActivityIndicator, InteractionManager } from "react-native";
+import { View, Text, AppState, ActivityIndicator, InteractionManager, Platform } from "react-native";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
 import { Feather } from "@expo/vector-icons";
 import { getUbicacionDomiciliario, type UbicacionDomiciliario } from "../lib/api";
@@ -42,6 +42,16 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
     const task = InteractionManager.runAfterInteractions(() => setMapaMontado(true));
     return () => task.cancel();
   }, []);
+
+  // Red de seguridad: si `onMapReady` no dispara, el indicador se quita igual a
+  // los 2 s. Gatear la visibilidad SOLO en ese evento fue lo que dejo el mapa
+  // "cargando para siempre" en la segunda prueba — y un mapa tapado por un
+  // spinner es indistinguible de uno roto.
+  useEffect(() => {
+    if (!mapaMontado || mapaListo) return undefined;
+    const t = setTimeout(() => setMapaListo(true), 2000);
+    return () => clearTimeout(t);
+  }, [mapaMontado, mapaListo]);
 
   useEffect(() => {
     vivo.current = true;
@@ -133,7 +143,11 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
         {mapaMontado && (
           <MapView
             ref={mapRef}
-            provider={PROVIDER_GOOGLE}
+            // En iOS NO se fuerza Google: el proyecto no tiene llave de Google
+            // Maps configurada (`ios.config.googleMapsApiKey` no existe en
+            // app.json), y pedir ese proveedor sin llave pinta un mapa vacio.
+            // Sin `provider` iOS usa Apple Maps, que es nativo y no pide llave.
+            provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
             style={{ height: 200, width: "100%" }}
             initialRegion={regionInicial.current}
             onMapReady={() => setMapaListo(true)}
