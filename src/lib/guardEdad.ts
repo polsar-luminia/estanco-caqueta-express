@@ -74,3 +74,39 @@ export function decidirAuthLayout(
   if (edadConfirmada === false) return "edad";
   return "tabs";
 }
+
+/**
+ * ¿El layout/pantalla de un grupo debe mandar a confirmar la edad?
+ *
+ * La clave es `segmentos[0] !== grupo`: en expo-router los layouts NO se
+ * desmontan cuando se navega a otro grupo — el de `(tabs)` sigue vivo debajo
+ * mientras la persona está en el mapa. Y `useSegments()` es global. Así que un
+ * layout de fondo que decida redirigir TUMBA la pantalla que está encima.
+ *
+ * Fue el bug del 17-ago, que mordió DOS veces el mismo día: al registrarse,
+ * `cliente` llega unos instantes después con `edad_confirmada: false`, y ese
+ * re-render ocurría con la persona ya en el mapa poniendo su punto de entrega.
+ * La expulsaba a /edad-confirmar y el formulario de dirección moría con la
+ * dirección ya escrita — se veía como "guardé la dirección y no quedó".
+ *
+ * La regla estaba copiada en CUATRO archivos ((auth), (tabs), profile, ofertas)
+ * y cada arreglo anterior parchó una sola copia. Por eso ahora todas llaman
+ * aquí.
+ *
+ * Se conserva la comparación laxa (`!edadConfirmada`, no `=== false`) a
+ * propósito: cubre que la API omita el campo, y ante la duda §1.4.3 pide cerrar,
+ * no abrir. Eso es seguro justamente porque ya se comprobó que este grupo es la
+ * ruta activa; el caso "todavía no cargó" lo cubre `clienteCargado`.
+ */
+export function grupoDebeConfirmarEdad(
+  segmentos: string[],
+  grupo: string,
+  isAuthenticated: boolean,
+  clienteCargado: boolean,
+  edadConfirmada: boolean | undefined,
+): boolean {
+  if (!isAuthenticated) return false;
+  if (segmentos[0] !== grupo) return false;
+  if (!clienteCargado) return false;
+  return !edadConfirmada;
+}

@@ -2,6 +2,7 @@ import { Pressable, View, Text, Image } from "react-native";
 import { Redirect, Tabs, useSegments, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useAuthStore } from "../../src/stores/auth";
+import { grupoDebeConfirmarEdad } from "../../src/lib/guardEdad";
 import { useCartStore } from "../../src/stores/cart";
 import { HomeIcon, SearchIcon, CartIcon, OrdersIcon } from "../../src/components/icons/TabIcons";
 
@@ -138,6 +139,7 @@ export default function TabLayout() {
   // Selector inline (no método): los métodos del store no son reactivos a cambios
   // del state — el badge no se actualizaba al limpiar carrito tras crear pedido.
   const itemCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad, 0));
+  const segments = useSegments();
 
   if (isLoading) return null;
 
@@ -145,10 +147,15 @@ export default function TabLayout() {
   // profile.tsx y orders/index.tsx tienen su propio guard para
   // redirigir a login cuando se requiere autenticación.
 
-  // Apple App Store §1.4.3 — bloquear acceso al catálogo hasta que el
-  // usuario confirme explícitamente que es mayor de 18. Se usa !falsy
-  // para cubrir false, null y undefined (respuesta de API que omite el campo).
-  if (isAuthenticated && cliente && !cliente.edad_confirmada) {
+  // Apple App Store §1.4.3 — bloquear acceso al catálogo hasta que el usuario
+  // confirme explícitamente que es mayor de 18.
+  //
+  // Solo cuando `(tabs)` es la ruta ACTIVA: este layout queda montado debajo del
+  // mapa y del onboarding, y redirigir desde el fondo tumbaba la pantalla en uso
+  // (bug del 17-ago; ver grupoDebeConfirmarEdad). No abre ningún hueco: si la
+  // persona vuelve al catálogo, `(tabs)` vuelve a ser la ruta activa y el guard
+  // dispara antes de mostrar nada.
+  if (grupoDebeConfirmarEdad(segments as string[], "(tabs)", isAuthenticated, cliente != null, cliente?.edad_confirmada)) {
     return <Redirect href="/(auth)/edad-confirmar" />;
   }
 

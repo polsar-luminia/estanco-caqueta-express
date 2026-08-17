@@ -1,7 +1,8 @@
 import {
   View, Text, ScrollView, Pressable, StyleSheet,
 } from "react-native";
-import { Stack, useRouter, Redirect } from "expo-router";
+import { Stack, useRouter, Redirect, useSegments } from "expo-router";
+import { grupoDebeConfirmarEdad } from "../src/lib/guardEdad";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
@@ -163,6 +164,7 @@ export default function OfertasScreen() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const cliente = useAuthStore((s) => s.cliente);
+  const segments = useSegments();
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -184,7 +186,9 @@ export default function OfertasScreen() {
   // Apple §1.4.3 — si hay sesión activa pero sin edad confirmada → age gate.
   // El guard de root layout y el de (tabs) ya cubren la edad cuando hay sesión.
   if (isAuthLoading) return null;
-  if (isAuthenticated && cliente && !cliente.edad_confirmada) return <Redirect href="/(auth)/edad-confirmar" />;
+  if (grupoDebeConfirmarEdad(segments as string[], "ofertas", isAuthenticated, cliente != null, cliente?.edad_confirmada)) {
+    return <Redirect href="/(auth)/edad-confirmar" />;
+  }
 
   // Separar flash vs regulares
   const flash = ofertas.filter((o) => o.tipo === "oferta_relampago");

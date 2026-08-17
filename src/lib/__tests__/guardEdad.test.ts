@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { debeConfirmarEdad, decidirAuthLayout, RUTAS_EXENTAS_EDAD } from "../guardEdad";
+import { debeConfirmarEdad, decidirAuthLayout, grupoDebeConfirmarEdad, RUTAS_EXENTAS_EDAD } from "../guardEdad";
 
 describe("debeConfirmarEdad", () => {
   it("manda a confirmar cuando la edad está explícitamente sin confirmar", () => {
@@ -71,5 +71,43 @@ describe("decidirAuthLayout", () => {
 
   it("cualquier otra ruta de raiz tampoco se toca desde este layout", () => {
     expect(decidirAuthLayout(["product", "12"], true, false)).toBe("render");
+  });
+});
+
+describe("grupoDebeConfirmarEdad — los layouts de fondo no expulsan", () => {
+  it("EL BUG: en el mapa, el layout de (tabs) sigue montado y NO debe redirigir", () => {
+    // Esta era la copia que segui expulsando despues de arreglar (auth): el
+    // layout de las tabs vive debajo de todo el onboarding.
+    expect(grupoDebeConfirmarEdad(["ubicacion"], "(tabs)", true, true, false)).toBe(false);
+  });
+
+  it("tampoco desde profile ni ofertas mientras la persona esta en el mapa", () => {
+    expect(grupoDebeConfirmarEdad(["ubicacion"], "profile", true, true, false)).toBe(false);
+    expect(grupoDebeConfirmarEdad(["ubicacion"], "ofertas", true, true, false)).toBe(false);
+  });
+
+  it("ni durante el onboarding en (auth)", () => {
+    expect(grupoDebeConfirmarEdad(["(auth)", "direccion-inicial"], "(tabs)", true, true, false)).toBe(false);
+  });
+
+  it("pero SI bloquea el catalogo cuando (tabs) es la ruta activa (Apple 1.4.3)", () => {
+    expect(grupoDebeConfirmarEdad(["(tabs)"], "(tabs)", true, true, false)).toBe(true);
+    expect(grupoDebeConfirmarEdad(["(tabs)", "index"], "(tabs)", true, true, false)).toBe(true);
+  });
+
+  it("cubre que la API omita el campo: undefined con cliente cargado si bloquea", () => {
+    expect(grupoDebeConfirmarEdad(["(tabs)"], "(tabs)", true, true, undefined)).toBe(true);
+  });
+
+  it("cliente sin cargar todavia no bloquea (evita el flash y la expulsion)", () => {
+    expect(grupoDebeConfirmarEdad(["(tabs)"], "(tabs)", true, false, undefined)).toBe(false);
+  });
+
+  it("sin sesion no aplica: el catalogo es publico", () => {
+    expect(grupoDebeConfirmarEdad(["(tabs)"], "(tabs)", false, false, undefined)).toBe(false);
+  });
+
+  it("con la edad confirmada deja pasar", () => {
+    expect(grupoDebeConfirmarEdad(["(tabs)"], "(tabs)", true, true, true)).toBe(false);
   });
 });
