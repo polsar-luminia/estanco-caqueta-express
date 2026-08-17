@@ -18,6 +18,7 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { getUbicacionDomiciliario, type UbicacionDomiciliario } from "../lib/api";
+import { rumboSiSeMovio, rotacionMoto } from "../lib/distancia";
 
 const INTERVALO_MS = 15_000;
 
@@ -33,6 +34,11 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
   const [ubi, setUbi] = useState<UbicacionDomiciliario | null>(null);
   const mapRef = useRef<MapView>(null);
   const vivo = useRef(true);
+  // Rumbo con el que se dibuja la moto. Se guarda tambien el punto con el que se
+  // calculo, para no recalcularlo con lecturas casi iguales.
+  const [rumbo, setRumbo] = useState<number | null>(null);
+  const puntoRumbo = useRef<{ lat: number; lng: number } | null>(null);
+  const rumboRef = useRef<number | null>(null);
   // El MapView se monta DESPUES de la animacion de entrada y se pinta con
   // `initialRegion`, no con `region`. Las dos cosas son el mismo arreglo que ya
   // vive en app/ubicacion.tsx: montarlo durante la transicion lo deja en blanco
@@ -72,6 +78,17 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
         const r = await getUbicacionDomiciliario(pedidoId);
         if (!vivo.current) return;
         setUbi(r);
+        if (r.disponible && r.lat != null && r.lng != null) {
+          const actual = { lat: r.lat, lng: r.lng };
+          const nuevo = rumboSiSeMovio(puntoRumbo.current, actual, rumboRef.current, r.destino ?? null);
+          if (nuevo != null && nuevo !== rumboRef.current) {
+            rumboRef.current = nuevo;
+            setRumbo(nuevo);
+          }
+          // Se guarda SIEMPRE el ultimo punto: el umbral de movimiento se mide
+          // contra la lectura anterior, no contra el ultimo giro.
+          puntoRumbo.current = actual;
+        }
         // Deslizar la camara en vez de saltar: es lo que hace que se SIENTA que
         // se va acercando, en vez de parpadear de una posicion a otra.
         if (r.disponible && r.lat != null && r.lng != null && mapRef.current) {
@@ -179,6 +196,10 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
               // llantas, no el centro de la imagen.
               anchor={{ x: 0.5, y: 0.9 }}
               tracksViewChanges={!iconoListo}
+              // La moto mira hacia donde VA. `rotation` es una propiedad nativa
+              // del marcador, asi que gira sin tener que redibujar la vista
+              // (que es lo que `tracksViewChanges` apagado evita).
+              rotation={rumbo != null ? rotacionMoto(rumbo) : 0}
             >
               <Image
                 source={require("../../assets/repartidor-moto.webp")}

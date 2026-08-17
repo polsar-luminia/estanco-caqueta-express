@@ -40,3 +40,54 @@ describe("textoDistancia", () => {
     expect(textoDistancia(5000)).toContain("en línea recta");
   });
 });
+
+import { rumboGrados, rotacionMoto, rumboSiSeMovio, MOTO_APUNTA_A } from "../distancia";
+
+describe("rumboGrados", () => {
+  const p = { lat: 1.62, lng: -75.61 };
+  it("norte, sur, este y oeste", () => {
+    expect(rumboGrados(p, { lat: 1.63, lng: -75.61 })).toBeCloseTo(0, 0);
+    expect(rumboGrados(p, { lat: 1.61, lng: -75.61 })).toBeCloseTo(180, 0);
+    expect(rumboGrados(p, { lat: 1.62, lng: -75.60 })).toBeCloseTo(90, 0);
+    expect(rumboGrados(p, { lat: 1.62, lng: -75.62 })).toBeCloseTo(270, 0);
+  });
+
+  it("nororiente cae en el primer cuadrante", () => {
+    const r = rumboGrados(p, { lat: 1.63, lng: -75.60 });
+    expect(r).toBeGreaterThan(20);
+    expect(r).toBeLessThan(70);
+  });
+});
+
+describe("rotacionMoto", () => {
+  it("para el rumbo en que la imagen ya apunta, no rota nada", () => {
+    expect(rotacionMoto(MOTO_APUNTA_A)).toBe(0);
+  });
+  it("siempre queda entre 0 y 360", () => {
+    for (const r of [0, 90, 180, 270, 359]) {
+      const v = rotacionMoto(r);
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(360);
+    }
+  });
+});
+
+describe("rumboSiSeMovio", () => {
+  const destino = { lat: 1.64, lng: -75.60 };
+
+  it("sin recorrido previo apunta hacia la casa, no a un valor arbitrario", () => {
+    const r = rumboSiSeMovio(null, { lat: 1.62, lng: -75.61 }, null, destino);
+    expect(r).toBeCloseTo(rumboGrados({ lat: 1.62, lng: -75.61 }, destino), 0);
+  });
+
+  it("un movimiento minusculo NO cambia el rumbo: la moto giraria sola en un semaforo", () => {
+    const previo = 90;
+    const r = rumboSiSeMovio({ lat: 1.62, lng: -75.61 }, { lat: 1.620005, lng: -75.61 }, previo, destino);
+    expect(r).toBe(previo);
+  });
+
+  it("un movimiento real si actualiza el rumbo", () => {
+    const r = rumboSiSeMovio({ lat: 1.62, lng: -75.61 }, { lat: 1.6215, lng: -75.61 }, 270, destino);
+    expect(r).toBeCloseTo(0, 0);
+  });
+});

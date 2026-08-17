@@ -17,7 +17,7 @@ import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getUbicacionDomiciliario, type UbicacionDomiciliario } from "../../src/lib/api";
-import { distanciaMetros, textoDistancia } from "../../src/lib/distancia";
+import { distanciaMetros, textoDistancia, rumboSiSeMovio, rotacionMoto } from "../../src/lib/distancia";
 import { tracker } from "../../src/lib/tracker";
 
 const INTERVALO_MS = 12_000;
@@ -35,6 +35,11 @@ export default function SeguimientoScreen() {
   const [iconoListo, setIconoListo] = useState(false);
   const mapRef = useRef<MapView>(null);
   const vivo = useRef(true);
+  // Rumbo con el que se dibuja la moto. Se guarda tambien el punto con el que se
+  // calculo, para no recalcularlo con lecturas casi iguales.
+  const [rumbo, setRumbo] = useState<number | null>(null);
+  const puntoRumbo = useRef<{ lat: number; lng: number } | null>(null);
+  const rumboRef = useRef<number | null>(null);
   const encuadrado = useRef(false);
 
   useEffect(() => {
@@ -60,6 +65,17 @@ export default function SeguimientoScreen() {
         const r = await getUbicacionDomiciliario(id);
         if (!vivo.current) return;
         setUbi(r);
+        if (r.disponible && r.lat != null && r.lng != null) {
+          const actual = { lat: r.lat, lng: r.lng };
+          const nuevo = rumboSiSeMovio(puntoRumbo.current, actual, rumboRef.current, r.destino ?? null);
+          if (nuevo != null && nuevo !== rumboRef.current) {
+            rumboRef.current = nuevo;
+            setRumbo(nuevo);
+          }
+          // Se guarda SIEMPRE el ultimo punto: el umbral de movimiento se mide
+          // contra la lectura anterior, no contra el ultimo giro.
+          puntoRumbo.current = actual;
+        }
         if (r.disponible && r.lat != null && r.lng != null && mapRef.current) {
           const puntos = [{ latitude: r.lat, longitude: r.lng }];
           if (r.destino) puntos.push({ latitude: r.destino.lat, longitude: r.destino.lng });
@@ -117,6 +133,10 @@ export default function SeguimientoScreen() {
               coordinate={{ latitude: ubi.lat, longitude: ubi.lng! }}
               anchor={{ x: 0.5, y: 0.9 }}
               tracksViewChanges={!iconoListo}
+              // La moto mira hacia donde VA. `rotation` es una propiedad nativa
+              // del marcador, asi que gira sin tener que redibujar la vista
+              // (que es lo que `tracksViewChanges` apagado evita).
+              rotation={rumbo != null ? rotacionMoto(rumbo) : 0}
               title="Tu repartidor"
             >
               <Image
