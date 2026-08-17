@@ -71,6 +71,7 @@ export default function ChatPedidoScreen() {
   const [visible, setVisible] = useState<boolean | null>(optimista ? true : null); // null = cargando
   const [escribible, setEscribible] = useState(optimista);
   const [motivoCierre, setMotivoCierre] = useState<string | null>(null);
+  const [contraparte, setContraparte] = useState<string | null>(null);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const ultimoId = useRef(0);
@@ -87,6 +88,7 @@ export default function ChatPedidoScreen() {
       setVisible(r.visible);
       setEscribible(r.escribible);
       setMotivoCierre(r.motivo);
+      setContraparte(r.contraparte ?? null);
       if (r.mensajes.length > 0) {
         ultimoId.current = Math.max(ultimoId.current, r.mensajes[r.mensajes.length - 1].id);
         // Dedupe por id: un sondeo que ya estaba en vuelo cuando se ENVIO un
@@ -149,6 +151,15 @@ export default function ChatPedidoScreen() {
   const ultimoStaff = [...mensajes].reverse().find((m) => m.autor_tipo === "staff");
   const nombreDomiciliario = ultimoStaff?.autor_staff_nombre ?? null;
   const fotoDomiciliario = ultimoStaff?.autor_foto_url ?? null;
+  // Antes del despacho contesta el mostrador; despues, quien lleva el pedido.
+  // El nombre del staff solo se muestra cuando la contraparte es el
+  // domiciliario: en la etapa del estanco, quien atiende puede ir cambiando y
+  // ponerle la cara de un cajero a "el estanco" confunde mas de lo que ayuda.
+  const esEstanco = contraparte !== "domiciliario";
+  const titulo = esEstanco ? "Estanco Caquetá Express" : (nombreDomiciliario ?? "Tu domiciliario");
+  const subtitulo = n
+    ? `Pedido #${n}`
+    : esEstanco ? "Estamos alistando tu pedido" : "Tu pedido en camino";
 
   return (
     <View style={{ flex: 1, backgroundColor: "#ECE9E2" }}>
@@ -184,7 +195,9 @@ export default function ChatPedidoScreen() {
             overflow: "hidden",
           }}
         >
-          {fotoDomiciliario ? (
+          {esEstanco ? (
+            <Feather name="home" size={20} color="#fff" />
+          ) : fotoDomiciliario ? (
             <Image source={{ uri: fotoDomiciliario }} style={{ width: 40, height: 40 }} contentFit="cover" />
           ) : nombreDomiciliario ? (
             <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>{iniciales(nombreDomiciliario)}</Text>
@@ -195,10 +208,10 @@ export default function ChatPedidoScreen() {
 
         <View style={{ flex: 1 }}>
           <Text style={{ color: "#fff", fontWeight: "800", fontSize: 16 }} numberOfLines={1}>
-            {nombreDomiciliario ?? "Tu domiciliario"}
+            {titulo}
           </Text>
           <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 12 }}>
-            {n ? `Pedido #${n}` : "Tu pedido en camino"}
+            {subtitulo}
           </Text>
         </View>
       </View>

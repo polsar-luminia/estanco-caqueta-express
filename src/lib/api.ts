@@ -442,9 +442,16 @@ export interface MensajePedido {
 export interface HiloPedido {
   /** El hilo se puede ver (aunque sea en solo lectura). */
   visible: boolean;
-  /** Se puede escribir. Solo mientras el pedido va en camino con domiciliario. */
+  /** Se puede escribir. Cierto durante todo el pedido, hasta que se cierra. */
   escribible: boolean;
-  /** 'aun_no_sale' | 'pedido_cerrado' | null. Es lo que se le explica al cliente. */
+  /**
+   * Con quien habla el cliente. Cambia en el despacho: antes contesta el
+   * mostrador ('estanco'), despues quien lleva el pedido ('domiciliario').
+   * Lo decide el SERVIDOR — si el pedido salio sin domiciliario asignado sigue
+   * siendo 'estanco', porque no hay a quien nombrar.
+   */
+  contraparte: 'estanco' | 'domiciliario' | null;
+  /** 'pedido_cerrado' | null. Es lo que se le explica al cliente. */
   motivo: string | null;
   mensajes: MensajePedido[];
 }

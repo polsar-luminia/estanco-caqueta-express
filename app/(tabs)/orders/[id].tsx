@@ -158,6 +158,9 @@ export default function OrderDetailScreen() {
     return <OrderDetailSkeleton />;
   }
 
+  // En la calle el chat es con quien lleva el pedido; antes, con el mostrador.
+  const enCalle = pedido.estado === "en_camino" || pedido.estado === "domiciliario_llego";
+
   return (
     <>
     <Stack.Screen
@@ -323,14 +326,18 @@ export default function OrderDetailScreen() {
         </View>
       )}
 
-      {/* Chat con el domiciliario: pantalla propia estilo WhatsApp (16-ago).
-          La tarjeta solo aparece con el pedido en la calle; quién puede escribir
-          lo sigue decidiendo el SERVIDOR dentro de la pantalla del chat. */}
-      {(pedido.estado === "en_camino" || pedido.estado === "domiciliario_llego") && (
+      {/* Chat del pedido: pantalla propia estilo WhatsApp (16-ago).
+          Desde el 17-ago está vivo durante TODO el pedido, no solo en la calle:
+          antes del despacho contesta el mostrador y después el domiciliario.
+          Sin esto, en toda la preparación el cliente no tenía por dónde
+          preguntar y le tocaba salirse a WhatsApp, donde lo que se acuerde
+          queda suelto y no pegado al pedido.
+          Quién puede escribir lo sigue decidiendo el SERVIDOR dentro del chat. */}
+      {pedido.estado !== "entregado" && pedido.estado !== "cancelado" && (
         <Pressable
           onPress={() => router.push(`/chat/${pedido.id}?n=${pedido.numero_orden_cliente ?? ""}&v=1`)}
           accessibilityRole="button"
-          accessibilityLabel="Abrir el chat con tu domiciliario"
+          accessibilityLabel={enCalle ? "Abrir el chat con tu domiciliario" : "Escribirle al Estanco"}
           className="bg-white rounded-2xl p-5"
           style={CARD_SHADOW}
         >
@@ -339,11 +346,15 @@ export default function OrderDetailScreen() {
               <Feather name="message-circle" size={20} color="#1FAF55" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: "800", color: "#1A1C1A" }}>Chat con tu domiciliario</Text>
+              <Text style={{ fontSize: 15, fontWeight: "800", color: "#1A1C1A" }}>
+                {enCalle ? "Chat con tu domiciliario" : "Escríbele al Estanco"}
+              </Text>
               <Text style={{ fontSize: 12.5, color: "#6D7B6C", marginTop: 1 }}>
                 {(pedido.chat_sin_leer ?? 0) > 0
                   ? `${pedido.chat_sin_leer} mensaje${(pedido.chat_sin_leer ?? 0) > 1 ? "s" : ""} sin leer`
-                  : "Dile con quién dejar el pedido o acuérdale dónde es."}
+                  : enCalle
+                    ? "Dile con quién dejar el pedido o acuérdale dónde es."
+                    : "¿Necesitas cambiar algo del pedido o de la dirección?"}
               </Text>
             </View>
             {(pedido.chat_sin_leer ?? 0) > 0 && (
