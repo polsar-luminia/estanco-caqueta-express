@@ -39,6 +39,9 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
   const [rumbo, setRumbo] = useState<number | null>(null);
   const puntoRumbo = useRef<{ lat: number; lng: number } | null>(null);
   const rumboRef = useRef<number | null>(null);
+  // Un marcador con contenido propio no se repinta si el mapa no lo esta
+  // vigilando: al girar hay que prender la vigilancia un instante y apagarla.
+  const [redibujando, setRedibujando] = useState(false);
   // El MapView se monta DESPUES de la animacion de entrada y se pinta con
   // `initialRegion`, no con `region`. Las dos cosas son el mismo arreglo que ya
   // vive en app/ubicacion.tsx: montarlo durante la transicion lo deja en blanco
@@ -107,6 +110,13 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
       if (timer) clearInterval(timer);
     };
   }, [pedidoId]);
+
+  useEffect(() => {
+    if (rumbo == null) return undefined;
+    setRedibujando(true);
+    const t = setTimeout(() => setRedibujando(false), 800);
+    return () => clearTimeout(t);
+  }, [rumbo]);
 
   // El servidor todavía no ha respondido: no se pinta nada, ni siquiera un
   // esqueleto — la tarjeta aparecería y desaparecería sola.
@@ -195,15 +205,19 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
               // El ancla en el centro-abajo: el punto del mapa es donde tocan las
               // llantas, no el centro de la imagen.
               anchor={{ x: 0.5, y: 0.9 }}
-              tracksViewChanges={!iconoListo}
-              // La moto mira hacia donde VA. `rotation` es una propiedad nativa
-              // del marcador, asi que gira sin tener que redibujar la vista
-              // (que es lo que `tracksViewChanges` apagado evita).
-              rotation={rumbo != null ? rotacionMoto(rumbo) : 0}
+              tracksViewChanges={!iconoListo || redibujando}
             >
               <Image
                 source={require("../../assets/repartidor-moto.webp")}
-                style={{ width: 30, height: 45 }}
+                style={{
+                  width: 30,
+                  height: 45,
+                  // La moto mira hacia donde VA. Se rota la IMAGEN y no con la
+                  // propiedad `rotation` del Marker: en iOS esa propiedad no
+                  // aplica cuando el marcador tiene contenido propio — se probo
+                  // y la moto quedaba siempre igual.
+                  transform: [{ rotate: `${rumbo != null ? rotacionMoto(rumbo) : 0}deg` }],
+                }}
                 contentFit="contain"
                 onLoadEnd={() => setIconoListo(true)}
               />

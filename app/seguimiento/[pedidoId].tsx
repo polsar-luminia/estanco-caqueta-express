@@ -40,6 +40,9 @@ export default function SeguimientoScreen() {
   const [rumbo, setRumbo] = useState<number | null>(null);
   const puntoRumbo = useRef<{ lat: number; lng: number } | null>(null);
   const rumboRef = useRef<number | null>(null);
+  // Un marcador con contenido propio no se repinta si el mapa no lo esta
+  // vigilando: al girar hay que prender la vigilancia un instante y apagarla.
+  const [redibujando, setRedibujando] = useState(false);
   const encuadrado = useRef(false);
 
   useEffect(() => {
@@ -106,6 +109,13 @@ export default function SeguimientoScreen() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (rumbo == null) return undefined;
+    setRedibujando(true);
+    const t = setTimeout(() => setRedibujando(false), 800);
+    return () => clearTimeout(t);
+  }, [rumbo]);
+
   const metros =
     ubi?.disponible && ubi.lat != null && ubi.destino
       ? distanciaMetros({ lat: ubi.lat, lng: ubi.lng! }, ubi.destino)
@@ -132,16 +142,20 @@ export default function SeguimientoScreen() {
             <Marker
               coordinate={{ latitude: ubi.lat, longitude: ubi.lng! }}
               anchor={{ x: 0.5, y: 0.9 }}
-              tracksViewChanges={!iconoListo}
-              // La moto mira hacia donde VA. `rotation` es una propiedad nativa
-              // del marcador, asi que gira sin tener que redibujar la vista
-              // (que es lo que `tracksViewChanges` apagado evita).
-              rotation={rumbo != null ? rotacionMoto(rumbo) : 0}
+              tracksViewChanges={!iconoListo || redibujando}
               title="Tu repartidor"
             >
               <Image
                 source={require("../../assets/repartidor-moto.webp")}
-                style={{ width: 38, height: 57 }}
+                style={{
+                  width: 38,
+                  height: 57,
+                  // La moto mira hacia donde VA. Se rota la IMAGEN y no con la
+                  // propiedad `rotation` del Marker: en iOS esa propiedad no
+                  // aplica cuando el marcador tiene contenido propio — se probo
+                  // y la moto quedaba siempre igual.
+                  transform: [{ rotate: `${rumbo != null ? rotacionMoto(rumbo) : 0}deg` }],
+                }}
                 contentFit="contain"
                 onLoadEnd={() => setIconoListo(true)}
               />
