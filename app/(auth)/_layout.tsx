@@ -1,5 +1,6 @@
 import { Redirect, Stack, useSegments } from "expo-router";
 import { useAuthStore } from "../../src/stores/auth";
+import { decidirAuthLayout } from "../../src/lib/guardEdad";
 
 export default function AuthLayout() {
   const isLoading = useAuthStore((s) => s.isLoading);
@@ -7,13 +8,6 @@ export default function AuthLayout() {
   const cliente = useAuthStore((s) => s.cliente);
   const segments = useSegments();
 
-  // `edad-confirmar` se renderiza dentro de (auth) PERO requiere usuario
-  // autenticado (necesitamos JWT para POST /me/confirmar-edad). Por eso
-  // no se redirige fuera aunque isAuthenticated sea true.
-  const enEdadConfirmar = segments[segments.length - 1] === "edad-confirmar";
-  // Misma excepcion que edad-confirmar: se renderiza dentro de (auth) pero exige
-  // sesion, porque guarda una direccion contra la cuenta recien creada.
-  const enDireccionInicial = segments[segments.length - 1] === "direccion-inicial";
 
   // Guard defensivo: el root layout ya retorna null durante isLoading,
   // pero si por alguna razón el subtree se renderiza antes de que hidrate,
@@ -22,19 +16,14 @@ export default function AuthLayout() {
     return <Stack screenOptions={{ headerShown: false }} />;
   }
 
-  if (isAuthenticated) {
-    if (enEdadConfirmar || enDireccionInicial) {
-      // Permitir renderizar las pantallas de onboarding
-      return <Stack screenOptions={{ headerShown: false }} />;
-    }
-    // Si está autenticado y aún NO confirmó edad, forzar a confirmar antes
-    // de entrar al catálogo. El (tabs)/_layout también enforza, pero hacerlo
-    // aquí evita un flash de la home.
-    if (cliente && !cliente.edad_confirmada) {
-      return <Redirect href="/(auth)/edad-confirmar" />;
-    }
-    return <Redirect href="/(tabs)" />;
-  }
+  // La decisión vive en `decidirAuthLayout` (probada en guardEdad.test.ts) para
+  // que no vuelva a existir una segunda copia de la regla de edad: el bug del
+  // 17-ago fue justo eso — el arreglo del 08-ago parchó el guard de la raíz y
+  // esta copia se quedó atrás, expulsando del mapa a quien acababa de
+  // registrarse y matando el formulario de dirección a medio llenar.
+  const salida = decidirAuthLayout(segments as string[], isAuthenticated, cliente?.edad_confirmada);
+  if (salida === "edad") return <Redirect href="/(auth)/edad-confirmar" />;
+  if (salida === "tabs") return <Redirect href="/(tabs)" />;
 
   return (
     <Stack screenOptions={{ headerShown: false }} />

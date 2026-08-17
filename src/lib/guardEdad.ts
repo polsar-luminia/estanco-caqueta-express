@@ -39,3 +39,38 @@ export function debeConfirmarEdad(
   if (!rutaActual) return false;
   return !RUTAS_EXENTAS_EDAD.includes(rutaActual);
 }
+
+/** Qué debe hacer el layout de `(auth)` con la ruta activa. */
+export type SalidaAuthLayout = "render" | "edad" | "tabs";
+
+/**
+ * Decisión del layout de `(auth)`, extraída para poder probarla — mismo motivo
+ * que `debeConfirmarEdad`.
+ *
+ * `useSegments()` es GLOBAL: cuando alguien abre el mapa (`app/ubicacion.tsx`,
+ * que vive en la raíz) este layout sigue montado debajo y ve esos segmentos. Sin
+ * la salida "render" para rutas de fuera del grupo, redirigía desde abajo y
+ * tumbaba la pantalla en uso. Bug del 17-ago: la dirección del onboarding se
+ * escribía, la persona iba al mapa, y al llegar `cliente` con
+ * `edad_confirmada: false` el layout la expulsaba; el formulario moría con la
+ * dirección adentro y se veía como "no se guardó".
+ *
+ * `edadConfirmada` en `undefined` es "todavía no cargó", NO "no confirmó": en la
+ * duda no se expulsa.
+ */
+export function decidirAuthLayout(
+  segments: string[],
+  isAuthenticated: boolean,
+  edadConfirmada: boolean | undefined,
+): SalidaAuthLayout {
+  if (!isAuthenticated) return "render";
+
+  const ultimo = segments[segments.length - 1];
+  if (ultimo === "edad-confirmar" || ultimo === "direccion-inicial") return "render";
+
+  // Ruta activa fuera del grupo (el mapa, y cualquier pantalla de raíz futura).
+  if (segments[0] !== "(auth)") return "render";
+
+  if (edadConfirmada === false) return "edad";
+  return "tabs";
+}
