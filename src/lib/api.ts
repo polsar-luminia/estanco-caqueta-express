@@ -500,8 +500,19 @@ export async function getPedido(id: number) {
   return apiFetch<Pedido>(`/pedidos/${id}`);
 }
 
-export async function cancelarPedido(id: number) {
-  return apiFetch(`/pedidos/${id}/cancelar`, { method: "PUT" });
+/** Un motivo del catalogo que sirve el servidor en /configuracion-app. */
+export interface MotivoCancelacion {
+  codigo: string;
+  etiqueta: string;
+}
+
+export async function cancelarPedido(id: number, motivo?: string, detalle?: string) {
+  // El motivo va como opcional porque el servidor lo acepta ausente: es lo que
+  // mantiene funcionando la cancelacion de los binarios viejos.
+  return apiFetch(`/pedidos/${id}/cancelar`, {
+    method: "PUT",
+    body: JSON.stringify({ ...(motivo ? { motivo } : {}), ...(detalle ? { detalle } : {}) }),
+  });
 }
 
 // --- Patrocinados ---
@@ -1007,6 +1018,9 @@ export async function getEstadoTienda(): Promise<EstadoTienda> {
 }
 
 export interface ConfigApp {
+  /** Catalogo de motivos de cancelacion. Viene del servidor para poder cambiarlo
+   *  sin publicar app (Android sigue en 1.2.3 y no recibe los OTA de 1.3.0). */
+  motivos_cancelacion?: MotivoCancelacion[];
   envio_gratis_minimo: number;
   envio_costo: number;
   pedido_minimo: number;

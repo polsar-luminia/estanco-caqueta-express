@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import Toast from "react-native-toast-message";
@@ -9,6 +9,7 @@ import { tracker } from "../../../src/lib/tracker";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline";
 import { TarjetaResena } from "../../../src/components/TarjetaResena";
+import { HojaCancelar } from "../../../src/components/HojaCancelar";
 import { MapaDomiciliario } from "../../../src/components/MapaDomiciliario";
 import { SkeletonBox } from "../../../src/components/skeletons/SkeletonBox";
 import { ErrorState } from "../../../src/components/ErrorState";
@@ -111,10 +112,16 @@ export default function OrderDetailScreen() {
     enabled: Number.isFinite(pedidoId) && pedidoId > 0,
   });
 
+  const [hojaCancelar, setHojaCancelar] = useState(false);
+
   const cancelMutation = useMutation({
-    mutationFn: () => cancelarPedido(pedidoId),
-    onSuccess: () => {
-      tracker.track('pedido_cancelado', { pedido_id: pedidoId }, 'orders/[id]');
+    mutationFn: ({ motivo, detalle }: { motivo: string; detalle?: string }) =>
+      cancelarPedido(pedidoId, motivo, detalle),
+    onSuccess: (_data, variables) => {
+      setHojaCancelar(false);
+      // Solo el CODIGO del motivo viaja a telemetria. El texto libre no: es un
+      // campo abierto donde la gente escribe lo que sea, incluida su direccion.
+      tracker.track('pedido_cancelado', { pedido_id: pedidoId, motivo: variables.motivo }, 'orders/[id]');
       queryClient.invalidateQueries({ queryKey: ["pedido", pedidoId] });
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });
       Toast.show({ type: "success", text1: "Pedido cancelado" });
@@ -128,16 +135,10 @@ export default function OrderDetailScreen() {
     },
   });
 
-  const handleCancelar = () => {
-    Alert.alert("Cancelar pedido", "Estas seguro?", [
-      { text: "No" },
-      {
-        text: "Si, cancelar",
-        style: "destructive",
-        onPress: () => cancelMutation.mutate(),
-      },
-    ]);
-  };
+  // Antes era un Alert de si/no. Ahora abre la hoja de motivos: el negocio
+  // necesita saber POR QUE se cae un pedido, y preguntarlo en el momento en que
+  // la persona ya decidio cancelar es cuando de verdad responde.
+  const handleCancelar = () => setHojaCancelar(true);
 
   if (!Number.isFinite(pedidoId) || pedidoId <= 0) {
     return (
@@ -431,6 +432,15 @@ export default function OrderDetailScreen() {
         </Pressable>
       )}
     </ScrollView>
+
+      <HojaCancelar
+        visible={hojaCancelar}
+        motivos={configApp?.motivos_cancelacion}
+        enviando={cancelMutation.isPending}
+        onCerrar={() => setHojaCancelar(false)}
+        onConfirmar={(motivo, detalle) => cancelMutation.mutate({ motivo, detalle })}
+      />
+
     </>
   );
 }

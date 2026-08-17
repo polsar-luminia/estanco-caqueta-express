@@ -142,7 +142,8 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   busqueda_sin_resultado: ['q'],
   busqueda: ['q', 'resultados'],
   pedido_reordenado: ['pedido_id', 'omitidos', 'omitidos_catalogo', 'omitidos_stock'],
-  pedido_cancelado: ['pedido_id'],
+  // `motivo` es el CODIGO del catalogo, nunca el texto libre.
+  pedido_cancelado: ['pedido_id', 'motivo'],
   carrito_agregado: ['producto_id', 'nombre', 'precio', 'cantidad'],
   carrito_eliminado: ['producto_id'],
   carrito_cantidad_cambiada: ['producto_id', 'cantidad_nueva'],
