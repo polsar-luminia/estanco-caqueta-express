@@ -184,10 +184,12 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
         {mapaMontado && (
           <MapView
             ref={mapRef}
-            // En iOS NO se fuerza Google: el proyecto no tiene llave de Google
-            // Maps configurada (`ios.config.googleMapsApiKey` no existe en
-            // app.json), y pedir ese proveedor sin llave pinta un mapa vacio.
-            // Sin `provider` iOS usa Apple Maps, que es nativo y no pide llave.
+            // Android: Google Maps. La llave esta en app.json, en la config del
+            // plugin `react-native-maps` (`androidGoogleMapsApiKey`).
+            // iOS: Apple Maps (sin `provider`). NO hay `iosGoogleMapsApiKey`, y
+            // pedir PROVIDER_GOOGLE sin llave no falla: pinta un mapa vacio que
+            // nunca avisa que esta listo — fue lo que se vio el 17-ago.
+            // Apple Maps es nativo, no pide llave y no factura.
             provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
             style={{ height: 200, width: "100%" }}
             initialRegion={regionInicial.current}

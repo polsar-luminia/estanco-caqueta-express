@@ -128,6 +128,8 @@ export default function SeguimientoScreen() {
       {mapaMontado && (
         <MapView
           ref={mapRef}
+          // Android usa Google Maps (llave en app.json, plugin react-native-maps);
+          // iOS usa Apple Maps, que no pide llave. Ver MapaDomiciliario.
           provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
           style={{ flex: 1 }}
           initialRegion={{
