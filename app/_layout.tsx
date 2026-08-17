@@ -1,4 +1,5 @@
 import "../global.css";
+import * as Updates from 'expo-updates';
 import { useEffect, useState } from "react";
 import { AppState, LogBox } from "react-native";
 import { Stack, useRouter, useSegments, usePathname } from "expo-router";
@@ -103,7 +104,10 @@ export default Sentry.wrap(function RootLayout() {
 
   useEffect(() => {
     hydrate();
-    tracker.track('app_abierta');
+    // El id del paquete OTA en curso: `null` = el binario tal cual salio de la
+    // tienda. Es lo que permite responder "¿ya le llego el arreglo?" mirando los
+    // datos en vez de suponer.
+    tracker.track('app_abierta', { ota: Updates.updateId ? Updates.updateId.slice(0, 8) : 'binario' });
     // Init del SDK de Meta + prompt ATT (iOS) una sola vez, con la UI ya montada.
     initMetaAnalytics();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate es un selector estable de Zustand

@@ -6,5 +6,7 @@
 export const runtimeVersion: string | null = '1.2.0-test';
 export const channel: string | null = null;
 export const isEmbeddedLaunch = true;
+// updateId: null cuando corre el binario tal cual (sin OTA aplicado).
+export const updateId: string | null = null;
 
-export default { runtimeVersion, channel, isEmbeddedLaunch };
+export default { runtimeVersion, channel, isEmbeddedLaunch, updateId };

@@ -117,7 +117,11 @@ export type EventTipo =
 // (TypeScript lo fuerza vía Record<EventTipo, ...>).
 const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   app_error: ['message', 'stack'],
-  app_abierta: [],
+  // `ota`: id corto del paquete de JavaScript en curso. Sin esto no hay forma de
+  // saber si un telefono ya recibio un OTA o sigue con el codigo viejo — el
+  // 17-ago se perdieron tres ciclos de depuracion adivinando justo eso. No es
+  // PII: identifica el codigo, no a la persona.
+  app_abierta: ['ota'],
   categoria_abierta: ['categoria_id', 'nombre'],
   // `telefono_verificado`: si la cuenta nació con el número confirmado por OTP.
   // Cuando la mayoría llegue en true, se puede prender registro_otp_obligatorio.
