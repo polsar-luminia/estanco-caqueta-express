@@ -84,7 +84,11 @@ export function Seccion({ seccion, ctx }: { seccion: SeccionInicio; ctx: Ctx }) 
       }));
       if (cats.length === 0) return null;
       return (
-        <View style={{ backgroundColor: colors.surface, paddingTop: 16, paddingBottom: 18 }}>
+        // paddingBottom corto a proposito: debajo viene la franja de la curva,
+        // que ya mide 29 pt y en el centro deja ver el blanco casi entero. Con
+        // los 18 de antes, el hueco entre la ultima categoria y el magenta
+        // llegaba a ~47 pt en la mitad de la pantalla y se veia despegado.
+        <View style={{ backgroundColor: colors.surface, paddingTop: 16, paddingBottom: 4 }}>
           <CuadriculaCategorias
             categorias={cats}
             onSelect={(id) => router.push(`/category/${id}`)}
