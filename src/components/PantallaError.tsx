@@ -1,10 +1,26 @@
+// Pantalla de error global de la app.
+//
+// VIVIA EN app/error.tsx Y NO SERVIA PARA NADA. Expo Router trata cualquier
+// archivo dentro de app/ como una RUTA, asi que ese exportaba un ErrorBoundary
+// para la pantalla "/error" — una pantalla a la que nadie navega nunca. La
+// frontera de error global se declara exportando `ErrorBoundary` desde un
+// _layout, y ningun _layout lo hacia.
+//
+// O sea: desde que se escribio (26-jul-2026), un fallo de render mostraba la
+// pantalla roja de Expo Router en vez de esto. No fallaba al escribirlo, no
+// fallaba al compilar, y solo se notaba el dia que algo reventara de verdad —
+// justo cuando ya no hay margen para descubrirlo.
+//
+// El aviso que lo delato ("Route ./error.tsx is missing the required default
+// export") sonaba a formalismo y era el sintoma exacto del problema.
+
 import { View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { ErrorBoundaryProps } from "expo-router";
-import { tracker } from "../src/lib/tracker";
+import { tracker } from "../lib/tracker";
 import { useEffect } from "react";
 import * as Sentry from "@sentry/react-native";
-import { colors } from "../src/constants/theme";
+import { colors } from "../constants/theme";
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   const router = useRouter();

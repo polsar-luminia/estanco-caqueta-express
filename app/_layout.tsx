@@ -42,6 +42,10 @@ if (process.env.EXPO_PUBLIC_E2E === "1") {
 // cart/orders/profile dentro de (tabs) hacen su propio Redirect a /login.
 const RUTAS_REQUIEREN_AUTH = ["profile"];
 
+// Frontera de error GLOBAL. Exportarla desde el _layout raiz es lo que la
+// activa; en un archivo suelto de app/ era solo una ruta muerta.
+export { ErrorBoundary } from "../src/components/PantallaError";
+
 if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
