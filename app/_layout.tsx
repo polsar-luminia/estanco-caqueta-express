@@ -95,7 +95,14 @@ function GuardVersion({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export default Sentry.wrap(function RootLayout() {
+// Sentry.wrap SOLO cuando hay DSN. `Sentry.init` ya vive detras de esa misma
+// condicion, y envolver sin inicializar hace que Sentry avise en cada arranque
+// ("Sentry.wrap was called before Sentry.init") en simulador y en dev. El aviso
+// no era un bug, pero era ruido permanente encima de los que si importan.
+const envolverConSentry = <T,>(componente: T): T =>
+  process.env.EXPO_PUBLIC_SENTRY_DSN ? (Sentry.wrap(componente as never) as T) : componente;
+
+export default envolverConSentry(function RootLayout() {
   // Fuentes propias del rediseno. Los alias son los mismos en iOS y Android, que
   // es justo lo que el plugin nativo no garantiza.
   const [fuentesListas, errorFuentes] = useFonts({
