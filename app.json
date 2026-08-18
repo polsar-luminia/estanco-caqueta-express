@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "co.estancocaqueta.express",
-      "buildNumber": "83",
+      "buildNumber": "84",
       "associatedDomains": [
         "applinks:estancocaqueta.com"
       ],
@@ -41,7 +41,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "co.estancocaqueta.express",
-      "versionCode": 83,
+      "versionCode": 84,
       "googleServicesFile": "./google-services.json"
     },
     "plugins": [
