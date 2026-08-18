@@ -56,7 +56,10 @@ export function CarrilProductos({
   };
 
   return (
-    <View style={{ paddingTop: 18, paddingBottom: 4 }}>
+    // paddingTop corto: dentro de una seccion con fondo propio, encima ya esta
+    // la franja de la curva (29 pt). Con 18 mas, el titulo quedaba flotando
+    // demasiado abajo del borde de color y el carril se despegaba del bloque.
+    <View style={{ paddingTop: 8, paddingBottom: 4 }}>
       <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", paddingHorizontal: 16, marginBottom: 12 }}>
         {titulo ? (
           // fontWeight NO se combina con fontFamily: Archivo Black tiene un solo peso, y
