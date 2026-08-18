@@ -59,13 +59,14 @@ function HomeHeader({
         paddingTop: insets.top + 8,
         paddingHorizontal: 16,
         paddingBottom: 16,
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
-        shadowColor: colors.greenDeep,
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.35,
-        shadowRadius: 18,
-        elevation: 8,
+        // SIN esquinas redondeadas y SIN sombra, a proposito. Las tenia, y las
+        // dos juntas dejaban ver el fondo gris de la pantalla por detras: la
+        // curva descubria las puntas y la sombra pintaba una franja gris a todo
+        // lo ancho justo encima del banner. Se leia como un borde sucio entre la
+        // cabecera y la imagen.
+        //
+        // Con el borde recto, el banner arranca pegado al verde y ocupa tambien
+        // ese espacio, que es como esta en el borrador.
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -126,7 +127,12 @@ export default function HomeScreen() {
   };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
+    // Fondo BLANCO en la portada, no el gris verdoso de colors.bg. Aqui casi
+    // todo el alto lo cubren el banner, el bloque blanco y la banda magenta; el
+    // gris solo asomaba en las juntas y se leia como una linea sucia entre
+    // secciones. Las demas pantallas conservan colors.bg: ahi el gris separa
+    // tarjetas y si cumple una funcion.
+    <View className="flex-1" style={{ backgroundColor: colors.surface }}>
       <HomeHeader insets={insets} router={router} />
       <ScrollView
         className="flex-1"
