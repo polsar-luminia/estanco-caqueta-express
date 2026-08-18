@@ -65,7 +65,7 @@ function CubiertosIcon({ color, size = 20 }: IconProps) {
 
 // Paleta por tipo (tokens del tema Vibrante). fuera_horario y general comparten
 // el gris neutro; ley_seca es rojo, almuerzo ámbar.
-const ESTILO: Record<
+export const ESTILO: Record<
   AvisoTipo,
   { chipBg: string; iconColor: string; border: string; pillTexto: string; pillBg: string; pillColor: string; Icono: (p: IconProps) => ReactElement }
 > = {
@@ -73,6 +73,10 @@ const ESTILO: Record<
   general:       { chipBg: "#F1F4F0", iconColor: "#6E7A6C", border: "#EBEFE9", pillTexto: "Cerrado", pillBg: "#F1EFE8", pillColor: "#5F5E5A", Icono: SadIcon },
   ley_seca:      { chipBg: "#FCEBEB", iconColor: "#A32D2D", border: "#F7C1C1", pillTexto: "Cerrado", pillBg: "#FCEBEB", pillColor: "#A32D2D", Icono: BottleOffIcon },
   almuerzo:      { chipBg: "#FAEEDA", iconColor: "#854F0B", border: "#FAC775", pillTexto: "Pausa",   pillBg: "#FAEEDA", pillColor: "#854F0B", Icono: CubiertosIcon },
+  // `demora` es el unico que sale con la tienda ABIERTA. Ambar y no rojo a
+  // proposito: rojo se lee como "algo se dano" y frena la compra, cuando lo que
+  // se esta diciendo es que si se puede comprar, solo que va mas lento.
+  demora:        { chipBg: "#FAEEDA", iconColor: "#854F0B", border: "#FAC775", pillTexto: "Demora",  pillBg: "#FAEEDA", pillColor: "#854F0B", Icono: ClockIcon },
 };
 
 // Deriva el aviso a mostrar. Fuente de verdad: backend. Fallback para builds

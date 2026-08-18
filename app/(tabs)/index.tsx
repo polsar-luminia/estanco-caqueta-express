@@ -27,6 +27,7 @@ import { getInicio, getDirecciones } from "../../src/lib/api";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
+import { BandaOperativa } from "../../src/components/BandaOperativa";
 import { BandaCerrado } from "../../src/components/BandaCerrado";
 import { BannerResena } from "../../src/components/BannerResena";
 import { CartFloatingBar } from "../../src/components/CartFloatingBar";
@@ -169,6 +170,7 @@ export default function HomeScreen() {
           <>
             {/* Banda de tienda cerrada — motivo/estilo lo decide el backend */}
             <BandaCerrado tienda={tienda} style={{ marginHorizontal: 16, marginTop: 12 }} />
+            <BandaOperativa tienda={tienda} style={{ marginHorizontal: 16, marginTop: 12 }} />
 
             {/* Segunda oportunidad para calificar: el push llega una vez y muchas
                 veces se descarta sin leer. Solo sale si hay un pedido entregado

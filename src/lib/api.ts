@@ -1091,6 +1091,14 @@ export interface Patrocinado {
   tipo: string;
   titulo?: string;
   imagen_url?: string;
+  // Las cuatro de la migracion 085. `null` significa NO PINTAR ese pedazo, y por
+  // eso el tipo admite null explicito y no solo `undefined`: son campos que el
+  // admin puede dejar vacios a proposito. Antes los tres ultimos estaban
+  // quemados en HeroSlide y no habia forma de quitarlos sin publicar la app.
+  etiqueta?: string | null;
+  etiqueta_color?: string | null;
+  subtitulo?: string | null;
+  cta_texto?: string | null;
   producto?: Producto;
   activo?: boolean;
   fecha_inicio?: string;
@@ -1114,7 +1122,11 @@ export interface Oferta {
 // Tipos de aviso de cierre. El backend elige el tipo; el app lo mapea a
 // color/ícono. Retrocompatible: builds viejos ignoran `aviso` y usan el banner
 // genérico con `proximaApertura`.
-export type AvisoTipo = "fuera_horario" | "general" | "ley_seca" | "almuerzo";
+// `demora` es el primero que convive con la tienda ABIERTA: no explica por que
+// no se puede comprar, sino que ajusta la expectativa mientras se compra. Por
+// eso lo pinta BandaOperativa y no BandaCerrado, que arranca devolviendo null
+// cuando la tienda esta abierta.
+export type AvisoTipo = "fuera_horario" | "general" | "ley_seca" | "almuerzo" | "demora";
 
 export interface AvisoTienda {
   tipo: AvisoTipo;

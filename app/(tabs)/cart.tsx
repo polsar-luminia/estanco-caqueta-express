@@ -25,6 +25,7 @@ import { TruckIcon, TagIcon } from "../../src/components/icons/AppIcons";
 import { CartIcon } from "../../src/components/icons/TabIcons";
 import { formatCOP } from "../../src/lib/format";
 import { CartItem } from "../../src/components/CartItem";
+import { BandaOperativa } from "../../src/components/BandaOperativa";
 import { BandaCerrado } from "../../src/components/BandaCerrado";
 import { colors, shadows } from "../../src/constants/theme";
 
@@ -1036,6 +1037,7 @@ export default function CartScreen() {
       >
         {/* Banda de tienda cerrada (versión compacta, sin horario) */}
         <BandaCerrado tienda={tienda} compact style={{ marginBottom: 12 }} />
+        <BandaOperativa tienda={tienda} compact style={{ marginBottom: 12 }} />
 
         {/* Las notas van DEBAJO del total, no al lado. Puestas en la misma fila
             competian por el ancho con un monto de 28 px y se cortaban contra el
