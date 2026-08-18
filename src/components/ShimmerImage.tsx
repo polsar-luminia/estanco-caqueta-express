@@ -44,7 +44,13 @@ export function ShimmerImage({ imageUrl, fallbackCategory, style, contentFit = "
   return (
     <Image
       source={{ uri: imageUrl }}
-      style={[{ backgroundColor: "#F3F4F6" }, style]}
+      // Fondo TRANSPARENTE, no un gris propio. Con contentFit="contain" en una
+      // caja cuadrada, una botella alta deja franjas a los lados, y ese gris se
+      // veia de forma permanente —no solo mientras carga— recuadrando cada
+      // producto sobre la tarjeta blanca. Transparente deja pasar el color de
+      // quien la monta: blanco en las tarjetas, verde de marca en el hero. Asi
+      // el componente no inventa un color que su contenedor no pidio.
+      style={[{ backgroundColor: "transparent" }, style]}
       contentFit={contentFit}
       contentPosition={contentPosition}
       cachePolicy="memory-disk"
