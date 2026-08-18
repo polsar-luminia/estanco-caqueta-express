@@ -42,12 +42,12 @@ export const categoryColors = [
 // el texto sale con la fuente equivocada EN UNA SOLA plataforma — no falla, se
 // ve mal en la mitad del parque y nadie lo nota hasta que alguien compara.
 //
-// Megion es la version DEMO. Ver assets/fonts/LEEME.md: hay que comprar la
-// licencia antes de mandar una version a revision de la App Store. Es reemplazar
-// el archivo; el alias no cambia.
+// Las DOS son SIL OFL: uso comercial permitido y sin pagar. Se descarto Megion
+// —que era la referencia del borrador— porque su licencia de app cuesta US$750
+// y la version gratuita es una demo que no cubre una app que vende.
 export const fuentes = {
-  titulo: "Megion",   // titulos de seccion — display gruesa y redonda
-  destacado: "Oswald", // subtitulos, etiquetas y numeros — condensada
+  titulo: "ArchivoBlack", // titulos de seccion — display negra
+  destacado: "Oswald",    // subtitulos, etiquetas y numeros — condensada
 } as const;
 
 export const radii = {

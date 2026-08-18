@@ -59,7 +59,7 @@ export function CarrilProductos({
     <View style={{ paddingTop: 18, paddingBottom: 4 }}>
       <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", paddingHorizontal: 16, marginBottom: 12 }}>
         {titulo ? (
-          // fontWeight NO se combina con fontFamily: Megion tiene un solo peso, y
+          // fontWeight NO se combina con fontFamily: Archivo Black tiene un solo peso, y
           // pedirle negrita hace que Android busque una variante que no existe y
           // caiga a la tipografia del sistema. El texto sale, con otra fuente.
           <Text style={{ fontFamily: fuentes.titulo, fontSize: 30, color: tinta, flex: 1 }} numberOfLines={1}>

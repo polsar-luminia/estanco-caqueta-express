@@ -95,7 +95,7 @@ export default Sentry.wrap(function RootLayout() {
   // Fuentes propias del rediseno. Los alias son los mismos en iOS y Android, que
   // es justo lo que el plugin nativo no garantiza.
   const [fuentesListas, errorFuentes] = useFonts({
-    Megion: require("../assets/fonts/MegionDemo-Bold.otf"),
+    ArchivoBlack: require("../assets/fonts/ArchivoBlack-Regular.ttf"),
     Oswald: require("../assets/fonts/Oswald-Bold.ttf"),
   });
   const [interstitialDone, setInterstitialDone] = useState(false);
