@@ -148,9 +148,22 @@ export default function HomeScreen() {
             <CategoryStripSkeleton />
             <ProductGridSkeleton count={4} />
           </View>
-        ) : isError || secciones.length === 0 ? (
+        ) : isError ? (
           <View style={{ flex: 1, paddingTop: 80 }}>
             <ErrorState mensaje="No pudimos cargar el catálogo" onRetry={onRefresh} />
+          </View>
+        ) : secciones.length === 0 ? (
+          // Una portada vacia NO es un fallo de red. El servidor respondio 200 y
+          // dijo que no hay nada que mostrar (todas las secciones apagadas, o
+          // fuera de sus fechas). Decirle "no pudimos cargar" al cliente lo manda
+          // a culpar su conexion y a tocar "Reintentar", que repite la misma
+          // consulta y le devuelve el mismo falso error. La misma pantalla de
+          // categoria ya distingue estos dos casos; la portada no lo hacia.
+          <View style={{ flex: 1, paddingTop: 80 }}>
+            <ErrorState
+              mensaje="Estamos preparando el catálogo. Vuelve en un momento."
+              onRetry={onRefresh}
+            />
           </View>
         ) : (
           <>

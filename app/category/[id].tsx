@@ -67,8 +67,15 @@ export default function CategoryScreen() {
     enabled: habilitada,
   });
 
-  const carriles = (cat?.carriles ?? []).map((c) => ({ ...c, items: filtrarProductosIOS(c.items) }));
-  const tieneCarriles = filtrarCategoriasIOS(carriles).length > 0;
+  // filtrarCategoriasIOS se aplica a la lista QUE SE PINTA, no solo a un conteo.
+  // Antes su resultado se tiraba (solo se usaba el .length para decidir si habia
+  // carriles) y el render recorria la lista sin filtrar por nombre: en iOS, una
+  // subcategoria de tabaco cuyos productos no cayeran en el filtro por producto
+  // seguia mostrando su titulo. Nada fallaba; se colaba justo lo de la §1.4.3.
+  const carriles = filtrarCategoriasIOS(
+    (cat?.carriles ?? []).map((c) => ({ ...c, items: filtrarProductosIOS(c.items) })),
+  );
+  const tieneCarriles = carriles.length > 0;
 
   const {
     data,

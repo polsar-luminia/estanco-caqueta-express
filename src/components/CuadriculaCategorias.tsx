@@ -14,16 +14,14 @@
 import { View, Text, Pressable, useWindowDimensions } from "react-native";
 import { ShimmerImage } from "./ShimmerImage";
 import { colors, radii, shadows, fuentes } from "../constants/theme";
-import { tracker } from "../lib/tracker";
 import type { CategoriaGrande } from "../lib/api";
 
 interface Props {
   categorias: CategoriaGrande[];
   onSelect: (id: number) => void;
-  pantalla: string;
 }
 
-export function CuadriculaCategorias({ categorias, onSelect, pantalla }: Props) {
+export function CuadriculaCategorias({ categorias, onSelect }: Props) {
   const { width } = useWindowDimensions();
   // Cuatro columnas, como el borrador. Se calcula con el ancho real y no con una
   // constante de modulo: la app se usa en telefonos de 320 dp y tambien rotada,
@@ -34,8 +32,18 @@ export function CuadriculaCategorias({ categorias, onSelect, pantalla }: Props) 
 
   if (categorias.length === 0) return null;
 
+  // Esta cuadricula NO emite `categoria_grande_abierta`, a proposito.
+  //
+  // Lo hacia, y como /category/[id] tambien lo emite al montar, abrir una
+  // categoria desde aqui contaba DOS veces mientras que abrirla desde el buscador
+  // o desde un "Ver mas" contaba una. Nada fallaba: la cifra existia, era
+  // plausible, y estaba inflada justo en la via mas usada — que es precisamente
+  // la que el evento existe para medir ("?funciona la cuadricula?").
+  //
+  // El disparo vive en la pantalla de destino porque ahi cubre TODAS las vias de
+  // entrada. Si algun dia esta cuadricula navega a otro lado, ese destino es el
+  // que debe emitirlo.
   const abrir = (c: CategoriaGrande) => {
-    tracker.track('categoria_grande_abierta', { categoria_id: c.id, nombre: c.nombre }, pantalla);
     onSelect(c.id);
   };
 

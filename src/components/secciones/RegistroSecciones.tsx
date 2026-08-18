@@ -37,6 +37,17 @@ interface Ctx {
 export function Seccion({ seccion, ctx }: { seccion: SeccionInicio; ctx: Ctx }) {
   const { router } = ctx;
 
+  // `puedeIr` decide si el boton "Ver mas" se DIBUJA; `irA` solo navega.
+  //
+  // Estaban fundidos en uno y por eso el boton aparecia siempre que la seccion
+  // trajera `ver_mas`, aunque `irA` no supiera a donde ir: destino "categoria"
+  // sin id (el admin no valida que el id exista), o un destino nuevo que el
+  // servidor empiece a mandar y este binario no conozca. El cliente lo tocaba y
+  // no pasaba nada — que es justo lo que CarrilProductos dice evitar cuando
+  // exige onVerMas para pintarlo.
+  const puedeIr = (destino: string | undefined, id: number | null | undefined) =>
+    destino === "ofertas" || destino === "busqueda" || (destino === "categoria" && !!id);
+
   const irA = (destino: string | undefined, id: number | null | undefined) => {
     if (destino === "ofertas") return router.push("/ofertas");
     if (destino === "busqueda") return router.push("/(tabs)/search");
@@ -92,7 +103,6 @@ export function Seccion({ seccion, ctx }: { seccion: SeccionInicio; ctx: Ctx }) 
           <CuadriculaCategorias
             categorias={cats}
             onSelect={(id) => router.push(`/category/${id}`)}
-            pantalla={PANTALLA_INICIO}
           />
         </View>
       );
@@ -113,7 +123,9 @@ export function Seccion({ seccion, ctx }: { seccion: SeccionInicio; ctx: Ctx }) 
             seccionId={seccion.id}
             destinoVerMas={seccion.ver_mas?.destino}
             colorTexto={seccion.estilo?.color_texto}
-            onVerMas={seccion.ver_mas ? () => irA(seccion.ver_mas!.destino, seccion.ver_mas!.id) : undefined}
+            onVerMas={seccion.ver_mas && puedeIr(seccion.ver_mas.destino, seccion.ver_mas.id)
+              ? () => irA(seccion.ver_mas!.destino, seccion.ver_mas!.id)
+              : undefined}
             onPressProducto={(id) => router.push(`/product/${id}`)}
             pantalla={PANTALLA_INICIO}
           />
