@@ -70,6 +70,22 @@ export const shadows = {
   },
 } as const;
 
+// Medidas de los carriles horizontales (rediseno del catalogo 1.3.0).
+//
+// ProductCard usa flex: 1 porque nacio para rejillas de dos columnas; dentro de
+// un carril horizontal hay que darle un ancho fijo. Ese ancho estaba inventado
+// en cada pantalla: search calcula COL_WIDTH y la ficha de producto usa 160 a
+// secas, asi que la misma tarjeta se ve de dos tamanos distintos segun por donde
+// se llegue. Aqui hay UNO.
+//
+// 156 no es arbitrario: en un telefono de 360 dp de ancho (el mas comun de la
+// base de usuarios) deja ver dos tarjetas completas y el borde de la tercera,
+// que es lo que le dice al pulgar que el carril sigue.
+export const medidas = {
+  cardCarril: 156,
+  gapCarril: 12,
+} as const;
+
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 } as const;
 
 // Tipografía: tamaños y pesos base del rediseño.

@@ -33,10 +33,10 @@ export default function CuponesScreen() {
     queryFn: () => apiFetch("/cupones/disponibles"),
   });
 
-  const handleCopiar = async (codigo: string) => {
-    await Clipboard.setStringAsync(codigo);
-    tracker.track('cupon_copiado', { cupon_codigo: codigo }, 'cupones');
-    Toast.show({ type: "success", text1: "Código copiado", text2: codigo, visibilityTime: 1500 });
+  const handleCopiar = async (cupon: CuponDisponible) => {
+    await Clipboard.setStringAsync(cupon.codigo);
+    tracker.track('cupon_copiado', { cupon_id: cupon.id }, 'cupones');
+    Toast.show({ type: "success", text1: "Código copiado", text2: cupon.codigo, visibilityTime: 1500 });
   };
 
   const activos = cupones.filter((c) => !c.ya_usado);
@@ -112,7 +112,7 @@ export default function CuponesScreen() {
   );
 }
 
-function CuponCard({ cupon, onCopiar, usado }: { cupon: CuponDisponible; onCopiar: (c: string) => void; usado?: boolean }) {
+function CuponCard({ cupon, onCopiar, usado }: { cupon: CuponDisponible; onCopiar: (c: CuponDisponible) => void; usado?: boolean }) {
   const expires = cupon.expires_at ? new Date(cupon.expires_at) : null;
   const diasRestantes = expires ? Math.ceil((expires.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
 
@@ -136,7 +136,7 @@ function CuponCard({ cupon, onCopiar, usado }: { cupon: CuponDisponible; onCopia
               </Text>
               {!usado && (
                 <Pressable
-                  onPress={() => onCopiar(cupon.codigo)}
+                  onPress={() => onCopiar(cupon)}
                   hitSlop={15}
                   accessibilityRole="button"
                   accessibilityLabel={`Copiar el cupón ${cupon.codigo}, ${getCuponLabel(cupon)}`}

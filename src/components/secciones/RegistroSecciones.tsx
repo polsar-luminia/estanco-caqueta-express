@@ -1,0 +1,112 @@
+// Registro de tipos de seccion de la portada.
+//
+// ESTA ES LA REGLA QUE HACE QUE EL REDISENO NO EXPLOTE: un tipo que este binario
+// no conoce se ignora EN SILENCIO. Sin eso, el dia que el servidor estrene un
+// tipo de seccion se rompen todos los binarios ya publicados, y se rompen en la
+// primera pantalla que abre la gente. Es el mismo criterio que aplica el backend
+// con estadoParaVersion para los estados de pedido.
+//
+// Por eso `tipo` es string y no una union, y por eso el default del switch
+// devuelve null en vez de lanzar: el caso "no lo conozco" es esperado, no un
+// error.
+
+import { View } from "react-native";
+import { useRouter } from "expo-router";
+import { CarrilProductos } from "../CarrilProductos";
+import { CuadriculaCategorias } from "../CuadriculaCategorias";
+import { TarjetaDireccion } from "../TarjetaDireccion";
+import { HeroSlide, HeroCarousel } from "../HeroBanner";
+import { filtrarCategoriasIOS, filtrarProductosIOS, filtrarConProductoIOS } from "../../lib/iosFilters";
+import type { SeccionInicio, ProductoEnCarril, CategoriaGrande, Patrocinado } from "../../lib/api";
+
+export const PANTALLA_INICIO = "(tabs)/index";
+
+interface Ctx {
+  router: ReturnType<typeof useRouter>;
+  direccion: string | null;
+  autenticado: boolean;
+  // Si la seccion inmediatamente anterior fue un banner, la tarjeta de direccion
+  // se monta encima con margen negativo. Cuando no hay banner —porque no habia
+  // patrocinados vigentes y el servidor descarto la seccion— tiene que dibujarse
+  // sin solaparse, o queda cortada contra el borde de arriba.
+  trasBanner: boolean;
+}
+
+export function Seccion({ seccion, ctx }: { seccion: SeccionInicio; ctx: Ctx }) {
+  const { router } = ctx;
+
+  const irA = (destino: string | undefined, id: number | null | undefined) => {
+    if (destino === "ofertas") return router.push("/ofertas");
+    if (destino === "busqueda") return router.push("/(tabs)/search");
+    if (destino === "categoria" && id) return router.push(`/category/${id}`);
+  };
+
+  switch (seccion.tipo) {
+    case "banner": {
+      // Defensa cliente para iOS (Apple §1.4.3): el backend ya filtra por
+      // X-Platform, esto cubre un cache vencido o una regresion.
+      const banners = filtrarConProductoIOS(seccion.items as Patrocinado[]);
+      if (banners.length === 0) return null;
+      return (
+        <View style={{ marginHorizontal: 16, marginTop: 12 }}>
+          {seccion.opciones?.modo === "carousel" ? (
+            <HeroCarousel banners={banners} router={router} />
+          ) : (
+            <HeroSlide
+              banner={banners[0]}
+              onPress={() => router.push(banners[0]?.producto?.id ? `/product/${banners[0].producto!.id}` : "/ofertas")}
+            />
+          )}
+        </View>
+      );
+    }
+
+    case "direccion_entrega":
+      return (
+        <TarjetaDireccion
+          direccion={ctx.direccion}
+          autenticado={ctx.autenticado}
+          montada={ctx.trasBanner}
+          onCambiar={() => router.push(ctx.autenticado ? "/profile/direcciones" : "/(auth)/login")}
+        />
+      );
+
+    case "categorias": {
+      const cats = filtrarCategoriasIOS(seccion.items as CategoriaGrande[]).map((c) => ({
+        ...c,
+        subcategorias: filtrarCategoriasIOS(c.subcategorias ?? []),
+      }));
+      if (cats.length === 0) return null;
+      return (
+        <View style={{ paddingTop: 16 }}>
+          <CuadriculaCategorias
+            categorias={cats}
+            onSelect={(id) => router.push(`/category/${id}`)}
+            pantalla={PANTALLA_INICIO}
+          />
+        </View>
+      );
+    }
+
+    case "carril_ofertas":
+    case "carril_productos": {
+      const productos = filtrarProductosIOS(seccion.items as ProductoEnCarril[]);
+      return (
+        <CarrilProductos
+          titulo={seccion.titulo}
+          productos={productos}
+          origen={seccion.titulo ?? seccion.tipo}
+          seccionId={seccion.id}
+          destinoVerMas={seccion.ver_mas?.destino}
+          onVerMas={seccion.ver_mas ? () => irA(seccion.ver_mas!.destino, seccion.ver_mas!.id) : undefined}
+          onPressProducto={(id) => router.push(`/product/${id}`)}
+          pantalla={PANTALLA_INICIO}
+        />
+      );
+    }
+
+    default:
+      // Tipo desconocido para este binario. Silencio a proposito: ver cabecera.
+      return null;
+  }
+}

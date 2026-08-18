@@ -348,6 +348,39 @@ export async function getSugerencias(productoId: number) {
   return apiFetch<Producto[]>(`/catalogo/sugerencias/${productoId}`);
 }
 
+// --- Rediseno del catalogo 1.3.0 ---
+
+// La portada la describe el servidor. Ver GET /catalogo/inicio.
+//
+// `items` es `unknown[]` a proposito: cada tipo de seccion trae una forma
+// distinta y el registro de secciones es quien sabe cual. Tiparlo como una
+// union cerrada obligaria a tocar este archivo para estrenar un tipo, que es
+// justo lo que el rediseno viene a evitar.
+export async function getInicio() {
+  return apiFetch<{ secciones: SeccionInicio[] }>("/catalogo/inicio");
+}
+
+export async function getCategoriasArbol() {
+  return apiFetch<CategoriaGrande[]>("/catalogo/categorias/arbol");
+}
+
+// La pantalla de categoria necesita saber sus hijas ANTES de pedir productos.
+// Antes deducia el nombre del primer producto de la primera pagina, y una
+// categoria sin resultados se quedaba hasta sin titulo.
+export async function getCategoria(id: number) {
+  return apiFetch<CategoriaDetalle>(`/catalogo/categorias/${id}`);
+}
+
+// La pantalla de categoria entera en UNA peticion: la categoria y un carril por
+// subcategoria con sus primeros productos. "Licores" tiene once subcategorias;
+// pedirlas de a una serian once peticiones en telefonos con datos limitados.
+// Una categoria sin hijas devuelve carriles vacio y la pantalla cae a la rejilla.
+export async function getCategoriaCarriles(id: number, limite = 10) {
+  return apiFetch<{ categoria: CategoriaDetalle; carriles: CarrilCategoria[] }>(
+    `/catalogo/categorias/${id}/carriles?limite=${limite}`
+  );
+}
+
 export interface EventoInput {
   tipo: string;
   payload?: Record<string, unknown>;
@@ -591,6 +624,9 @@ export interface Producto {
   nombre: string;
   codigo?: string;
   imagen_url?: string;
+  // Miniatura. La tarjeta la pinta a 156 dp: pedir la original es descargar
+  // entre 3 y 4 veces mas bytes para el mismo pixel en pantalla.
+  imagen_url_thumb?: string;
   precio_app: number;
   // Precio efectivo con oferta/combo activo aplicado, calculado server-side.
   // El carrito y el checkout deben usar ESTE, no precio_app, para no revertir
@@ -623,7 +659,66 @@ export interface Categoria {
   id: number;
   nombre: string;
   imagen_url?: string;
+  // Miniatura de 300x300 servida por el CDN. La imagen original de una coleccion
+  // de Shopify pesa entre 370 y 774 KB; la cuadricula la pinta a 110 dp. Ver
+  // packages/api/src/lib/imagenes.js en el backend.
+  imagen_url_thumb?: string;
   cantidad_productos: number;
+}
+
+// Una categoria grande y sus subcategorias (GET /catalogo/categorias/arbol).
+export interface CategoriaGrande extends Categoria {
+  subcategorias: Categoria[];
+}
+
+export interface CategoriaDetalle {
+  id: number;
+  nombre: string;
+  imagen_url?: string;
+  imagen_url_thumb?: string;
+  categoria_padre_id: number | null;
+  // Productos colgados directamente de esta categoria. Una categoria grande
+  // normalmente tiene 0 y todo cuelga de sus hijas; "Hielo y Fiesta" es al reves.
+  productos_propios: number;
+  padre: { id: number; nombre: string } | null;
+  subcategorias: Categoria[];
+}
+
+// Oferta o combo aplicado a un producto dentro de un carril. NO es una forma
+// distinta de producto: es el producto de siempre mas esta clave, que es la que
+// ProductCard ya sabe pintar (badge + precio tachado).
+export interface OfertaEnProducto {
+  titulo?: string | null;
+  precio_oferta?: number | null;
+  precio_anterior?: number | null;
+}
+
+export interface ProductoEnCarril extends Producto {
+  oferta?: OfertaEnProducto;
+}
+
+export interface CarrilCategoria {
+  id: number;
+  nombre: string;
+  imagen_url?: string;
+  imagen_url_thumb?: string;
+  items: ProductoEnCarril[];
+}
+
+export interface SeccionInicio {
+  id: number;
+  // Deliberadamente `string` y no una union: la app tiene que poder recibir un
+  // tipo que todavia no conoce y descartarlo sin romperse. Con una union cerrada,
+  // TypeScript daria una falsa sensacion de seguridad sobre datos que llegan de
+  // la red y ya no la controla el binario.
+  tipo: string;
+  titulo: string | null;
+  ver_mas: { destino: string; id: number | null } | null;
+  // Configuracion propia del tipo (el banner trae aqui si va estatico o en
+  // carrusel). Se lee con `?.` y respaldo: una seccion que no la traiga tiene
+  // que seguir dibujandose.
+  opciones?: { modo?: string } | null;
+  items: unknown[];
 }
 
 export interface Pedido {
@@ -983,7 +1078,10 @@ export async function getBarrios() {
 export interface Patrocinado {
   id: number;
   producto_id?: number;
-  tipo: "banner" | "oferta" | "oferta_relampago" | "promocion" | "imperdible" | "irresistible";
+  // `string` y no una union cerrada: el tipo lo decide el backend y un valor
+  // nuevo tiene que poder llegar sin que el binario mienta ni reviente. La
+  // union daba una falsa sensacion de seguridad sobre un dato de la red.
+  tipo: string;
   titulo?: string;
   imagen_url?: string;
   producto?: Producto;

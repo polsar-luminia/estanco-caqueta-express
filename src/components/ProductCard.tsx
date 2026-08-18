@@ -30,9 +30,14 @@ interface Props {
   // pintar el badge custom y el precio tachado. Tiene prioridad sobre `badge`.
   oferta?: OfertaInfo;
   priority?: "low" | "normal" | "high";
+  // De que carril viene y en que lugar. Solo telemetria: responde cual seccion
+  // de la portada VENDE, que no es lo mismo que cual se mira. Sin esto,
+  // reordenar la portada es adivinar.
+  origen?: string;
+  posicion?: number;
 }
 
-export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, oferta, priority = "normal" }: Props) {
+export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, oferta, priority = "normal", origen, posicion }: Props) {
   const addItem = useCartStore((s) => s.addItem);
   const { animatedStyle, onPressIn, onPressOut } = useScalePress();
   const { cupoDe, ventanaDias } = useLimitesCliente();
@@ -70,7 +75,7 @@ export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, o
       imagenUrl: product.imagen_url || undefined,
       stockMaximo: product.stock_total,
       maxPorCliente,
-    });
+    }, origen ? { carril: origen, posicion: posicion ?? 0 } : undefined);
     Toast.show({
       type: "success",
       text1: "Agregado al carrito",
@@ -135,7 +140,10 @@ export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, o
             </View>
           ) : null}
           <ShimmerImage
-            imageUrl={product.imagen_url}
+            // Miniatura primero: la tarjeta mide 156 dp y la imagen original
+            // pesa entre 3 y 4 veces mas para el mismo pixel en pantalla. El
+            // respaldo a imagen_url cubre los productos que no tienen thumb.
+            imageUrl={product.imagen_url_thumb || product.imagen_url}
             fallbackCategory={product.categoria}
             style={{ width: "100%", aspectRatio: 1 }}
             contentFit="contain"

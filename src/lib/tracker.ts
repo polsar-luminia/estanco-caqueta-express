@@ -110,7 +110,13 @@ export type EventTipo =
   | 'registro_codigo_solicitado'
   | 'registro_codigo_reenviado'
   | 'registro_codigo_verificado'
-  | 'registro_codigo_fallido';
+  | 'registro_codigo_fallido'
+  // Rediseno del catalogo (1.3.0). La pantalla de inicio no tenia NI UN evento
+  // propio: no se medía impresion ni clic de hero, combo, destacado, banner de
+  // ofertas ni tira de categorias. Lo unico era pantalla_vista.
+  | 'categoria_grande_abierta'
+  | 'subcategoria_abierta'
+  | 'carril_mostrar_mas';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -123,6 +129,12 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // PII: identifica el codigo, no a la persona.
   app_abierta: ['ota'],
   categoria_abierta: ['categoria_id', 'nombre'],
+  categoria_grande_abierta: ['categoria_id', 'nombre'],
+  subcategoria_abierta: ['categoria_id', 'nombre', 'categoria_padre_id'],
+  // Que carril se queda corto: si lo tocan mucho, ese carril necesita mas items
+  // o merece pantalla propia. NO se mide el deslizamiento del carril — eso es
+  // friccion fisica, no intencion, e inflaria la cola sin responder nada.
+  carril_mostrar_mas: ['seccion_id', 'titulo', 'destino'],
   // `telefono_verificado`: si la cuenta nació con el número confirmado por OTP.
   // Cuando la mayoría llegue en true, se puede prender registro_otp_obligatorio.
   registro_completado: ['telefono_verificado'],
@@ -131,11 +143,15 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // `otorgado` y `origen` no son PII: no identifican a nadie por si solos.
   consentimiento_mercadeo_cambiado: ['otorgado', 'origen'],
   sesion_iniciada: [],
-  cupon_copiado: [],
+  // `cupon_id` y NO `cupon_codigo`: el codigo es canjeable y no tiene por que
+  // viajar a la tabla de eventos, que se consulta para analitica y no esta
+  // pensada para guardar secretos. El id responde la misma pregunta de negocio
+  // (que cupon copian y cual aplican) sin llevarse el codigo.
+  cupon_copiado: ['cupon_id'],
   producto_visto: ['producto_id', 'nombre', 'categoria'],
   tiempo_en_producto: ['producto_id', 'segundos'],
   sugerencia_clickeada: ['desde_producto', 'producto_clickeado', 'nombre'],
-  cupon_aplicado: ['descuento'],
+  cupon_aplicado: ['descuento', 'cupon_id'],
   pedido_creado: ['pedido_id', 'total', 'items_count', 'uso_cupon', 'uso_puntos'],
   // 'q': término buscado — dato de comportamiento (qué buscan y no encuentran),
   // no PII. Clave para decisiones de surtido y campañas (M-OBS-22).
@@ -144,7 +160,10 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   pedido_reordenado: ['pedido_id', 'omitidos', 'omitidos_catalogo', 'omitidos_stock'],
   // `motivo` es el CODIGO del catalogo, nunca el texto libre.
   pedido_cancelado: ['pedido_id', 'motivo'],
-  carrito_agregado: ['producto_id', 'nombre', 'precio', 'cantidad'],
+  // `origen` y `posicion`: desde que carril y en que lugar del carril se agrego.
+  // Es lo que responde cual seccion de la portada VENDE, que es distinto de cual
+  // se mira. Sin esto, reordenar la portada es adivinar.
+  carrito_agregado: ['producto_id', 'nombre', 'precio', 'cantidad', 'origen', 'posicion'],
   carrito_eliminado: ['producto_id'],
   carrito_cantidad_cambiada: ['producto_id', 'cantidad_nueva'],
   interstitial_mostrado: ['interstitial_id'],

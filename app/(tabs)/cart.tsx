@@ -297,7 +297,7 @@ export default function CartScreen() {
       const result = await validarCupon(codigoCupon.trim(), subtotal);
       setCuponValidado(result);
       cuponSubtotalRef.current = subtotal;
-      tracker.track('cupon_aplicado', { cupon_codigo: result.cupon.codigo, descuento: result.descuento }, 'cart');
+      tracker.track('cupon_aplicado', { cupon_id: result.cupon.id, descuento: result.descuento }, 'cart');
       Toast.show({ type: "success", text1: "Cupon aplicado", text2: `-${formatCOP(result.descuento)} de descuento` });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Cupon no valido";

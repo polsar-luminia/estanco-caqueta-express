@@ -32,7 +32,10 @@ interface CartState {
   notas: string;
   direccionId: number | null;
 
-  addItem: (product: Omit<CartItem, "cantidad">) => void;
+  // `origen` es SOLO telemetria y por eso va como argumento aparte y no dentro
+  // del producto: si viajara dentro, el spread lo guardaria en el item y quedaria
+  // persistido en el carrito del telefono para siempre.
+  addItem: (product: Omit<CartItem, "cantidad">, origen?: { carril: string; posicion: number }) => void;
   addItemWithQuantity: (product: Omit<CartItem, "cantidad">, cantidad: number) => void;
   updateQuantity: (productoId: number, cantidad: number) => void;
   removeItem: (productoId: number) => void;
@@ -59,7 +62,7 @@ export const useCartStore = create<CartState>()(
       notas: "",
       direccionId: null,
 
-      addItem: (product) => {
+      addItem: (product, origen) => {
         set((state) => {
           // M-CART-20: no agregar productos agotados. Defensa en el store además
           // del botón deshabilitado en la UI (evita item fantasma cantidad 0).
@@ -67,7 +70,12 @@ export const useCartStore = create<CartState>()(
           const existing = state.items.find(
             (i) => i.productoId === product.productoId
           );
-          tracker.track('carrito_agregado', { producto_id: product.productoId, nombre: product.nombre, precio: product.precioUnitario });
+          tracker.track('carrito_agregado', {
+            producto_id: product.productoId,
+            nombre: product.nombre,
+            precio: product.precioUnitario,
+            ...(origen ? { origen: origen.carril, posicion: origen.posicion } : {}),
+          });
           metaLogAddToCart(product.productoId, product.precioUnitario);
           if (existing) {
             // Respetar stock y máximo por cliente si ya los conocemos
