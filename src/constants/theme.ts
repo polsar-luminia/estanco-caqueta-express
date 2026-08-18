@@ -62,11 +62,20 @@ export const radii = {
 // Sombras (React Native: sin spread; se aproxima con opacidad/radio).
 export const shadows = {
   // Tarjeta de producto / contenido — profundidad suave.
+  //
+  // El radio es 6, no 20, y esa cifra sale de una medida, no del gusto: el hueco
+  // entre tarjetas de un carril es 12 (medidas.gapCarril), asi que cada tarjeta
+  // solo puede derramar 6 hacia cada lado. Con mas, las sombras de dos vecinas
+  // se superponen y se SUMAN, pintando una banda mas oscura justo en el medio.
+  // Sobre una seccion con fondo propio eso se lee como un segundo gris encima
+  // del de la seccion: medido, #F4F6F3 (244,246,243) caia a (226,230,226).
+  //
+  // Si algun dia se cambia gapCarril, este radio se revisa con el.
   card: {
     shadowColor: "#12281A",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
     elevation: 3,
   },
   soft: {
