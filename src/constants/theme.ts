@@ -34,6 +34,22 @@ export const categoryColors = [
   colors.offer, colors.purple, colors.green, colors.amber, colors.blue, colors.pink,
 ] as const;
 
+// Tipografia (rediseno del catalogo 1.3.0).
+//
+// Los alias los define useFonts en app/_layout.tsx. Se usan alias y NO el plugin
+// nativo de expo-font a proposito: con el plugin, iOS referencia la fuente por
+// su nombre PostScript y Android por el nombre del archivo. Cuando no coinciden,
+// el texto sale con la fuente equivocada EN UNA SOLA plataforma — no falla, se
+// ve mal en la mitad del parque y nadie lo nota hasta que alguien compara.
+//
+// Megion es la version DEMO. Ver assets/fonts/LEEME.md: hay que comprar la
+// licencia antes de mandar una version a revision de la App Store. Es reemplazar
+// el archivo; el alias no cambia.
+export const fuentes = {
+  titulo: "Megion",   // titulos de seccion — display gruesa y redonda
+  destacado: "Oswald", // subtitulos, etiquetas y numeros — condensada
+} as const;
+
 export const radii = {
   sm: 8,
   md: 12,

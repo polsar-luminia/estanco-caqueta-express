@@ -77,7 +77,8 @@
         {
           "androidGoogleMapsApiKey": "AIzaSyCd3RFESmWCbzzHR17iVAZC5ZupvuBCYno"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "router": {},

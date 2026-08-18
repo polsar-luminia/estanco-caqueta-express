@@ -22,7 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { colors } from "../../src/constants/theme";
+import { colors, radii, fuentes } from "../../src/constants/theme";
 import { getInicio, getDirecciones } from "../../src/lib/api";
 import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
@@ -36,16 +36,19 @@ import { SkeletonBox } from "../../src/components/skeletons/SkeletonBox";
 import { ErrorState } from "../../src/components/ErrorState";
 import { Seccion } from "../../src/components/secciones/RegistroSecciones";
 
-// Cabecera verde: buscador + perfil + carrito. Ya no lleva la direccion.
+// Cabecera verde: avatar + buscador. Ya no lleva la direccion (ahora es su propia
+// seccion, en la tarjeta redondeada que monta sobre el banner) ni el carrito: el
+// carrito tiene su pestana abajo y ademas la banda flotante aparece sola apenas
+// hay algo dentro, asi que el icono de arriba era un tercer camino al mismo sitio
+// quitandole ancho al buscador.
 function HomeHeader({
-  insets, itemCount, router,
+  insets, router,
 }: {
   insets: { top: number };
-  itemCount: number;
   router: ReturnType<typeof useRouter>;
 }) {
   const iconBtn = {
-    width: 38, height: 38, borderRadius: 12,
+    width: 40, height: 40, borderRadius: 999,
     backgroundColor: "rgba(255,255,255,0.18)",
     alignItems: "center" as const, justifyContent: "center" as const,
   };
@@ -66,32 +69,18 @@ function HomeHeader({
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Pressable
-          onPress={() => router.push("/(tabs)/search")}
-          style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#fff", borderRadius: 14, paddingHorizontal: 13, paddingVertical: 11 }}
-          accessibilityLabel="Buscar productos"
-          accessibilityRole="search"
-          hitSlop={4}
-        >
-          <Feather name="search" size={16} color={colors.faint} />
-          <Text style={{ fontSize: 12.5, color: colors.faint, fontWeight: "500" }}>Encuentra tus productos</Text>
-        </Pressable>
         <Pressable onPress={() => router.push("/profile")} style={iconBtn} accessibilityLabel="Abrir mi perfil" accessibilityRole="button" hitSlop={3}>
           <Feather name="user" size={19} color="#fff" />
         </Pressable>
         <Pressable
-          onPress={() => router.push("/(tabs)/cart")}
-          style={iconBtn}
-          accessibilityLabel={itemCount > 0 ? `Ver carrito, ${itemCount} productos` : "Ver carrito, vacío"}
-          accessibilityRole="button"
-          hitSlop={3}
+          onPress={() => router.push("/(tabs)/search")}
+          style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#fff", borderRadius: radii.pill, paddingHorizontal: 16, paddingVertical: 11 }}
+          accessibilityLabel="Buscar productos"
+          accessibilityRole="search"
+          hitSlop={4}
         >
-          <Feather name="shopping-bag" size={18} color="#fff" />
-          {itemCount > 0 && (
-            <View style={{ position: "absolute", top: -5, right: -5, minWidth: 19, height: 19, paddingHorizontal: 4, borderRadius: 999, backgroundColor: colors.offer, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ color: "#fff", fontSize: 12, fontWeight: "800" }}>{itemCount > 99 ? "99+" : itemCount}</Text>
-            </View>
-          )}
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 13.5, color: colors.faint }}>Encuentra tus productos</Text>
+          <Feather name="search" size={17} color={colors.pink} />
         </Pressable>
       </View>
     </View>
@@ -138,7 +127,7 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg }}>
-      <HomeHeader insets={insets} itemCount={itemCount} router={router} />
+      <HomeHeader insets={insets} router={router} />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: itemCount > 0 ? 172 : 102 }}

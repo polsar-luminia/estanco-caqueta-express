@@ -1,4 +1,4 @@
-// Carril horizontal de productos con "Mostrar mas".
+// Carril horizontal de productos con "VER MÁS".
 //
 // ES LA PIEZA NUEVA MAS IMPORTANTE DEL REDISENO. No existia ningun carril
 // reusable en la app: el inicio tenia uno escrito a mano en el JSX para los
@@ -7,39 +7,44 @@
 // vez que hacia falta otro carril, se copiaba. Aqui hay UNO y usa ProductCard,
 // asi que todo eso lo hereda gratis.
 //
-// TAMPOCO EXISTIA NINGUN "Mostrar mas" en toda la app (busqueda exhaustiva: 0
+// TAMPOCO EXISTIA NINGUN "ver mas" en toda la app (busqueda exhaustiva: 0
 // resultados). Habia un "Ver todas" en Categorias y nada mas.
+//
+// El color del texto lo manda la seccion: sobre la banda magenta el titulo va
+// blanco, sobre el fondo de la pantalla va oscuro. Sin eso, el titulo se pierde
+// contra su propio fondo — no falla, simplemente no se lee.
 
 import { View, Text, Pressable, FlatList } from "react-native";
-import { Feather } from "@expo/vector-icons";
 import { ProductCard } from "./ProductCard";
-import { colors, medidas } from "../constants/theme";
+import { colors, medidas, fuentes } from "../constants/theme";
 import { tracker } from "../lib/tracker";
 import type { ProductoEnCarril } from "../lib/api";
 
 interface Props {
   titulo: string | null;
   productos: ProductoEnCarril[];
-  // Que se hace al tocar "Mostrar mas". Sin esto no se dibuja el boton: un
-  // boton que no lleva a ningun lado es peor que no tenerlo.
+  // Que se hace al tocar "VER MÁS". Sin esto no se dibuja el boton: uno que no
+  // lleva a ningun lado es peor que no tenerlo.
   onVerMas?: () => void;
   onPressProducto: (id: number) => void;
   // Identifica el carril en la telemetria (titulo o tipo de seccion).
   origen: string;
-  // Para el evento de "Mostrar mas". Opcional: los carriles de la pantalla de
-  // categoria no vienen de una fila de secciones_inicio.
   seccionId?: number;
   destinoVerMas?: string;
+  colorTexto?: string | null;
   pantalla: string;
 }
 
 export function CarrilProductos({
-  titulo, productos, onVerMas, onPressProducto, origen, seccionId, destinoVerMas, pantalla,
+  titulo, productos, onVerMas, onPressProducto, origen, seccionId, destinoVerMas,
+  colorTexto, pantalla,
 }: Props) {
   // Un carril vacio no se dibuja. El servidor ya descarta las secciones sin
   // items, pero la pantalla de categoria arma carriles por su cuenta y ahi el
   // filtro de iOS puede vaciar uno despues de recibirlo.
   if (productos.length === 0) return null;
+
+  const tinta = colorTexto || colors.ink;
 
   const verMas = () => {
     tracker.track('carril_mostrar_mas', {
@@ -51,10 +56,13 @@ export function CarrilProductos({
   };
 
   return (
-    <View style={{ paddingTop: 18 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, marginBottom: 10 }}>
+    <View style={{ paddingTop: 18, paddingBottom: 4 }}>
+      <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", paddingHorizontal: 16, marginBottom: 12 }}>
         {titulo ? (
-          <Text style={{ fontSize: 17, fontWeight: "800", color: colors.ink, letterSpacing: -0.2, flex: 1 }} numberOfLines={1}>
+          // fontWeight NO se combina con fontFamily: Megion tiene un solo peso, y
+          // pedirle negrita hace que Android busque una variante que no existe y
+          // caiga a la tipografia del sistema. El texto sale, con otra fuente.
+          <Text style={{ fontFamily: fuentes.titulo, fontSize: 30, color: tinta, flex: 1 }} numberOfLines={1}>
             {titulo}
           </Text>
         ) : <View style={{ flex: 1 }} />}
@@ -63,12 +71,21 @@ export function CarrilProductos({
           <Pressable
             onPress={verMas}
             accessibilityRole="button"
-            accessibilityLabel={`Mostrar mas de ${titulo ?? "esta seccion"}`}
-            hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
-            style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
+            accessibilityLabel={`Ver más de ${titulo ?? "esta sección"}`}
+            hitSlop={{ top: 12, bottom: 12, left: 10, right: 10 }}
+            style={{ paddingBottom: 3 }}
           >
-            <Text style={{ fontSize: 12.5, fontWeight: "800", color: colors.greenInk }}>Mostrar más</Text>
-            <Feather name="chevron-right" size={15} color={colors.greenInk} />
+            <Text
+              style={{
+                fontFamily: fuentes.destacado,
+                fontSize: 14,
+                letterSpacing: 0.5,
+                color: tinta,
+                textDecorationLine: "underline",
+              }}
+            >
+              VER MÁS
+            </Text>
           </Pressable>
         )}
       </View>
@@ -77,7 +94,7 @@ export function CarrilProductos({
         data={productos}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: medidas.gapCarril }}
+        contentContainerStyle={{ paddingHorizontal: 16, gap: medidas.gapCarril, paddingBottom: 16 }}
         keyExtractor={(item) => String(item.id)}
         // Telefonos baratos: no montar 20 tarjetas de golpe para que se vean 2.
         initialNumToRender={4}

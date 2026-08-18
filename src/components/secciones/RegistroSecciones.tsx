@@ -11,10 +11,12 @@
 // error.
 
 import { View } from "react-native";
+import { colors } from "../../constants/theme";
 import { useRouter } from "expo-router";
 import { CarrilProductos } from "../CarrilProductos";
 import { CuadriculaCategorias } from "../CuadriculaCategorias";
 import { TarjetaDireccion } from "../TarjetaDireccion";
+import { SeccionContenedor } from "../SeccionContenedor";
 import { HeroSlide, HeroCarousel } from "../HeroBanner";
 import { filtrarCategoriasIOS, filtrarProductosIOS, filtrarConProductoIOS } from "../../lib/iosFilters";
 import type { SeccionInicio, ProductoEnCarril, CategoriaGrande, Patrocinado } from "../../lib/api";
@@ -48,12 +50,16 @@ export function Seccion({ seccion, ctx }: { seccion: SeccionInicio; ctx: Ctx }) 
       const banners = filtrarConProductoIOS(seccion.items as Patrocinado[]);
       if (banners.length === 0) return null;
       return (
-        <View style={{ marginHorizontal: 16, marginTop: 12 }}>
+        // A sangre completa: sin margenes ni esquinas redondeadas, pegado al
+        // header. El carrusel conserva sus margenes porque su snap entre
+        // diapositivas esta medido contra el ancho con margen.
+        <View style={seccion.opciones?.modo === "carousel" ? { marginHorizontal: 16, marginTop: 12 } : undefined}>
           {seccion.opciones?.modo === "carousel" ? (
             <HeroCarousel banners={banners} router={router} />
           ) : (
             <HeroSlide
               banner={banners[0]}
+              aSangre
               onPress={() => router.push(banners[0]?.producto?.id ? `/product/${banners[0].producto!.id}` : "/ofertas")}
             />
           )}
@@ -78,7 +84,7 @@ export function Seccion({ seccion, ctx }: { seccion: SeccionInicio; ctx: Ctx }) 
       }));
       if (cats.length === 0) return null;
       return (
-        <View style={{ paddingTop: 16 }}>
+        <View style={{ backgroundColor: colors.surface, paddingTop: 16, paddingBottom: 18 }}>
           <CuadriculaCategorias
             categorias={cats}
             onSelect={(id) => router.push(`/category/${id}`)}
@@ -92,16 +98,22 @@ export function Seccion({ seccion, ctx }: { seccion: SeccionInicio; ctx: Ctx }) 
     case "carril_productos": {
       const productos = filtrarProductosIOS(seccion.items as ProductoEnCarril[]);
       return (
-        <CarrilProductos
-          titulo={seccion.titulo}
-          productos={productos}
-          origen={seccion.titulo ?? seccion.tipo}
-          seccionId={seccion.id}
-          destinoVerMas={seccion.ver_mas?.destino}
-          onVerMas={seccion.ver_mas ? () => irA(seccion.ver_mas!.destino, seccion.ver_mas!.id) : undefined}
-          onPressProducto={(id) => router.push(`/product/${id}`)}
-          pantalla={PANTALLA_INICIO}
-        />
+        <SeccionContenedor
+          colorFondo={seccion.estilo?.color_fondo}
+          bordeSuperior={seccion.estilo?.borde_superior}
+        >
+          <CarrilProductos
+            titulo={seccion.titulo}
+            productos={productos}
+            origen={seccion.titulo ?? seccion.tipo}
+            seccionId={seccion.id}
+            destinoVerMas={seccion.ver_mas?.destino}
+            colorTexto={seccion.estilo?.color_texto}
+            onVerMas={seccion.ver_mas ? () => irA(seccion.ver_mas!.destino, seccion.ver_mas!.id) : undefined}
+            onPressProducto={(id) => router.push(`/product/${id}`)}
+            pantalla={PANTALLA_INICIO}
+          />
+        </SeccionContenedor>
       );
     }
 

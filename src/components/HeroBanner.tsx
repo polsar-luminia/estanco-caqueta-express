@@ -33,7 +33,12 @@ function cfgDe(tipo: string | undefined) {
   return TIPO_CFG.banner;
 }
 
-export function HeroSlide({ banner, onPress }: { banner: Patrocinado | undefined; onPress: () => void }) {
+// `aSangre`: el banner ocupa TODO el ancho, sin margenes ni esquinas
+// redondeadas, pegado al header. Es como lo pide el diseno 1.3.0. Se deja como
+// opcion y no como unica forma porque el carrusel de la version anterior sigue
+// midiendo sus paginas con el ancho con margen, y cambiarlo a ciegas descuadra
+// el snap entre diapositivas.
+export function HeroSlide({ banner, onPress, aSangre = false }: { banner: Patrocinado | undefined; onPress: () => void; aSangre?: boolean }) {
   const cfg = cfgDe(banner?.tipo);
   const titulo = banner?.titulo ?? "Descuentos en\ndomicilio";
   const imgUrl = banner?.imagen_url;
@@ -41,7 +46,7 @@ export function HeroSlide({ banner, onPress }: { banner: Patrocinado | undefined
   return (
     // Fondo de marca como fallback: si el banner no trae imagen, el hero se ve
     // intencional en verde en vez de depender de un CDN externo que puede romperse.
-    <View style={{ width: SCREEN_WIDTH - 32, height: 220, borderRadius: 12, overflow: "hidden", backgroundColor: "#1FAF55" }}>
+    <View style={{ width: aSangre ? SCREEN_WIDTH : SCREEN_WIDTH - 32, height: 220, borderRadius: aSangre ? 0 : 12, overflow: "hidden", backgroundColor: "#1FAF55" }}>
       {imgUrl ? (
         <ShimmerImage imageUrl={imgUrl} style={{ width: "100%", height: 220, position: "absolute" }} contentFit="cover" />
       ) : null}

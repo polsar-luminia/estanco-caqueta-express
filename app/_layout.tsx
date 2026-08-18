@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AppState, LogBox } from "react-native";
 import { Stack, useRouter, useSegments, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useFonts } from "expo-font";
 import { QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import NetInfo from "@react-native-community/netinfo";
@@ -91,6 +92,12 @@ function GuardVersion({ children }: { children: React.ReactNode }) {
 }
 
 export default Sentry.wrap(function RootLayout() {
+  // Fuentes propias del rediseno. Los alias son los mismos en iOS y Android, que
+  // es justo lo que el plugin nativo no garantiza.
+  const [fuentesListas, errorFuentes] = useFonts({
+    Megion: require("../assets/fonts/MegionDemo-Bold.otf"),
+    Oswald: require("../assets/fonts/Oswald-Bold.ttf"),
+  });
   const [interstitialDone, setInterstitialDone] = useState(false);
   const hydrate = useAuthStore((s) => s.hydrate);
   const clearHydrateError = useAuthStore((s) => s.clearHydrateError);
@@ -195,7 +202,14 @@ export default Sentry.wrap(function RootLayout() {
   // percibe como spam y quema la unica oportunidad de iOS.
   usePushNotifications({ interstitialDone });
 
-  if (isLoading) {
+  // Se espera a las fuentes junto con la sesion, bajo el mismo splash de marca:
+  // pintar primero con la tipografia del sistema y cambiarla al terminar la
+  // carga produce un salto de texto muy visible en los titulos grandes.
+  //
+  // Si la carga FALLA se sigue de largo. Un catalogo que no abre porque no pudo
+  // leer un .otf seria muchisimo peor que uno con la tipografia del sistema:
+  // React Native cae al font por defecto y la app queda fea, pero usable.
+  if (isLoading || (!fuentesListas && !errorFuentes)) {
     return <SplashBranded />;
   }
 

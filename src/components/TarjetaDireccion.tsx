@@ -1,19 +1,17 @@
-// Tarjeta de "Entregar ahora en ..." con esquinas redondeadas, montada sobre el
-// banner (rediseno del catalogo 1.3.0, referencia visual TaDa).
+// Tarjeta de "Entregar ahora en ..." montada sobre el banner (diseno 1.3.0).
 //
-// El radio sale de radii.card (16), que YA existia en el tema. No se inventa un
-// numero suelto: para eso estan los tokens, y un 14 escrito a mano aqui haria
-// que esta tarjeta no encaje con las demas sin que nadie sepa por que.
+// Son DOS piezas, no una: el bloque blanco con las esquinas de arriba
+// redondeadas —que es el que monta sobre el banner y arranca el cuerpo de la
+// pantalla— y dentro la tarjeta con el pin y la direccion.
 //
-// El margen negativo de arriba es lo que la hace "montar" sobre el banner. Es
-// deliberado y solo funciona si va inmediatamente despues de una seccion de
-// banner; cuando no hay banner (porque no hay patrocinados vigentes y el
-// servidor descarto la seccion) la tarjeta se dibuja sin solaparse, que es la
-// razon de la prop `montada`.
+// El margen negativo solo funciona si esta seccion va inmediatamente despues de
+// un banner. Cuando no hay banner (porque no habia patrocinados vigentes y el
+// servidor descarto la seccion) tiene que dibujarse sin solaparse, o queda
+// cortada contra el borde de arriba: de ahi la prop `montada`.
 
 import { View, Text, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { colors, radii, shadows } from "../constants/theme";
+import { colors, radii, fuentes } from "../constants/theme";
 
 interface Props {
   direccion: string | null;
@@ -24,7 +22,16 @@ interface Props {
 
 export function TarjetaDireccion({ direccion, autenticado, montada, onCambiar }: Props) {
   return (
-    <View style={{ paddingHorizontal: 16, marginTop: montada ? -26 : 12 }}>
+    <View
+      style={{
+        backgroundColor: colors.surface,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        marginTop: montada ? -28 : 0,
+        paddingTop: 18,
+        paddingHorizontal: 16,
+      }}
+    >
       <Pressable
         onPress={onCambiar}
         accessibilityRole="button"
@@ -37,23 +44,23 @@ export function TarjetaDireccion({ direccion, autenticado, montada, onCambiar }:
           flexDirection: "row",
           alignItems: "center",
           gap: 10,
-          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.line,
           borderRadius: radii.card,
           paddingHorizontal: 14,
-          paddingVertical: 12,
-          ...shadows.card,
+          paddingVertical: 11,
         }}
       >
-        <View style={{ width: 32, height: 32, borderRadius: radii.pill, backgroundColor: colors.greenTint, alignItems: "center", justifyContent: "center" }}>
-          <Feather name="map-pin" size={15} color={colors.greenInk} />
-        </View>
+        <Feather name="map-pin" size={19} color={colors.pink} />
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 11.5, fontWeight: "700", color: colors.muted }}>Entregar ahora en</Text>
-          <Text style={{ fontSize: 13.5, fontWeight: "800", color: colors.ink }} numberOfLines={1}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12.5, color: colors.muted }}>
+            Entregar ahora en
+          </Text>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 14.5, color: colors.ink }} numberOfLines={1}>
             {autenticado ? (direccion || "Agrega tu dirección") : "Florencia, Caquetá"}
           </Text>
         </View>
-        <Text style={{ fontSize: 12.5, fontWeight: "800", color: colors.greenInk }}>Cambiar</Text>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 13.5, color: colors.pink }}>Cambiar</Text>
       </Pressable>
     </View>
   );

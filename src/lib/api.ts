@@ -718,6 +718,13 @@ export interface SeccionInicio {
   // carrusel). Se lee con `?.` y respaldo: una seccion que no la traiga tiene
   // que seguir dibujandose.
   opciones?: { modo?: string } | null;
+  // Estilo de la seccion (migracion 083). Agrupado para que un binario que no lo
+  // entienda pueda ignorarlo entero, igual que hace con los tipos desconocidos.
+  estilo?: {
+    color_fondo?: string | null;
+    color_texto?: string | null;
+    borde_superior?: string | null;
+  } | null;
   items: unknown[];
 }
 
