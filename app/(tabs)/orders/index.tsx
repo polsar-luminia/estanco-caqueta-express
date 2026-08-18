@@ -382,7 +382,10 @@ export default function OrdersScreen() {
     enabled: isAuthenticated,
   });
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
+  // A REGISTRO y no a login (ver profile.tsx). Discutible aqui —quien toca
+  // "Pedidos" suele creer que tiene historial— pero se unifica el criterio:
+  // el pie del registro ofrece iniciar sesion para ese caso.
+  if (!isAuthenticated) return <Redirect href="/(auth)/register" />;
 
   if (isLoading) {
     return (

@@ -66,7 +66,9 @@ export default function EliminarCuentaScreen() {
                 text1: "Cuenta eliminada",
                 text2: "Tus datos fueron borrados",
               });
-              router.replace("/(auth)/login");
+              // A registro: la cuenta acaba de dejar de existir, asi que volver
+              // a entrar exige crear una nueva, no iniciar sesion.
+              router.replace("/(auth)/register");
             } catch (err: unknown) {
               const msg = err instanceof Error ? err.message : "No se pudo eliminar la cuenta";
               Sentry.captureException(err instanceof Error ? err : new Error(msg), {

@@ -84,7 +84,10 @@ export default function ProfileScreen() {
   });
   const cuponesNuevos = cupones.filter((c) => !c.ya_usado).length;
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
+  // A REGISTRO y no a login: el invitado que llega aqui, por defecto, todavia
+  // no tiene cuenta. Mismo criterio que el muro del carrito, que ya lo razonaba
+  // asi y era el unico sitio que lo aplicaba.
+  if (!isAuthenticated) return <Redirect href="/(auth)/register" />;
 
   const handleLogout = () => {
     Alert.alert("Cerrar sesión", "¿Quieres salir de tu cuenta?", [

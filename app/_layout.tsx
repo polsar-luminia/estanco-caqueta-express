@@ -161,6 +161,13 @@ export default Sentry.wrap(function RootLayout() {
 
     if (!isAuthenticated) {
       if (rutaActual && RUTAS_REQUIEREN_AUTH.includes(rutaActual)) {
+        // LOGIN, y es la EXCEPCION deliberada al criterio del resto de la app
+        // (que manda a registro porque el invitado no suele tener cuenta).
+        //
+        // Este guard no solo atrapa invitados: tambien salta cuando una sesion
+        // EXPIRA con el cliente dentro de la app. Esa persona SI tiene cuenta, y
+        // recibirla con "Crear cuenta" la empuja a abrir una segunda con el mismo
+        // telefono. El pie del login ofrece registrarse para el otro caso.
         router.replace("/(auth)/login");
       }
       return;

@@ -12,7 +12,8 @@ export default function ProfileLayout() {
   // El redirect a login se mantiene tal cual: `profile` solo se renderiza si es
   // la ruta activa o queda debajo, y mandar a login sin sesion no destruye nada
   // a medio llenar. El de edad si se limita al grupo activo (ver (tabs)).
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
+  // A REGISTRO y no a login: mismo criterio que el resto de la app.
+  if (!isAuthenticated) return <Redirect href="/(auth)/register" />;
   if (grupoDebeConfirmarEdad(segments as string[], "profile", isAuthenticated, cliente != null, cliente?.edad_confirmada)) {
     return <Redirect href="/(auth)/edad-confirmar" />;
   }

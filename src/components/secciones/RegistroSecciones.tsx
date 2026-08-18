@@ -73,7 +73,7 @@ export function Seccion({ seccion, ctx }: { seccion: SeccionInicio; ctx: Ctx }) 
           direccion={ctx.direccion}
           autenticado={ctx.autenticado}
           montada={ctx.trasBanner}
-          onCambiar={() => router.push(ctx.autenticado ? "/profile/direcciones" : "/(auth)/login")}
+          onCambiar={() => router.push(ctx.autenticado ? "/profile/direcciones" : "/(auth)/register")}
         />
       );
 
