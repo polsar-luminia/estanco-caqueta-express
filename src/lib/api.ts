@@ -676,6 +676,11 @@ export interface CategoriaDetalle {
   nombre: string;
   imagen_url?: string;
   imagen_url_thumb?: string;
+  // Banner apaisado de la cabecera (migracion 088). Va aparte de imagen_url
+  // porque son formatos distintos: el cuadrado del mosaico no sobrevive al
+  // recorte de una franja, y la franja se ve como una tira dentro del cuadrado.
+  // Ausente = la cabecera cae a imagen_url, que es el comportamiento anterior.
+  banner_url?: string | null;
   categoria_padre_id: number | null;
   // Productos colgados directamente de esta categoria. Una categoria grande
   // normalmente tiene 0 y todo cuelga de sus hijas; "Hielo y Fiesta" es al reves.

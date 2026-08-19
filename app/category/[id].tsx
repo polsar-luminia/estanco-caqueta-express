@@ -155,10 +155,21 @@ export default function CategoryScreen() {
       {/* Imagen de la categoria. Sale de categorias.imagen_url, no de un mapa
           indexado por el nombre en español: las categorias nuevas no estarian
           en ese mapa y saldrian todas grises. */}
-      {(cat?.categoria?.imagen_url_thumb || cat?.categoria?.imagen_url) ? (
+      {(cat?.categoria?.banner_url || cat?.categoria?.imagen_url_thumb || cat?.categoria?.imagen_url) ? (
         <View style={{ marginHorizontal: 16, height: 120, borderRadius: radii.card, overflow: "hidden", backgroundColor: colors.surface }}>
-          {/* Miniatura tambien aqui: una franja de 120 dp no justifica 700 KB. */}
-          <ShimmerImage imageUrl={cat.categoria.imagen_url_thumb || cat.categoria.imagen_url} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+          {/* El banner manda cuando existe: viene apaisado (1170x360) y esta
+              franja es casi la misma proporcion, asi que `cover` casi no
+              recorta. Sin banner se cae a la miniatura cuadrada, que es lo que
+              habia antes — se recorta feo, pero es preferible a una cabecera
+              vacia mientras las categorias no tengan su banner.
+
+              La miniatura sigue primero que la original entre los respaldos:
+              una franja de 120 dp no justifica 700 KB. */}
+          <ShimmerImage
+            imageUrl={cat.categoria.banner_url || cat.categoria.imagen_url_thumb || cat.categoria.imagen_url}
+            style={{ width: "100%", height: "100%" }}
+            contentFit="cover"
+          />
         </View>
       ) : null}
 
