@@ -171,7 +171,15 @@ export default function CategoryScreen() {
         // pero en un iPhone SE se comia 47 pt de ANCHO — el 12%, que en estos
         // banners es justo donde esta el producto de los extremos. Derivandola
         // del banner (1170x360 = 3.25:1) entra completo en cualquier ancho.
-        <View style={{ marginHorizontal: 16, aspectRatio: 1170 / 360, borderRadius: radii.card, overflow: "hidden", backgroundColor: colors.surface }}>
+        // A SANGRE: sin margen y sin esquinas, de borde a borde. Mismo criterio
+        // que el hero de la portada (HeroSlide, prop `aSangre`).
+        //
+        // Funciona en los DOS caminos de render de esta pantalla sin tocar nada
+        // mas: el de carriles usa un ScrollView sin padding horizontal, y el de
+        // lista plana ya envuelve la cabecera en marginHorizontal:-16 para
+        // cancelar el padding de su contenedor. Poner el margen en 0 aqui basta
+        // para ambos; ajustar el contenedor habria descuadrado uno de los dos.
+        <View style={{ aspectRatio: 1170 / 360, overflow: "hidden", backgroundColor: colors.surface }}>
           <ShimmerImage
             imageUrl={cat.categoria.banner_url}
             style={{ width: "100%", height: "100%" }}
