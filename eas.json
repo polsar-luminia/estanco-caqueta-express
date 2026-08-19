@@ -18,6 +18,7 @@
     },
     "preview-ios": {
       "distribution": "internal",
+      "channel": "production",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://poloysalazar.luminiatech.digital/api/v1"
       },
