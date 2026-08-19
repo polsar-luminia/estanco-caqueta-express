@@ -166,7 +166,12 @@ export default function CategoryScreen() {
           le sube su banner. Que la ausencia de banner produzca una cabecera
           improvisada es justo lo que habia que quitar. */}
       {cat?.categoria?.banner_url ? (
-        <View style={{ marginHorizontal: 16, height: 120, borderRadius: radii.card, overflow: "hidden", backgroundColor: colors.surface }}>
+        // `aspectRatio` y no una altura fija de 120. Con 120 el recorte dependia
+        // del ancho del telefono: en un iPhone 17 Pro Max se comia 6 pt de alto,
+        // pero en un iPhone SE se comia 47 pt de ANCHO — el 12%, que en estos
+        // banners es justo donde esta el producto de los extremos. Derivandola
+        // del banner (1170x360 = 3.25:1) entra completo en cualquier ancho.
+        <View style={{ marginHorizontal: 16, aspectRatio: 1170 / 360, borderRadius: radii.card, overflow: "hidden", backgroundColor: colors.surface }}>
           <ShimmerImage
             imageUrl={cat.categoria.banner_url}
             style={{ width: "100%", height: "100%" }}
