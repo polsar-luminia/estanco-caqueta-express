@@ -155,18 +155,20 @@ export default function CategoryScreen() {
       {/* Imagen de la categoria. Sale de categorias.imagen_url, no de un mapa
           indexado por el nombre en español: las categorias nuevas no estarian
           en ese mapa y saldrian todas grises. */}
-      {(cat?.categoria?.banner_url || cat?.categoria?.imagen_url_thumb || cat?.categoria?.imagen_url) ? (
-        <View style={{ marginHorizontal: 16, height: 120, borderRadius: radii.card, overflow: "hidden", backgroundColor: colors.surface }}>
-          {/* El banner manda cuando existe: viene apaisado (1170x360) y esta
-              franja es casi la misma proporcion, asi que `cover` casi no
-              recorta. Sin banner se cae a la miniatura cuadrada, que es lo que
-              habia antes — se recorta feo, pero es preferible a una cabecera
-              vacia mientras las categorias no tengan su banner.
+      {/* SOLO con banner propio. Antes esto caia a la imagen cuadrada cuando no
+          habia banner, y el resultado era que TODA subcategoria mostraba una
+          cabecera: su foto de producto recortada a una franja de 120 pt, o sea
+          una botella partida por la mitad. El banner es de las categorias
+          grandes; una subcategoria a la que se llega desde el carril de su
+          padre no necesita repetir una franja ancha.
 
-              La miniatura sigue primero que la original entre los respaldos:
-              una franja de 120 dp no justifica 700 KB. */}
+          Sin respaldo a proposito: si alguien quiere cabecera en una categoria,
+          le sube su banner. Que la ausencia de banner produzca una cabecera
+          improvisada es justo lo que habia que quitar. */}
+      {cat?.categoria?.banner_url ? (
+        <View style={{ marginHorizontal: 16, height: 120, borderRadius: radii.card, overflow: "hidden", backgroundColor: colors.surface }}>
           <ShimmerImage
-            imageUrl={cat.categoria.banner_url || cat.categoria.imagen_url_thumb || cat.categoria.imagen_url}
+            imageUrl={cat.categoria.banner_url}
             style={{ width: "100%", height: "100%" }}
             contentFit="cover"
           />
