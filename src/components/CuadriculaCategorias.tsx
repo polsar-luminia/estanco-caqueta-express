@@ -13,7 +13,7 @@
 
 import { View, Text, Pressable, useWindowDimensions } from "react-native";
 import { ShimmerImage } from "./ShimmerImage";
-import { colors, radii, shadows, fuentes } from "../constants/theme";
+import { colors, radii, fuentes } from "../constants/theme";
 import type { CategoriaGrande } from "../lib/api";
 
 interface Props {
@@ -57,23 +57,36 @@ export function CuadriculaCategorias({ categorias, onSelect }: Props) {
           accessibilityLabel={`${c.nombre}, ${c.cantidad_productos} productos`}
           style={{ width: ancho }}
         >
+          {/* La baldosa gris es lo que dice "esto se toca". Era blanca sobre
+              fondo blanco, asi que no habia boton: solo una foto flotando.
+              El gris es el mismo de la 1.2.3.
+
+              SIN SOMBRA, a proposito. La separacion entre baldosas es de 10 pt y
+              `shadows.soft` tiene 14 de radio: dos vecinas se cruzarian y
+              sumarian justo en el hueco, que es el mismo defecto que hubo que
+              corregir en las tarjetas de producto. Con el relleno gris la sombra
+              ya no hace falta para separar del fondo.
+
+              `contain` y no `cover`: con `cover` la foto tapa la baldosa entera y
+              el gris no se ve por ningun lado. El padding es lo que deja el
+              marco visible alrededor del producto. */}
           <View
             style={{
               width: "100%",
               aspectRatio: 1,
               borderRadius: radii.tile,
               overflow: "hidden",
-              backgroundColor: colors.surface,
+              backgroundColor: colors.baldosa,
               alignItems: "center",
               justifyContent: "center",
-              ...shadows.soft,
+              padding: 8,
             }}
           >
             {(c.imagen_url_thumb || c.imagen_url) ? (
               <ShimmerImage
                 imageUrl={c.imagen_url_thumb || c.imagen_url}
                 style={{ width: "100%", height: "100%" }}
-                contentFit="cover"
+                contentFit="contain"
               />
             ) : (
               <View style={{ width: "100%", height: "100%", backgroundColor: colors.greenTint, alignItems: "center", justifyContent: "center" }}>

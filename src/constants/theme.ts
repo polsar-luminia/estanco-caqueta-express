@@ -15,6 +15,10 @@ export const colors = {
   faint: "#9AA69A",       // placeholders / terciario
   bg: "#F4F6F3",          // fondo de pantalla
   surface: "#FFFFFF",     // tarjetas y superficies
+  // Relleno de las baldosas de categoria. Es el gris de la 1.2.3 (#E8E8E5) y
+  // vuelve a proposito: sin el, la baldosa era blanca sobre fondo blanco y la
+  // cuadricula no se leia como botones, sino como fotos sueltas flotando.
+  baldosa: "#E8E8E5",
   line: "#EBEFE9",        // bordes / hairlines
   lowfill: "#F1F4F0",     // rellenos suaves (chips, botones "ghost")
   strike: "#B2BAAE",      // precio tachado

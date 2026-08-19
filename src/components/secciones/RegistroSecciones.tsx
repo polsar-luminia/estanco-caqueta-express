@@ -10,8 +10,8 @@
 // devuelve null en vez de lanzar: el caso "no lo conozco" es esperado, no un
 // error.
 
-import { View } from "react-native";
-import { colors } from "../../constants/theme";
+import { View, Text } from "react-native";
+import { colors, fuentes } from "../../constants/theme";
 import { useRouter } from "expo-router";
 import { CarrilProductos } from "../CarrilProductos";
 import { CuadriculaCategorias } from "../CuadriculaCategorias";
@@ -100,6 +100,25 @@ export function Seccion({ seccion, ctx }: { seccion: SeccionInicio; ctx: Ctx }) 
         // los 18 de antes, el hueco entre la ultima categoria y el magenta
         // llegaba a ~47 pt en la mitad de la pantalla y se veia despegado.
         <View style={{ backgroundColor: colors.surface, paddingTop: 16, paddingBottom: 4 }}>
+          {/* El titulo lo manda el servidor (secciones_inicio.titulo) igual que
+              en los carriles, y por eso no va quemado: cambiarlo no deberia
+              exigir publicar la app. Mismo estilo que "Ofertas" y "Recomendados
+              para ti" — con el tamano de la 1.2.3 (18 pt) quedaria al lado de
+              uno de 30 y se leeria como un error de diseno, no como jerarquia. */}
+          {seccion.titulo ? (
+            <Text
+              style={{
+                fontFamily: fuentes.titulo,
+                fontSize: 30,
+                color: colors.ink,
+                paddingHorizontal: 16,
+                marginBottom: 12,
+              }}
+              numberOfLines={1}
+            >
+              {seccion.titulo}
+            </Text>
+          ) : null}
           <CuadriculaCategorias
             categorias={cats}
             onSelect={(id) => router.push(`/category/${id}`)}
