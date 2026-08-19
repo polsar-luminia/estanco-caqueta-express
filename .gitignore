@@ -67,3 +67,8 @@ play-service-account.json
 
 # Artefactos del monkey (scripts/monkey-android.sh): logs por semilla, no se versionan
 scripts/monkey-logs/
+
+# Artefactos de compilacion local (eas build --local). Pesan ~55 MB el .app y
+# ~34 MB cada .tar.gz: no van al repo. `*.ipa` ya estaba, pero faltaban el
+# tarball del simulador y el .app extraido, y `git add -A` los arrastro.
+builds/
