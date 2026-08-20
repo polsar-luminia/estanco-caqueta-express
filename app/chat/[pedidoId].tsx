@@ -315,7 +315,11 @@ export default function ChatPedidoScreen() {
                   maxHeight: 110,
                   color: "#1A1C1A",
                 }}
-                accessibilityLabel="Mensaje para tu domiciliario"
+                // Sigue al titulo: hoy casi siempre se escribe con el estanco
+                // porque el pedido no tiene domiciliario asignado, y anunciar
+                // "para tu domiciliario" a quien usa lector de pantalla dice
+                // algo que la pantalla misma esta desmintiendo arriba.
+                accessibilityLabel={`Mensaje para ${titulo}`}
               />
               <Pressable
                 onPress={enviar}
