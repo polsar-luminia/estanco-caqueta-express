@@ -19,6 +19,7 @@ import * as Sentry from "@sentry/react-native";
 import { Feather } from "@expo/vector-icons";
 import { Image as ImagenExpo } from "expo-image";
 import { CARD_SHADOW } from "../../../src/constants/styles";
+import { fuentes } from "../../../src/constants/theme";
 
 /* ── Skeleton de carga ───────────────────────────────────── */
 
@@ -185,7 +186,7 @@ export default function OrderDetailScreen() {
             style={{ flexDirection: "row", alignItems: "center", paddingRight: 8 }}
           >
             <Feather name="chevron-left" size={26} color="#fff" />
-            <Text style={{ color: "#fff", fontSize: 15, fontWeight: "600" }}>Pedidos</Text>
+            <Text style={{ color: "#fff", fontSize: 15, fontFamily: fuentes.destacado }}>Pedidos</Text>
           </Pressable>
         ),
       }}
@@ -315,7 +316,7 @@ export default function OrderDetailScreen() {
           listo para cuando Envíos Express asigne y llene perfiles. */}
       {pedido.domiciliario && (
         <View className="bg-white rounded-2xl p-5" style={CARD_SHADOW}>
-          <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 10 }}>
+          <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 10 }}>
             Tu domiciliario
           </Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
@@ -327,7 +328,7 @@ export default function OrderDetailScreen() {
               )}
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15.5, fontWeight: "800", color: "#1A1C1A" }}>{pedido.domiciliario.nombre}</Text>
+              <Text style={{ fontSize: 15.5, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{pedido.domiciliario.nombre}</Text>
               {(pedido.domiciliario.moto || pedido.domiciliario.placa) && (
                 <Text style={{ fontSize: 12.5, color: "#6D7B6C", marginTop: 1 }}>
                   {[pedido.domiciliario.moto, pedido.domiciliario.placa].filter(Boolean).join(" · ")}
@@ -363,7 +364,7 @@ export default function OrderDetailScreen() {
               <Feather name="message-circle" size={20} color="#1FAF55" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: "800", color: "#1A1C1A" }}>
+              <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>
                 {enCalle ? "Chat con tu domiciliario" : "Escríbele al Estanco"}
               </Text>
               <Text style={{ fontSize: 12.5, color: "#6D7B6C", marginTop: 1 }}>
@@ -376,7 +377,7 @@ export default function OrderDetailScreen() {
             </View>
             {(pedido.chat_sin_leer ?? 0) > 0 && (
               <View style={{ minWidth: 22, height: 22, borderRadius: 11, backgroundColor: "#D33587", alignItems: "center", justifyContent: "center", paddingHorizontal: 6, marginRight: 4 }}>
-                <Text style={{ color: "#fff", fontSize: 12, fontWeight: "800" }}>{pedido.chat_sin_leer}</Text>
+                <Text style={{ color: "#fff", fontSize: 12, fontFamily: fuentes.destacado }}>{pedido.chat_sin_leer}</Text>
               </View>
             )}
             <Feather name="chevron-right" size={20} color="#9E9E9E" />

@@ -1,6 +1,6 @@
 import { View, Text } from "react-native";
 import { formatTime } from "../lib/format";
-import { colors } from "../constants/theme";
+import { colors, fuentes } from "../constants/theme";
 import type { Pedido } from "../lib/api";
 
 // Los cuatro pasos clasicos van siempre. Los dos de la 068 (preparado, llego)
@@ -51,9 +51,9 @@ export function OrderStatusTimeline({ estado, pedido, estadosExtendidos = false 
     return (
       <View style={{ alignItems: "center", paddingVertical: 16 }}>
         <View style={{ width: 44, height: 44, borderRadius: 999, backgroundColor: "rgba(180,83,9,0.12)", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
-          <Text style={{ color: "#B45309", fontSize: 20, fontWeight: "800" }}>!</Text>
+          <Text style={{ color: "#B45309", fontSize: 20, fontFamily: fuentes.titulo }}>!</Text>
         </View>
-        <Text style={{ color: "#B45309", fontWeight: "700" }}>No pudimos entregarlo</Text>
+        <Text style={{ color: "#B45309", fontFamily: fuentes.destacado }}>No pudimos entregarlo</Text>
         <Text style={{ color: colors.muted, fontSize: 13, marginTop: 6, textAlign: "center", paddingHorizontal: 12, lineHeight: 18 }}>
           Tu pedido volvió al estanco. Te contactamos para reprogramar la entrega — también puedes
           escribirnos por el chat de abajo.
@@ -66,9 +66,9 @@ export function OrderStatusTimeline({ estado, pedido, estadosExtendidos = false 
     return (
       <View style={{ alignItems: "center", paddingVertical: 16 }}>
         <View style={{ width: 44, height: 44, borderRadius: 999, backgroundColor: "rgba(220,38,38,0.12)", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
-          <Text style={{ color: colors.danger, fontSize: 20, fontWeight: "800" }}>✕</Text>
+          <Text style={{ color: colors.danger, fontSize: 20, fontFamily: fuentes.titulo }}>✕</Text>
         </View>
-        <Text style={{ color: colors.danger, fontWeight: "700" }}>Pedido cancelado</Text>
+        <Text style={{ color: colors.danger, fontFamily: fuentes.destacado }}>Pedido cancelado</Text>
       </View>
     );
   }
@@ -111,7 +111,7 @@ export function OrderStatusTimeline({ estado, pedido, estadosExtendidos = false 
                 }}
               >
                 {done ? (
-                  <Text style={{ color: "#fff", fontSize: 13, fontWeight: "900" }}>✓</Text>
+                  <Text style={{ color: "#fff", fontSize: 13, fontFamily: fuentes.destacado }}>✓</Text>
                 ) : current ? (
                   <View style={{ width: 9, height: 9, borderRadius: 999, backgroundColor: colors.green }} />
                 ) : null}
@@ -126,7 +126,7 @@ export function OrderStatusTimeline({ estado, pedido, estadosExtendidos = false 
               <Text
                 style={{
                   fontSize: 14,
-                  fontWeight: current ? "800" : done ? "700" : "500",
+                  fontFamily: fuentes.destacado ? "800" : done ? "700" : "500",
                   color: current ? colors.greenInk : done ? colors.ink : colors.faint,
                 }}
               >
@@ -137,7 +137,7 @@ export function OrderStatusTimeline({ estado, pedido, estadosExtendidos = false 
                   {formatTime(timeValue)}{current ? " · ahora" : ""}
                 </Text>
               ) : current ? (
-                <Text style={{ fontSize: 12, color: colors.greenInk, marginTop: 1, fontWeight: "700" }}>ahora</Text>
+                <Text style={{ fontSize: 12, color: colors.greenInk, marginTop: 1, fontFamily: fuentes.destacado }}>ahora</Text>
               ) : null}
             </View>
           </View>

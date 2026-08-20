@@ -5,7 +5,7 @@ import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import { confirmarEdad, getPerfil } from "../../src/lib/api";
 import { useAuthStore } from "../../src/stores/auth";
-import { colors, shadows } from "../../src/constants/theme";
+import { colors, shadows, fuentes } from "../../src/constants/theme";
 
 export default function EdadConfirmarScreen() {
   const [loading, setLoading] = useState(false);
@@ -81,13 +81,13 @@ export default function EdadConfirmarScreen() {
           className="bg-white rounded-2xl p-6"
           style={shadows.card}
         >
-          <Text style={{ fontSize: 22, fontWeight: "700", color: colors.ink, textAlign: "center", marginBottom: 12 }}>
+          <Text style={{ fontSize: 22, fontFamily: fuentes.titulo, color: colors.ink, textAlign: "center", marginBottom: 12 }}>
             Confirma tu mayoría de edad
           </Text>
 
           <Text style={{ fontSize: 14, color: "#3C443B", lineHeight: 20, textAlign: "center", marginBottom: 8 }}>
             Para usar Estanco Caquetá Express debes ser{"\n"}
-            <Text style={{ fontWeight: "700", color: colors.ink }}>mayor de 18 años</Text>.
+            <Text style={{ fontFamily: fuentes.destacado, color: colors.ink }}>mayor de 18 años</Text>.
           </Text>
 
           <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 18, textAlign: "center", marginBottom: 24 }}>
@@ -108,7 +108,7 @@ export default function EdadConfirmarScreen() {
               ...(loading ? {} : shadows.greenBtn),
             }}
           >
-            <Text style={{ color: colors.white, fontWeight: "800", fontSize: 16 }}>
+            <Text style={{ color: colors.white, fontFamily: fuentes.destacado, fontSize: 16 }}>
               {loading ? "Confirmando..." : "Sí, soy mayor de 18 años"}
             </Text>
           </Pressable>
@@ -126,7 +126,7 @@ export default function EdadConfirmarScreen() {
               paddingVertical: 16,
             }}
           >
-            <Text style={{ color: "#3C443B", fontWeight: "600", fontSize: 15 }}>
+            <Text style={{ color: "#3C443B", fontFamily: fuentes.destacado, fontSize: 15 }}>
               No, salir de la app
             </Text>
           </Pressable>

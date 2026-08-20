@@ -9,6 +9,7 @@
 
 import { View, Text, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { fuentes } from "../constants/theme";
 
 const ETIQUETAS = ["Muy malo", "Malo", "Regular", "Bueno", "Excelente"];
 const DORADO = "#E4A400";
@@ -66,7 +67,7 @@ export function Estrellas({
       </View>
 
       {mostrarEtiqueta && valor > 0 && (
-        <Text style={{ fontSize: 14, fontWeight: "600", color: "#6D7B6C", marginTop: 2 }}>
+        <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#6D7B6C", marginTop: 2 }}>
           {ETIQUETAS[valor - 1]}
         </Text>
       )}

@@ -12,7 +12,7 @@
 
 import { View, Text, Pressable, Linking, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { colors } from "../constants/theme";
+import { colors, fuentes } from "../constants/theme";
 import { APP_STORE_URL, PLAY_STORE_URL } from "../constants/config";
 
 export function PantallaActualizar({ mensaje }: { mensaje?: string | null }) {
@@ -47,7 +47,7 @@ export function PantallaActualizar({ mensaje }: { mensaje?: string | null }) {
       <Text
         style={{
           fontSize: 22,
-          fontWeight: "800",
+          fontFamily: fuentes.titulo,
           color: colors.ink,
           textAlign: "center",
         }}
@@ -83,7 +83,7 @@ export function PantallaActualizar({ mensaje }: { mensaje?: string | null }) {
           marginTop: 28,
         }}
       >
-        <Text style={{ fontSize: 16, fontWeight: "800", color: "#fff" }}>
+        <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: "#fff" }}>
           {Platform.OS === "ios" ? "Abrir App Store" : "Abrir Google Play"}
         </Text>
       </Pressable>

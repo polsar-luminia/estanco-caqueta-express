@@ -7,6 +7,7 @@ import { useRef, useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { ShimmerImage } from "./ShimmerImage";
 import type { Patrocinado } from "../lib/api";
+import { fuentes } from "../constants/theme";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -83,13 +84,13 @@ export function HeroSlide({ banner, onPress, aSangre = false }: { banner: Patroc
           <View style={{ width: "58%", gap: 6 }}>
             {etiqueta ? (
               <View style={{ alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, backgroundColor: colorEtiqueta }}>
-                <Text style={{ color: "#fff", fontSize: 12, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" }}>
+                <Text style={{ color: "#fff", fontSize: 12, fontFamily: fuentes.destacado, letterSpacing: 1.5, textTransform: "uppercase" }}>
                   {etiqueta}
                 </Text>
               </View>
             ) : null}
             {titulo ? (
-              <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800", lineHeight: 26, textShadowColor: "rgba(0,0,0,0.55)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 }}>{titulo}</Text>
+              <Text style={{ color: "#fff", fontSize: 22, fontFamily: fuentes.titulo, lineHeight: 26, textShadowColor: "rgba(0,0,0,0.55)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 }}>{titulo}</Text>
             ) : null}
             {subtitulo ? (
               <Text style={{ color: "rgba(255,255,255,0.92)", fontSize: 12, textShadowColor: "rgba(0,0,0,0.55)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 }}>{subtitulo}</Text>
@@ -103,7 +104,7 @@ export function HeroSlide({ banner, onPress, aSangre = false }: { banner: Patroc
                 accessibilityLabel={`${cta}: ${titulo?.replace(/\n/g, " ") ?? ""}`.trim()}
                 hitSlop={6}
               >
-                <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>{cta}</Text>
+                <Text style={{ color: "#fff", fontSize: 12, fontFamily: fuentes.destacado }}>{cta}</Text>
               </Pressable>
             ) : null}
           </View>

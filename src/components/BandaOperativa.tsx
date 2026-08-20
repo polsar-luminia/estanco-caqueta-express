@@ -16,6 +16,7 @@
 import { View, Text } from "react-native";
 import { ESTILO } from "./BandaCerrado";
 import type { EstadoTienda } from "../lib/api";
+import { fuentes } from "../constants/theme";
 
 interface Props {
   tienda: EstadoTienda;
@@ -53,7 +54,7 @@ export function BandaOperativa({ tienda, compact = false, style }: Props) {
           <Icono color={e.iconColor} size={20} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 13, fontWeight: "700", color: "#16241A" }}>{aviso.titulo}</Text>
+          <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#16241A" }}>{aviso.titulo}</Text>
           {/* Tres líneas y no dos: el mensaje sin ETA es más largo porque tiene
               que explicar sin prometer un tiempo, y cortarlo dejaría la frase a
               la mitad. */}
@@ -63,7 +64,7 @@ export function BandaOperativa({ tienda, compact = false, style }: Props) {
         </View>
         {!compact && (
           <View style={{ backgroundColor: e.pillBg, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }}>
-            <Text style={{ fontSize: 12, fontWeight: "700", color: e.pillColor }}>{e.pillTexto}</Text>
+            <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: e.pillColor }}>{e.pillTexto}</Text>
           </View>
         )}
       </View>

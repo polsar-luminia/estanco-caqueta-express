@@ -8,7 +8,7 @@ import { type UbicacionCapturada } from "../lib/api";
 import { useUbicacionPicker } from "../stores/ubicacionPicker";
 import { useZonaEntrega } from "../hooks/useZonaEntrega";
 import { tracker } from "../lib/tracker";
-import { colors, radii, shadows } from "../constants/theme";
+import { colors, radii, shadows, fuentes } from "../constants/theme";
 
 // Botón "Usar mi ubicación actual" (Geolocalización Fase 1).
 // Controlado: el padre guarda la `UbicacionCapturada` y la manda al backend.
@@ -224,7 +224,7 @@ export function UbicacionButton({ value, onChange }: Props) {
             ) : (
               <Feather name="check-circle" size={12} color={colors.greenInk} />
             )}
-            <Text style={{ fontSize: 12, fontWeight: "800", color: colors.greenInk }}>
+            <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: colors.greenInk }}>
               {refinando ? "Afinando ubicación…" : "Ubicación fijada"}
             </Text>
           </View>
@@ -238,7 +238,7 @@ export function UbicacionButton({ value, onChange }: Props) {
             style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingVertical: 11, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.green }}
           >
             <Feather name="map" size={14} color={colors.greenInk} />
-            <Text style={{ fontSize: 13, fontWeight: "800", color: colors.greenInk }}>Ajustar en el mapa</Text>
+            <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: colors.greenInk }}>Ajustar en el mapa</Text>
           </Pressable>
           <Pressable
             onPress={quitar}
@@ -248,7 +248,7 @@ export function UbicacionButton({ value, onChange }: Props) {
             style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 12, backgroundColor: colors.lowfill }}
           >
             <Feather name="x" size={12} color={colors.muted} />
-            <Text style={{ fontSize: 13, fontWeight: "700", color: colors.muted }}>Quitar</Text>
+            <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: colors.muted }}>Quitar</Text>
           </Pressable>
         </View>
       </View>
@@ -281,7 +281,7 @@ export function UbicacionButton({ value, onChange }: Props) {
         ) : (
           <Feather name="map-pin" size={16} color="#fff" />
         )}
-        <Text style={{ fontSize: 14, fontWeight: "800", color: "#fff" }}>
+        <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#fff" }}>
           {estado === "capturando" ? "Obteniendo ubicación..." : "Usar mi ubicación actual"}
         </Text>
       </Pressable>
@@ -298,7 +298,7 @@ export function UbicacionButton({ value, onChange }: Props) {
           style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 8 }}
         >
           <Feather name="map" size={13} color="#6D7B6C" />
-          <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D7B6C" }}>o ubícalo en el mapa</Text>
+          <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C" }}>o ubícalo en el mapa</Text>
         </Pressable>
       ) : null}
 
@@ -313,7 +313,7 @@ export function UbicacionButton({ value, onChange }: Props) {
               accessibilityLabel="Abrir los ajustes del teléfono para dar permiso de ubicación"
               style={{ marginTop: 4 }}
             >
-              <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>Abrir Ajustes</Text>
+              <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>Abrir Ajustes</Text>
             </Pressable>
           ) : null}
         </View>

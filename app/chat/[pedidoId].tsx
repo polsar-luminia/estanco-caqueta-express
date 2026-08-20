@@ -34,7 +34,7 @@ import Toast from "react-native-toast-message";
 import { getMensajesPedido, enviarMensajePedido, type MensajePedido } from "../../src/lib/api";
 import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { tracker } from "../../src/lib/tracker";
-import { colors } from "../../src/constants/theme";
+import { colors, fuentes } from "../../src/constants/theme";
 
 const INTERVALO_MS = 5000;
 
@@ -200,14 +200,14 @@ export default function ChatPedidoScreen() {
           ) : fotoDomiciliario ? (
             <Image source={{ uri: fotoDomiciliario }} style={{ width: 40, height: 40 }} contentFit="cover" />
           ) : nombreDomiciliario ? (
-            <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>{iniciales(nombreDomiciliario)}</Text>
+            <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 15 }}>{iniciales(nombreDomiciliario)}</Text>
           ) : (
             <Feather name="user" size={20} color="#fff" />
           )}
         </View>
 
         <View style={{ flex: 1 }}>
-          <Text style={{ color: "#fff", fontWeight: "800", fontSize: 16 }} numberOfLines={1}>
+          <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 16 }} numberOfLines={1}>
             {titulo}
           </Text>
           <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 12 }}>

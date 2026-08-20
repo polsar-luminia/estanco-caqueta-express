@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { View, Text, Pressable, Modal, ScrollView, TextInput, KeyboardAvoidingView, Platform } from "react-native";
+import { fuentes } from "../constants/theme";
 
 export type DateValue = { day?: number; month?: number; year?: number };
 
@@ -117,7 +118,7 @@ export function DateSelector({ value, onChange }: Props) {
 
   return (
     <View>
-      <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginLeft: 16, marginBottom: 4 }}>
+      <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginLeft: 16, marginBottom: 4 }}>
         Fecha de Nacimiento
       </Text>
 
@@ -230,7 +231,7 @@ export function DateSelector({ value, onChange }: Props) {
                       backgroundColor: isSelected ? "#F0FBF4" : "transparent",
                     }}
                   >
-                    <Text style={{ fontSize: 16, color: isSelected ? "#1FAF55" : "#1A1C1A", fontWeight: isSelected ? "700" : "400" }}>
+                    <Text style={{ fontSize: 16, color: isSelected ? "#1FAF55" : "#1A1C1A", fontFamily: fuentes.destacado ? "700" : "400" }}>
                       {opt.label}
                     </Text>
                   </Pressable>
@@ -271,7 +272,7 @@ export function DateSelector({ value, onChange }: Props) {
             <View style={{ alignItems: "center", marginBottom: 16 }}>
               <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: "#E0E0E0" }} />
             </View>
-            <Text style={{ fontSize: 13, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
+            <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
               Año de nacimiento
             </Text>
             <TextInput
@@ -289,7 +290,7 @@ export function DateSelector({ value, onChange }: Props) {
                 paddingHorizontal: 20,
                 paddingVertical: 16,
                 fontSize: 28,
-                fontWeight: "700",
+                fontFamily: fuentes.titulo,
                 color: "#1A1C1A",
                 letterSpacing: 8,
                 textAlign: "center",
@@ -310,7 +311,7 @@ export function DateSelector({ value, onChange }: Props) {
                 alignItems: "center",
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
+              <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 15 }}>
                 Confirmar
               </Text>
             </Pressable>

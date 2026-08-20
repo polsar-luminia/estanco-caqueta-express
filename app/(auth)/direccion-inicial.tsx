@@ -28,7 +28,7 @@ import { getDirecciones, crearDireccion, ubicacionABody, type UbicacionCapturada
 import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { BuscadorDireccion } from "../../src/components/BuscadorDireccion";
 import { tracker } from "../../src/lib/tracker";
-import { colors, radii } from "../../src/constants/theme";
+import { colors, radii, fuentes } from "../../src/constants/theme";
 
 const ETIQUETAS = ["Casa", "Trabajo", "Otro"];
 
@@ -139,7 +139,7 @@ export default function DireccionInicialScreen() {
           <Feather name="map-pin" size={26} color={colors.green} />
         </View>
 
-        <Text style={{ fontSize: 26, fontWeight: "800", color: colors.ink, letterSpacing: -0.5 }}>
+        <Text style={{ fontSize: 26, fontFamily: fuentes.titulo, color: colors.ink, letterSpacing: -0.5 }}>
           ¿A dónde te llevamos el pedido?
         </Text>
         <Text style={{ fontSize: 15, lineHeight: 22, color: colors.muted, marginTop: 8, marginBottom: 24 }}>
@@ -163,7 +163,7 @@ export default function DireccionInicialScreen() {
                 borderColor: etiqueta === e ? colors.green : colors.line,
               }}
             >
-              <Text style={{ fontWeight: "700", fontSize: 14, color: etiqueta === e ? "#fff" : colors.muted }}>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: etiqueta === e ? "#fff" : colors.muted }}>
                 {e}
               </Text>
             </Pressable>
@@ -171,7 +171,7 @@ export default function DireccionInicialScreen() {
         </View>
 
         {/* Dirección con autocompletado */}
-        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.muted, marginBottom: 6 }}>
+        <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: colors.muted, marginBottom: 6 }}>
           DIRECCIÓN
         </Text>
         <BuscadorDireccion
@@ -203,7 +203,7 @@ export default function DireccionInicialScreen() {
         </View>
 
         {/* Notas */}
-        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.muted, marginTop: 20, marginBottom: 6 }}>
+        <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: colors.muted, marginTop: 20, marginBottom: 6 }}>
           INDICACIONES (OPCIONAL)
         </Text>
         <TextInput
@@ -235,7 +235,7 @@ export default function DireccionInicialScreen() {
           {mutCrear.isPending ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={{ color: "#fff", fontWeight: "800", fontSize: 16 }}>Guardar y continuar</Text>
+            <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 16 }}>Guardar y continuar</Text>
           )}
         </Pressable>
 
@@ -246,7 +246,7 @@ export default function DireccionInicialScreen() {
           accessibilityLabel="Lo hago después, ir al catálogo"
           style={{ marginTop: 12, minHeight: 44, alignItems: "center", justifyContent: "center" }}
         >
-          <Text style={{ color: colors.muted, fontWeight: "600", fontSize: 15 }}>Lo hago después</Text>
+          <Text style={{ color: colors.muted, fontFamily: fuentes.destacado, fontSize: 15 }}>Lo hago después</Text>
         </Pressable>
       </ScrollView>
     </View>

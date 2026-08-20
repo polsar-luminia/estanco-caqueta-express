@@ -21,7 +21,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import { getPedidos } from "../lib/api";
 import { tracker } from "../lib/tracker";
-import { colors } from "../constants/theme";
+import { colors, fuentes } from "../constants/theme";
 
 const CLAVE_DESCARTADOS = "resenas_banner_descartados";
 const DIAS_MAX = 7;
@@ -126,7 +126,7 @@ export function BannerResena({ habilitado }: { habilitado: boolean }) {
         accessibilityLabel={`Calificar tu pedido número ${pendiente.numero_orden_cliente ?? pendiente.id}`}
         style={{ flex: 1, minHeight: 44, justifyContent: "center" }}
       >
-        <Text style={{ fontSize: 15, fontWeight: "700", color: colors.ink }}>
+        <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: colors.ink }}>
           ¿Cómo te fue con tu pedido?
         </Text>
         <Text style={{ fontSize: 13, color: colors.muted, marginTop: 1 }}>

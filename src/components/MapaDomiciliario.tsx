@@ -19,6 +19,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { getUbicacionDomiciliario, type UbicacionDomiciliario } from "../lib/api";
 import { rumboSiSeMovio, rotacionMoto } from "../lib/distancia";
+import { fuentes } from "../constants/theme";
 
 const INTERVALO_MS = 15_000;
 
@@ -129,7 +130,7 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
       <View className="bg-white rounded-2xl p-5" style={{ gap: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Feather name="map-pin" size={16} color="#6D7B6C" />
-          <Text style={{ fontSize: 15, fontWeight: "800", color: "#1A1C1A" }}>¿Por dónde viene?</Text>
+          <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>¿Por dónde viene?</Text>
         </View>
         <Text style={{ fontSize: 13, color: "#6D7B6C" }}>{texto}</Text>
       </View>
@@ -154,7 +155,7 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
     >
       <View style={{ padding: 16, paddingBottom: 10, flexDirection: "row", alignItems: "center", gap: 8 }}>
         <Feather name="navigation" size={16} color="#1FAF55" />
-        <Text style={{ fontSize: 15, fontWeight: "800", color: "#1A1C1A", flex: 1 }}>Por dónde viene</Text>
+        <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: "#1A1C1A", flex: 1 }}>Por dónde viene</Text>
         <Feather name="maximize-2" size={13} color="#6D7B6C" style={{ marginRight: 6 }} />
         <Text style={{ fontSize: 11.5, color: "#6D7B6C" }}>
           {(ubi.actualizado_hace_seg ?? 0) < 60

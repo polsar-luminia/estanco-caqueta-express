@@ -1,5 +1,6 @@
 import { View, Text } from "react-native";
 import { useState, useEffect } from "react";
+import { fuentes } from "../constants/theme";
 
 interface Props {
   // Fecha/hora de expiración como string ISO (ej. "2026-05-08T23:59:00.000Z")
@@ -38,7 +39,7 @@ export function CountdownChip({ expiresAt, color = '#DC2626' }: Props) {
         paddingVertical: 5,
       }}
     >
-      <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>
+      <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: '#fff' }}>
         ⏱ {h}:{m}:{s}
       </Text>
     </View>

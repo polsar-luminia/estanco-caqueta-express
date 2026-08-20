@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getUbicacionDomiciliario, type UbicacionDomiciliario } from "../../src/lib/api";
 import { distanciaMetros, textoDistancia, rumboSiSeMovio, rotacionMoto } from "../../src/lib/distancia";
 import { tracker } from "../../src/lib/tracker";
+import { fuentes } from "../../src/constants/theme";
 
 const INTERVALO_MS = 12_000;
 const PANTALLA = "seguimiento";
@@ -206,7 +207,7 @@ export default function SeguimientoScreen() {
       >
         {ubi?.disponible ? (
           <>
-            <Text style={{ fontSize: 19, fontWeight: "800", color: "#1A1C1A" }}>
+            <Text style={{ fontSize: 19, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>
               {metros != null ? textoDistancia(metros) : "En camino"}
             </Text>
             <Text style={{ fontSize: 13, color: "#6D7B6C", marginTop: 4 }}>
@@ -225,7 +226,7 @@ export default function SeguimientoScreen() {
           </>
         ) : (
           <>
-            <Text style={{ fontSize: 17, fontWeight: "800", color: "#1A1C1A" }}>Sin señal por ahora</Text>
+            <Text style={{ fontSize: 17, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Sin señal por ahora</Text>
             <Text style={{ fontSize: 13, color: "#6D7B6C", marginTop: 4 }}>
               Tu repartidor no está reportando su ubicación en este momento. Sigue en camino.
             </Text>

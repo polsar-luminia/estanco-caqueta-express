@@ -20,7 +20,7 @@ import { ErrorBoundaryProps } from "expo-router";
 import { tracker } from "../lib/tracker";
 import { useEffect } from "react";
 import * as Sentry from "@sentry/react-native";
-import { colors } from "../constants/theme";
+import { colors, fuentes } from "../constants/theme";
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   const router = useRouter();
@@ -47,7 +47,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
       <Text
         style={{
           fontSize: 20,
-          fontWeight: "700",
+          fontFamily: fuentes.titulo,
           color: "#1A1C1A",
           marginBottom: 8,
           textAlign: "center",
@@ -80,7 +80,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
           alignItems: "center",
         }}
       >
-        <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
+        <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 15 }}>
           Intentar de nuevo
         </Text>
       </Pressable>
@@ -97,7 +97,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
           alignItems: "center",
         }}
       >
-        <Text style={{ color: "#6D7B6C", fontWeight: "600", fontSize: 15 }}>
+        <Text style={{ color: "#6D7B6C", fontFamily: fuentes.destacado, fontSize: 15 }}>
           Volver al inicio
         </Text>
       </Pressable>

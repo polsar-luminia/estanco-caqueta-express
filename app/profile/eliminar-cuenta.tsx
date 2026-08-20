@@ -18,7 +18,7 @@ import { useAuthStore } from "../../src/stores/auth";
 import { useCartStore } from "../../src/stores/cart";
 import { eliminarCuenta } from "../../src/lib/api";
 import { BackButton } from "../../src/components/BackButton";
-import { colors, radii } from "../../src/constants/theme";
+import { colors, radii, fuentes } from "../../src/constants/theme";
 
 const PALABRA_CONFIRMACION = "ELIMINAR";
 
@@ -96,7 +96,7 @@ export default function EliminarCuentaScreen() {
         borderBottomWidth: 1, borderBottomColor: colors.line,
       }}>
         <BackButton style={{ paddingRight: 16 }} />
-        <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: colors.ink, textAlign: "center", marginRight: 60 }}>
+        <Text style={{ flex: 1, fontSize: 17, fontFamily: fuentes.destacado, color: colors.ink, textAlign: "center", marginRight: 60 }}>
           Eliminar cuenta
         </Text>
       </View>
@@ -121,7 +121,7 @@ export default function EliminarCuentaScreen() {
           }}>
             <Feather name="alert-triangle" size={22} color={colors.danger} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 14, fontWeight: "800", color: colors.danger, marginBottom: 4 }}>
+              <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.danger, marginBottom: 4 }}>
                 Esta acción no se puede deshacer
               </Text>
               <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18 }}>
@@ -130,7 +130,7 @@ export default function EliminarCuentaScreen() {
             </View>
           </View>
 
-          <Text style={{ fontSize: 13, fontWeight: "700", color: colors.ink, marginBottom: 10 }}>
+          <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: colors.ink, marginBottom: 10 }}>
             Lo que se eliminará:
           </Text>
           <View style={{ gap: 8, marginBottom: 24 }}>
@@ -151,7 +151,7 @@ export default function EliminarCuentaScreen() {
 
           <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18, marginBottom: 16 }}>
             Por seguridad, escribe la palabra{" "}
-            <Text style={{ fontWeight: "800", color: colors.ink }}>{PALABRA_CONFIRMACION}</Text>{" "}
+            <Text style={{ fontFamily: fuentes.destacado, color: colors.ink }}>{PALABRA_CONFIRMACION}</Text>{" "}
             (en mayúsculas) para confirmar.
           </Text>
 
@@ -168,7 +168,7 @@ export default function EliminarCuentaScreen() {
               paddingHorizontal: 16,
               paddingVertical: 14,
               fontSize: 16,
-              fontWeight: "700",
+              fontFamily: fuentes.destacado,
               color: colors.ink,
               borderWidth: 1.5,
               borderColor: palabraOk ? colors.danger : colors.line,
@@ -193,7 +193,7 @@ export default function EliminarCuentaScreen() {
           >
             <Text style={{
               color: !palabraOk || loading ? colors.faint : colors.white,
-              fontWeight: "700",
+              fontFamily: fuentes.destacado,
               fontSize: 15,
             }}>
               {loading ? "Eliminando..." : "Eliminar mi cuenta"}
@@ -212,7 +212,7 @@ export default function EliminarCuentaScreen() {
               alignItems: "center",
             }}
           >
-            <Text style={{ color: colors.muted, fontWeight: "600", fontSize: 14 }}>
+            <Text style={{ color: colors.muted, fontFamily: fuentes.destacado, fontSize: 14 }}>
               Cancelar
             </Text>
           </Pressable>

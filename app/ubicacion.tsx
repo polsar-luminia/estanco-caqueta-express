@@ -6,7 +6,7 @@ import MapView, { PROVIDER_GOOGLE, type Region } from "react-native-maps";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
-import { colors } from "../src/constants/theme";
+import { colors, fuentes } from "../src/constants/theme";
 import { getCoberturaZona, evaluarZonasCliente, type UbicacionCapturada } from "../src/lib/api";
 import { useUbicacionPicker } from "../src/stores/ubicacionPicker";
 import { WHATSAPP_SOPORTE } from "../src/constants/config";
@@ -201,7 +201,7 @@ export default function UbicacionScreen() {
         <Pressable onPress={onCancelar} hitSlop={10} style={{ padding: 6 }} accessibilityRole="button" accessibilityLabel="Volver">
           <Feather name="arrow-left" size={22} color="#1A1C1A" />
         </Pressable>
-        <Text style={{ flex: 1, fontSize: 16, fontWeight: "800", color: "#1A1C1A", textAlign: "center", marginRight: 34 }}>
+        <Text style={{ flex: 1, fontSize: 16, fontFamily: fuentes.destacado, color: "#1A1C1A", textAlign: "center", marginRight: 34 }}>
           Ubica tu punto de entrega
         </Text>
       </View>
@@ -247,7 +247,7 @@ export default function UbicacionScreen() {
         {mostrarPista && mapaListo ? (
           <View pointerEvents="none" style={{ position: "absolute", top: 12, left: 0, right: 0, alignItems: "center" }}>
             <View style={{ backgroundColor: "rgba(26,28,26,0.85)", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 }}>
-              <Text style={{ color: "#fff", fontSize: 12.5, fontWeight: "700" }}>Arrastra el mapa para ajustar el punto</Text>
+              <Text style={{ color: "#fff", fontSize: 12.5, fontFamily: fuentes.destacado }}>Arrastra el mapa para ajustar el punto</Text>
             </View>
           </View>
         ) : null}
@@ -283,7 +283,7 @@ export default function UbicacionScreen() {
             <Feather name="alert-triangle" size={16} color="#DC2626" />
             {/* Lenguaje llano: "fuera de la zona de reparto" es jerga de logística.
                 Lo que el cliente necesita saber es que hoy no le llegamos ahí. */}
-            <Text style={{ flex: 1, fontSize: 14, lineHeight: 19, color: "#DC2626", fontWeight: "600" }}>
+            <Text style={{ flex: 1, fontSize: 14, lineHeight: 19, color: "#DC2626", fontFamily: fuentes.destacado }}>
               Por ahora no llegamos hasta aquí
             </Text>
           </View>
@@ -308,7 +308,7 @@ export default function UbicacionScreen() {
             style={{ minHeight: 44, marginTop: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.lowfill }}
           >
             <Feather name="message-circle" size={16} color={colors.greenInk} />
-            <Text style={{ fontSize: 14, fontWeight: "700", color: colors.greenInk }}>
+            <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.greenInk }}>
               Escríbenos y te avisamos cuando lleguemos
             </Text>
           </Pressable>
@@ -325,7 +325,7 @@ export default function UbicacionScreen() {
           accessibilityHint={!dentroZona ? "Por ahora no llegamos hasta aqui. Mueve el mapa a otro punto." : undefined}
           style={{ minHeight: 48, marginTop: 12, paddingVertical: 14, borderRadius: 12, backgroundColor: dentroZona ? "#1FAF55" : "#D1D5DB", alignItems: "center", justifyContent: "center" }}
         >
-          <Text style={{ fontSize: 15, fontWeight: "700", color: "#fff" }}>Confirmar este punto</Text>
+          <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: "#fff" }}>Confirmar este punto</Text>
         </Pressable>
 
         <Pressable
@@ -334,7 +334,7 @@ export default function UbicacionScreen() {
           accessibilityLabel="Escribir la direccion manualmente en vez de usar el mapa"
           style={{ minHeight: 44, marginTop: 8, paddingVertical: 10, alignItems: "center", justifyContent: "center" }}
         >
-          <Text style={{ fontSize: 13, fontWeight: "600", color: "#6D7B6C" }}>Escribir dirección manualmente</Text>
+          <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#6D7B6C" }}>Escribir dirección manualmente</Text>
         </Pressable>
       </View>
     </View>

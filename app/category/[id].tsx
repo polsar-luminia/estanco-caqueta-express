@@ -22,7 +22,7 @@ import { Feather } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 import { getProductos, getCategoriaCarriles, type Producto } from "../../src/lib/api";
 import { esCategoriaProhibidaIOS, filtrarProductosIOS, filtrarCategoriasIOS } from "../../src/lib/iosFilters";
-import { colors, shadows, radii } from "../../src/constants/theme";
+import { colors, shadows, radii, fuentes } from "../../src/constants/theme";
 
 type GridItem = Producto | { id: number; _spacer: true };
 import { tracker } from "../../src/lib/tracker";
@@ -135,7 +135,7 @@ export default function CategoryScreen() {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
         <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>
-        <Text style={{ fontSize: 18, fontWeight: "600", color: "#1F1F1F", textAlign: "center" }}>
+        <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1F1F1F", textAlign: "center" }}>
           Categoría no encontrada
         </Text>
       </View>
@@ -207,7 +207,7 @@ export default function CategoryScreen() {
         hitSlop={4}
       >
         <Feather name="search" size={16} color={colors.faint} />
-        <Text style={{ fontSize: 12.5, color: colors.faint, fontWeight: "500" }}>Encuentra tus productos</Text>
+        <Text style={{ fontSize: 12.5, color: colors.faint, fontFamily: fuentes.destacado }}>Encuentra tus productos</Text>
       </Pressable>
     </View>
   );
@@ -234,7 +234,7 @@ export default function CategoryScreen() {
           <ChevronLeftIcon />
         </Pressable>
         <Text
-          style={{ flex: 1, fontSize: 18, fontWeight: "800", color: colors.ink, letterSpacing: -0.2 }}
+          style={{ flex: 1, fontSize: 18, fontFamily: fuentes.destacado, color: colors.ink, letterSpacing: -0.2 }}
           numberOfLines={1}
         >
           {cargandoCat ? "" : nombreCategoria}

@@ -40,7 +40,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { colors } from "../constants/theme";
+import { colors, fuentes } from "../constants/theme";
 import { formatCOP } from "../lib/format";
 
 // Paleta de la pieza gráfica aprobada (azul profundo → azul hielo).
@@ -223,7 +223,7 @@ export function FrioRecordatorio({
                   <Text
                     style={{
                       fontSize: 22,
-                      fontWeight: "800",
+                      fontFamily: fuentes.titulo,
                       color: colors.white,
                       textAlign: "center",
                       marginBottom: 14,
@@ -236,7 +236,7 @@ export function FrioRecordatorio({
                 <Text
                   style={{
                     fontSize: 16,
-                    fontWeight: "800",
+                    fontFamily: fuentes.destacado,
                     color: AZUL_HIELO,
                     textAlign: "center",
                   }}
@@ -259,7 +259,7 @@ export function FrioRecordatorio({
                 <Text
                   style={{
                     fontSize: 15,
-                    fontWeight: "700",
+                    fontFamily: fuentes.destacado,
                     color: colors.white,
                     textAlign: "center",
                     marginTop: 10,
@@ -288,7 +288,7 @@ export function FrioRecordatorio({
                   {enviando ? (
                     <ActivityIndicator color={AZUL_PROFUNDO} />
                   ) : (
-                    <Text style={{ fontSize: 16, fontWeight: "800", color: AZUL_PROFUNDO }}>
+                    <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: AZUL_PROFUNDO }}>
                       ¡Sí, lo quiero asegurar!
                     </Text>
                   )}
@@ -308,7 +308,7 @@ export function FrioRecordatorio({
                     opacity: enviando ? 0.5 : 1,
                   }}
                 >
-                  <Text style={{ fontSize: 15, fontWeight: "600", color: AZUL_HIELO }}>
+                  <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: AZUL_HIELO }}>
                     No me interesa
                   </Text>
                 </Pressable>

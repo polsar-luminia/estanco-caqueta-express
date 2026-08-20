@@ -7,7 +7,7 @@ import { InputField } from "../../src/components/InputField";
 import { PhoneIcon } from "../../src/components/icons/AppIcons";
 import { solicitarResetPassword } from "../../src/lib/api";
 import { aplicarModoPorTelefono } from "../../src/lib/backendPruebas";
-import { colors, shadows } from "../../src/constants/theme";
+import { colors, shadows, fuentes } from "../../src/constants/theme";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -80,13 +80,13 @@ export default function ForgotPasswordScreen() {
             </Text>
           </View>
 
-          <Text style={{ fontSize: 20, fontWeight: "700", color: colors.ink, marginBottom: 8, textAlign: "center" }}>
+          <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: colors.ink, marginBottom: 8, textAlign: "center" }}>
             Recuperar contraseña
           </Text>
 
           <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 20, textAlign: "center", lineHeight: 18 }}>
             Ingresa tu número y te enviaremos un{"\n"}
-            <Text style={{ fontWeight: "600", color: colors.ink }}>código de 6 dígitos</Text> en segundos.
+            <Text style={{ fontFamily: fuentes.destacado, color: colors.ink }}>código de 6 dígitos</Text> en segundos.
           </Text>
 
           <InputField
@@ -114,7 +114,7 @@ export default function ForgotPasswordScreen() {
             accessibilityLabel="Enviar código de verificación"
             accessibilityState={{ disabled: loading }}
           >
-            <Text style={{ color: colors.white, fontWeight: "800", fontSize: 17 }}>
+            <Text style={{ color: colors.white, fontFamily: fuentes.destacado, fontSize: 17 }}>
               {loading ? "Enviando..." : "Enviar código"}
             </Text>
           </Pressable>
@@ -141,7 +141,7 @@ export default function ForgotPasswordScreen() {
             className="items-center mt-4"
           >
             <Text style={{ color: colors.muted, fontSize: 13 }}>
-              ¿No tienes cuenta? <Text style={{ color: colors.offer, fontWeight: "700" }}>Regístrate</Text>
+              ¿No tienes cuenta? <Text style={{ color: colors.offer, fontFamily: fuentes.destacado }}>Regístrate</Text>
             </Text>
           </Pressable>
         </ScrollView>

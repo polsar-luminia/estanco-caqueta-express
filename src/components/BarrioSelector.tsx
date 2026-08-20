@@ -12,6 +12,7 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { useBarrios } from "../hooks/useBarrios";
 import type { Barrio } from "../lib/api";
+import { fuentes } from "../constants/theme";
 
 export interface BarrioSeleccionado {
   id: number;
@@ -125,7 +126,7 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0} style={{ flex: 1, backgroundColor: "#FAFAF6" }}>
           {/* Header modal */}
           <View style={{ flexDirection: "row", alignItems: "center", paddingTop: 16, paddingBottom: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: "#EFEFEB" }}>
-            <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: "#1A1C1A" }}>Selecciona tu barrio</Text>
+            <Text style={{ flex: 1, fontSize: 17, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Selecciona tu barrio</Text>
             <Pressable
               onPress={() => { setAbierto(false); setQuery(""); }}
               hitSlop={8}
@@ -177,7 +178,7 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
                 if (item.tipo === "header") {
                   return (
                     <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 6 }}>
-                      <Text style={{ fontSize: 12, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2 }}>
+                      <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2 }}>
                         {item.comuna}
                       </Text>
                     </View>
@@ -200,7 +201,7 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
                       backgroundColor: seleccionado ? "rgba(31,175,85,0.06)" : "transparent",
                     }}
                   >
-                    <Text style={{ fontSize: 14, color: seleccionado ? "#1FAF55" : "#1A1C1A", fontWeight: seleccionado ? "700" : "400" }}>
+                    <Text style={{ fontSize: 14, color: seleccionado ? "#1FAF55" : "#1A1C1A", fontFamily: fuentes.destacado ? "700" : "400" }}>
                       {b.nombre}
                     </Text>
                     {seleccionado && <Feather name="check" size={16} color="#1FAF55" />}

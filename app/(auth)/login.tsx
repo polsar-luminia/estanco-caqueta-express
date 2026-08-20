@@ -10,7 +10,7 @@ import { useAuthStore } from "../../src/stores/auth";
 import { tracker } from "../../src/lib/tracker";
 import { aplicarModoPorTelefono } from "../../src/lib/backendPruebas";
 import { PhoneIcon, LockIcon, EyeIcon, EyeOffIcon } from "../../src/components/icons/AppIcons";
-import { colors, radii, shadows } from "../../src/constants/theme";
+import { colors, radii, shadows, fuentes } from "../../src/constants/theme";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -134,7 +134,7 @@ export default function LoginScreen() {
         accessibilityLabel="Volver al catálogo"
       >
         <Feather name="chevron-left" size={20} color={colors.ink} />
-        <Text style={{ fontSize: 14, fontWeight: "600", color: colors.ink }}>
+        <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
           Volver
         </Text>
       </Pressable>
@@ -168,7 +168,7 @@ export default function LoginScreen() {
           {/* Campo Teléfono */}
           <View style={{ gap: 6, marginBottom: 16 }}>
             <Text style={{
-              fontSize: 12, fontWeight: "700", color: colors.muted,
+              fontSize: 12, fontFamily: fuentes.destacado, color: colors.muted,
               textTransform: "uppercase", letterSpacing: 1.2,
               marginBottom: 6, marginLeft: 4,
             }}>
@@ -193,7 +193,7 @@ export default function LoginScreen() {
           {/* Campo Contraseña */}
           <View style={{ gap: 6, marginBottom: 8 }}>
             <Text style={{
-              fontSize: 12, fontWeight: "700", color: colors.muted,
+              fontSize: 12, fontFamily: fuentes.destacado, color: colors.muted,
               textTransform: "uppercase", letterSpacing: 1.2,
               marginBottom: 6, marginLeft: 4,
             }}>
@@ -228,7 +228,7 @@ export default function LoginScreen() {
             </View>
 
             {loginError && (
-              <Text style={{ fontSize: 12, color: colors.danger, fontWeight: "500", marginTop: 4, marginLeft: 4 }}>
+              <Text style={{ fontSize: 12, color: colors.danger, fontFamily: fuentes.destacado, marginTop: 4, marginLeft: 4 }}>
                 {loginErrorMsg || "Teléfono o contraseña incorrectos"}
               </Text>
             )}
@@ -241,7 +241,7 @@ export default function LoginScreen() {
               hitSlop={16}
               style={{ alignSelf: "flex-end", marginTop: 4 }}
             >
-              <Text style={{ fontSize: 12, color: colors.green, fontWeight: "600" }}>
+              <Text style={{ fontSize: 12, color: colors.green, fontFamily: fuentes.destacado }}>
                 ¿Olvidaste tu contraseña?
               </Text>
             </Pressable>
@@ -268,7 +268,7 @@ export default function LoginScreen() {
                 ...(loading ? {} : shadows.greenBtn),
               }}
             >
-              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 17 }}>
+              <Text style={{ color: colors.white, fontFamily: fuentes.destacado, fontSize: 17 }}>
                 {loading ? "Ingresando..." : "Ingresar"}
               </Text>
             </LinearGradient>
@@ -295,7 +295,7 @@ export default function LoginScreen() {
               backgroundColor: "rgba(240,101,63,0.04)",
             }}
           >
-            <Text style={{ fontSize: 15, fontWeight: "700", color: colors.offer }}>
+            <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: colors.offer }}>
               Crear cuenta
             </Text>
           </Pressable>

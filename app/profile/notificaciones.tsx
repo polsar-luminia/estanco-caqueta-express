@@ -17,7 +17,7 @@ import { Feather } from "@expo/vector-icons";
 import { BackButton } from "../../src/components/BackButton";
 import { apiFetch, getConsentimiento, actualizarConsentimientoMercadeo } from "../../src/lib/api";
 import { tracker } from "../../src/lib/tracker";
-import { colors, radii, shadows } from "../../src/constants/theme";
+import { colors, radii, shadows, fuentes } from "../../src/constants/theme";
 
 interface Preferencias {
   operativas: boolean;
@@ -154,7 +154,7 @@ export default function NotificacionesScreen() {
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.line }}>
         <BackButton style={{ paddingRight: 16 }} />
-        <Text style={{ flex: 1, fontSize: 16, fontWeight: "800", color: colors.ink, textAlign: "center", marginRight: 44 }}>
+        <Text style={{ flex: 1, fontSize: 16, fontFamily: fuentes.destacado, color: colors.ink, textAlign: "center", marginRight: 44 }}>
           Notificaciones y comunicaciones
         </Text>
       </View>
@@ -176,14 +176,14 @@ export default function NotificacionesScreen() {
               accessibilityLabel="Reintentar la carga de mis preferencias de notificaciones"
               style={{ backgroundColor: colors.green, paddingHorizontal: 24, paddingVertical: 12, borderRadius: radii.pill }}
             >
-              <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}>Reintentar</Text>
+              <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 14 }}>Reintentar</Text>
             </Pressable>
           </View>
         ) : (
           <>
             {/* Operativas — no se pueden desactivar */}
             <View>
-              <Text style={{ fontSize: 12, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
+              <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
                 Tus pedidos
               </Text>
               <View style={{ backgroundColor: colors.surface, borderRadius: radii.card, padding: 16, flexDirection: "row", alignItems: "center", gap: 12, ...shadows.card }}>
@@ -191,7 +191,7 @@ export default function NotificacionesScreen() {
                   <Feather name="package" size={18} color={colors.green} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: "700", color: colors.ink }}>
+                  <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
                     Estado de tus pedidos
                   </Text>
                   <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
@@ -211,7 +211,7 @@ export default function NotificacionesScreen() {
 
             {/* Autorizacion de mercadeo — maestro de los dos canales */}
             <View>
-              <Text style={{ fontSize: 12, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
+              <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
                 Publicidad
               </Text>
               <View style={{ backgroundColor: colors.surface, borderRadius: radii.card, padding: 16, ...shadows.card }}>
@@ -220,7 +220,7 @@ export default function NotificacionesScreen() {
                     <Feather name="message-circle" size={18} color={colors.pink} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: "700", color: colors.ink }}>
+                    <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
                       Ofertas y promociones
                     </Text>
                     <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
@@ -254,7 +254,7 @@ export default function NotificacionesScreen() {
 
             {/* Categorias de push — solo aplican si autorizo el mercadeo */}
             <View style={{ opacity: mercadeo === true ? 1 : 0.45 }}>
-              <Text style={{ fontSize: 12, fontWeight: "900", color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
+              <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: colors.faint, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
                 Que notificaciones quieres
               </Text>
               <View style={{ backgroundColor: colors.surface, borderRadius: radii.card, overflow: "hidden", ...shadows.card }}>
@@ -271,7 +271,7 @@ export default function NotificacionesScreen() {
                     }}
                   >
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14, fontWeight: "700", color: colors.ink }}>
+                      <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
                         {item.titulo}
                       </Text>
                       <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>

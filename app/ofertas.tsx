@@ -19,7 +19,7 @@ import { useCartStore } from "../src/stores/cart";
 import { useLimitesCliente } from "../src/hooks/useLimitesCliente";
 import { formatCOP } from "../src/lib/format";
 import { getCatVisuals } from "../src/lib/catVisuals";
-import { colors } from "../src/constants/theme";
+import { colors, fuentes } from "../src/constants/theme";
 
 function ChevronLeftIcon() {
   return (
@@ -111,7 +111,7 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
               paddingVertical: 3,
             }}
           >
-            <Text style={{ fontSize: 12, fontWeight: "800", color: "#fff" }}>
+            <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#fff" }}>
               -{formatCOP(saving)}
             </Text>
           </View>
@@ -121,7 +121,7 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
       {/* Contenido */}
       <View style={{ padding: 10 }}>
         <Text
-          style={{ fontSize: 12, fontWeight: "700", color: "#fff", lineHeight: 15, marginBottom: 6 }}
+          style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#fff", lineHeight: 15, marginBottom: 6 }}
           numberOfLines={2}
         >
           {oferta.producto.nombre}
@@ -131,7 +131,7 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
             <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.40)", textDecorationLine: "line-through" }}>
               {formatCOP(precioBase)}
             </Text>
-            <Text style={{ fontSize: 17, fontWeight: "800", color: "#fff" }}>
+            <Text style={{ fontSize: 17, fontFamily: fuentes.destacado, color: "#fff" }}>
               {formatCOP(precioOferta)}
             </Text>
           </View>
@@ -152,7 +152,7 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
               justifyContent: "center",
             }}
           >
-            <Text style={{ fontSize: 20, fontWeight: "700", color: colors.offer, marginTop: -1 }}>+</Text>
+            <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: colors.offer, marginTop: -1 }}>+</Text>
           </Pressable>
         </View>
       </View>
@@ -239,7 +239,7 @@ export default function OfertasScreen() {
         >
           <ChevronLeftIcon />
         </Pressable>
-        <Text style={{ fontSize: 17, fontWeight: "800", color: colors.ink }}>Ofertas de hoy</Text>
+        <Text style={{ fontSize: 17, fontFamily: fuentes.destacado, color: colors.ink }}>Ofertas de hoy</Text>
         {!isLoading && ofertas.length > 0 && (
           <View
             style={{
@@ -250,7 +250,7 @@ export default function OfertasScreen() {
               paddingVertical: 4,
             }}
           >
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>
+            <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>
               {ofertas.length} activas
             </Text>
           </View>
@@ -288,7 +288,7 @@ export default function OfertasScreen() {
                   <Text
                     style={{
                       fontSize: 16,
-                      fontWeight: "900",
+                      fontFamily: fuentes.destacado,
                       color: "#fff",
                       textTransform: "uppercase",
                       letterSpacing: 0.5,
@@ -332,7 +332,7 @@ export default function OfertasScreen() {
                 <Text
                   style={{
                     fontSize: 12,
-                    fontWeight: "700",
+                    fontFamily: fuentes.destacado,
                     color: colors.muted,
                     textTransform: "uppercase",
                     letterSpacing: 1,
@@ -419,19 +419,19 @@ export default function OfertasScreen() {
                 justifyContent: "center",
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "800", fontSize: 13 }}>{itemCount}</Text>
+              <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 13 }}>{itemCount}</Text>
             </View>
             <View style={{ marginLeft: 12 }}>
-              <Text style={{ fontSize: 12, fontWeight: "700", color: colors.faint, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: colors.faint, textTransform: "uppercase", letterSpacing: 0.5 }}>
                 Tu Pedido
               </Text>
-              <Text style={{ fontSize: 14, fontWeight: "800", color: colors.ink }}>
+              <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
                 {formatCOP(total)}
               </Text>
             </View>
           </View>
           <View style={{ paddingHorizontal: 20, paddingVertical: 8, borderRadius: 8, backgroundColor: "#D33587" }}>
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>
+            <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>
               Ver Carrito
             </Text>
           </View>

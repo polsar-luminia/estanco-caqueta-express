@@ -16,7 +16,7 @@ import { ErrorState } from "../../src/components/ErrorState";
 import { SearchIcon, CloseIcon, ClockIcon } from "../../src/components/icons/AppIcons";
 import { CartFloatingBar } from "../../src/components/CartFloatingBar";
 import { useCartStore } from "../../src/stores/cart";
-import { colors } from "../../src/constants/theme";
+import { colors, fuentes } from "../../src/constants/theme";
 
 // Sugerencias visibles antes de que el usuario escriba — son recomendaciones
 // fijas, no historial real. El header lo nombra "Búsquedas populares" para
@@ -66,7 +66,7 @@ function CategoryGridItem({ cat, onPress }: { cat: Categoria; onPress: () => voi
         ) : emoji ? (
           <Text style={{ fontSize: 22, opacity: 0.85 }}>{emoji}</Text>
         ) : (
-          <Text style={{ fontSize: 20, fontWeight: "800", color: "rgba(255,255,255,0.6)" }}>
+          <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: "rgba(255,255,255,0.6)" }}>
             {cat.nombre.charAt(0)}
           </Text>
         )}
@@ -76,7 +76,7 @@ function CategoryGridItem({ cat, onPress }: { cat: Categoria; onPress: () => voi
           para que cupiera, que es exactamente lo contrario de lo que se busca.
           Un nombre largo ahora se corta con puntos suspensivos y se sigue leyendo. */}
       <Text
-        style={{ flex: 1, fontSize: 12, fontWeight: "700", color: colors.ink }}
+        style={{ flex: 1, fontSize: 12, fontFamily: fuentes.destacado, color: colors.ink }}
         numberOfLines={1}
         ellipsizeMode="tail"
       >
@@ -278,7 +278,7 @@ export default function SearchScreen() {
           }
           ListHeaderComponent={
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <Text style={{ fontSize: 18, fontWeight: "800", color: colors.ink }}>Resultados</Text>
+              <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: colors.ink }}>Resultados</Text>
               <Text style={{ fontSize: 12, color: colors.muted }}>{totalResultados} productos</Text>
             </View>
           }
@@ -306,7 +306,7 @@ export default function SearchScreen() {
           }}>
             <SearchIcon color={colors.faint} size={32} />
           </View>
-          <Text style={{ fontSize: 16, fontWeight: "700", color: colors.muted }}>
+          <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: colors.muted }}>
             Sin resultados para &quot;{debouncedQuery}&quot;
           </Text>
           <Text style={{ fontSize: 12, color: colors.faint, marginTop: 4 }}>
@@ -320,7 +320,7 @@ export default function SearchScreen() {
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: cartCount > 0 ? 170 : 120 }}>
           {/* Recent Searches */}
           <View style={{ paddingHorizontal: 16, marginBottom: 20, paddingTop: 16 }}>
-            <Text style={{ fontSize: 12, fontWeight: "700", color: colors.faint, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>
+            <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: colors.faint, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 10 }}>
               Búsquedas Populares
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
@@ -344,7 +344,7 @@ export default function SearchScreen() {
                   }}
                 >
                   <ClockIcon color={colors.faint} size={13} />
-                  <Text style={{ fontSize: 12, fontWeight: "500", color: colors.ink }}>{term}</Text>
+                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: colors.ink }}>{term}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -352,7 +352,7 @@ export default function SearchScreen() {
 
           {/* Categories Grid — 2 columns */}
           <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
-            <Text style={{ fontSize: 18, fontWeight: "800", color: colors.ink, marginBottom: 16 }}>
+            <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: colors.ink, marginBottom: 16 }}>
               Explora Categorías
             </Text>
             <FlatList
@@ -372,14 +372,14 @@ export default function SearchScreen() {
           {destacados.length > 0 && (
             <View style={{ paddingHorizontal: 16 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <Text style={{ fontSize: 18, fontWeight: "800", color: colors.ink }}>Sugerencias de Hoy</Text>
+                <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: colors.ink }}>Sugerencias de Hoy</Text>
                 <Pressable
                   onPress={() => router.push("/(tabs)/")}
                   accessibilityRole="button"
                   accessibilityLabel="Ver todos los destacados en el inicio"
                   hitSlop={{ top: 15, bottom: 15, left: 8, right: 8 }}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: colors.greenInk }}>Ver Todo</Text>
+                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: colors.greenInk }}>Ver Todo</Text>
                 </Pressable>
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingRight: 16 }}>

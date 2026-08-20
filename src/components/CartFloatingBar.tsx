@@ -11,6 +11,7 @@ import { useRouter } from "expo-router";
 import { useCartStore } from "../stores/cart";
 import { formatCOP } from "../lib/format";
 import { CARD_SHADOW } from "../constants/styles";
+import { fuentes } from "../constants/theme";
 
 export function CartFloatingBar({ bottomOffset = 24 }: { bottomOffset?: number } = {}) {
   const router = useRouter();
@@ -55,15 +56,15 @@ export function CartFloatingBar({ bottomOffset = 24 }: { bottomOffset?: number }
           marginRight: 12,
         }}
       >
-        <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14 }}>
+        <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 14 }}>
           {itemCount}
         </Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 12, color: "#6D7B6C", fontWeight: "600" }}>
+        <Text style={{ fontSize: 12, color: "#6D7B6C", fontFamily: fuentes.destacado }}>
           TU PEDIDO
         </Text>
-        <Text style={{ fontSize: 16, fontWeight: "700", color: "#1A1C1A" }}>
+        <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>
           {formatCOP(total)}
         </Text>
       </View>
@@ -78,7 +79,7 @@ export function CartFloatingBar({ bottomOffset = 24 }: { bottomOffset?: number }
         accessibilityRole="button"
         accessibilityLabel="Ver carrito"
       >
-        <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>
+        <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 13 }}>
           VER CARRITO
         </Text>
       </Pressable>

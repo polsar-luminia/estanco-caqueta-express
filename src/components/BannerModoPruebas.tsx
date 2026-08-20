@@ -8,6 +8,7 @@ import { useSyncExternalStore } from "react";
 import { View, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { modoPruebasActivo, suscribirModoPruebas } from "../lib/backendPruebas";
+import { fuentes } from "../constants/theme";
 
 export function BannerModoPruebas() {
   const activo = useSyncExternalStore(suscribirModoPruebas, modoPruebasActivo, modoPruebasActivo);
@@ -39,7 +40,7 @@ export function BannerModoPruebas() {
           elevation: 3,
         }}
       >
-        <Text style={{ color: "#fff", fontSize: 11, fontWeight: "800", letterSpacing: 0.5 }}>
+        <Text style={{ color: "#fff", fontSize: 11, fontFamily: fuentes.destacado, letterSpacing: 0.5 }}>
           MODO PRUEBAS · staging
         </Text>
       </View>

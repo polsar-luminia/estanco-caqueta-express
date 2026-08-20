@@ -14,7 +14,7 @@ import { metaLogRegistration } from "../../src/lib/metaEvents";
 import { DateValue, toISODate, calcularEdad } from "../../src/components/DateSelector";
 import { InputField } from "../../src/components/InputField";
 import { UserIcon, PhoneIcon, LockIcon } from "../../src/components/icons/AppIcons";
-import { colors, shadows } from "../../src/constants/theme";
+import { colors, shadows, fuentes } from "../../src/constants/theme";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -341,7 +341,7 @@ export default function RegisterScreen() {
         accessibilityLabel="Volver"
       >
         <Feather name="chevron-left" size={20} color={colors.ink} />
-        <Text style={{ fontSize: 14, fontWeight: "600", color: colors.ink }}>
+        <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
           Volver
         </Text>
       </Pressable>
@@ -451,7 +451,7 @@ export default function RegisterScreen() {
           <Text style={{ fontSize: 12.5, color: colors.muted, textAlign: "center", marginTop: 12, lineHeight: 17, paddingHorizontal: 8 }}>
             Al crear tu cuenta aceptas los{" "}
             <Text
-              style={{ color: colors.green, fontWeight: "700" }}
+              style={{ color: colors.green, fontFamily: fuentes.destacado }}
               onPress={() => router.push("/support/terms")}
               accessibilityRole="link"
               accessibilityLabel="Leer los Términos y Condiciones"
@@ -460,7 +460,7 @@ export default function RegisterScreen() {
             </Text>
             {" "}y autorizas el{" "}
             <Text
-              style={{ color: colors.green, fontWeight: "700" }}
+              style={{ color: colors.green, fontFamily: fuentes.destacado }}
               onPress={() => router.push("/support/privacy")}
               accessibilityRole="link"
               accessibilityLabel="Leer la política de Tratamiento de Datos"
@@ -492,7 +492,7 @@ export default function RegisterScreen() {
                 ...(loading ? {} : shadows.greenBtn),
               }}
             >
-              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 17 }}>
+              <Text style={{ color: colors.white, fontFamily: fuentes.destacado, fontSize: 17 }}>
                 {loading ? "Enviando código..." : "Continuar"}
               </Text>
             </LinearGradient>
@@ -508,7 +508,7 @@ export default function RegisterScreen() {
                   accessibilityLabel="Iniciar sesión con una cuenta existente"
                   hitSlop={16}
                 >
-                  <Text style={{ color: colors.offer, fontSize: 13, fontWeight: "700" }}>Inicia sesión</Text>
+                  <Text style={{ color: colors.offer, fontSize: 13, fontFamily: fuentes.destacado }}>Inicia sesión</Text>
                 </Pressable>
               </Link>
             </View>
@@ -516,15 +516,15 @@ export default function RegisterScreen() {
           </>) : (<>
           {/* Paso 2 — verificación del número por código */}
           <View style={{ alignItems: "center", marginBottom: 18, paddingHorizontal: 8 }}>
-            <Text style={{ fontSize: 18, fontWeight: "800", color: colors.ink, marginBottom: 6 }}>
+            <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: colors.ink, marginBottom: 6 }}>
               Verifica tu número
             </Text>
             <Text style={{ fontSize: 13.5, color: colors.muted, textAlign: "center", lineHeight: 19 }}>
               Te enviamos un código de 6 dígitos por{" "}
-              <Text style={{ fontWeight: "700", color: colors.ink }}>
+              <Text style={{ fontFamily: fuentes.destacado, color: colors.ink }}>
                 {canal === "sms" ? "SMS" : "WhatsApp"}
               </Text>{" "}
-              al <Text style={{ fontWeight: "700", color: colors.ink }}>{telefono.trim()}</Text>.
+              al <Text style={{ fontFamily: fuentes.destacado, color: colors.ink }}>{telefono.trim()}</Text>.
             </Text>
           </View>
 
@@ -559,7 +559,7 @@ export default function RegisterScreen() {
                 ...(loading ? {} : shadows.greenBtn),
               }}
             >
-              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 17 }}>
+              <Text style={{ color: colors.white, fontFamily: fuentes.destacado, fontSize: 17 }}>
                 {loading ? "Creando cuenta..." : "Crear Cuenta"}
               </Text>
             </LinearGradient>
@@ -576,7 +576,7 @@ export default function RegisterScreen() {
             style={{ alignItems: "center", marginTop: 18 }}
           >
             <Text style={{
-              fontSize: 13.5, fontWeight: "700",
+              fontSize: 13.5, fontFamily: fuentes.destacado,
               color: cooldownSegundos > 0 ? colors.faint : colors.green,
             }}>
               {cooldownSegundos > 0
@@ -594,7 +594,7 @@ export default function RegisterScreen() {
             style={{ alignItems: "center", marginTop: 14 }}
           >
             <Text style={{ fontSize: 13, color: colors.muted }}>
-              ¿Número equivocado? <Text style={{ color: colors.offer, fontWeight: "700" }}>Corrígelo</Text>
+              ¿Número equivocado? <Text style={{ color: colors.offer, fontFamily: fuentes.destacado }}>Corrígelo</Text>
             </Text>
           </Pressable>
           </>)}

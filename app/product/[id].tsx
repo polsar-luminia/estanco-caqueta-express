@@ -22,7 +22,7 @@ import { formatCOP } from "../../src/lib/format";
 import { ShimmerImage } from "../../src/components/ShimmerImage";
 import { SkeletonBox } from "../../src/components/skeletons/SkeletonBox";
 import { CartFloatingBar } from "../../src/components/CartFloatingBar";
-import { colors, shadows } from "../../src/constants/theme";
+import { colors, shadows, fuentes } from "../../src/constants/theme";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const HEADER_MAX = SCREEN_HEIGHT * 0.45;
@@ -181,7 +181,7 @@ export default function ProductDetailScreen() {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
         <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>
-        <Text style={{ fontSize: 18, fontWeight: "600", color: "#1F1F1F", textAlign: "center" }}>
+        <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1F1F1F", textAlign: "center" }}>
           Producto no encontrado
         </Text>
       </View>
@@ -196,7 +196,7 @@ export default function ProductDetailScreen() {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
         <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>
-        <Text style={{ fontSize: 18, fontWeight: "600", color: "#1F1F1F", textAlign: "center" }}>
+        <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1F1F1F", textAlign: "center" }}>
           Producto no disponible
         </Text>
       </View>
@@ -207,7 +207,7 @@ export default function ProductDetailScreen() {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
         <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>
-        <Text style={{ fontSize: 18, fontWeight: "600", color: "#1F1F1F", marginBottom: 8 }}>
+        <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1F1F1F", marginBottom: 8 }}>
           No pudimos cargar este producto
         </Text>
         <Text style={{ fontSize: 14, color: "#6B6B6B", textAlign: "center", marginBottom: 24 }}>
@@ -220,7 +220,7 @@ export default function ProductDetailScreen() {
           hitSlop={4}
           style={{ backgroundColor: "#1FAF55", paddingHorizontal: 32, paddingVertical: 12, borderRadius: 999 }}
         >
-          <Text style={{ color: "white", fontWeight: "600" }}>Reintentar</Text>
+          <Text style={{ color: "white", fontFamily: fuentes.destacado }}>Reintentar</Text>
         </Pressable>
       </View>
     );
@@ -492,7 +492,7 @@ export default function ProductDetailScreen() {
           {/* ── También te puede gustar ───────────── */}
           {sugerencias.length > 0 && (
             <View style={{ paddingBottom: 48 }}>
-              <Text style={{ fontSize: 16, fontWeight: "800", color: "#1A1C1A", marginBottom: 12 }}>
+              <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: "#1A1C1A", marginBottom: 12 }}>
                 También te puede gustar
               </Text>
               <RNScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
@@ -548,12 +548,12 @@ export default function ProductDetailScreen() {
             ...(puedeAgregar ? shadows.greenBtn : {}),
           }}
         >
-          <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>
+          <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 15 }}>
             {!inStock ? "Agotado" : sinCupo ? "Límite alcanzado" : "Agregar al carrito"}
             {puedeAgregar && quantity > 1 ? ` · ${quantity}` : ""}
           </Text>
           {puedeAgregar && (
-            <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>
+            <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 15 }}>
               {formatCOP(precioActivo * quantity)}
             </Text>
           )}

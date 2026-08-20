@@ -6,7 +6,7 @@ import { useCartStore } from "../stores/cart";
 import { useScalePress } from "../hooks/useScalePress";
 import { useLimitesCliente } from "../hooks/useLimitesCliente";
 import { ShimmerImage } from "./ShimmerImage";
-import { colors, radii, shadows } from "../constants/theme";
+import { colors, radii, shadows, fuentes } from "../constants/theme";
 import type { Producto } from "../lib/api";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -128,13 +128,13 @@ export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, o
         <View style={{ borderRadius: 12, backgroundColor: colors.white, overflow: "hidden", position: "relative" }}>
           {agotado ? (
             <View style={{ position: "absolute", top: 8, left: 8, zIndex: 10, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, backgroundColor: "#6B7280" }}>
-              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 12.5, letterSpacing: 0.4, textTransform: "uppercase" }}>
+              <Text style={{ color: colors.white, fontFamily: fuentes.destacado, fontSize: 12.5, letterSpacing: 0.4, textTransform: "uppercase" }}>
                 Agotado
               </Text>
             </View>
           ) : badgeText ? (
             <View style={{ position: "absolute", top: 8, left: 8, zIndex: 10, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, backgroundColor: badgeBg }}>
-              <Text style={{ color: colors.white, fontWeight: "800", fontSize: 12.5, letterSpacing: 0.4, textTransform: "uppercase" }}>
+              <Text style={{ color: colors.white, fontFamily: fuentes.destacado, fontSize: 12.5, letterSpacing: 0.4, textTransform: "uppercase" }}>
                 {badgeText}
               </Text>
             </View>
@@ -154,7 +154,7 @@ export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, o
         {/* Info */}
         <View style={{ marginTop: 10 }}>
           <Text
-            style={{ fontSize: 12, fontWeight: "700", color: colors.ink, lineHeight: 15, minHeight: 30 }}
+            style={{ fontSize: 12.5, fontFamily: fuentes.destacado, color: colors.ink, lineHeight: 15, minHeight: 30 }}
             numberOfLines={2}
           >
             {product.nombre}
@@ -164,15 +164,15 @@ export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, o
             <View>
               {tienePrecioOferta ? (
                 <>
-                  <Text style={{ fontSize: 12, color: colors.strike, textDecorationLine: "line-through", fontWeight: "600" }}>
+                  <Text style={{ fontSize: 12, color: colors.strike, textDecorationLine: "line-through", fontFamily: fuentes.destacado }}>
                     {formatCOP(precioTachado)}
                   </Text>
-                  <Text style={{ fontSize: 15, fontWeight: "800", color: agotado ? colors.faint : colors.ink }}>
+                  <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: agotado ? colors.faint : colors.ink }}>
                     {formatCOP(precioEfectivo)}
                   </Text>
                 </>
               ) : (
-                <Text style={{ fontSize: 15, fontWeight: "800", color: agotado ? colors.faint : colors.ink }}>
+                <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: agotado ? colors.faint : colors.ink }}>
                   {formatCOP(product.precio_app)}
                 </Text>
               )}
@@ -199,7 +199,7 @@ export function ProductCard({ product, onPress, badge, badgeTexto, badgeColor, o
                 ...(agotado ? {} : shadows.greenBtn),
               }}
             >
-              <Text style={{ color: colors.white, fontSize: 19, fontWeight: "700", marginTop: -2 }}>
+              <Text style={{ color: colors.white, fontSize: 19, fontFamily: fuentes.destacado, marginTop: -2 }}>
                 +
               </Text>
             </Pressable>

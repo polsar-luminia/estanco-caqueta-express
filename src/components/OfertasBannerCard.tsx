@@ -1,6 +1,6 @@
 import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { colors } from "../constants/theme";
+import { colors, fuentes } from "../constants/theme";
 import type { Oferta } from "../lib/api";
 
 interface Props {
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     fontSize: 12,
-    fontWeight: "700",
+    fontFamily: fuentes.destacado,
     letterSpacing: 2,
     textTransform: "uppercase",
     color: "#F9A8D4",
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   title: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "800",
+    fontFamily: fuentes.destacado,
     lineHeight: 22,
     marginBottom: 5,
   },
@@ -141,6 +141,6 @@ const styles = StyleSheet.create({
   ctaText: {
     color: colors.offer,
     fontSize: 12,
-    fontWeight: "800",
+    fontFamily: fuentes.destacado,
   },
 });

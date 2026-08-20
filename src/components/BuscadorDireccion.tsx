@@ -20,7 +20,7 @@ import {
   type SugerenciaDireccion,
 } from "../lib/places";
 import { nuevoUuidV4 } from "../lib/uuid";
-import { colors, radii } from "../constants/theme";
+import { colors, radii, fuentes } from "../constants/theme";
 import type { UbicacionCapturada } from "../lib/api";
 import { useZonaEntrega } from "../hooks/useZonaEntrega";
 import { tracker } from "../lib/tracker";
@@ -211,7 +211,7 @@ export function BuscadorDireccion({
                 borderTopColor: colors.line,
               }}
             >
-              <Text style={{ fontSize: 14, fontWeight: "600", color: colors.ink }}>
+              <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
                 {s.principal}
               </Text>
               {!!s.secundaria && (

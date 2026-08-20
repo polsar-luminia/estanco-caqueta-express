@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { fuentes } from "../constants/theme";
 
 export function OfflineBanner() {
   const insets = useSafeAreaInsets();
@@ -41,6 +42,6 @@ const styles = StyleSheet.create({
   text: {
     color: "white",
     fontSize: 13,
-    fontWeight: "600",
+    fontFamily: fuentes.destacado,
   },
 });

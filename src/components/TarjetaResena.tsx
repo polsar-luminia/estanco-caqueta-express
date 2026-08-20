@@ -16,7 +16,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Toast from "react-native-toast-message";
 import { getResena, crearResena } from "../lib/api";
 import { tracker } from "../lib/tracker";
-import { colors } from "../constants/theme";
+import { colors, fuentes } from "../constants/theme";
 import { CARD_SHADOW } from "../constants/styles";
 import { Estrellas } from "./Estrellas";
 
@@ -180,7 +180,7 @@ export function TarjetaResena({ pedidoId, abrirAlEntrar = false, nombreDomicilia
             {mutation.isPending ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={{ fontSize: 16, fontWeight: "700", color: "#fff" }}>
+              <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: "#fff" }}>
                 Enviar calificación
               </Text>
             )}

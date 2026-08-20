@@ -27,7 +27,7 @@ import { formatCOP } from "../../src/lib/format";
 import { CartItem } from "../../src/components/CartItem";
 import { BandaOperativa } from "../../src/components/BandaOperativa";
 import { BandaCerrado } from "../../src/components/BandaCerrado";
-import { colors, shadows } from "../../src/constants/theme";
+import { colors, shadows, fuentes } from "../../src/constants/theme";
 
 function ChevronRightIcon() {
   return (
@@ -632,7 +632,7 @@ export default function CartScreen() {
     return (
       <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: colors.bg }}>
         <CartIcon color="#BCCABA" size={48} />
-        <Text style={{ fontSize: 20, fontWeight: "700", color: "#6D7B6C", marginBottom: 6 }}>Carrito vacío</Text>
+        <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: "#6D7B6C", marginBottom: 6 }}>Carrito vacío</Text>
         <Text style={{ color: "#BCCABA", textAlign: "center", fontSize: 14 }}>
           Agrega productos desde el catálogo para hacer tu pedido
         </Text>
@@ -655,7 +655,7 @@ export default function CartScreen() {
         keyExtractor={(item) => String(item.productoId)}
         contentContainerStyle={{ padding: 16, paddingBottom: 200 }}
         ListHeaderComponent={
-          <Text style={{ fontSize: 22, fontWeight: "800", color: "#1A1C1A", marginBottom: 16, letterSpacing: -0.5 }}>
+          <Text style={{ fontSize: 22, fontFamily: fuentes.titulo, color: "#1A1C1A", marginBottom: 16, letterSpacing: -0.5 }}>
             Tu Carrito
           </Text>
         }
@@ -668,7 +668,7 @@ export default function CartScreen() {
               <View className="flex-row items-center justify-between mb-4">
                 <View className="flex-row items-center">
                   <TruckIcon color="#1A1C1A" size={20} />
-                  <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Entrega</Text>
+                  <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Entrega</Text>
                 </View>
                 <Pressable
                   onPress={() => setMostrarNueva(!mostrarNueva)}
@@ -678,7 +678,7 @@ export default function CartScreen() {
                   // objetivo táctil sin mover la fila.
                   hitSlop={12}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>
+                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>
                     {mostrarNueva ? "Usar guardada" : "+ Nueva"}
                   </Text>
                 </Pressable>
@@ -714,16 +714,16 @@ export default function CartScreen() {
                             <Feather name="map-pin" size={16} color={selected ? "#1FAF55" : "#9E9E9E"} />
                             <View className="flex-1 ml-3">
                               <View className="flex-row items-center" style={{ gap: 6 }}>
-                                <Text style={{ fontSize: 13, fontWeight: "700", color: "#1A1C1A" }}>{d.etiqueta}</Text>
+                                <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{d.etiqueta}</Text>
                                 {d.predeterminada && (
                                   <View style={{ backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
-                                    <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>DEFAULT</Text>
+                                    <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>DEFAULT</Text>
                                   </View>
                                 )}
                                 {d.lat != null && (
                                   <View style={{ flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
                                     <Feather name="map-pin" size={8} color="#1FAF55" />
-                                    <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>CON UBICACIÓN</Text>
+                                    <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>CON UBICACIÓN</Text>
                                   </View>
                                 )}
                               </View>
@@ -744,7 +744,7 @@ export default function CartScreen() {
                       className="items-center py-6 rounded-xl bg-white"
                     >
                       <Feather name="plus-circle" size={24} color="#1FAF55" />
-                      <Text style={{ fontSize: 13, fontWeight: "600", color: "#1FAF55", marginTop: 6 }}>
+                      <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1FAF55", marginTop: 6 }}>
                         Agregar dirección
                       </Text>
                     </Pressable>
@@ -769,7 +769,7 @@ export default function CartScreen() {
                       setSilenciadoDir(u != null);
                     }}
                   />
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
+                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
                     Dirección
                   </Text>
                   {/* Tercer camino, junto al botón de ubicación y al mapa: escribir
@@ -794,7 +794,7 @@ export default function CartScreen() {
                     El punto del mapa es el que usa el domiciliario. Esto le ayuda a
                     identificar la casa cuando ya está cerca.
                   </Text>
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
+                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
                     Notas (Opcional)
                   </Text>
                   <TextInput
@@ -814,14 +814,14 @@ export default function CartScreen() {
             <View className="p-5 rounded-2xl" style={{ backgroundColor: colors.surface, ...shadows.card }}>
               <View className="flex-row items-center mb-3">
                 <TagIcon color="#1A1C1A" size={20} />
-                <Text style={{ fontSize: 18, fontWeight: "700", color: "#1A1C1A" }}>Cupon</Text>
+                <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Cupon</Text>
               </View>
 
               {cuponValidado ? (
                 <View className="flex-row items-center p-3 rounded-xl bg-white" style={{ borderWidth: 2, borderColor: "#1FAF55" }}>
                   <Feather name="check-circle" size={18} color="#1FAF55" />
                   <View className="flex-1 ml-3">
-                    <Text style={{ fontSize: 13, fontWeight: "700", color: "#1FAF55" }}>
+                    <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1FAF55" }}>
                       {cuponValidado.cupon.codigo}
                     </Text>
                     <Text style={{ fontSize: 12, color: "#6D7B6C" }}>
@@ -867,7 +867,7 @@ export default function CartScreen() {
                       justifyContent: "center",
                     }}
                   >
-                    <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>
+                    <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 13 }}>
                       {validandoCupon ? "..." : "Aplicar"}
                     </Text>
                   </Pressable>
@@ -884,7 +884,7 @@ export default function CartScreen() {
               <View style={{ backgroundColor: '#F4F4F0', borderRadius: 12, padding: 12, marginBottom: 0 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
                   <Text style={{ fontSize: 12, color: '#6D7B6C' }}>Faltan {formatCOP(envioGratisMinimo - subtotal)} para envío gratis</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#1FAF55' }}>{formatCOP(envioGratisMinimo)}</Text>
+                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: '#1FAF55' }}>{formatCOP(envioGratisMinimo)}</Text>
                 </View>
                 <View style={{ height: 4, borderRadius: 2, backgroundColor: '#E2E3DF' }}>
                   <View style={{ height: 4, borderRadius: 2, backgroundColor: '#1FAF55', width: `${Math.min(100, (subtotal / envioGratisMinimo) * 100)}%` }} />
@@ -892,7 +892,7 @@ export default function CartScreen() {
               </View>
             ) : subtotal >= envioGratisMinimo ? (
               <View style={{ backgroundColor: '#F4F4F0', borderRadius: 12, padding: 12, alignItems: 'center' }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#1FAF55' }}>🎉 ¡Envío gratis!</Text>
+                <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: '#1FAF55' }}>🎉 ¡Envío gratis!</Text>
               </View>
             ) : null}
 
@@ -900,25 +900,25 @@ export default function CartScreen() {
             <View className="rounded-2xl p-4 bg-white" style={{ ...shadows.card, gap: 12 }}>
               <View className="flex-row justify-between">
                 <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Subtotal</Text>
-                <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1C1A" }}>{formatCOP(subtotal)}</Text>
+                <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{formatCOP(subtotal)}</Text>
               </View>
               {descuentoCupon > 0 && (
                 <View className="flex-row justify-between">
                   <Text style={{ fontSize: 14, color: "#1FAF55" }}>Descuento cupon</Text>
-                  <Text style={{ fontSize: 14, fontWeight: "600", color: "#1FAF55" }}>-{formatCOP(descuentoCupon)}</Text>
+                  <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1FAF55" }}>-{formatCOP(descuentoCupon)}</Text>
                 </View>
               )}
               {eta && (
                 <View className="flex-row justify-between items-center">
                   <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Llega en</Text>
-                  <Text style={{ fontSize: 14, fontWeight: "600", color: "#1A1C1A" }}>
+                  <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>
                     {eta.min}–{eta.max} min
                   </Text>
                 </View>
               )}
               <View className="flex-row justify-between items-center">
                 <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Envio</Text>
-                <Text style={{ fontSize: 14, fontWeight: "600", color: envio === 0 ? "#1FAF55" : "#1A1C1A" }}>
+                <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: envio === 0 ? "#1FAF55" : "#1A1C1A" }}>
                   {envio === 0 ? "¡Gratis!" : formatCOP(envio)}
                 </Text>
               </View>
@@ -943,7 +943,7 @@ export default function CartScreen() {
                       // Es un cargo, no una nota al pie: 44 pt de objetivo táctil.
                       style={{ flex: 1, minHeight: 44, justifyContent: "center" }}
                     >
-                      <Text style={{ fontSize: 15, fontWeight: "700", color: "#1A1C1A" }}>
+                      <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>
                         ¿Lo quieres frío? +{formatCOP(frioCosto)}
                       </Text>
                       <Text style={{ fontSize: 14, lineHeight: 19, color: "#6D7B6C", marginTop: 3 }}>
@@ -966,7 +966,7 @@ export default function CartScreen() {
               {resumen.frio > 0 && (
                 <View className="flex-row justify-between items-center">
                   <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Frío asegurado</Text>
-                  <Text style={{ fontSize: 14, fontWeight: "600", color: "#0F3A6B" }}>
+                  <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#0F3A6B" }}>
                     {formatCOP(resumen.frio)}
                   </Text>
                 </View>
@@ -974,7 +974,7 @@ export default function CartScreen() {
               {puedeUsarPuntos && subtotal < envioGratisMinimo && (
                 <View className="flex-row justify-between items-center rounded-xl p-3" style={{ backgroundColor: colors.lowfill }}>
                   <View className="flex-1">
-                    <Text style={{ fontSize: 13, fontWeight: "600", color: "#1A1C1A" }}>Usar 200 puntos</Text>
+                    <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Usar 200 puntos</Text>
                     <Text style={{ fontSize: 12, color: "#6D7B6C" }}>Envío gratis (tienes {puntos} pts)</Text>
                   </View>
                   <Switch
@@ -1001,10 +1001,10 @@ export default function CartScreen() {
             >
               <View className="flex-row items-center">
                 <View className="flex-1">
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: "rgba(255,255,255,0.7)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>
+                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "rgba(255,255,255,0.7)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>
                     Express Delivery
                   </Text>
-                  <Text style={{ fontSize: 17, fontWeight: "700", color: "#fff", lineHeight: 22 }}>
+                  <Text style={{ fontSize: 17, fontFamily: fuentes.destacado, color: "#fff", lineHeight: 22 }}>
                     Domicilio en Florencia
                   </Text>
                   <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 4 }}>
@@ -1044,17 +1044,17 @@ export default function CartScreen() {
             borde: "Pedido minimo: $30.000 (faltan $10..." sin cerrar el parentesis.
             Debajo tienen la pantalla entera y ya no dependen de que quepan. */}
         <View className="mb-4">
-          <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5 }}>
+          <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5 }}>
             Total a pagar
           </Text>
-          <Text style={{ fontSize: 28, fontWeight: "800", color: colors.ink, letterSpacing: -1 }}>
+          <Text style={{ fontSize: 28, fontFamily: fuentes.titulo, color: colors.ink, letterSpacing: -1 }}>
             {formatCOP(total)}
           </Text>
           {(() => {
             const ahorroEnvio = envio === 0 ? envioCosto : 0;
             const totalAhorro = descuentoCupon + ahorroEnvio;
             return totalAhorro > 0 ? (
-              <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55", marginTop: 2 }}>
+              <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55", marginTop: 2 }}>
                 Ahorras {formatCOP(totalAhorro)} 🎉
               </Text>
             ) : null;
@@ -1063,12 +1063,12 @@ export default function CartScreen() {
             {envio === 0 ? "Envío gratis con puntos 🎉" : `Incluye domicilio (${formatCOP(envio)})`}
           </Text>
           {resumen.frio > 0 && (
-            <Text style={{ fontSize: 12, color: "#0F3A6B", fontWeight: "600", marginTop: 2 }}>
+            <Text style={{ fontSize: 12, color: "#0F3A6B", fontFamily: fuentes.destacado, marginTop: 2 }}>
               Incluye frío asegurado ({formatCOP(resumen.frio)})
             </Text>
           )}
           {subtotal < pedidoMinimo && (
-            <Text style={{ fontSize: 12, color: colors.offer, fontWeight: "600", marginTop: 2 }}>
+            <Text style={{ fontSize: 12, color: colors.offer, fontFamily: fuentes.destacado, marginTop: 2 }}>
               Pedido mínimo: {formatCOP(pedidoMinimo)} (faltan {formatCOP(pedidoMinimo - subtotal)})
             </Text>
           )}
@@ -1103,7 +1103,7 @@ export default function CartScreen() {
               elevation: 6,
             }}
           >
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17, marginRight: 8 }}>
+            <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 17, marginRight: 8 }}>
               {loading ? "Enviando..." : !tienda.abierta ? "Tienda cerrada" : subtotal < pedidoMinimo ? `Faltan ${formatCOP(pedidoMinimo - subtotal)}` : "Confirmar pedido"}
             </Text>
             {!loading && tienda.abierta && <ChevronRightIcon />}

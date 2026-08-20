@@ -12,7 +12,7 @@ import { useCartStore } from "../../src/stores/cart";
 import { WHATSAPP_SOPORTE } from "../../src/constants/config";
 import { getCuponesDisponibles } from "../../src/lib/api";
 import { CopyIcon } from "../../src/components/icons/AppIcons";
-import { colors } from "../../src/constants/theme";
+import { colors, fuentes } from "../../src/constants/theme";
 
 function MenuItem({ icon, label, badge, onPress, a11yLabel }: { icon: string; label: string; badge?: string; onPress?: () => void; a11yLabel: string }) {
   const iconMap: Record<string, keyof typeof Feather.glyphMap> = {
@@ -53,12 +53,12 @@ function MenuItem({ icon, label, badge, onPress, a11yLabel }: { icon: string; la
         <View style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: colorMap[icon] || colors.faint, alignItems: "center", justifyContent: "center" }}>
           <Feather name={iconMap[icon] || "circle"} size={16} color="#fff" />
         </View>
-        <Text style={{ fontSize: 14.5, fontWeight: "600", color: colors.ink }}>{label}</Text>
+        <Text style={{ fontSize: 14.5, fontFamily: fuentes.destacado, color: colors.ink }}>{label}</Text>
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         {badge && (
           <View style={{ backgroundColor: colors.pink, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
-            <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700", textTransform: "uppercase" }}>{badge}</Text>
+            <Text style={{ color: "#fff", fontSize: 12, fontFamily: fuentes.destacado, textTransform: "uppercase" }}>{badge}</Text>
           </View>
         )}
         <Feather name="chevron-right" size={18} color="#CBD3C7" />
@@ -155,7 +155,7 @@ export default function ProfileScreen() {
           }}
         >
           <Feather name="chevron-left" size={22} color="#fff" />
-          <Text style={{ fontSize: 15, fontWeight: "600", color: "#fff" }}>Volver</Text>
+          <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: "#fff" }}>Volver</Text>
         </Pressable>
 
         {/* Avatar + nombre */}
@@ -168,13 +168,13 @@ export default function ProfileScreen() {
               borderWidth: 2, borderColor: "rgba(255,255,255,0.40)",
             }}
           >
-            <Text style={{ fontSize: 26, fontWeight: "900", color: "#fff", letterSpacing: -1 }}>
+            <Text style={{ fontSize: 26, fontFamily: fuentes.titulo, color: "#fff", letterSpacing: -1 }}>
               {initials}
             </Text>
           </View>
 
           <View style={{ alignItems: "center" }}>
-            <Text style={{ fontSize: 20, fontWeight: "800", color: "#fff" }}>
+            <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: "#fff" }}>
               {cliente?.nombre || "Usuario"}
             </Text>
             <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.80)", marginTop: 2 }}>
@@ -201,12 +201,12 @@ export default function ProfileScreen() {
               borderLeftWidth: i > 0 ? 1 : 0, borderLeftColor: "#E2E3DF",
             }}>
               <Text style={{
-                fontSize: 12, fontWeight: "700", color: stat.color,
+                fontSize: 12, fontFamily: fuentes.destacado, color: stat.color,
                 textTransform: "uppercase", letterSpacing: 1, marginBottom: 3,
               }}>
                 {stat.label}
               </Text>
-              <Text style={{ fontSize: 18, fontWeight: "800", color: "#1A1C1A" }}>{stat.value}</Text>
+              <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{stat.value}</Text>
               <Text style={{ fontSize: 12, color: "#BCCABA", marginTop: 1 }}>{stat.sub}</Text>
             </View>
           ))}
@@ -223,8 +223,8 @@ export default function ProfileScreen() {
         padding: 14, borderWidth: 1, borderColor: "#E2E3DF",
       }}>
         <View style={{ marginBottom: 8 }}>
-          <Text style={{ fontSize: 13, fontWeight: "700", color: "#1A1C1A" }}>Progreso de puntos</Text>
-          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.offer, marginTop: 2 }}>
+          <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Progreso de puntos</Text>
+          <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: colors.offer, marginTop: 2 }}>
             {puntosNext} pts para tu próximo envío gratis
           </Text>
         </View>
@@ -251,12 +251,12 @@ export default function ProfileScreen() {
         }}>
           <View style={{ flex: 1 }}>
             <Text style={{
-              fontSize: 12, fontWeight: "700", color: "#6D7B6C",
+              fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C",
               textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4,
             }}>
               Código de referido
             </Text>
-            <Text style={{ fontSize: 20, fontWeight: "900", color: "#1A1C1A", letterSpacing: 3 }}>
+            <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: "#1A1C1A", letterSpacing: 3 }}>
               {cliente.codigo_referido}
             </Text>
             <Text style={{ fontSize: 12, color: "#BCCABA", marginTop: 3 }}>
@@ -278,14 +278,14 @@ export default function ProfileScreen() {
             }}
           >
             <CopyIcon color="#fff" size={14} />
-            <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>Copiar</Text>
+            <Text style={{ color: "#fff", fontSize: 12, fontFamily: fuentes.destacado }}>Copiar</Text>
           </Pressable>
         </View>
       ) : null}
 
       {/* ── Información Personal ─────────────────────────────── */}
       <View style={{ marginHorizontal: 24, marginBottom: 24 }}>
-        <Text style={{ fontSize: 12, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
+        <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
           Información Personal
         </Text>
         <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: "#F4F4F0" }}>
@@ -297,7 +297,7 @@ export default function ProfileScreen() {
 
       {/* ── Pedidos y Promociones ────────────────────────────── */}
       <View style={{ marginHorizontal: 24, marginBottom: 24 }}>
-        <Text style={{ fontSize: 12, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
+        <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
           Pedidos y Promociones
         </Text>
         <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: "#F4F4F0" }}>
@@ -319,7 +319,7 @@ export default function ProfileScreen() {
 
       {/* ── Soporte ──────────────────────────────────────────── */}
       <View style={{ marginHorizontal: 24, marginBottom: 24 }}>
-        <Text style={{ fontSize: 12, fontWeight: "900", color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
+        <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>
           Soporte
         </Text>
         <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: "#F4F4F0" }}>
@@ -367,7 +367,7 @@ export default function ProfileScreen() {
           }}
         >
           <Feather name="log-out" size={17} color="rgba(255,255,255,0.7)" />
-          <Text style={{ color: "rgba(255,255,255,0.85)", fontWeight: "700", fontSize: 14, letterSpacing: 0.3 }}>
+          <Text style={{ color: "rgba(255,255,255,0.85)", fontFamily: fuentes.destacado, fontSize: 14, letterSpacing: 0.3 }}>
             Cerrar Sesión
           </Text>
         </Pressable>
@@ -393,7 +393,7 @@ export default function ProfileScreen() {
         <Text style={{ textAlign: "center", fontSize: 12, color: "#9E9E9E" }}>
           Creado por{" "}
           <Text
-            style={{ color: "#D33587", fontWeight: "700" }}
+            style={{ color: "#D33587", fontFamily: fuentes.destacado }}
             onPress={() => Linking.openURL("https://hola.luminiatech.digital")}
             accessibilityRole="link"
             accessibilityLabel="Abrir el sitio web de LuminIA"

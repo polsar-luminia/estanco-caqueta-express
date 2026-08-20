@@ -4,7 +4,7 @@ import { useCartStore, capEfectivo, type CartItem as CartItemType } from "../sto
 import { useLimitesCliente } from "../hooks/useLimitesCliente";
 import { formatCOP } from "../lib/format";
 import { ShimmerImage } from "./ShimmerImage";
-import { colors } from "../constants/theme";
+import { colors, fuentes } from "../constants/theme";
 import Toast from "react-native-toast-message";
 
 function MinusIcon() {
@@ -63,10 +63,10 @@ export function CartItem({ item }: Props) {
 
       {/* Info */}
       <View className="flex-1">
-        <Text style={{ fontWeight: "700", fontSize: 14, color: colors.ink, lineHeight: 18 }} numberOfLines={2}>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: colors.ink, lineHeight: 18 }} numberOfLines={2}>
           {item.nombre}
         </Text>
-        <Text style={{ color: colors.ink, fontWeight: "800", fontSize: 17, marginTop: 4 }}>
+        <Text style={{ color: colors.ink, fontFamily: fuentes.destacado, fontSize: 17, marginTop: 4 }}>
           {formatCOP(item.precioUnitario)}
         </Text>
       </View>
@@ -96,7 +96,7 @@ export function CartItem({ item }: Props) {
         >
           <MinusIcon />
         </Pressable>
-        <Text style={{ fontWeight: "700", fontSize: 14, minWidth: 16, textAlign: "center" }}>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, minWidth: 16, textAlign: "center" }}>
           {item.cantidad}
         </Text>
         <Pressable

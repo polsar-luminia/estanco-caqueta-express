@@ -7,6 +7,7 @@ import type { ReactElement } from "react";
 import { View, Text } from "react-native";
 import Svg, { Path, Circle } from "react-native-svg";
 import type { EstadoTienda, AvisoTipo, AvisoTienda, HorarioFila } from "../lib/api";
+import { fuentes } from "../constants/theme";
 
 // Fallback para builds corriendo contra un backend que todavía no manda
 // `horario`. Es el horario vigente al 27-jul-2026; el que manda es el del
@@ -119,13 +120,13 @@ export function BandaCerrado({ tienda, compact = false, style }: Props) {
           <Icono color={e.iconColor} size={20} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 13, fontWeight: "700", color: "#16241A" }}>{aviso.titulo}</Text>
+          <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#16241A" }}>{aviso.titulo}</Text>
           <Text style={{ fontSize: 12, color: "#6E7A6C", marginTop: 1 }} numberOfLines={2}>
             {aviso.mensaje}
           </Text>
         </View>
         <View style={{ backgroundColor: e.pillBg, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }}>
-          <Text style={{ fontSize: 12, fontWeight: "700", color: e.pillColor }}>{e.pillTexto}</Text>
+          <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: e.pillColor }}>{e.pillTexto}</Text>
         </View>
       </View>
 
@@ -139,7 +140,7 @@ export function BandaCerrado({ tienda, compact = false, style }: Props) {
               {/* Los días con pausa traen dos franjas: se apilan a la derecha. */}
               <View style={{ alignItems: "flex-end" }}>
                 {horas.map((hora) => (
-                  <Text key={hora} style={{ fontSize: 12, color: "#6E7A6C", fontWeight: "600" }}>
+                  <Text key={hora} style={{ fontSize: 12, color: "#6E7A6C", fontFamily: fuentes.destacado }}>
                     {hora}
                   </Text>
                 ))}

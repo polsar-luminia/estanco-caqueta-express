@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { View, Text } from "react-native";
 import { Image, type ImageStyle, type ImageContentFit, type ImageContentPosition } from "expo-image";
+import { fuentes } from "../constants/theme";
 
 interface Props {
   imageUrl?: string | null;
@@ -33,7 +34,7 @@ export function ShimmerImage({ imageUrl, fallbackCategory, style, contentFit = "
         ]}
       >
         {initial ? (
-          <Text style={{ fontSize: 32, fontWeight: "700", color: "#C9C9C2" }}>
+          <Text style={{ fontSize: 32, fontFamily: fuentes.titulo, color: "#C9C9C2" }}>
             {initial}
           </Text>
         ) : null}

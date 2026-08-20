@@ -15,6 +15,7 @@ import { View, Text, Pressable, TextInput, Modal, ScrollView } from "react-nativ
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { MotivoCancelacion } from "../lib/api";
+import { fuentes } from "../constants/theme";
 
 const MOTIVOS_RESPALDO: MotivoCancelacion[] = [
   { codigo: "pedi_por_equivocacion", etiqueta: "Lo pedí por equivocación" },
@@ -67,7 +68,7 @@ export function HojaCancelar({
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
-          <Text style={{ flex: 1, fontSize: 19, fontWeight: "800", color: "#1A1C1A" }}>
+          <Text style={{ flex: 1, fontSize: 19, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>
             ¿Por qué cancelas?
           </Text>
           <Pressable onPress={cerrar} accessibilityRole="button" accessibilityLabel="Cerrar" hitSlop={10}>
@@ -105,7 +106,7 @@ export function HojaCancelar({
                   size={19}
                   color={activo ? "#1FAF55" : "#B6BDB5"}
                 />
-                <Text style={{ flex: 1, fontSize: 15, color: "#1A1C1A", fontWeight: activo ? "700" : "500" }}>
+                <Text style={{ flex: 1, fontSize: 15, color: "#1A1C1A", fontFamily: fuentes.destacado ? "700" : "500" }}>
                   {m.etiqueta}
                 </Text>
               </Pressable>
@@ -148,13 +149,13 @@ export function HojaCancelar({
             backgroundColor: listo && !enviando ? "#D64545" : "#E4E9E3",
           }}
         >
-          <Text style={{ fontSize: 15.5, fontWeight: "800", color: listo && !enviando ? "#fff" : "#9AA69A" }}>
+          <Text style={{ fontSize: 15.5, fontFamily: fuentes.destacado, color: listo && !enviando ? "#fff" : "#9AA69A" }}>
             {enviando ? "Cancelando…" : "Cancelar mi pedido"}
           </Text>
         </Pressable>
 
         <Pressable onPress={cerrar} style={{ paddingVertical: 14, alignItems: "center" }} accessibilityRole="button">
-          <Text style={{ fontSize: 15, color: "#6D7B6C", fontWeight: "600" }}>Mejor no, sigo con el pedido</Text>
+          <Text style={{ fontSize: 15, color: "#6D7B6C", fontFamily: fuentes.destacado }}>Mejor no, sigo con el pedido</Text>
         </Pressable>
       </View>
     </Modal>

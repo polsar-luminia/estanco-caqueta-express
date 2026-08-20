@@ -1,7 +1,7 @@
 import { ReactNode, useRef, useState } from "react";
 import { View, Text, TextInput, Pressable, KeyboardTypeOptions } from "react-native";
 import { EyeIcon, EyeOffIcon } from "./icons/AppIcons";
-import { colors, radii } from "../constants/theme";
+import { colors, radii, fuentes } from "../constants/theme";
 
 interface InputFieldProps {
   label: string;
@@ -53,7 +53,7 @@ export function InputField({
       <Text
         style={{
           fontSize: 12,
-          fontWeight: "700",
+          fontFamily: fuentes.destacado,
           color: colors.muted,
           textTransform: "uppercase",
           letterSpacing: 1,
@@ -117,7 +117,7 @@ export function InputField({
           style={{
             fontSize: 12,
             color: colors.danger,
-            fontWeight: "500",
+            fontFamily: fuentes.destacado,
             marginLeft: 16,
             marginTop: 4,
           }}

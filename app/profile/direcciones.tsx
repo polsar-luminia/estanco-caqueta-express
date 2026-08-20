@@ -11,7 +11,7 @@ import { getDirecciones, crearDireccion, editarDireccion, setPredeterminada, eli
 import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { BuscadorDireccion } from "../../src/components/BuscadorDireccion";
-import { colors, shadows } from "../../src/constants/theme";
+import { colors, shadows, fuentes } from "../../src/constants/theme";
 import { useUbicacionPicker } from "../../src/stores/ubicacionPicker";
 
 export default function DireccionesScreen() {
@@ -118,7 +118,7 @@ export default function DireccionesScreen() {
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 14, paddingHorizontal: 16, backgroundColor: colors.bg }}>
         <BackButton style={{ paddingRight: 16 }} />
-        <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: "#1A1C1A", textAlign: "center", marginRight: 60 }}>
+        <Text style={{ flex: 1, fontSize: 17, fontFamily: fuentes.destacado, color: "#1A1C1A", textAlign: "center", marginRight: 60 }}>
           Mis Direcciones
         </Text>
       </View>
@@ -130,9 +130,9 @@ export default function DireccionesScreen() {
         {isError ? (
           <View className="items-center py-12">
             <Feather name="alert-circle" size={40} color="#D1D5DB" />
-            <Text style={{ fontSize: 16, fontWeight: "600", color: "#6D7B6C", marginTop: 12 }}>No pudimos cargar tus direcciones</Text>
+            <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: "#6D7B6C", marginTop: 12 }}>No pudimos cargar tus direcciones</Text>
             <Pressable onPress={() => refetch()} accessibilityRole="button" accessibilityLabel="Reintentar cargar tus direcciones" style={{ marginTop: 12, paddingHorizontal: 24, paddingVertical: 10, minHeight: 44, justifyContent: "center", backgroundColor: "#1FAF55", borderRadius: 999 }}>
-              <Text style={{ color: "#fff", fontWeight: "600" }}>Reintentar</Text>
+              <Text style={{ color: "#fff", fontFamily: fuentes.destacado }}>Reintentar</Text>
             </Pressable>
           </View>
         ) : isLoading ? (
@@ -140,7 +140,7 @@ export default function DireccionesScreen() {
         ) : direcciones.length === 0 && !mostrarForm ? (
           <View className="items-center py-12">
             <Feather name="map-pin" size={40} color="#D1D5DB" />
-            <Text style={{ fontSize: 16, fontWeight: "600", color: "#6D7B6C", marginTop: 12 }}>No tienes direcciones guardadas</Text>
+            <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: "#6D7B6C", marginTop: 12 }}>No tienes direcciones guardadas</Text>
             <Text style={{ fontSize: 13, color: "#9E9E9E", marginTop: 4 }}>Agrega una para agilizar tus pedidos</Text>
           </View>
         ) : (
@@ -154,16 +154,16 @@ export default function DireccionesScreen() {
                         desbordaba por encima de la basura de eliminar y la
                         dejaba intocable. Los chips ahora bajan de línea. */}
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                      <Text style={{ fontSize: 14, fontWeight: "700", color: "#1A1C1A" }}>{d.etiqueta}</Text>
+                      <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{d.etiqueta}</Text>
                       {d.predeterminada && (
                         <View style={{ backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
-                          <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>PREDETERMINADA</Text>
+                          <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>PREDETERMINADA</Text>
                         </View>
                       )}
                       {d.lat != null && (
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
                           <Feather name="map-pin" size={8} color="#1FAF55" />
-                          <Text style={{ fontSize: 12, fontWeight: "700", color: "#1FAF55" }}>CON UBICACIÓN</Text>
+                          <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>CON UBICACIÓN</Text>
                         </View>
                       )}
                     </View>
@@ -194,7 +194,7 @@ export default function DireccionesScreen() {
                     hitSlop={{ top: 8, bottom: 8 }}
                     style={{ flex: 1, paddingVertical: 8, borderRadius: 8, backgroundColor: colors.lowfill, alignItems: "center" }}
                   >
-                    <Text style={{ fontSize: 12, fontWeight: "600", color: "#1FAF55" }}>Predeterminada</Text>
+                    <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>Predeterminada</Text>
                   </Pressable>
                 )}
                 <Pressable
@@ -207,7 +207,7 @@ export default function DireccionesScreen() {
                   style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, borderRadius: 8, backgroundColor: colors.lowfill }}
                 >
                   <Feather name="map" size={12} color="#1FAF55" />
-                  <Text style={{ fontSize: 12, fontWeight: "600", color: "#1FAF55" }}>{d.lat != null ? "Editar ubicación" : "Agregar ubicación"}</Text>
+                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>{d.lat != null ? "Editar ubicación" : "Agregar ubicación"}</Text>
                 </Pressable>
               </View>
             </View>
@@ -217,7 +217,7 @@ export default function DireccionesScreen() {
         {/* Formulario nueva dirección */}
         {mostrarForm ? (
           <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, ...shadows.card }}>
-            <Text style={{ fontSize: 16, fontWeight: "800", color: colors.ink, marginBottom: 16 }}>Nueva dirección</Text>
+            <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: colors.ink, marginBottom: 16 }}>Nueva dirección</Text>
 
             {/* El punto es OBLIGATORIO al crear (ver handleGuardar). Va primero
                 porque es lo que define la dirección; el texto de abajo es la
@@ -236,7 +236,7 @@ export default function DireccionesScreen() {
             />
 
             {/* Etiqueta */}
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Etiqueta</Text>
+            <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Etiqueta</Text>
             <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
               {etiquetas.map((e) => (
                 <Pressable
@@ -249,12 +249,12 @@ export default function DireccionesScreen() {
                   hitSlop={{ top: 8, bottom: 8 }}
                   style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: etiqueta === e ? "#1FAF55" : colors.lowfill }}
                 >
-                  <Text style={{ fontSize: 13, fontWeight: "600", color: etiqueta === e ? "#fff" : "#6D7B6C" }}>{e}</Text>
+                  <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: etiqueta === e ? "#fff" : "#6D7B6C" }}>{e}</Text>
                 </Pressable>
               ))}
             </View>
 
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Dirección *</Text>
+            <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Dirección *</Text>
             {/* Tercer camino para fijar el punto: escribir y elegir una sugerencia
                 de Google, que trae las coordenadas puestas. Sin llave configurada
                 se comporta como el campo de texto de siempre. */}
@@ -269,7 +269,7 @@ export default function DireccionesScreen() {
               />
             </View>
 
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Notas (opcional)</Text>
+            <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Notas (opcional)</Text>
             <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontSize: 14, color: colors.ink, marginBottom: 16 }} placeholder="Portería, dejar con vigilante..." placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline />
 
             <View style={{ flexDirection: "row", gap: 8 }}>
@@ -279,7 +279,7 @@ export default function DireccionesScreen() {
                 accessibilityLabel="Cancelar y cerrar el formulario de nueva dirección"
                 style={{ flex: 1, paddingVertical: 12, minHeight: 44, justifyContent: "center", borderRadius: 12, backgroundColor: colors.lowfill, alignItems: "center" }}
               >
-                <Text style={{ fontSize: 14, fontWeight: "600", color: "#6D7B6C" }}>Cancelar</Text>
+                <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#6D7B6C" }}>Cancelar</Text>
               </Pressable>
               <Pressable
                 onPress={handleGuardar}
@@ -289,7 +289,7 @@ export default function DireccionesScreen() {
                 accessibilityState={{ disabled: mutCrear.isPending }}
                 style={{ flex: 2, paddingVertical: 12, minHeight: 44, justifyContent: "center", borderRadius: 12, backgroundColor: "#1FAF55", alignItems: "center" }}
               >
-                <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>{mutCrear.isPending ? "Guardando..." : "Guardar"}</Text>
+                <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#fff" }}>{mutCrear.isPending ? "Guardando..." : "Guardar"}</Text>
               </Pressable>
             </View>
           </View>
@@ -301,7 +301,7 @@ export default function DireccionesScreen() {
             style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, minHeight: 44, borderRadius: 16, borderWidth: 2, borderColor: "#1FAF55", borderStyle: "dashed" }}
           >
             <Feather name="plus" size={18} color="#1FAF55" />
-            <Text style={{ fontSize: 14, fontWeight: "700", color: "#1FAF55" }}>Agregar dirección</Text>
+            <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1FAF55" }}>Agregar dirección</Text>
           </Pressable>
         )}
       </ScrollView>

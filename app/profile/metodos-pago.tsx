@@ -3,7 +3,7 @@ import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { BackButton } from "../../src/components/BackButton";
-import { colors, radii, shadows } from "../../src/constants/theme";
+import { colors, radii, shadows, fuentes } from "../../src/constants/theme";
 
 const METODOS = [
   {
@@ -38,17 +38,17 @@ export default function MetodosPagoScreen() {
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.line }}>
         <BackButton style={{ paddingRight: 16 }} />
-        <Text style={{ flex: 1, fontSize: 17, fontWeight: "800", color: colors.ink, textAlign: "center", marginRight: 60 }}>
+        <Text style={{ flex: 1, fontSize: 17, fontFamily: fuentes.destacado, color: colors.ink, textAlign: "center", marginRight: 60 }}>
           Métodos de Pago
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}>
         <View style={{ backgroundColor: colors.ink, borderRadius: radii.card, padding: 20, marginBottom: 4 }}>
-          <Text style={{ fontSize: 12, fontWeight: "700", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
+          <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
             Todo contra entrega
           </Text>
-          <Text style={{ fontSize: 16, fontWeight: "700", color: "#fff", lineHeight: 22 }}>
+          <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: "#fff", lineHeight: 22 }}>
             Paga cuando recibas tu pedido. No manejamos pagos anticipados.
           </Text>
         </View>
@@ -59,7 +59,7 @@ export default function MetodosPagoScreen() {
               <Feather name={m.icon} size={20} color={m.color} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: "700", color: colors.ink, marginBottom: 4 }}>{m.titulo}</Text>
+              <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: colors.ink, marginBottom: 4 }}>{m.titulo}</Text>
               <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 19 }}>{m.descripcion}</Text>
             </View>
           </View>

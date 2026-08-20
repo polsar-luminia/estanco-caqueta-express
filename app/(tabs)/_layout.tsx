@@ -7,6 +7,7 @@ import { useAuthStore } from "../../src/stores/auth";
 import { grupoDebeConfirmarEdad } from "../../src/lib/guardEdad";
 import { useCartStore } from "../../src/stores/cart";
 import { HomeIcon, SearchIcon, CartIcon, OrdersIcon } from "../../src/components/icons/TabIcons";
+import { fuentes } from "../../src/constants/theme";
 
 
 const RADIO_BARRA = 24;
@@ -151,7 +152,7 @@ function TabButton({ onPress, onLongPress, accessibilityState, label, icon: Icon
             paddingHorizontal: 4,
           }}>
             <Text style={{
-              fontSize: 12, fontWeight: "800",
+              fontSize: 12, fontFamily: fuentes.destacado,
               color: focused ? "#1FAF55" : "#fff",
             }}>
               {badge > 99 ? "99+" : badge}
@@ -163,7 +164,7 @@ function TabButton({ onPress, onLongPress, accessibilityState, label, icon: Icon
       {/* Label */}
       <Text style={{
         fontSize: 12,
-        fontWeight: focused ? "700" : "500",
+        fontFamily: fuentes.destacado ? "700" : "500",
         color: focused ? "#fff" : "rgba(26,28,26,0.38)",
         marginTop: 3,
       }}>

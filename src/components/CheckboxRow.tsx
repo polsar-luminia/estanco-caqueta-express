@@ -1,4 +1,5 @@
 import { View, Text, Pressable } from "react-native";
+import { fuentes } from "../constants/theme";
 
 interface CheckboxRowProps {
   checked: boolean;
@@ -33,7 +34,7 @@ export function CheckboxRow({ checked, onToggle, children, etiqueta }: CheckboxR
         }}
       >
         {checked && (
-          <Text style={{ color: "#fff", fontSize: 13, fontWeight: "800", marginTop: -1 }}>✓</Text>
+          <Text style={{ color: "#fff", fontSize: 13, fontFamily: fuentes.destacado, marginTop: -1 }}>✓</Text>
         )}
       </View>
       <Text style={{ flex: 1, fontSize: 13, color: "#1A1C1A", lineHeight: 18 }}>
