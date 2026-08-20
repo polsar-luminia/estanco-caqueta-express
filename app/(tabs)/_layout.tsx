@@ -9,7 +9,7 @@ import { useCartStore } from "../../src/stores/cart";
 import { HomeIcon, SearchIcon, CartIcon, OrdersIcon } from "../../src/components/icons/TabIcons";
 
 
-const RADIO_BARRA = 26;
+const RADIO_BARRA = 24;
 
 // Fondo de vidrio de la barra inferior.
 //
@@ -129,7 +129,9 @@ function TabButton({ onPress, onLongPress, accessibilityState, label, icon: Icon
         justifyContent: "center",
         borderRadius: 14,
         backgroundColor: focused ? "#1FAF55" : "transparent",
-        paddingVertical: 7,
+        // Baja de 7 a 4 junto con la altura de la barra. El icono mide 20 y la
+        // etiqueta 12: con el relleno anterior no caben en 58 y se recortan.
+        paddingVertical: 4,
         paddingHorizontal: 10,
         marginHorizontal: 2,
       }}
@@ -210,9 +212,9 @@ export default function TabLayout() {
           // quedar encima del indicador de inicio: con un 12 fijo, en los
           // iPhone con indicador la barra se le montaba encima.
           bottom: insets.bottom > 0 ? insets.bottom - 6 : 18,
-          left: 18,
-          right: 18,
-          height: 64,
+          left: 32,
+          right: 32,
+          height: 58,
           borderRadius: RADIO_BARRA,
           // Transparente: el fondo lo pinta FondoVidrio (tabBarBackground). Con
           // un color aqui, el desenfoque quedaria tapado por debajo y no se
@@ -222,8 +224,8 @@ export default function TabLayout() {
           // El vidrio se recorta a las esquinas; sin esto el blur sale cuadrado
           // por debajo del radio.
           overflow: "hidden",
-          paddingBottom: 8,
-          paddingTop: 8,
+          paddingBottom: 6,
+          paddingTop: 6,
           paddingHorizontal: 6,
           shadowColor: "#0B1F12",
           shadowOffset: { width: 0, height: 10 },
