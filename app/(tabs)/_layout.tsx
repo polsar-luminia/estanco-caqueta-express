@@ -1,4 +1,4 @@
-import { Pressable, View, Text, Image, Platform } from "react-native";
+import { Pressable, View, Text, Image, Platform, UIManager } from "react-native";
 import { Redirect, Tabs, useSegments, useRouter } from "expo-router";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,18 +22,33 @@ const RADIO_BARRA = 24;
 // deja pasar demasiado color del contenido que pasa por debajo —el magenta de
 // Ofertas, por ejemplo— y los iconos dejan de leerse. El velo la sostiene en un
 // rango claro constante sin matar el efecto.
+// ¿El binario trae compilado el modulo nativo del desenfoque?
+//
+// Un OTA viaja a TODOS los binarios que compartan runtime, y el runtime no
+// cambia al agregar un modulo nativo. Cuando entro expo-blur, los binarios
+// anteriores (build 88, y los de simulador) recibieron un paquete que les pedia
+// pintar <ExpoBlurView> — un componente que no tienen — y salia el recuadro rojo
+// "Unimplemented component" encima de la barra.
+//
+// Preguntarle a UIManager es barato y se resuelve una sola vez al cargar. Sin
+// blur la barra se ve solida en vez de esmerilada: se pierde el efecto, no la
+// navegacion.
+const HAY_BLUR = !!UIManager.hasViewManagerConfig?.("ExpoBlurView");
+
 function FondoVidrio() {
   return (
     <View style={{ flex: 1, borderRadius: RADIO_BARRA, overflow: "hidden" }}>
-      <BlurView
-        intensity={Platform.OS === "ios" ? 60 : 40}
-        tint="light"
-        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-      />
+      {HAY_BLUR ? (
+        <BlurView
+          intensity={Platform.OS === "ios" ? 60 : 40}
+          tint="light"
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+        />
+      ) : null}
       <View
         style={{
           position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: "rgba(255,255,255,0.55)",
+          backgroundColor: HAY_BLUR ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.96)",
         }}
       />
       {/* Filo superior claro: es lo que da el borde de cristal en vez de un
