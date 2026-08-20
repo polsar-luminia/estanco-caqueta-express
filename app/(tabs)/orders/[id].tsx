@@ -173,7 +173,12 @@ export default function OrderDetailScreen() {
         // esta, y sin historial lleva a Mis pedidos.
         headerLeft: () => (
           <Pressable
-            onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)/orders"))}
+            // `navigate` y no `back()`. El boton dice "Pedidos", pero back() te
+            // devuelve a DONDE ESTABAS, que no es lo mismo: si llegaste desde
+            // el carrito al confirmar, o desde un push, lo de abajo es Inicio y
+            // ahi terminabas. `navigate` vuelve a la lista si ya esta en la
+            // pila, y si no, entra a ella — desde cualquier via de entrada.
+            onPress={() => router.navigate("/(tabs)/orders")}
             hitSlop={12}
             accessibilityRole="button"
             accessibilityLabel="Volver a mis pedidos"
