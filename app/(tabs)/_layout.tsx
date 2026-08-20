@@ -1,10 +1,51 @@
-import { Pressable, View, Text, Image } from "react-native";
+import { Pressable, View, Text, Image, Platform } from "react-native";
 import { Redirect, Tabs, useSegments, useRouter } from "expo-router";
+import { BlurView } from "expo-blur";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useAuthStore } from "../../src/stores/auth";
 import { grupoDebeConfirmarEdad } from "../../src/lib/guardEdad";
 import { useCartStore } from "../../src/stores/cart";
 import { HomeIcon, SearchIcon, CartIcon, OrdersIcon } from "../../src/components/icons/TabIcons";
+
+
+const RADIO_BARRA = 26;
+
+// Fondo de vidrio de la barra inferior.
+//
+// El desenfoque es un modulo NATIVO (expo-blur): no viaja por OTA. Un binario
+// que no lo traiga compilado no puede pintar esto, por eso el fondo se apoya en
+// una capa de color propia y no depende del blur para verse bien.
+//
+// La capa clara ENCIMA del blur no es decoracion: el desenfoque solo a secas
+// deja pasar demasiado color del contenido que pasa por debajo —el magenta de
+// Ofertas, por ejemplo— y los iconos dejan de leerse. El velo la sostiene en un
+// rango claro constante sin matar el efecto.
+function FondoVidrio() {
+  return (
+    <View style={{ flex: 1, borderRadius: RADIO_BARRA, overflow: "hidden" }}>
+      <BlurView
+        intensity={Platform.OS === "ios" ? 60 : 40}
+        tint="light"
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+      />
+      <View
+        style={{
+          position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(255,255,255,0.55)",
+        }}
+      />
+      {/* Filo superior claro: es lo que da el borde de cristal en vez de un
+          rectangulo translucido plano. */}
+      <View
+        style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: 1,
+          backgroundColor: "rgba(255,255,255,0.75)",
+        }}
+      />
+    </View>
+  );
+}
 
 // Magenta de la organización (Polo & Salazar)
 const MAGENTA = "#D33587";
@@ -133,6 +174,7 @@ function TabButton({ onPress, onLongPress, accessibilityState, label, icon: Icon
 // ── Layout principal ──────────────────────────────────────────────────────────
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
   const cliente = useAuthStore((s) => s.cliente);
@@ -164,22 +206,32 @@ export default function TabLayout() {
       screenOptions={{
         tabBarStyle: {
           position: "absolute",
-          bottom: 12,
-          left: 12,
-          right: 12,
+          // Separada de los bordes. Abajo se apoya en el area segura para no
+          // quedar encima del indicador de inicio: con un 12 fijo, en los
+          // iPhone con indicador la barra se le montaba encima.
+          bottom: insets.bottom > 0 ? insets.bottom - 6 : 18,
+          left: 18,
+          right: 18,
           height: 64,
-          borderRadius: 22,
-          backgroundColor: "rgba(255,255,255,0.96)",
+          borderRadius: RADIO_BARRA,
+          // Transparente: el fondo lo pinta FondoVidrio (tabBarBackground). Con
+          // un color aqui, el desenfoque quedaria tapado por debajo y no se
+          // veria nada del efecto.
+          backgroundColor: "transparent",
           borderTopWidth: 0,
+          // El vidrio se recorta a las esquinas; sin esto el blur sale cuadrado
+          // por debajo del radio.
+          overflow: "hidden",
           paddingBottom: 8,
           paddingTop: 8,
           paddingHorizontal: 6,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.13,
-          shadowRadius: 32,
+          shadowColor: "#0B1F12",
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.16,
+          shadowRadius: 24,
           elevation: 12,
         },
+        tabBarBackground: () => <FondoVidrio />,
         tabBarActiveBackgroundColor: "transparent",
         // Ocultar labels y íconos nativos — los maneja TabButton
         tabBarShowLabel: false,
