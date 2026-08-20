@@ -17,7 +17,7 @@ import { View, Text, FlatList, Pressable, ActivityIndicator, ScrollView } from "
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { Feather } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 import { getProductos, getCategoriaCarriles, type Producto } from "../../src/lib/api";
@@ -150,6 +150,11 @@ export default function CategoryScreen() {
     );
   }
 
+  // Estable entre renders. Con la flecha en linea nacia una funcion nueva cada
+  // vez, la celda memoizada veia una prop distinta y se volvia a dibujar igual:
+  // la memoizacion existia y no servia para nada.
+  const abrirProducto = useCallback((pid: number) => router.push(`/product/${pid}`), [router]);
+
   const Cabecera = (
     <View>
       {/* Imagen de la categoria. Sale de categorias.imagen_url, no de un mapa
@@ -251,7 +256,7 @@ export default function CategoryScreen() {
               origen={c.nombre}
               destinoVerMas="categoria"
               onVerMas={() => router.push(`/category/${c.id}`)}
-              onPressProducto={(pid) => router.push(`/product/${pid}`)}
+              onPressProducto={abrirProducto}
               pantalla={PANTALLA}
             />
           ))}

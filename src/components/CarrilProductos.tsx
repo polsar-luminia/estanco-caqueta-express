@@ -14,7 +14,8 @@
 // blanco, sobre el fondo de la pantalla va oscuro. Sin eso, el titulo se pierde
 // contra su propio fondo — no falla, simplemente no se lee.
 
-import { View, Text, Pressable, FlatList } from "react-native";
+import { memo, useCallback } from "react";
+import { View, Text, Pressable, FlatList, Platform } from "react-native";
 import { ProductCard } from "./ProductCard";
 import { colors, medidas, fuentes } from "../constants/theme";
 import { tracker } from "../lib/tracker";
@@ -34,6 +35,47 @@ interface Props {
   colorTexto?: string | null;
   pantalla: string;
 }
+
+
+// Ancho de tarjeta + separacion. Se calcula una vez y no por fotograma.
+const PASO_CARRIL = medidas.cardCarril + medidas.gapCarril;
+
+// Celda memoizada. ProductCard NO esta memoizada y la usan seis pantallas, asi
+// que cambiarle la firma para poder memoizarla arrastraria regresiones a
+// rejillas que hoy funcionan. Envolverla aqui deja el arreglo contenido: la
+// celda solo se vuelve a dibujar si cambia SU producto, no cuando se redibuja
+// el carril entero.
+//
+// `onAbrir` recibe el id y se queda estable; con el patron anterior
+// (`onPress={() => onPressProducto(item.id)}`) nacia una funcion nueva por
+// tarjeta en cada render y cualquier memoizacion se caia sola.
+const CeldaCarril = memo(function CeldaCarril({
+  item, index, onAbrir, origen,
+}: {
+  item: ProductoEnCarril;
+  index: number;
+  onAbrir: (id: number) => void;
+  origen: string;
+}) {
+  const abrir = useCallback(() => onAbrir(item.id), [onAbrir, item.id]);
+  return (
+    // ProductCard usa flex: 1 porque nacio para rejillas de dos columnas;
+    // dentro de un carril hay que envolverla en un ancho fijo.
+    <View style={{ width: medidas.cardCarril }}>
+      <ProductCard
+        product={item}
+        onPress={abrir}
+        badge={item.badge || undefined}
+        badgeTexto={item.badge_texto}
+        badgeColor={item.badge_color}
+        oferta={item.oferta}
+        priority={index < 4 ? "high" : "normal"}
+        origen={origen}
+        posicion={index}
+      />
+    </View>
+  );
+});
 
 export function CarrilProductos({
   titulo, productos, onVerMas, onPressProducto, origen, seccionId, destinoVerMas,
@@ -106,22 +148,20 @@ export function CarrilProductos({
         // NO se mide el deslizamiento (onScroll): la regla del proyecto es medir
         // intencion, no friccion fisica. Arrastrar no responde ninguna pregunta
         // y gastaria bateria y datos en una cola que ya viaja apretada.
+        // Todas las tarjetas miden lo mismo (medidas.cardCarril), asi que la
+        // posicion de cada una se puede calcular en vez de medirse. Sin esto,
+        // FlatList monta cada celda, espera su onLayout y recalcula — en mitad
+        // del deslizamiento, que es justo cuando se siente el tiron.
+        getItemLayout={(_, index) => ({
+          length: medidas.cardCarril,
+          offset: PASO_CARRIL * index,
+          index,
+        })}
+        // Solo Android: en iOS desmontar vistas fuera de pantalla puede dejar
+        // celdas en blanco al volver.
+        removeClippedSubviews={Platform.OS === "android"}
         renderItem={({ item, index }) => (
-          // ProductCard usa flex: 1 porque nacio para rejillas de dos columnas;
-          // dentro de un carril hay que envolverla en un ancho fijo.
-          <View style={{ width: medidas.cardCarril }}>
-            <ProductCard
-              product={item}
-              onPress={() => onPressProducto(item.id)}
-              badge={item.badge || undefined}
-              badgeTexto={item.badge_texto}
-              badgeColor={item.badge_color}
-              oferta={item.oferta}
-              priority={index < 4 ? "high" : "normal"}
-              origen={origen}
-              posicion={index}
-            />
-          </View>
+          <CeldaCarril item={item} index={index} onAbrir={onPressProducto} origen={origen} />
         )}
       />
     </View>
