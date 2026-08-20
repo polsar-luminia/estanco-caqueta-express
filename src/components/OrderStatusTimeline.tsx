@@ -54,7 +54,7 @@ export function OrderStatusTimeline({ estado, pedido, estadosExtendidos = false 
           <Text style={{ color: "#B45309", fontSize: 20, fontFamily: fuentes.titulo }}>!</Text>
         </View>
         <Text style={{ color: "#B45309", fontFamily: fuentes.destacado }}>No pudimos entregarlo</Text>
-        <Text style={{ color: colors.muted, fontSize: 13, marginTop: 6, textAlign: "center", paddingHorizontal: 12, lineHeight: 18 }}>
+        <Text style={{ color: colors.muted, fontFamily: fuentes.destacado, fontSize: 13, marginTop: 6, textAlign: "center", paddingHorizontal: 12, lineHeight: 18 }}>
           Tu pedido volvió al estanco. Te contactamos para reprogramar la entrega — también puedes
           escribirnos por el chat de abajo.
         </Text>
@@ -133,7 +133,7 @@ export function OrderStatusTimeline({ estado, pedido, estadosExtendidos = false 
                 {step.label}
               </Text>
               {timeValue ? (
-                <Text style={{ fontSize: 12, color: current ? colors.greenInk : colors.muted, marginTop: 1 }}>
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: current ? colors.greenInk : colors.muted, marginTop: 1 }}>
                   {formatTime(timeValue)}{current ? " · ahora" : ""}
                 </Text>
               ) : current ? (

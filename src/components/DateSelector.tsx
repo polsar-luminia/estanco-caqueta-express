@@ -147,10 +147,10 @@ export function DateSelector({ value, onChange }: Props) {
                   justifyContent: "space-between",
                 }}
               >
-                <Text style={{ fontSize: 15, color: selected ? "#1A1C1A" : "#BCCABA", flex: 1 }}>
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 15, color: selected ? "#1A1C1A" : "#BCCABA", flex: 1 }}>
                   {value.year ? String(value.year) : "Año"}
                 </Text>
-                <Text style={{ fontSize: 12, color: "#6D7B6C", marginLeft: 4 }}>✏️</Text>
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C", marginLeft: 4 }}>✏️</Text>
               </Pressable>
             );
           }
@@ -175,10 +175,10 @@ export function DateSelector({ value, onChange }: Props) {
                 justifyContent: "space-between",
               }}
             >
-              <Text style={{ fontSize: 15, color: selected ? "#1A1C1A" : "#BCCABA", flex: 1 }}>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 15, color: selected ? "#1A1C1A" : "#BCCABA", flex: 1 }}>
                 {pillLabel(field, value)}
               </Text>
-              <Text style={{ fontSize: 12, color: "#6D7B6C", marginLeft: 4 }}>▾</Text>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C", marginLeft: 4 }}>▾</Text>
             </Pressable>
           );
         })}
@@ -296,7 +296,7 @@ export function DateSelector({ value, onChange }: Props) {
                 textAlign: "center",
               }}
             />
-            <Text style={{ fontSize: 12, color: "#BCCABA", textAlign: "center", marginTop: 8 }}>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#BCCABA", textAlign: "center", marginTop: 8 }}>
               Entre 1920 y {new Date().getFullYear() - 18}
             </Text>
             <Pressable

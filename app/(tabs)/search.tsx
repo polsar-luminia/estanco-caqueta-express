@@ -64,7 +64,7 @@ function CategoryGridItem({ cat, onPress }: { cat: Categoria; onPress: () => voi
             onError={() => setImageErrored(true)}
           />
         ) : emoji ? (
-          <Text style={{ fontSize: 22, opacity: 0.85 }}>{emoji}</Text>
+          <Text style={{ fontFamily: fuentes.titulo, fontSize: 22, opacity: 0.85 }}>{emoji}</Text>
         ) : (
           <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: "rgba(255,255,255,0.6)" }}>
             {cat.nombre.charAt(0)}
@@ -220,7 +220,7 @@ export default function SearchScreen() {
           <SearchIcon color={focused ? "#1FAF55" : colors.faint} size={18} />
           <TextInput
             ref={inputRef}
-            style={{ flex: 1, fontSize: 15, color: colors.ink }}
+            style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 15, color: colors.ink }}
             placeholder="Busca licores o snacks..."
             placeholderTextColor={colors.faint}
             value={query}
@@ -279,7 +279,7 @@ export default function SearchScreen() {
           ListHeaderComponent={
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: colors.ink }}>Resultados</Text>
-              <Text style={{ fontSize: 12, color: colors.muted }}>{totalResultados} productos</Text>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted }}>{totalResultados} productos</Text>
             </View>
           }
           renderItem={({ item }) => (
@@ -309,7 +309,7 @@ export default function SearchScreen() {
           <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: colors.muted }}>
             Sin resultados para &quot;{debouncedQuery}&quot;
           </Text>
-          <Text style={{ fontSize: 12, color: colors.faint, marginTop: 4 }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.faint, marginTop: 4 }}>
             Intenta con otro término
           </Text>
         </View>

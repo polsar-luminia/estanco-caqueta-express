@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ScrollView, Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import type { Categoria } from "../lib/api";
+import { fuentes } from "../constants/theme";
 
 interface Props {
   categorias: Categoria[];
@@ -14,7 +15,7 @@ function CategoryIcon({ cat }: { cat: Categoria }) {
 
   if (showFallback) {
     return (
-      <Text className="font-bold text-gray-500" style={{ fontSize: 26 }}>
+      <Text className="font-bold text-gray-500" style={{ fontFamily: fuentes.titulo, fontSize: 26 }}>
         {cat.nombre.charAt(0).toUpperCase()}
       </Text>
     );
@@ -55,7 +56,7 @@ function CategoryItem({ cat, onSelect }: { cat: Categoria; onSelect: (id: number
       </View>
       <Text
         className="font-semibold text-center mt-1.5"
-        style={{ fontSize: 12, color: "#1A1C1A" }}
+        style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#1A1C1A" }}
         numberOfLines={1}
       >
         {cat.nombre}

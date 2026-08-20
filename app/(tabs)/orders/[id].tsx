@@ -200,13 +200,13 @@ export default function OrderDetailScreen() {
     >
       {/* Estado y timeline */}
       <View className="bg-white rounded-2xl p-6" style={CARD_SHADOW}>
-        <Text className="text-xl font-bold text-on-surface mb-1">
+        <Text className="text-xl text-on-surface mb-1 font-titulo">
           Pedido #{pedido.numero_orden_cliente ?? pedido.id}
         </Text>
-        <Text className="text-sm text-gray-500">
+        <Text className="text-sm text-gray-500 font-destacado">
           {formatDate(pedido.created_at)} - {formatTime(pedido.created_at)}
         </Text>
-        <Text className="text-xs text-gray-400 mb-4 mt-1">
+        <Text className="text-xs text-gray-400 mb-4 mt-1 font-destacado">
           Ref. soporte: #{pedido.id}
         </Text>
         <OrderStatusTimeline estado={pedido.estado} pedido={pedido} estadosExtendidos={configApp?.estados_extendidos_activo === true} />
@@ -220,8 +220,8 @@ export default function OrderDetailScreen() {
             posibles — y no fallaría, se vería perfectamente normal. */}
         {pedido.eta && !["entregado", "cancelado", "domiciliario_llego", "no_entregado"].includes(pedido.estado) && (
           <View className="mt-4 rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(31,175,85,0.08)" }}>
-            <Text className="text-xs" style={{ color: "#6D7B6C" }}>Tiempo estimado de entrega</Text>
-            <Text className="text-lg font-extrabold" style={{ color: "#14803E" }}>
+            <Text className="text-xs font-destacado" style={{ color: "#6D7B6C" }}>Tiempo estimado de entrega</Text>
+            <Text className="text-lg font-destacado" style={{ color: "#14803E" }}>
               {pedido.eta.min}–{pedido.eta.max} min
             </Text>
           </View>
@@ -230,7 +230,7 @@ export default function OrderDetailScreen() {
 
       {/* Productos */}
       <View className="bg-white rounded-2xl p-6" style={CARD_SHADOW}>
-        <Text className="text-base font-bold text-on-surface mb-4">
+        <Text className="text-base text-on-surface mb-4 font-destacado">
           Productos
         </Text>
         {pedido.lineas?.map((linea, index) => (
@@ -243,14 +243,14 @@ export default function OrderDetailScreen() {
             }`}
           >
             <View className="flex-1 mr-3">
-              <Text className="text-sm font-medium text-on-surface">
+              <Text className="text-sm text-on-surface font-destacado">
                 {linea.nombre_producto}
               </Text>
-              <Text className="text-xs text-gray-500 mt-0.5">
+              <Text className="text-xs text-gray-500 mt-0.5 font-destacado">
                 x{linea.cantidad} - {formatCOP(linea.precio_unitario)} c/u
               </Text>
             </View>
-            <Text className="text-sm font-semibold text-on-surface">
+            <Text className="text-sm text-on-surface font-destacado">
               {formatCOP(linea.subtotal)}
             </Text>
           </View>
@@ -261,20 +261,20 @@ export default function OrderDetailScreen() {
             $0 se dice "¡Gratis!" — es un logro del cliente, no un vacío. */}
         {pedido.costo_domicilio != null && (
           <View className="border-t border-gray-100 mt-2 pt-3 flex-row justify-between items-center">
-            <Text className="text-sm text-gray-600">Domicilio</Text>
+            <Text className="text-sm text-gray-600 font-destacado">Domicilio</Text>
             {pedido.costo_domicilio > 0 ? (
-              <Text className="text-sm font-semibold text-on-surface">{formatCOP(pedido.costo_domicilio)}</Text>
+              <Text className="text-sm text-on-surface font-destacado">{formatCOP(pedido.costo_domicilio)}</Text>
             ) : (
-              <Text className="text-sm font-bold text-brand-600">¡Gratis!</Text>
+              <Text className="text-sm text-brand-600 font-destacado">¡Gratis!</Text>
             )}
           </View>
         )}
         {(pedido.descuento ?? 0) > 0 && (
           <View className="border-t border-gray-100 mt-2 pt-3 flex-row justify-between items-center">
-            <Text className="text-sm text-gray-600">
+            <Text className="text-sm text-gray-600 font-destacado">
               Descuento{pedido.cupon_codigo ? ` (${pedido.cupon_codigo})` : ""}
             </Text>
-            <Text className="text-sm font-semibold" style={{ color: "#D33587" }}>
+            <Text className="text-sm font-destacado" style={{ color: "#D33587" }}>
               -{formatCOP(pedido.descuento ?? 0)}
             </Text>
           </View>
@@ -285,18 +285,18 @@ export default function OrderDetailScreen() {
             cumplimos y el cobro se siente como una estafa. */}
         {pedido.frio && (pedido.frio_costo ?? 0) > 0 && (
           <View className="border-t border-gray-100 mt-2 pt-3 flex-row justify-between items-center">
-            <Text className="text-sm text-gray-600">Frío asegurado</Text>
-            <Text className="text-sm font-semibold" style={{ color: "#0F3A6B" }}>
+            <Text className="text-sm text-gray-600 font-destacado">Frío asegurado</Text>
+            <Text className="text-sm font-destacado" style={{ color: "#0F3A6B" }}>
               {formatCOP(pedido.frio_costo ?? 0)}
             </Text>
           </View>
         )}
         {pedido.frio_removido && (
           <View className="border-t border-gray-100 mt-2 pt-3">
-            <Text className="text-sm font-semibold" style={{ color: "#0F3A6B" }}>
+            <Text className="text-sm font-destacado" style={{ color: "#0F3A6B" }}>
               Frío — no alcanzó, sin cobro
             </Text>
-            <Text className="text-xs text-gray-500 mt-0.5">
+            <Text className="text-xs text-gray-500 mt-0.5 font-destacado">
               No alcanzamos a tenerlo frío, así que te quitamos el cargo.
             </Text>
           </View>
@@ -304,8 +304,8 @@ export default function OrderDetailScreen() {
 
         {/* Total */}
         <View className="border-t border-gray-200 mt-2 pt-4 flex-row justify-between items-center">
-          <Text className="text-base font-bold text-on-surface">Total</Text>
-          <Text className="text-xl font-extrabold text-brand-600">
+          <Text className="text-base text-on-surface font-destacado">Total</Text>
+          <Text className="text-xl text-brand-600 font-titulo">
             {formatCOP(pedido.total)}
           </Text>
         </View>
@@ -330,7 +330,7 @@ export default function OrderDetailScreen() {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 15.5, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{pedido.domiciliario.nombre}</Text>
               {(pedido.domiciliario.moto || pedido.domiciliario.placa) && (
-                <Text style={{ fontSize: 12.5, color: "#6D7B6C", marginTop: 1 }}>
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 12.5, color: "#6D7B6C", marginTop: 1 }}>
                   {[pedido.domiciliario.moto, pedido.domiciliario.placa].filter(Boolean).join(" · ")}
                 </Text>
               )}
@@ -367,7 +367,7 @@ export default function OrderDetailScreen() {
               <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>
                 {enCalle ? "Chat con tu domiciliario" : "Escríbele al Estanco"}
               </Text>
-              <Text style={{ fontSize: 12.5, color: "#6D7B6C", marginTop: 1 }}>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12.5, color: "#6D7B6C", marginTop: 1 }}>
                 {(pedido.chat_sin_leer ?? 0) > 0
                   ? `${pedido.chat_sin_leer} mensaje${(pedido.chat_sin_leer ?? 0) > 1 ? "s" : ""} sin leer`
                   : enCalle
@@ -400,7 +400,7 @@ export default function OrderDetailScreen() {
           SecureStore antes de poder pintar nada. */}
       {pedido.foto_entrega_url && (
         <View className="bg-white rounded-2xl p-6" style={CARD_SHADOW}>
-          <Text className="text-base font-bold text-on-surface mb-3">
+          <Text className="text-base text-on-surface mb-3 font-destacado">
             Así se entregó tu pedido
           </Text>
           <FotoEntrega uri={pedido.foto_entrega_url} />
@@ -409,17 +409,17 @@ export default function OrderDetailScreen() {
 
       {/* Direccion de entrega */}
       <View className="bg-white rounded-2xl p-6" style={CARD_SHADOW}>
-        <Text className="text-base font-bold text-on-surface mb-3">
+        <Text className="text-base text-on-surface mb-3 font-destacado">
           Entrega
         </Text>
-        <Text className="text-sm text-on-surface-variant">
+        <Text className="text-sm text-on-surface-variant font-destacado">
           {pedido.direccion}
         </Text>
         {pedido.barrio && (
-          <Text className="text-sm text-gray-500 mt-1">{pedido.barrio}</Text>
+          <Text className="text-sm text-gray-500 mt-1 font-destacado">{pedido.barrio}</Text>
         )}
         {pedido.notas_cliente && (
-          <Text className="text-sm text-gray-400 mt-2 italic">
+          <Text className="text-sm text-gray-400 mt-2 italic font-destacado">
             {pedido.notas_cliente}
           </Text>
         )}

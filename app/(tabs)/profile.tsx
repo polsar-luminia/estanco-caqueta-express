@@ -177,7 +177,7 @@ export default function ProfileScreen() {
             <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: "#fff" }}>
               {cliente?.nombre || "Usuario"}
             </Text>
-            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.80)", marginTop: 2 }}>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "rgba(255,255,255,0.80)", marginTop: 2 }}>
               {cliente?.telefono}
             </Text>
           </View>
@@ -207,7 +207,7 @@ export default function ProfileScreen() {
                 {stat.label}
               </Text>
               <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{stat.value}</Text>
-              <Text style={{ fontSize: 12, color: "#BCCABA", marginTop: 1 }}>{stat.sub}</Text>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#BCCABA", marginTop: 1 }}>{stat.sub}</Text>
             </View>
           ))}
         </View>
@@ -237,8 +237,8 @@ export default function ProfileScreen() {
           />
         </View>
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 5 }}>
-          <Text style={{ fontSize: 12, color: "#BCCABA" }}>0 pts</Text>
-          <Text style={{ fontSize: 12, color: "#BCCABA" }}>100 pts</Text>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#BCCABA" }}>0 pts</Text>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#BCCABA" }}>100 pts</Text>
         </View>
       </View>
 
@@ -259,7 +259,7 @@ export default function ProfileScreen() {
             <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: "#1A1C1A", letterSpacing: 3 }}>
               {cliente.codigo_referido}
             </Text>
-            <Text style={{ fontSize: 12, color: "#BCCABA", marginTop: 3 }}>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#BCCABA", marginTop: 3 }}>
               Comparte y gana puntos
             </Text>
           </View>
@@ -375,7 +375,7 @@ export default function ProfileScreen() {
 
       {/* ── Branding Polo & Salazar — NO MODIFICAR ───────────── */}
       <View style={{ alignItems: "center", marginTop: 16, gap: 4 }}>
-        <Text style={{ fontSize: 12, color: "#BCCABA", textTransform: "uppercase", letterSpacing: 2 }}>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#BCCABA", textTransform: "uppercase", letterSpacing: 2 }}>
           Un producto de
         </Text>
         <Image
@@ -387,10 +387,10 @@ export default function ProfileScreen() {
 
       {/* ── Versión y créditos — NO MODIFICAR ────────────────── */}
       <View style={{ alignItems: "center", marginBottom: 24, gap: 2 }}>
-        <Text style={{ textAlign: "center", fontSize: 12, color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2 }}>
+        <Text style={{ textAlign: "center", fontFamily: fuentes.destacado, fontSize: 12, color: "#9E9E9E", textTransform: "uppercase", letterSpacing: 2 }}>
           Versión {Constants.expoConfig?.version ?? "1.0.0"}
         </Text>
-        <Text style={{ textAlign: "center", fontSize: 12, color: "#9E9E9E" }}>
+        <Text style={{ textAlign: "center", fontFamily: fuentes.destacado, fontSize: 12, color: "#9E9E9E" }}>
           Creado por{" "}
           <Text
             style={{ color: "#D33587", fontFamily: fuentes.destacado }}

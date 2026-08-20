@@ -246,7 +246,7 @@ export function FrioRecordatorio({
 
                 <Text
                   style={{
-                    fontSize: 14,
+                    fontFamily: fuentes.destacado, fontSize: 14,
                     lineHeight: 19,
                     color: colors.white,
                     textAlign: "center",

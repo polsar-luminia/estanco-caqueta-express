@@ -43,7 +43,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
         backgroundColor: colors.bg,
       }}
     >
-      <Text style={{ fontSize: 40, marginBottom: 16 }}>😵</Text>
+      <Text style={{ fontFamily: fuentes.titulo, fontSize: 40, marginBottom: 16 }}>😵</Text>
       <Text
         style={{
           fontSize: 20,
@@ -57,7 +57,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
       </Text>
       <Text
         style={{
-          fontSize: 13,
+          fontFamily: fuentes.destacado, fontSize: 13,
           color: "#6D7B6C",
           textAlign: "center",
           marginBottom: 32,

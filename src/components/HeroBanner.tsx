@@ -93,7 +93,7 @@ export function HeroSlide({ banner, onPress, aSangre = false }: { banner: Patroc
               <Text style={{ color: "#fff", fontSize: 22, fontFamily: fuentes.titulo, lineHeight: 26, textShadowColor: "rgba(0,0,0,0.55)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 }}>{titulo}</Text>
             ) : null}
             {subtitulo ? (
-              <Text style={{ color: "rgba(255,255,255,0.92)", fontSize: 12, textShadowColor: "rgba(0,0,0,0.55)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 }}>{subtitulo}</Text>
+              <Text style={{ color: "rgba(255,255,255,0.92)", fontFamily: fuentes.destacado, fontSize: 12, textShadowColor: "rgba(0,0,0,0.55)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 }}>{subtitulo}</Text>
             ) : null}
             {cta ? (
               <Pressable

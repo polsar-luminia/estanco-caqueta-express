@@ -119,12 +119,12 @@ export default function VerifyOtpScreen() {
           <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: colors.ink, marginBottom: 8, textAlign: "center" }}>
             Ingresa el código
           </Text>
-          <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 16, textAlign: "center" }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: colors.muted, marginBottom: 16, textAlign: "center" }}>
             Enviamos un código de 6 dígitos al{"\n"}
             <Text style={{ fontFamily: fuentes.destacado, color: colors.ink }}>+57 {telefono}</Text>
           </Text>
 
-          <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 20, textAlign: "center", lineHeight: 16 }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, marginBottom: 20, textAlign: "center", lineHeight: 16 }}>
             ¿No te llegó? Espera unos segundos y luego toca{" "}
             <Text style={{ fontFamily: fuentes.destacado, color: colors.green }}>Reenviar</Text> abajo.
           </Text>
@@ -193,7 +193,7 @@ export default function VerifyOtpScreen() {
             hitSlop={16}
             className="items-center mt-3"
           >
-            <Text style={{ color: colors.muted, fontSize: 13 }}>← Volver</Text>
+            <Text style={{ color: colors.muted, fontFamily: fuentes.destacado, fontSize: 13 }}>← Volver</Text>
           </Pressable>
 
           {/* M-AUTH-17: salida clara si el número no tenía cuenta. Con el backend
@@ -206,7 +206,7 @@ export default function VerifyOtpScreen() {
             hitSlop={16}
             className="items-center mt-4"
           >
-            <Text style={{ color: colors.muted, fontSize: 13 }}>
+            <Text style={{ color: colors.muted, fontFamily: fuentes.destacado, fontSize: 13 }}>
               ¿No tienes cuenta? <Text style={{ color: colors.offer, fontFamily: fuentes.destacado }}>Regístrate</Text>
             </Text>
           </Pressable>

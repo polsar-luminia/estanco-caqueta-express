@@ -60,13 +60,13 @@ export default function MetodosPagoScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: colors.ink, marginBottom: 4 }}>{m.titulo}</Text>
-              <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 19 }}>{m.descripcion}</Text>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: colors.muted, lineHeight: 19 }}>{m.descripcion}</Text>
             </View>
           </View>
         ))}
 
         <View style={{ backgroundColor: colors.lowfill, borderRadius: 12, padding: 16, marginTop: 8 }}>
-          <Text style={{ fontSize: 12, color: colors.muted, textAlign: "center", lineHeight: 18 }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, textAlign: "center", lineHeight: 18 }}>
             ¿Preguntas sobre tu pago? Escríbenos por WhatsApp y te ayudamos de inmediato.
           </Text>
         </View>

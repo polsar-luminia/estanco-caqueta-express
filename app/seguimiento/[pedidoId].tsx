@@ -210,7 +210,7 @@ export default function SeguimientoScreen() {
             <Text style={{ fontSize: 19, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>
               {metros != null ? textoDistancia(metros) : "En camino"}
             </Text>
-            <Text style={{ fontSize: 13, color: "#6D7B6C", marginTop: 4 }}>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: "#6D7B6C", marginTop: 4 }}>
               {(ubi.actualizado_hace_seg ?? 0) < 60
                 ? "Ubicación de hace un momento"
                 : `Ubicación de hace ${Math.round((ubi.actualizado_hace_seg ?? 0) / 60)} min`}
@@ -219,7 +219,7 @@ export default function SeguimientoScreen() {
                 aquí la distancia se lee como "ya casi llega", y sin esto un
                 repartidor que se aleja a dejar otro pedido parece un error. */}
             {ubi.aviso ? (
-              <Text style={{ fontSize: 13, color: "#8A6400", marginTop: 10, lineHeight: 18 }}>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: "#8A6400", marginTop: 10, lineHeight: 18 }}>
                 {ubi.aviso}
               </Text>
             ) : null}
@@ -227,7 +227,7 @@ export default function SeguimientoScreen() {
         ) : (
           <>
             <Text style={{ fontSize: 17, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Sin señal por ahora</Text>
-            <Text style={{ fontSize: 13, color: "#6D7B6C", marginTop: 4 }}>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: "#6D7B6C", marginTop: 4 }}>
               Tu repartidor no está reportando su ubicación en este momento. Sigue en camino.
             </Text>
           </>

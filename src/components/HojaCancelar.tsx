@@ -75,7 +75,7 @@ export function HojaCancelar({
             <Feather name="x" size={22} color="#6D7B6C" />
           </Pressable>
         </View>
-        <Text style={{ fontSize: 13.5, color: "#6D7B6C", marginBottom: 14 }}>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 13.5, color: "#6D7B6C", marginBottom: 14 }}>
           Nos ayuda a mejorar. Solo toma un segundo.
         </Text>
 
@@ -127,7 +127,7 @@ export function HojaCancelar({
                 borderRadius: 14,
                 padding: 14,
                 minHeight: 86,
-                fontSize: 15,
+                fontFamily: fuentes.destacado, fontSize: 15,
                 color: "#1A1C1A",
                 textAlignVertical: "top",
                 marginBottom: 8,

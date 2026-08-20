@@ -58,7 +58,7 @@ export function BandaOperativa({ tienda, compact = false, style }: Props) {
           {/* Tres líneas y no dos: el mensaje sin ETA es más largo porque tiene
               que explicar sin prometer un tiempo, y cortarlo dejaría la frase a
               la mitad. */}
-          <Text style={{ fontSize: 12, color: "#6E7A6C", marginTop: 1 }} numberOfLines={3}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6E7A6C", marginTop: 1 }} numberOfLines={3}>
             {aviso.mensaje}
           </Text>
         </View>

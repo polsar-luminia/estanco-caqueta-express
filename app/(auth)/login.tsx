@@ -158,7 +158,7 @@ export default function LoginScreen() {
             {/* Tagline con líneas decorativas */}
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 14 }}>
               <View style={{ width: 20, height: 1, backgroundColor: colors.line }} />
-              <Text style={{ fontSize: 12, color: colors.faint, letterSpacing: 0.5 }}>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.faint, letterSpacing: 0.5 }}>
                 Tus productos favoritos en minutos
               </Text>
               <View style={{ width: 20, height: 1, backgroundColor: colors.line }} />
@@ -177,7 +177,7 @@ export default function LoginScreen() {
             <View style={phoneStyle}>
               <PhoneIcon color={colors.muted} size={18} />
               <TextInput
-                style={{ flex: 1, fontSize: 15, color: colors.ink }}
+                style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 15, color: colors.ink }}
                 placeholder="300 000 0000"
                 placeholderTextColor={colors.faint}
                 keyboardType="phone-pad"
@@ -202,7 +202,7 @@ export default function LoginScreen() {
             <View style={passwordStyle}>
               <LockIcon color={colors.muted} size={18} />
               <TextInput
-                style={{ flex: 1, fontSize: 15, color: colors.ink }}
+                style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 15, color: colors.ink }}
                 placeholder="••••••••"
                 placeholderTextColor={colors.faint}
                 secureTextEntry={!showPass}
@@ -277,7 +277,7 @@ export default function LoginScreen() {
           {/* Divider ¿Eres nuevo? */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 28 }}>
             <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
-            <Text style={{ fontSize: 12, color: colors.faint }}>¿Eres nuevo?</Text>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.faint }}>¿Eres nuevo?</Text>
             <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
           </View>
 

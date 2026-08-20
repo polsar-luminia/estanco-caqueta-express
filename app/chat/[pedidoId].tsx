@@ -210,7 +210,7 @@ export default function ChatPedidoScreen() {
           <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 16 }} numberOfLines={1}>
             {titulo}
           </Text>
-          <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 12 }}>
+          <Text style={{ color: "rgba(255,255,255,0.85)", fontFamily: fuentes.destacado, fontSize: 12 }}>
             {subtitulo}
           </Text>
         </View>
@@ -228,7 +228,7 @@ export default function ChatPedidoScreen() {
         ) : visible === false ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
             <Feather name="message-circle" size={40} color="#B9B4A8" />
-            <Text style={{ color: "#6D7B6C", textAlign: "center", marginTop: 12, fontSize: 14 }}>
+            <Text style={{ color: "#6D7B6C", textAlign: "center", marginTop: 12, fontFamily: fuentes.destacado, fontSize: 14 }}>
               {motivoCierre === "pedido_cerrado"
                 ? "Este pedido ya fue entregado — el chat se cerró."
                 : "El chat se abre cuando tu pedido salga a entrega."}
@@ -245,7 +245,7 @@ export default function ChatPedidoScreen() {
             {mensajes.length === 0 ? (
               <View style={{ alignItems: "center", marginTop: 24 }}>
                 <View style={{ backgroundColor: "rgba(31,175,85,0.12)", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8 }}>
-                  <Text style={{ color: "#166534", fontSize: 12.5, textAlign: "center" }}>
+                  <Text style={{ color: "#166534", fontFamily: fuentes.destacado, fontSize: 12.5, textAlign: "center" }}>
                     Acuérdale dónde es, o dile con quién dejar el pedido.
                   </Text>
                 </View>
@@ -271,8 +271,8 @@ export default function ChatPedidoScreen() {
                         elevation: 1,
                       }}
                     >
-                      <Text style={{ fontSize: 14.5, color: "#1A1C1A", lineHeight: 20 }}>{m.cuerpo}</Text>
-                      <Text style={{ fontSize: 10.5, color: "#8B948B", marginTop: 2, alignSelf: "flex-end" }}>
+                      <Text style={{ fontFamily: fuentes.destacado, fontSize: 14.5, color: "#1A1C1A", lineHeight: 20 }}>{m.cuerpo}</Text>
+                      <Text style={{ fontFamily: fuentes.destacado, fontSize: 10.5, color: "#8B948B", marginTop: 2, alignSelf: "flex-end" }}>
                         {hora(m.created_at)}
                       </Text>
                     </View>
@@ -311,7 +311,7 @@ export default function ChatPedidoScreen() {
                   paddingHorizontal: 16,
                   paddingTop: 10,
                   paddingBottom: 10,
-                  fontSize: 14.5,
+                  fontFamily: fuentes.destacado, fontSize: 14.5,
                   maxHeight: 110,
                   color: "#1A1C1A",
                 }}
@@ -340,7 +340,7 @@ export default function ChatPedidoScreen() {
             </View>
           ) : (
             <View style={{ padding: 12, paddingBottom: Math.max(insets.bottom, 12), backgroundColor: "#F4F2EC" }}>
-              <Text style={{ textAlign: "center", fontSize: 12.5, color: "#6D7B6C" }}>
+              <Text style={{ textAlign: "center", fontFamily: fuentes.destacado, fontSize: 12.5, color: "#6D7B6C" }}>
                 El pedido se entregó. El chat queda como constancia de lo acordado.
               </Text>
             </View>

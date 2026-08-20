@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import { Image } from "expo-image";
 import { getToken } from "../lib/api";
-import { colors } from "../constants/theme";
+import { colors, fuentes } from "../constants/theme";
 
 /**
  * La foto de "así se entregó tu pedido".
@@ -43,7 +43,7 @@ export function FotoEntrega({ uri }: { uri: string }) {
   // no sabría si es su conexión o si nunca hubo foto.
   if (fallo) {
     return (
-      <Text style={{ color: colors.muted, fontSize: 13 }}>
+      <Text style={{ color: colors.muted, fontFamily: fuentes.destacado, fontSize: 13 }}>
         No pudimos cargar la foto en este momento.
       </Text>
     );

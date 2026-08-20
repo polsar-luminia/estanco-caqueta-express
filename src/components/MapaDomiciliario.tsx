@@ -132,7 +132,7 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
           <Feather name="map-pin" size={16} color="#6D7B6C" />
           <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>¿Por dónde viene?</Text>
         </View>
-        <Text style={{ fontSize: 13, color: "#6D7B6C" }}>{texto}</Text>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: "#6D7B6C" }}>{texto}</Text>
       </View>
     );
   }
@@ -157,7 +157,7 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
         <Feather name="navigation" size={16} color="#1FAF55" />
         <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: "#1A1C1A", flex: 1 }}>Por dónde viene</Text>
         <Feather name="maximize-2" size={13} color="#6D7B6C" style={{ marginRight: 6 }} />
-        <Text style={{ fontSize: 11.5, color: "#6D7B6C" }}>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 11.5, color: "#6D7B6C" }}>
           {(ubi.actualizado_hace_seg ?? 0) < 60
             ? "hace un momento"
             : `hace ${Math.round((ubi.actualizado_hace_seg ?? 0) / 60)} min`}
@@ -186,7 +186,7 @@ export function MapaDomiciliario({ pedidoId }: { pedidoId: number }) {
           }}
         >
           <Feather name="package" size={13} color="#8A6400" style={{ marginTop: 1 }} />
-          <Text style={{ flex: 1, fontSize: 12.5, color: "#8A6400", lineHeight: 17 }}>
+          <Text style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 12.5, color: "#8A6400", lineHeight: 17 }}>
             {ubi.aviso}
           </Text>
         </View>

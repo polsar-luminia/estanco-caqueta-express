@@ -134,7 +134,7 @@ export default function CategoryScreen() {
   if (!habilitada || categoriaBloqueada) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>
+        <Text style={{ fontFamily: fuentes.titulo, fontSize: 48, marginBottom: 12 }}>😕</Text>
         <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1F1F1F", textAlign: "center" }}>
           Categoría no encontrada
         </Text>

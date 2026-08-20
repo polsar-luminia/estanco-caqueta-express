@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   },
   sub: {
     color: "rgba(255,255,255,0.45)",
-    fontSize: 12,
+    fontFamily: fuentes.destacado, fontSize: 12,
   },
   right: {
     alignItems: "flex-end",

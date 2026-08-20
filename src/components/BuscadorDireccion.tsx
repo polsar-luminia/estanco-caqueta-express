@@ -153,7 +153,7 @@ export function BuscadorDireccion({
       >
         <Feather name="search" size={16} color={colors.faint} />
         <TextInput
-          style={{ flex: 1, fontSize: 14, color: colors.ink, paddingVertical: 12 }}
+          style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 14, color: colors.ink, paddingVertical: 12 }}
           placeholder={placeholder}
           placeholderTextColor={colors.faint}
           value={value}
@@ -179,7 +179,7 @@ export function BuscadorDireccion({
       {errorZona && (
         <Text
           accessibilityRole="alert"
-          style={{ fontSize: 12, color: colors.danger, marginTop: 6, paddingHorizontal: 4 }}
+          style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.danger, marginTop: 6, paddingHorizontal: 4 }}
         >
           {errorZona}
         </Text>
@@ -215,7 +215,7 @@ export function BuscadorDireccion({
                 {s.principal}
               </Text>
               {!!s.secundaria && (
-                <Text style={{ fontSize: 12, color: colors.muted, marginTop: 1 }}>
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, marginTop: 1 }}>
                   {s.secundaria}
                 </Text>
               )}

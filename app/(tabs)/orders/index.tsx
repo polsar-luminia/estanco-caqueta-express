@@ -119,7 +119,7 @@ function StatusBadge({ estado }: { estado: string }) {
       className={`flex-row items-center px-3 py-1.5 rounded-full ${ESTADO_BADGE[estado] ?? "bg-gray-100"}`}
     >
       {ESTADOS_EN_CALLE.includes(estado) && <PulsingDot />}
-      <Text className={`text-xs font-semibold ${ESTADO_TEXT[estado] ?? "text-gray-600"}`}>
+      <Text className={`text-xs ${ESTADO_TEXT[estado] ?? "text-gray-600"} font-destacado`}>
         {ESTADO_LABEL[estado] ?? estado}
       </Text>
     </View>
@@ -255,7 +255,7 @@ function OrderCard({ item }: { item: Pedido }) {
     >
       {/* Etiqueta "Pedido Activo" */}
       {isActive && (
-        <Text className="text-xs font-bold uppercase tracking-widest text-brand-600 mb-3">
+        <Text className="text-xs uppercase tracking-widest text-brand-600 mb-3 font-destacado">
           Pedido Activo
         </Text>
       )}
@@ -263,10 +263,10 @@ function OrderCard({ item }: { item: Pedido }) {
       {/* Fila superior: info + badge */}
       <View className="flex-row justify-between items-start">
         <View className="flex-1 mr-3">
-          <Text className="text-xl font-bold text-on-surface">
+          <Text className="text-xl text-on-surface font-titulo">
             Pedido #{item.numero_orden_cliente ?? item.id}
           </Text>
-          <Text className="text-sm text-gray-500 mt-1">
+          <Text className="text-sm text-gray-500 mt-1 font-destacado">
             {formatDate(item.created_at)} - {formatTime(item.created_at)}
           </Text>
         </View>
@@ -277,13 +277,11 @@ function OrderCard({ item }: { item: Pedido }) {
       <View className="border-t border-gray-100 mt-4 pt-4">
         {/* Total */}
         <View className="flex-row justify-between items-center">
-          <Text className="text-xs text-gray-500 uppercase tracking-wide">
+          <Text className="text-xs text-gray-500 uppercase tracking-wide font-destacado">
             Total Pagado
           </Text>
           <Text
-            className={`text-xl font-extrabold ${
-              isActive ? "text-brand-500" : "text-on-surface"
-            }`}
+            className={`text-xl ${ isActive ? "text-brand-500" : "text-on-surface" } font-titulo`}
           >
             {formatCOP(item.total)}
           </Text>
@@ -304,9 +302,7 @@ function OrderCard({ item }: { item: Pedido }) {
             }`}
           >
             <Text
-              className={`text-sm font-semibold ${
-                isEnCamino ? "text-white" : "text-on-surface"
-              }`}
+              className={`text-sm ${ isEnCamino ? "text-white" : "text-on-surface" } font-destacado`}
             >
               {isEnCamino ? "Rastrear" : "Ver detalles"}
             </Text>
@@ -321,7 +317,7 @@ function OrderCard({ item }: { item: Pedido }) {
               accessibilityState={{ disabled: reordenando }}
               className="flex-1 py-3 rounded-xl items-center bg-magenta-50"
             >
-              <Text className="text-sm font-semibold text-magenta-600">
+              <Text className="text-sm text-magenta-600 font-destacado">
                 Reordenar
               </Text>
             </Pressable>
@@ -349,13 +345,13 @@ function HelpSection() {
       className="bg-brand-900/5 p-6 rounded-2xl flex-row items-center"
     >
       <View className="w-12 h-12 rounded-full bg-brand-600 items-center justify-center mr-4">
-        <Text className="text-white text-lg">?</Text>
+        <Text className="text-white text-lg font-destacado">?</Text>
       </View>
       <View className="flex-1">
-        <Text className="text-base font-bold text-on-surface">
+        <Text className="text-base text-on-surface font-destacado">
           Problemas con un pedido?
         </Text>
-        <Text className="text-sm text-gray-500 mt-0.5">
+        <Text className="text-sm text-gray-500 mt-0.5 font-destacado">
           Estamos aqui para ayudarte 24/7
         </Text>
       </View>
@@ -412,7 +408,7 @@ export default function OrdersScreen() {
   if (pedidos.length === 0) {
     return (
       <View className="flex-1 bg-surface-low items-center justify-center px-6">
-        <Text className="text-xl text-gray-400 mb-2">Sin pedidos</Text>
+        <Text className="text-xl text-gray-400 mb-2 font-titulo">Sin pedidos</Text>
         <Text className="text-gray-400 text-center">
           Tus pedidos apareceran aqui cuando hagas tu primera compra
         </Text>
@@ -436,7 +432,7 @@ export default function OrdersScreen() {
       }
       ListHeaderComponent={
         <View className="mb-2">
-          <Text className="text-3xl font-extrabold text-on-surface">
+          <Text className="text-3xl text-on-surface font-titulo">
             Mis Pedidos
           </Text>
           <Text className="text-gray-500 mt-1">

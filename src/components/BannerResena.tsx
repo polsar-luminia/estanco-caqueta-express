@@ -129,7 +129,7 @@ export function BannerResena({ habilitado }: { habilitado: boolean }) {
         <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: colors.ink }}>
           ¿Cómo te fue con tu pedido?
         </Text>
-        <Text style={{ fontSize: 13, color: colors.muted, marginTop: 1 }}>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: colors.muted, marginTop: 1 }}>
           Califícanos en 10 segundos
         </Text>
       </Pressable>

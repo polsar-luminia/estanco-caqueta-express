@@ -304,7 +304,7 @@ export function UbicacionButton({ value, onChange }: Props) {
 
       {error ? (
         <View style={{ marginTop: 6 }}>
-          <Text style={{ fontSize: 12, color: "#6D7B6C" }}>{error}</Text>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C" }}>{error}</Text>
           {abrirAjustes ? (
             <Pressable
               onPress={() => Linking.openSettings()}

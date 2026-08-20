@@ -75,7 +75,7 @@ export default function ForgotPasswordScreen() {
               style={{ width: 260, height: 104 }}
               resizeMode="contain"
             />
-            <Text style={{ color: colors.muted, fontSize: 13, marginTop: 12, textAlign: "center" }}>
+            <Text style={{ color: colors.muted, fontFamily: fuentes.destacado, fontSize: 13, marginTop: 12, textAlign: "center" }}>
               Te enviaremos un código de verificación
             </Text>
           </View>
@@ -84,7 +84,7 @@ export default function ForgotPasswordScreen() {
             Recuperar contraseña
           </Text>
 
-          <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 20, textAlign: "center", lineHeight: 18 }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: colors.muted, marginBottom: 20, textAlign: "center", lineHeight: 18 }}>
             Ingresa tu número y te enviaremos un{"\n"}
             <Text style={{ fontFamily: fuentes.destacado, color: colors.ink }}>código de 6 dígitos</Text> en segundos.
           </Text>
@@ -126,7 +126,7 @@ export default function ForgotPasswordScreen() {
             hitSlop={16}
             className="items-center mt-6"
           >
-            <Text style={{ color: colors.muted, fontSize: 13 }}>← Volver al inicio de sesión</Text>
+            <Text style={{ color: colors.muted, fontFamily: fuentes.destacado, fontSize: 13 }}>← Volver al inicio de sesión</Text>
           </Pressable>
 
           {/* Link de registro PERSISTENTE (M-AUTH-17): no depende del 404 del
@@ -140,7 +140,7 @@ export default function ForgotPasswordScreen() {
             hitSlop={16}
             className="items-center mt-4"
           >
-            <Text style={{ color: colors.muted, fontSize: 13 }}>
+            <Text style={{ color: colors.muted, fontFamily: fuentes.destacado, fontSize: 13 }}>
               ¿No tienes cuenta? <Text style={{ color: colors.offer, fontFamily: fuentes.destacado }}>Regístrate</Text>
             </Text>
           </Pressable>

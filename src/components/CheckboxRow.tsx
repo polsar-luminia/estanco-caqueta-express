@@ -37,7 +37,7 @@ export function CheckboxRow({ checked, onToggle, children, etiqueta }: CheckboxR
           <Text style={{ color: "#fff", fontSize: 13, fontFamily: fuentes.destacado, marginTop: -1 }}>✓</Text>
         )}
       </View>
-      <Text style={{ flex: 1, fontSize: 13, color: "#1A1C1A", lineHeight: 18 }}>
+      <Text style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 13, color: "#1A1C1A", lineHeight: 18 }}>
         {children}
       </Text>
     </Pressable>

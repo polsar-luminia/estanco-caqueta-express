@@ -633,7 +633,7 @@ export default function CartScreen() {
       <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: colors.bg }}>
         <CartIcon color="#BCCABA" size={48} />
         <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: "#6D7B6C", marginBottom: 6 }}>Carrito vacío</Text>
-        <Text style={{ color: "#BCCABA", textAlign: "center", fontSize: 14 }}>
+        <Text style={{ color: "#BCCABA", textAlign: "center", fontFamily: fuentes.destacado, fontSize: 14 }}>
           Agrega productos desde el catálogo para hacer tu pedido
         </Text>
       </View>
@@ -727,7 +727,7 @@ export default function CartScreen() {
                                   </View>
                                 )}
                               </View>
-                              <Text style={{ fontSize: 12, color: "#6D7B6C", marginTop: 2 }} numberOfLines={1}>
+                              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C", marginTop: 2 }} numberOfLines={1}>
                                 {d.direccion}
                               </Text>
                             </View>
@@ -790,7 +790,7 @@ export default function CartScreen() {
                       domiciliario lee cuando ya llegó a la cuadra. Decirlo evita que
                       la gente escriba la dirección completa creyendo que reemplaza
                       el mapa. */}
-                  <Text style={{ fontSize: 12, color: "#9AA69A", marginBottom: 12, marginLeft: 4 }}>
+                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#9AA69A", marginBottom: 12, marginLeft: 4 }}>
                     El punto del mapa es el que usa el domiciliario. Esto le ayuda a
                     identificar la casa cuando ya está cerca.
                   </Text>
@@ -798,7 +798,7 @@ export default function CartScreen() {
                     Notas (Opcional)
                   </Text>
                   <TextInput
-                    style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: "#1A1C1A" }}
+                    style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontFamily: fuentes.destacado, fontSize: 14, color: "#1A1C1A" }}
                     placeholder="Portería, dejar con vigilante..."
                     placeholderTextColor="#BCCABA"
                     value={nuevasNotas}
@@ -824,7 +824,7 @@ export default function CartScreen() {
                     <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1FAF55" }}>
                       {cuponValidado.cupon.codigo}
                     </Text>
-                    <Text style={{ fontSize: 12, color: "#6D7B6C" }}>
+                    <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C" }}>
                       {cuponValidado.cupon.descripcion || (cuponValidado.cupon.tipo === "porcentaje" ? `${cuponValidado.cupon.valor}% de descuento` : `${formatCOP(cuponValidado.cupon.valor)} de descuento`)}
                     </Text>
                   </View>
@@ -875,7 +875,7 @@ export default function CartScreen() {
               )}
 
               {cuponError ? (
-                <Text style={{ fontSize: 12, color: colors.danger, marginTop: 6, marginLeft: 4 }}>{cuponError}</Text>
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.danger, marginTop: 6, marginLeft: 4 }}>{cuponError}</Text>
               ) : null}
             </View>
 
@@ -883,7 +883,7 @@ export default function CartScreen() {
             {subtotal < envioGratisMinimo && envio > 0 ? (
               <View style={{ backgroundColor: '#F4F4F0', borderRadius: 12, padding: 12, marginBottom: 0 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <Text style={{ fontSize: 12, color: '#6D7B6C' }}>Faltan {formatCOP(envioGratisMinimo - subtotal)} para envío gratis</Text>
+                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: '#6D7B6C' }}>Faltan {formatCOP(envioGratisMinimo - subtotal)} para envío gratis</Text>
                   <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: '#1FAF55' }}>{formatCOP(envioGratisMinimo)}</Text>
                 </View>
                 <View style={{ height: 4, borderRadius: 2, backgroundColor: '#E2E3DF' }}>
@@ -899,25 +899,25 @@ export default function CartScreen() {
             {/* Puntos + Envio */}
             <View className="rounded-2xl p-4 bg-white" style={{ ...shadows.card, gap: 12 }}>
               <View className="flex-row justify-between">
-                <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Subtotal</Text>
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#6D7B6C" }}>Subtotal</Text>
                 <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{formatCOP(subtotal)}</Text>
               </View>
               {descuentoCupon > 0 && (
                 <View className="flex-row justify-between">
-                  <Text style={{ fontSize: 14, color: "#1FAF55" }}>Descuento cupon</Text>
+                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#1FAF55" }}>Descuento cupon</Text>
                   <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1FAF55" }}>-{formatCOP(descuentoCupon)}</Text>
                 </View>
               )}
               {eta && (
                 <View className="flex-row justify-between items-center">
-                  <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Llega en</Text>
+                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#6D7B6C" }}>Llega en</Text>
                   <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>
                     {eta.min}–{eta.max} min
                   </Text>
                 </View>
               )}
               <View className="flex-row justify-between items-center">
-                <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Envio</Text>
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#6D7B6C" }}>Envio</Text>
                 <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: envio === 0 ? "#1FAF55" : "#1A1C1A" }}>
                   {envio === 0 ? "¡Gratis!" : formatCOP(envio)}
                 </Text>
@@ -946,7 +946,7 @@ export default function CartScreen() {
                       <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>
                         ¿Lo quieres frío? +{formatCOP(frioCosto)}
                       </Text>
-                      <Text style={{ fontSize: 14, lineHeight: 19, color: "#6D7B6C", marginTop: 3 }}>
+                      <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, lineHeight: 19, color: "#6D7B6C", marginTop: 3 }}>
                         {todosElegibles
                           ? "Todo tu pedido va frío."
                           : `Aseguramos frío para: ${itemsElegibles.map((i) => i.nombre).slice(0, 3).join(", ")}${itemsElegibles.length > 3 ? ` y ${itemsElegibles.length - 3} más` : ""}. El resto de tu pedido va a temperatura ambiente.`}
@@ -965,7 +965,7 @@ export default function CartScreen() {
 
               {resumen.frio > 0 && (
                 <View className="flex-row justify-between items-center">
-                  <Text style={{ fontSize: 14, color: "#6D7B6C" }}>Frío asegurado</Text>
+                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#6D7B6C" }}>Frío asegurado</Text>
                   <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#0F3A6B" }}>
                     {formatCOP(resumen.frio)}
                   </Text>
@@ -975,7 +975,7 @@ export default function CartScreen() {
                 <View className="flex-row justify-between items-center rounded-xl p-3" style={{ backgroundColor: colors.lowfill }}>
                   <View className="flex-1">
                     <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Usar 200 puntos</Text>
-                    <Text style={{ fontSize: 12, color: "#6D7B6C" }}>Envío gratis (tienes {puntos} pts)</Text>
+                    <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C" }}>Envío gratis (tienes {puntos} pts)</Text>
                   </View>
                   <Switch
                     value={usarPuntos}
@@ -986,7 +986,7 @@ export default function CartScreen() {
                 </View>
               )}
               {!puedeUsarPuntos && puntos > 0 && subtotal < envioGratisMinimo && (
-                <Text style={{ fontSize: 12, color: "#6D7B6C", fontStyle: "italic" }}>
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C", fontStyle: "italic" }}>
                   Tienes {puntos} pts. Necesitas 200 para envío gratis.
                 </Text>
               )}
@@ -1007,11 +1007,11 @@ export default function CartScreen() {
                   <Text style={{ fontSize: 17, fontFamily: fuentes.destacado, color: "#fff", lineHeight: 22 }}>
                     Domicilio en Florencia
                   </Text>
-                  <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 4 }}>
+                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 4 }}>
                     Efectivo, QR o datáfono contra entrega.
                   </Text>
                 </View>
-                <Text style={{ fontSize: 40, opacity: 0.2 }}>⚡</Text>
+                <Text style={{ fontFamily: fuentes.titulo, fontSize: 40, opacity: 0.2 }}>⚡</Text>
               </View>
             </LinearGradient>
           </View>
@@ -1059,7 +1059,7 @@ export default function CartScreen() {
               </Text>
             ) : null;
           })()}
-          <Text style={{ fontSize: 12, color: "#6D7B6C", fontStyle: "italic", marginTop: 4 }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C", fontStyle: "italic", marginTop: 4 }}>
             {envio === 0 ? "Envío gratis con puntos 🎉" : `Incluye domicilio (${formatCOP(envio)})`}
           </Text>
           {resumen.frio > 0 && (

@@ -78,7 +78,7 @@ export default function CuponesScreen() {
           <View className="items-center py-16">
             <Feather name="tag" size={40} color={colors.faint} />
             <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: colors.muted, marginTop: 12 }}>No hay cupones disponibles</Text>
-            <Text style={{ fontSize: 13, color: colors.faint, marginTop: 4, textAlign: "center" }}>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: colors.faint, marginTop: 4, textAlign: "center" }}>
               Sigue comprando para recibir descuentos exclusivos
             </Text>
           </View>
@@ -155,22 +155,22 @@ function CuponCard({ cupon, onCopiar, usado }: { cupon: CuponDisponible; onCopia
           </View>
 
           {cupon.descripcion ? (
-            <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 6 }}>{cupon.descripcion}</Text>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: colors.muted, marginBottom: 6 }}>{cupon.descripcion}</Text>
           ) : null}
 
           <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
             {Number(cupon.min_pedido) > 0 && (
-              <Text style={{ fontSize: 12, color: colors.faint }}>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.faint }}>
                 Pedido mín. {formatCOP(cupon.min_pedido)}
               </Text>
             )}
             {diasRestantes !== null && (
-              <Text style={{ fontSize: 12, color: diasRestantes <= 3 ? colors.offer : colors.faint }}>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: diasRestantes <= 3 ? colors.offer : colors.faint }}>
                 {diasRestantes === 1 ? "Vence hoy" : `Vence en ${diasRestantes} días`}
               </Text>
             )}
             {usado && (
-              <Text style={{ fontSize: 12, color: colors.faint, fontStyle: "italic" }}>Ya utilizado</Text>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.faint, fontStyle: "italic" }}>Ya utilizado</Text>
             )}
           </View>
         </View>

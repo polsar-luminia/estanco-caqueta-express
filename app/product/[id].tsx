@@ -180,7 +180,7 @@ export default function ProductDetailScreen() {
   if (!Number.isFinite(productoId) || productoId <= 0) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>
+        <Text style={{ fontFamily: fuentes.titulo, fontSize: 48, marginBottom: 12 }}>😕</Text>
         <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1F1F1F", textAlign: "center" }}>
           Producto no encontrado
         </Text>
@@ -195,7 +195,7 @@ export default function ProductDetailScreen() {
   if (productoBloqueadoIOS) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>
+        <Text style={{ fontFamily: fuentes.titulo, fontSize: 48, marginBottom: 12 }}>😕</Text>
         <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1F1F1F", textAlign: "center" }}>
           Producto no disponible
         </Text>
@@ -206,11 +206,11 @@ export default function ProductDetailScreen() {
   if (isError || !product) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <Text style={{ fontSize: 48, marginBottom: 12 }}>😕</Text>
+        <Text style={{ fontFamily: fuentes.titulo, fontSize: 48, marginBottom: 12 }}>😕</Text>
         <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1F1F1F", marginBottom: 8 }}>
           No pudimos cargar este producto
         </Text>
-        <Text style={{ fontSize: 14, color: "#6B6B6B", textAlign: "center", marginBottom: 24 }}>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#6B6B6B", textAlign: "center", marginBottom: 24 }}>
           Verifica tu conexión e intenta de nuevo
         </Text>
         <Pressable
@@ -361,20 +361,20 @@ export default function ProductDetailScreen() {
         <View className="px-5 pt-6" style={{ gap: 12 }}>
           {/* Category + Availability row */}
           <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-extrabold uppercase tracking-widest" style={{ color: colors.offer }}>
+            <Text className="text-sm uppercase tracking-widest font-destacado" style={{ color: colors.offer }}>
               {product.categoria}
             </Text>
 
             {inStock ? (
               <View className="flex-row items-center rounded-full bg-brand-500/10 px-3 py-1">
                 <CheckIcon />
-                <Text className="ml-1 text-xs font-semibold text-brand-500">
+                <Text className="ml-1 text-xs text-brand-500 font-destacado">
                   Disponible
                 </Text>
               </View>
             ) : (
               <View className="rounded-full bg-red-500/10 px-3 py-1">
-                <Text className="text-xs font-semibold text-red-500">
+                <Text className="text-xs text-red-500 font-destacado">
                   Agotado
                 </Text>
               </View>
@@ -382,18 +382,18 @@ export default function ProductDetailScreen() {
           </View>
 
           {/* Title */}
-          <Text className="text-3xl font-bold text-on-surface">
+          <Text className="text-3xl text-on-surface font-titulo">
             {product.nombre}
           </Text>
 
           {/* Price */}
           <View style={{ gap: 2 }}>
             {ofertaValida && precioAnteriorValido ? (
-              <Text style={{ fontSize: 14, color: "#9E9E9E", textDecorationLine: "line-through" }}>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#9E9E9E", textDecorationLine: "line-through" }}>
                 {formatCOP(precioAnteriorParsed)}
               </Text>
             ) : null}
-            <Text className="text-2xl font-extrabold" style={{ color: colors.ink }}>
+            <Text className="text-2xl font-titulo" style={{ color: colors.ink }}>
               {formatCOP(precioActivo)}
             </Text>
           </View>
@@ -403,7 +403,7 @@ export default function ProductDetailScreen() {
               puede volver a pedir — para que no se entere apenas al pagar. */}
           {maxCliente != null ? (
             <View className="flex-row items-center self-start rounded-full px-3 py-1" style={{ backgroundColor: "#FDECEF" }}>
-              <Text className="text-xs font-semibold" style={{ color: colors.offer }}>
+              <Text className="text-xs font-destacado" style={{ color: colors.offer }}>
                 {sinCupo && liberaTexto
                   ? `Ya llevaste ${maxCliente} ${maxCliente === 1 ? "unidad" : "unidades"} — puedes volver a pedir el ${liberaTexto}`
                   : `Máximo ${maxCliente} ${maxCliente === 1 ? "unidad" : "unidades"} por cliente cada ${ventanaDias} días`}
@@ -416,10 +416,10 @@ export default function ProductDetailScreen() {
               El sync-shopify-app.js la trae automáticamente en el próximo ciclo. */}
           {product.descripcion ? (
             <View style={{ gap: 6 }}>
-              <Text className="text-base font-bold text-on-surface">
+              <Text className="text-base text-on-surface font-destacado">
                 Descripcion
               </Text>
-              <Text className="text-base leading-6 text-gray-600">
+              <Text className="text-base leading-6 text-gray-600 font-destacado">
                 {product.descripcion}
               </Text>
             </View>
@@ -427,7 +427,7 @@ export default function ProductDetailScreen() {
 
           {/* ── Quantity selector ─────────────────────────── */}
           <View className="mt-4 flex-row items-center justify-between">
-            <Text className="text-base font-bold text-on-surface">
+            <Text className="text-base text-on-surface font-destacado">
               Cantidad
             </Text>
 
@@ -457,7 +457,7 @@ export default function ProductDetailScreen() {
 
               {/* Number */}
               <Text
-                className="text-xl font-extrabold text-on-surface"
+                className="text-xl text-on-surface font-titulo"
                 style={{ minWidth: 28, textAlign: "center" }}
               >
                 {quantity}

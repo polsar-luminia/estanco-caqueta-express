@@ -124,7 +124,7 @@ export default function EliminarCuentaScreen() {
               <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.danger, marginBottom: 4 }}>
                 Esta acción no se puede deshacer
               </Text>
-              <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18 }}>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, lineHeight: 18 }}>
                 Tu cuenta y todos tus datos serán eliminados de forma permanente.
               </Text>
             </View>
@@ -144,12 +144,12 @@ export default function EliminarCuentaScreen() {
             ].map((it, i) => (
               <View key={i} style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
                 <Feather name="x-circle" size={14} color={colors.danger} style={{ marginTop: 2 }} />
-                <Text style={{ flex: 1, fontSize: 13, color: colors.ink, lineHeight: 18 }}>{it}</Text>
+                <Text style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 13, color: colors.ink, lineHeight: 18 }}>{it}</Text>
               </View>
             ))}
           </View>
 
-          <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18, marginBottom: 16 }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, lineHeight: 18, marginBottom: 16 }}>
             Por seguridad, escribe la palabra{" "}
             <Text style={{ fontFamily: fuentes.destacado, color: colors.ink }}>{PALABRA_CONFIRMACION}</Text>{" "}
             (en mayúsculas) para confirmar.
@@ -218,7 +218,7 @@ export default function EliminarCuentaScreen() {
           </Pressable>
 
           <Text style={{
-            fontSize: 12, color: colors.faint,
+            fontFamily: fuentes.destacado, fontSize: 12, color: colors.faint,
             marginTop: 24, textAlign: "center", lineHeight: 16, paddingHorizontal: 8,
           }}>
             ¿Solo necesitas cambiar tu información? Vuelve atrás y edita tu perfil — no

@@ -65,19 +65,19 @@ export function TarjetaResena({ pedidoId, abrirAlEntrar = false, nombreDomicilia
   if (resena) {
     return (
       <View className="bg-white rounded-2xl p-6" style={CARD_SHADOW}>
-        <Text className="text-base font-bold text-on-surface mb-3">Tu calificación</Text>
+        <Text className="text-base text-on-surface mb-3 font-destacado">Tu calificación</Text>
         <Estrellas valor={resena.estrellas} readonly tamano={24} />
         {resena.comentario && (
-          <Text className="text-sm text-gray-600 mt-3 text-center italic">
+          <Text className="text-sm text-gray-600 mt-3 text-center italic font-destacado">
             “{resena.comentario}”
           </Text>
         )}
         {resena.estrellas_domiciliario ? (
           <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 10, alignItems: "center" }}>
-            <Text className="text-xs text-gray-500 mb-1">Tu domiciliario</Text>
+            <Text className="text-xs text-gray-500 mb-1 font-destacado">Tu domiciliario</Text>
             <Estrellas valor={resena.estrellas_domiciliario} readonly tamano={18} />
             {resena.comentario_domiciliario && (
-              <Text className="text-sm text-gray-600 mt-2 text-center italic">
+              <Text className="text-sm text-gray-600 mt-2 text-center italic font-destacado">
                 “{resena.comentario_domiciliario}”
               </Text>
             )}
@@ -92,10 +92,10 @@ export function TarjetaResena({ pedidoId, abrirAlEntrar = false, nombreDomicilia
       className="bg-white rounded-2xl p-6"
       style={[CARD_SHADOW, abrirAlEntrar ? { borderWidth: 2, borderColor: colors.green } : null]}
     >
-      <Text className="text-base font-bold text-on-surface text-center">
+      <Text className="text-base text-on-surface text-center font-destacado">
         ¿Cómo te fue con tu pedido?
       </Text>
-      <Text className="text-sm text-gray-500 text-center mt-1 mb-4">
+      <Text className="text-sm text-gray-500 text-center mt-1 mb-4 font-destacado">
         Toca las estrellas. Te toma 10 segundos.
       </Text>
 
@@ -120,7 +120,7 @@ export function TarjetaResena({ pedidoId, abrirAlEntrar = false, nombreDomicilia
               borderColor: colors.line,
               borderRadius: 12,
               padding: 12,
-              fontSize: 14,
+              fontFamily: fuentes.destacado, fontSize: 14,
               color: colors.ink,
               textAlignVertical: "top",
             }}
@@ -130,7 +130,7 @@ export function TarjetaResena({ pedidoId, abrirAlEntrar = false, nombreDomicilia
               asignado. Opcional — no calificarlo no bloquea la reseña general. */}
           {nombreDomiciliario ? (
             <View style={{ marginTop: 18, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 14 }}>
-              <Text className="text-sm font-bold text-on-surface text-center">
+              <Text className="text-sm text-on-surface text-center font-destacado">
                 ¿Qué tal estuvo el servicio de {nombreDomiciliario}?
               </Text>
               <View style={{ marginTop: 8 }}>
@@ -152,7 +152,7 @@ export function TarjetaResena({ pedidoId, abrirAlEntrar = false, nombreDomicilia
                     borderColor: colors.line,
                     borderRadius: 12,
                     padding: 12,
-                    fontSize: 14,
+                    fontFamily: fuentes.destacado, fontSize: 14,
                     color: colors.ink,
                     textAlignVertical: "top",
                   }}

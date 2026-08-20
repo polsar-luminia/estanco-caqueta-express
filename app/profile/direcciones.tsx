@@ -141,7 +141,7 @@ export default function DireccionesScreen() {
           <View className="items-center py-12">
             <Feather name="map-pin" size={40} color="#D1D5DB" />
             <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: "#6D7B6C", marginTop: 12 }}>No tienes direcciones guardadas</Text>
-            <Text style={{ fontSize: 13, color: "#9E9E9E", marginTop: 4 }}>Agrega una para agilizar tus pedidos</Text>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: "#9E9E9E", marginTop: 4 }}>Agrega una para agilizar tus pedidos</Text>
           </View>
         ) : (
           direcciones.map((d) => (
@@ -167,8 +167,8 @@ export default function DireccionesScreen() {
                         </View>
                       )}
                     </View>
-                    <Text style={{ fontSize: 13, color: "#6D7B6C", marginTop: 2 }}>{d.direccion}</Text>
-                    {d.notas ? <Text style={{ fontSize: 12, color: "#9E9E9E", fontStyle: "italic", marginTop: 2 }}>{d.notas}</Text> : null}
+                    <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: "#6D7B6C", marginTop: 2 }}>{d.direccion}</Text>
+                    {d.notas ? <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#9E9E9E", fontStyle: "italic", marginTop: 2 }}>{d.notas}</Text> : null}
                   </View>
                 </View>
                 <Pressable
@@ -270,7 +270,7 @@ export default function DireccionesScreen() {
             </View>
 
             <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Notas (opcional)</Text>
-            <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontSize: 14, color: colors.ink, marginBottom: 16 }} placeholder="Portería, dejar con vigilante..." placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline />
+            <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontFamily: fuentes.destacado, fontSize: 14, color: colors.ink, marginBottom: 16 }} placeholder="Portería, dejar con vigilante..." placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline />
 
             <View style={{ flexDirection: "row", gap: 8 }}>
               <Pressable

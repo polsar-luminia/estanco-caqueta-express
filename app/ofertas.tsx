@@ -96,7 +96,7 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
           style={StyleSheet.absoluteFill}
         />
         <View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center" }]}>
-          <Text style={{ fontSize: 38, opacity: 0.28 }}>{emoji}</Text>
+          <Text style={{ fontFamily: fuentes.titulo, fontSize: 38, opacity: 0.28 }}>{emoji}</Text>
         </View>
         {/* Badge de ahorro */}
         {saving > 0 && (
@@ -128,7 +128,7 @@ function FlashCard({ oferta }: { oferta: Oferta }) {
         </Text>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <View>
-            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.40)", textDecorationLine: "line-through" }}>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "rgba(255,255,255,0.40)", textDecorationLine: "line-through" }}>
               {formatCOP(precioBase)}
             </Text>
             <Text style={{ fontSize: 17, fontFamily: fuentes.destacado, color: "#fff" }}>
@@ -283,7 +283,7 @@ export default function OfertasScreen() {
             >
               {/* Encabezado */}
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                <Text style={{ fontSize: 18 }}>⚡</Text>
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 18 }}>⚡</Text>
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
@@ -296,7 +296,7 @@ export default function OfertasScreen() {
                   >
                     Ofertas Relámpago
                   </Text>
-                  <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 1 }}>
+                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 1 }}>
                     Solo por tiempo limitado
                   </Text>
                 </View>
@@ -376,7 +376,7 @@ export default function OfertasScreen() {
           {/* ── Estado vacío ── */}
           {ofertas.length === 0 && (
             <View style={{ flex: 1, alignItems: "center", paddingTop: 48 }}>
-              <Text style={{ fontSize: 16, color: "#9CA3AF" }}>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 16, color: "#9CA3AF" }}>
                 No hay ofertas activas ahora
               </Text>
             </View>

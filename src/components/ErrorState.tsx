@@ -9,11 +9,11 @@ interface Props {
 export function ErrorState({ mensaje = "No pudimos cargar la información", onRetry }: Props) {
   return (
     <View style={{ alignItems: "center", justifyContent: "center", padding: 32 }}>
-      <Text style={{ fontSize: 40, marginBottom: 12 }}>😕</Text>
+      <Text style={{ fontFamily: fuentes.titulo, fontSize: 40, marginBottom: 12 }}>😕</Text>
       <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: "#1F1F1F", marginBottom: 6, textAlign: "center" }}>
         {mensaje}
       </Text>
-      <Text style={{ fontSize: 13, color: "#6B6B6B", textAlign: "center", marginBottom: 20 }}>
+      <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: "#6B6B6B", textAlign: "center", marginBottom: 20 }}>
         Verifica tu conexión e intenta de nuevo
       </Text>
       {onRetry && (

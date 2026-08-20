@@ -166,7 +166,7 @@ export default function NotificacionesScreen() {
           </View>
         ) : !prefs ? (
           <View style={{ alignItems: "center", paddingVertical: 48, gap: 16 }}>
-            <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center" }}>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: colors.muted, textAlign: "center" }}>
               No pudimos cargar tus preferencias
             </Text>
             <Pressable
@@ -194,7 +194,7 @@ export default function NotificacionesScreen() {
                   <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
                     Estado de tus pedidos
                   </Text>
-                  <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
+                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, marginTop: 2 }}>
                     Recibido, despachado, cuando el domiciliario llega y entregado. Estas son transaccionales y no se pueden desactivar.
                   </Text>
                 </View>
@@ -223,7 +223,7 @@ export default function NotificacionesScreen() {
                     <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
                       Ofertas y promociones
                     </Text>
-                    <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
+                    <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, marginTop: 2 }}>
                       Por WhatsApp y por notificaciones. Es opcional: apagarlo no afecta tus pedidos.
                     </Text>
                   </View>
@@ -243,7 +243,7 @@ export default function NotificacionesScreen() {
                 {/* Nunca se le pregunto: se pide, no se asume. */}
                 {mercadeo === null && (
                   <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: colors.line }}>
-                    <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 17 }}>
+                    <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, lineHeight: 17 }}>
                       Todavia no nos has dicho si quieres recibir ofertas. Activalo si quieres
                       enterarte de las promociones; si lo dejas apagado, no te escribiremos.
                     </Text>
@@ -274,7 +274,7 @@ export default function NotificacionesScreen() {
                       <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
                         {item.titulo}
                       </Text>
-                      <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
+                      <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, marginTop: 2 }}>
                         {item.descripcion}
                       </Text>
                     </View>
@@ -297,7 +297,7 @@ export default function NotificacionesScreen() {
               </View>
             </View>
 
-            <Text style={{ fontSize: 12, color: colors.faint, textAlign: "center", marginTop: 8, paddingHorizontal: 16 }}>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.faint, textAlign: "center", marginTop: 8, paddingHorizontal: 16 }}>
               Maximo 2 mensajes promocionales por semana. Puedes cambiar esto cuando quieras, y el estado de tus pedidos te llega siempre.
             </Text>
           </>

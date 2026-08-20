@@ -121,7 +121,7 @@ export function BandaCerrado({ tienda, compact = false, style }: Props) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#16241A" }}>{aviso.titulo}</Text>
-          <Text style={{ fontSize: 12, color: "#6E7A6C", marginTop: 1 }} numberOfLines={2}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6E7A6C", marginTop: 1 }} numberOfLines={2}>
             {aviso.mensaje}
           </Text>
         </View>
@@ -136,7 +136,7 @@ export function BandaCerrado({ tienda, compact = false, style }: Props) {
         <View style={{ borderTopWidth: 1, borderTopColor: "#EBEFE9", marginTop: 12, paddingTop: 10, gap: 5 }}>
           {horario.map(({ dias, horas }) => (
             <View key={dias} style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
-              <Text style={{ fontSize: 12, color: "#9AA69A" }}>{dias}</Text>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#9AA69A" }}>{dias}</Text>
               {/* Los días con pausa traen dos franjas: se apilan a la derecha. */}
               <View style={{ alignItems: "flex-end" }}>
                 {horas.map((hora) => (

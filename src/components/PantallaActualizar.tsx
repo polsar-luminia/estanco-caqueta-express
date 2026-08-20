@@ -57,7 +57,7 @@ export function PantallaActualizar({ mensaje }: { mensaje?: string | null }) {
 
       <Text
         style={{
-          fontSize: 15,
+          fontFamily: fuentes.destacado, fontSize: 15,
           lineHeight: 22,
           color: colors.muted,
           textAlign: "center",

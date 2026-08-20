@@ -364,7 +364,7 @@ export default function RegisterScreen() {
             />
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 }}>
               <View style={{ width: 16, height: 1, backgroundColor: colors.line }} />
-              <Text style={{ fontSize: 12, color: colors.faint }}>Crea tu cuenta gratis</Text>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.faint }}>Crea tu cuenta gratis</Text>
               <View style={{ width: 16, height: 1, backgroundColor: colors.line }} />
             </View>
           </View>
@@ -438,7 +438,7 @@ export default function RegisterScreen() {
             >
               {aceptaMercadeo && <Feather name="check" size={14} color="#fff" />}
             </View>
-            <Text style={{ flex: 1, fontSize: 12.5, color: colors.muted, lineHeight: 17 }}>
+            <Text style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 12.5, color: colors.muted, lineHeight: 17 }}>
               Quiero recibir ofertas y promociones por WhatsApp y notificaciones.{" "}
               <Text style={{ color: colors.faint }}>
                 Opcional — puedes cambiarlo cuando quieras desde tu perfil.
@@ -448,7 +448,7 @@ export default function RegisterScreen() {
 
           {/* Aceptación implícita de políticas: el toque en "Crear Cuenta" es la
               aceptación expresa (patrón estándar; reemplaza los 2 checkboxes). */}
-          <Text style={{ fontSize: 12.5, color: colors.muted, textAlign: "center", marginTop: 12, lineHeight: 17, paddingHorizontal: 8 }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12.5, color: colors.muted, textAlign: "center", marginTop: 12, lineHeight: 17, paddingHorizontal: 8 }}>
             Al crear tu cuenta aceptas los{" "}
             <Text
               style={{ color: colors.green, fontFamily: fuentes.destacado }}
@@ -501,7 +501,7 @@ export default function RegisterScreen() {
           {/* Footer — link a login */}
           <View style={{ alignItems: "center", marginTop: 16 }}>
             <View style={{ flexDirection: "row" }}>
-              <Text style={{ color: colors.muted, fontSize: 13 }}>¿Ya tienes una cuenta? </Text>
+              <Text style={{ color: colors.muted, fontFamily: fuentes.destacado, fontSize: 13 }}>¿Ya tienes una cuenta? </Text>
               <Link href="/(auth)/login" asChild>
                 <Pressable
                   accessibilityRole="link"
@@ -519,7 +519,7 @@ export default function RegisterScreen() {
             <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: colors.ink, marginBottom: 6 }}>
               Verifica tu número
             </Text>
-            <Text style={{ fontSize: 13.5, color: colors.muted, textAlign: "center", lineHeight: 19 }}>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 13.5, color: colors.muted, textAlign: "center", lineHeight: 19 }}>
               Te enviamos un código de 6 dígitos por{" "}
               <Text style={{ fontFamily: fuentes.destacado, color: colors.ink }}>
                 {canal === "sms" ? "SMS" : "WhatsApp"}
@@ -593,7 +593,7 @@ export default function RegisterScreen() {
             hitSlop={8}
             style={{ alignItems: "center", marginTop: 14 }}
           >
-            <Text style={{ fontSize: 13, color: colors.muted }}>
+            <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: colors.muted }}>
               ¿Número equivocado? <Text style={{ color: colors.offer, fontFamily: fuentes.destacado }}>Corrígelo</Text>
             </Text>
           </Pressable>

@@ -86,7 +86,7 @@ export function InputField({
         <View style={{ marginRight: 12 }}>{icon}</View>
         <TextInput
           ref={inputRef}
-          style={{ flex: 1, fontSize: 16, color: colors.ink }}
+          style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 16, color: colors.ink }}
           placeholder={placeholder}
           placeholderTextColor={colors.faint}
           keyboardType={keyboardType}

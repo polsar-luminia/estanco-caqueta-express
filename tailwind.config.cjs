@@ -5,6 +5,15 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
+        // Las de marca, con los MISMOS alias que registra useFonts en
+        // app/_layout.tsx (ver src/constants/theme.ts → fuentes). Si el alias no
+        // coincide, nativewind emite un fontFamily que no existe y el texto sale
+        // con la tipografia del sistema, sin ningun error.
+        titulo: ["ArchivoBlack"],
+        destacado: ["Oswald"],
+        // Heredadas: apuntan a fuentes que NO se cargan en ningun lado, asi que
+        // hoy caen al sistema. Se dejan para no romper una clase suelta que
+        // siga usandolas; no usarlas en codigo nuevo.
         headline: ["PlusJakartaSans_700Bold"],
         body: ["Inter_400Regular"],
       },

@@ -232,7 +232,7 @@ export default function UbicacionScreen() {
         {!mapaListo ? (
           <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
             <ActivityIndicator size="large" color="#1FAF55" />
-            <Text style={{ marginTop: 10, color: "#6D7B6C", fontSize: 13 }}>Cargando mapa…</Text>
+            <Text style={{ marginTop: 10, color: "#6D7B6C", fontFamily: fuentes.destacado, fontSize: 13 }}>Cargando mapa…</Text>
           </View>
         ) : null}
 
@@ -267,7 +267,7 @@ export default function UbicacionScreen() {
       <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 12, backgroundColor: "#fff", borderTopWidth: 1, borderTopColor: "#EFEFEB" }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 20 }}>
           <Feather name="map-pin" size={13} color="#6D7B6C" />
-          <Text style={{ flex: 1, fontSize: 13, color: "#6D7B6C" }} numberOfLines={1}>
+          <Text style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 13, color: "#6D7B6C" }} numberOfLines={1}>
             {geocoded ? `${geocoded} (aprox.)` : "Mueve el mapa para ubicar el punto"}
           </Text>
         </View>
@@ -292,7 +292,7 @@ export default function UbicacionScreen() {
         {avisoPermiso ? (
           <View accessibilityLiveRegion="polite" style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8, backgroundColor: colors.lowfill, borderRadius: 8, padding: 10 }}>
             <Feather name="info" size={16} color="#6D7B6C" />
-            <Text style={{ flex: 1, fontSize: 14, lineHeight: 19, color: "#6D7B6C" }}>{avisoPermiso}</Text>
+            <Text style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 14, lineHeight: 19, color: "#6D7B6C" }}>{avisoPermiso}</Text>
           </View>
         ) : null}
 

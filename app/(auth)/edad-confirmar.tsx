@@ -85,12 +85,12 @@ export default function EdadConfirmarScreen() {
             Confirma tu mayoría de edad
           </Text>
 
-          <Text style={{ fontSize: 14, color: "#3C443B", lineHeight: 20, textAlign: "center", marginBottom: 8 }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#3C443B", lineHeight: 20, textAlign: "center", marginBottom: 8 }}>
             Para usar Estanco Caquetá Express debes ser{"\n"}
             <Text style={{ fontFamily: fuentes.destacado, color: colors.ink }}>mayor de 18 años</Text>.
           </Text>
 
-          <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 18, textAlign: "center", marginBottom: 24 }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: colors.muted, lineHeight: 18, textAlign: "center", marginBottom: 24 }}>
             Esta aplicación contiene productos para adultos.
           </Text>
 
@@ -132,7 +132,7 @@ export default function EdadConfirmarScreen() {
           </Pressable>
         </View>
 
-        <Text style={{ fontSize: 12, color: colors.muted, textAlign: "center", marginTop: 20, lineHeight: 16, paddingHorizontal: 12 }}>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, textAlign: "center", marginTop: 20, lineHeight: 16, paddingHorizontal: 12 }}>
           La venta y consumo de bebidas alcohólicas a menores de edad está prohibida por la ley colombiana (Ley 124 de 1994).
         </Text>
       </ScrollView>

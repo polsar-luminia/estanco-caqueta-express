@@ -95,7 +95,7 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
           marginBottom: 12,
         }}
       >
-        <Text style={{ fontSize: 14, color: triggerText ? "#1A1C1A" : "#BCCABA", flex: 1 }} numberOfLines={1}>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: triggerText ? "#1A1C1A" : "#BCCABA", flex: 1 }} numberOfLines={1}>
           {triggerText || "Selecciona tu barrio"}
         </Text>
         <Feather name="chevron-down" size={16} color="#6D7B6C" />
@@ -109,7 +109,7 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
             borderRadius: 12,
             paddingHorizontal: 16,
             paddingVertical: 12,
-            fontSize: 14,
+            fontFamily: fuentes.destacado, fontSize: 14,
             color: "#1A1C1A",
             marginBottom: 12,
             display: modoLibre ? "flex" : "none",
@@ -143,7 +143,7 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
             <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, gap: 8 }}>
               <Feather name="search" size={16} color="#9E9E9E" />
               <TextInput
-                style={{ flex: 1, fontSize: 14, color: "#1A1C1A" }}
+                style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 14, color: "#1A1C1A" }}
                 placeholder="Buscar barrio..."
                 placeholderTextColor="#BCCABA"
                 value={query}
@@ -217,7 +217,7 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
                     style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 14, marginTop: 8 }}
                   >
                     <Feather name="edit-2" size={14} color="#9E9E9E" />
-                    <Text style={{ fontSize: 14, color: "#9E9E9E" }}>Mi barrio no está en la lista...</Text>
+                    <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#9E9E9E" }}>Mi barrio no está en la lista...</Text>
                   </Pressable>
                 ) : null
               }

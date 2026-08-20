@@ -142,7 +142,7 @@ export default function DireccionInicialScreen() {
         <Text style={{ fontSize: 26, fontFamily: fuentes.titulo, color: colors.ink, letterSpacing: -0.5 }}>
           ¿A dónde te llevamos el pedido?
         </Text>
-        <Text style={{ fontSize: 15, lineHeight: 22, color: colors.muted, marginTop: 8, marginBottom: 24 }}>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 15, lineHeight: 22, color: colors.muted, marginTop: 8, marginBottom: 24 }}>
           Guárdala una vez y pide en dos toques. Así el domiciliario llega exacto,
           sin llamarte.
         </Text>
@@ -215,7 +215,7 @@ export default function DireccionInicialScreen() {
           style={{
             backgroundColor: "#fff", borderRadius: radii.input,
             paddingHorizontal: 16, paddingVertical: 12,
-            fontSize: 14, color: colors.ink, minHeight: 48,
+            fontFamily: fuentes.destacado, fontSize: 14, color: colors.ink, minHeight: 48,
           }}
         />
 
