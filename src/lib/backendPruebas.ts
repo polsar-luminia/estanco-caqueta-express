@@ -27,7 +27,21 @@ import { API_URL } from "../constants/config";
 export const STAGING_URL = "https://pruebas.estancocaqueta.com/api/v1";
 
 // Numeros que SIEMPRE trabajan contra staging. Solo cuentas del equipo.
-export const TELEFONOS_PRUEBA = ["3183224021"];
+//
+// VACIA desde el 21-ago-2026. Tenia el numero del dueño (3183224021), y el
+// efecto no era el buscado: cada vez que abria la app de la tienda con SU
+// numero terminaba en staging sin quererlo — cuenta nueva en la base de
+// pruebas, catalogo de pruebas, y la franja naranja permanente. Se borro su
+// cuenta de staging tres veces creyendo que era basura de las pruebas, cuando
+// la causa era esta linea.
+//
+// Con la lista vacia el modo no se puede activar por ningun numero, que es
+// justo lo que se quiere: la app de la tienda va SIEMPRE a produccion. Para
+// probar staging quedan el simulador y el perfil `staging-ios` de eas.json.
+//
+// Si algun dia se vuelve a necesitar desde un celular, agregar aqui una linea
+// que NO sea la que se usa para comprar de verdad.
+export const TELEFONOS_PRUEBA: string[] = [];
 
 const STORAGE_KEY = "backend_pruebas_activo";
 
@@ -46,7 +60,19 @@ export function hidratarModoPruebas(): Promise<void> {
   if (!hidratado) {
     hidratado = AsyncStorage.getItem(STORAGE_KEY)
       .then((v) => {
-        activo = v === "1";
+        // El modo es PEGAJOSO, y `aplicarModoPorTelefono` solo corre al iniciar
+        // sesion. Sin esta limpieza, quien ya lo tenia activo se quedaba en
+        // staging para siempre despues de vaciar TELEFONOS_PRUEBA — la app se
+        // "arreglaba" solo si cerraba sesion y volvia a entrar, que es
+        // exactamente lo que nadie adivina que hay que hacer.
+        //
+        // Con la lista vacia el modo no puede estar activo legitimamente, asi
+        // que apagarlo aqui es correcto por construccion, no un parche.
+        const sinNumerosDePrueba = TELEFONOS_PRUEBA.length === 0;
+        activo = v === "1" && !sinNumerosDePrueba;
+        if (v === "1" && sinNumerosDePrueba) {
+          AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+        }
         notificar();
       })
       .catch(() => {});
