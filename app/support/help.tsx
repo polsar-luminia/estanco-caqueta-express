@@ -6,6 +6,7 @@ import { Feather } from "@expo/vector-icons";
 import { MessageIcon } from "../../src/components/icons/AppIcons";
 import { colors, shadows } from "../../src/constants/theme";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
+import { WHATSAPP_SOPORTE } from "../../src/constants/config";
 import { HORARIO_FALLBACK } from "../../src/components/BandaCerrado";
 
 const FAQ = [
@@ -107,14 +108,14 @@ export default function HelpScreen() {
           </Text>
 
           <Pressable
-            onPress={() => Linking.openURL("https://wa.me/573189495704")}
+            onPress={() => Linking.openURL(WHATSAPP_SOPORTE)}
             accessibilityRole="link"
-            accessibilityLabel="Escribirnos por WhatsApp al 318 949 5704"
+            accessibilityLabel="Escribirnos por WhatsApp"
             className="flex-row items-center justify-center py-3.5 rounded-xl mb-3"
             style={{ backgroundColor: "#25D366" }}
           >
             <MessageIcon color="#fff" size={20} />
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>WhatsApp: 318 949 5704</Text>
+            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Escribir por WhatsApp</Text>
           </Pressable>
 
           <Pressable
