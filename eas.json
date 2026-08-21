@@ -26,6 +26,16 @@
         "simulator": true
       }
     },
+    "staging-ios": {
+      "distribution": "internal",
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.estancocaqueta.com:8443/api/v1"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
     "preview-device": {
       "distribution": "internal",
       "env": {
