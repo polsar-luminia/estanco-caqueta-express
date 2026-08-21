@@ -4,17 +4,6 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { colors } from "../../src/constants/theme";
 
-// BORRADOR — PENDIENTE DE REVISION JURIDICA.
-//
-// Los textos de mercadeo (secciones 2, 3, 4 y la 5 nueva) se redactaron para cerrar
-// un hueco concreto: la politica declaraba marketing SOLO por notificaciones push,
-// mientras en la practica se envian campanas y recordatorios de carrito por
-// WhatsApp. Enviar por un canal que el texto no declara es el problema; el texto
-// nuevo lo declara y separa la autorizacion de mercadeo de la de tratamiento.
-//
-// Esto NO es una opinion legal ni certifica cumplimiento de la Ley 1581 de 2012.
-// Antes de publicarlo tiene que revisarlo un abogado, y la fecha de "ultima
-// actualizacion" y la version en `documentos_legales` deben moverse juntas.
 const SECTIONS = [
   {
     title: "1. Responsable del Tratamiento",
