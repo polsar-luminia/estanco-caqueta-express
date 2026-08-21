@@ -116,7 +116,11 @@ export type EventTipo =
   // ofertas ni tira de categorias. Lo unico era pantalla_vista.
   | 'categoria_grande_abierta'
   | 'subcategoria_abierta'
-  | 'carril_mostrar_mas';
+  | 'carril_mostrar_mas'
+  // Fuga de direccion (1.3.1). `checkout_abandonado` solo se dispara DENTRO de
+  // handlePedir, o sea que solo mide al que llego a tocar "Pedir". De 277 que
+  // agregan al carrito, 101 lo tocan: de los otros 176 no sabiamos nada.
+  | 'carrito_abandonado';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -271,6 +275,13 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // `motivo`: codigo_invalido | envio_fallido | telefono_ya_registrado |
   // limite_alcanzado. Nunca el código ni el teléfono.
   registro_codigo_fallido: ['motivo'],
+
+  // --- Fuga de direccion (1.3.1) ---
+  // Se fue del carrito sin tocar "Pedir". Responde la pregunta que
+  // `checkout_abandonado` no puede: de los que ni lo intentan, a cuantos les
+  // faltaba algo que la app YA sabia. Todo son booleanos y conteos: no dice
+  // cual es la direccion ni donde queda, solo si la hay.
+  carrito_abandonado: ['items_count', 'subtotal', 'tiene_direccion', 'supera_minimo', 'tienda_abierta', 'vio_formulario'],
 };
 
 function aplicarAllowlist(

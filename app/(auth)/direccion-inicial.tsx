@@ -10,11 +10,17 @@
  * Pedirla acá cuesta lo mismo pero se paga cuando todavía no ha invertido nada,
  * y el carrito deja de ser una pared.
  *
- * SE PUEDE SALTAR a proposito. El punto del mapa es obligatorio para guardar
- * —una dirección sin coordenadas es una entrega que el domiciliario adivina—,
- * pero obligar a resolverlo AHORA dejaría afuera a quien tiene mala señal o
- * simplemente está mirando. Quien se salta encuentra el mismo muro de siempre en
- * el carrito, que es exactamente donde estábamos: no perdemos nada.
+ * El punto del mapa es obligatorio SIEMPRE: una dirección sin coordenadas es una
+ * entrega que el domiciliario adivina, y el mapa funciona sin ningún permiso
+ * (`ubicacion.tsx` nunca exige el GPS y cae al centro de Florencia), así que no
+ * deja a nadie encerrado.
+ *
+ * SE PUEDE SALTAR solo mientras `direccion_obligatoria_registro` esté apagada.
+ * El argumento para dejar saltar era "quien se salta encuentra el mismo muro en
+ * el carrito, no perdemos nada", y los datos del 20-ago-2026 lo desmienten: de
+ * 62 devices que tocaron "Lo hago después", 8 tienen dirección hoy. Y de las 78
+ * cuentas sin dirección de la quincena, 75 vieron ESTA pantalla y 37 llegaron
+ * igual hasta el carrito. El muro de abajo no recoge a nadie.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -24,10 +30,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Toast from "react-native-toast-message";
 import { Feather } from "@expo/vector-icons";
-import { getDirecciones, crearDireccion, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
+import { getDirecciones, crearDireccion, getConfigApp, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { BuscadorDireccion } from "../../src/components/BuscadorDireccion";
 import { tracker } from "../../src/lib/tracker";
+import { useAuthStore } from "../../src/stores/auth";
 import { colors, radii, fuentes } from "../../src/constants/theme";
 
 const ETIQUETAS = ["Casa", "Trabajo", "Otro"];
@@ -44,6 +51,17 @@ export default function DireccionInicialScreen() {
   // aporta nada y encima tapa el mapa que lo confirma.
   const [silenciado, setSilenciado] = useState(false);
   const vistoRef = useRef(false);
+
+  // Muro de dirección (089). Apagada = la pantalla de siempre, con su botón de
+  // saltar y con el punto obligatorio.
+  const { data: configApp } = useQuery({
+    queryKey: ["config-app"],
+    queryFn: getConfigApp,
+    staleTime: 5 * 60 * 1000,
+  });
+  const obligatoria = configApp?.direccion_obligatoria_registro === true;
+  const setCliente = useAuthStore((s) => s.setCliente);
+  const cliente = useAuthStore((s) => s.cliente);
 
   // Quien ya tiene dirección no tiene nada que hacer aquí: pasa de largo. Cubre a
   // quien confirma edad tarde y ya había guardado una antes.
@@ -75,6 +93,11 @@ export default function DireccionInicialScreen() {
       // caché la sirve por 5 minutos: sin invalidarla, el carrito y Mis
       // direcciones muestran "sin direcciones" justo después de guardar una.
       queryClient.invalidateQueries({ queryKey: ["direcciones"] });
+      // El guard del catálogo lee `cliente.tiene_direccion`. Se marca AQUI, en
+      // local, y no con un getPerfil(): acabamos de crear la dirección, o sea que
+      // ya sabemos la respuesta, y hacerla depender de la red significaría que un
+      // refetch fallido deja a la persona encerrada dando vueltas en el muro.
+      if (cliente) setCliente({ ...cliente, tiene_direccion: true });
       tracker.track("direccion_inicial_guardada", undefined, "direccion-inicial");
       Toast.show({ type: "success", text1: "Listo, ya tienes tu dirección" });
       router.replace("/(tabs)");
@@ -88,8 +111,14 @@ export default function DireccionInicialScreen() {
       Toast.show({ type: "error", text1: "Escribe tu dirección" });
       return;
     }
-    // Mismo criterio que "Mis direcciones": sin punto no se guarda. El mapa
-    // funciona sin permisos, así que siempre hay una salida.
+    // Sin punto no se guarda, con muro o sin él.
+    //
+    // Antes esta línea decía `!obligatoria &&`: prender el muro RELAJABA el pin,
+    // por miedo a dejar sin cuenta a quien niega el GPS. El miedo no se sostiene
+    // —el mapa no pide permiso y son 6 devices en toda la historia los que han
+    // negado el GPS—, y con `exigir_ubicacion` prendida era además contradictorio:
+    // esa persona chocaba igual contra el checkout, con el carrito lleno, que es
+    // exactamente lo que este muro existe para evitar.
     if (!ubicacion || ubicacion.lat == null) {
       Toast.show({
         type: "error",
@@ -190,6 +219,7 @@ export default function DireccionInicialScreen() {
         <View style={{ marginTop: 16 }}>
           <UbicacionButton
             value={ubicacion}
+            textoDireccion={direccion}
             onChange={(u) => {
               setUbicacion(u);
               setSilenciado(!!u);
@@ -239,15 +269,20 @@ export default function DireccionInicialScreen() {
           )}
         </Pressable>
 
-        <Pressable
-          onPress={saltar}
-          disabled={mutCrear.isPending}
-          accessibilityRole="button"
-          accessibilityLabel="Lo hago después, ir al catálogo"
-          style={{ marginTop: 12, minHeight: 44, alignItems: "center", justifyContent: "center" }}
-        >
-          <Text style={{ color: colors.muted, fontFamily: fuentes.destacado, fontSize: 15 }}>Lo hago después</Text>
-        </Pressable>
+        {/* De los 61 que tocaron "Lo hago después", solo 7 crearon dirección
+            algún día: los otros 54 nunca tuvieron ninguna. La salida no aplazaba
+            el trámite, lo cancelaba. Con la bandera prendida el botón no existe. */}
+        {!obligatoria && (
+          <Pressable
+            onPress={saltar}
+            disabled={mutCrear.isPending}
+            accessibilityRole="button"
+            accessibilityLabel="Lo hago después, ir al catálogo"
+            style={{ marginTop: 12, minHeight: 44, alignItems: "center", justifyContent: "center" }}
+          >
+            <Text style={{ color: colors.muted, fontFamily: fuentes.destacado, fontSize: 15 }}>Lo hago después</Text>
+          </Pressable>
+        )}
       </ScrollView>
     </View>
   );

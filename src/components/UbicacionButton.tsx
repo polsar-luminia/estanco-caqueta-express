@@ -1,11 +1,10 @@
 import { useState, useRef } from "react";
 import { View, Text, Pressable, ActivityIndicator, Linking } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { type UbicacionCapturada } from "../lib/api";
-import { useUbicacionPicker } from "../stores/ubicacionPicker";
+import { useConfirmarUbicacion } from "../hooks/useConfirmarUbicacion";
 import { useZonaEntrega } from "../hooks/useZonaEntrega";
 import { tracker } from "../lib/tracker";
 import { colors, radii, shadows, fuentes } from "../constants/theme";
@@ -21,6 +20,15 @@ type Estado = "idle" | "capturando";
 interface Props {
   value: UbicacionCapturada | null;
   onChange: (u: UbicacionCapturada | null) => void;
+  /**
+   * La dirección escrita, para abrir el mapa CERCA de ella cuando todavía no hay
+   * pin. Sin esto el mapa arranca en el centro de Florencia y la persona tiene
+   * que arrastrarlo a ciegas — justo cuando el pin ya es obligatorio y su
+   * dirección es de las que Google no reconoce, que es el caso que el
+   * autocompletado no resuelve. Opcional: si no llega, el comportamiento es el
+   * de antes.
+   */
+  textoDireccion?: string;
 }
 
 // Un cold-fix de GPS en dispositivo real (sobre todo bajo techo) suele pasar de
@@ -59,9 +67,8 @@ function aUbicacion(pos: Location.LocationObject, geocoded: string | null): Ubic
   };
 }
 
-export function UbicacionButton({ value, onChange }: Props) {
-  const router = useRouter();
-  const abrirPicker = useUbicacionPicker((s) => s.abrir);
+export function UbicacionButton({ value, onChange, textoDireccion }: Props) {
+  const confirmarUbicacion = useConfirmarUbicacion();
   const { fueraDeZona } = useZonaEntrega();
   const [estado, setEstado] = useState<Estado>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -193,11 +200,10 @@ export function UbicacionButton({ value, onChange }: Props) {
     sesionRef.current++;
     setRefinando(false);
     setError(null);
-    abrirPicker(
-      (u) => onChange(u),
-      value && value.lat != null && value.lng != null ? { lat: value.lat, lng: value.lng } : null,
-    );
-    router.push("/ubicacion");
+    // `confirmarUbicacion` es el mismo bloque que antes estaba escrito a mano
+    // aqui, en cart.tsx y en direcciones.tsx. Lo que agrega es el punto de
+    // partida: pin actual -> geocode del texto escrito -> centro de Florencia.
+    confirmarUbicacion(textoDireccion ?? "", value, (u) => onChange(u));
   };
 
   // Estado: ubicación capturada → mini-mapa con el pin + acciones.

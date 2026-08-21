@@ -73,8 +73,9 @@ import { resolverDireccion } from "../../lib/places";
 import { tracker } from "../../lib/tracker";
 import { BuscadorDireccion } from "../BuscadorDireccion";
 
-// Orden de los useState del componente: sugerencias, buscando, resolviendo, errorZona.
-const IDX_ERROR_ZONA = 3;
+// Orden de los useState del componente: sugerencias, buscando, resolviendo, errorCampo.
+// Se indexa por POSICION: agregar un useState antes de errorCampo rompe todo esto.
+const IDX_ERROR_CAMPO = 3;
 
 const SUGERENCIA = { id: "p1", principal: "Cra 5 # 10-20", secundaria: "Florencia" };
 
@@ -90,7 +91,7 @@ function renderYExtraerElegir(props: { onChangeText: OnChangeText; onUbicacion: 
     onUbicacion: props.onUbicacion,
   }) as React.ReactElement<{ children: React.ReactNode[] }>;
 
-  // Estructura: <View> [ <View fila input>, errorZona && <Text>, <View lista> ] </View>
+  // Estructura: <View> [ <View fila input>, errorCampo && <Text>, <View lista> ] </View>
   const children = React.Children.toArray(result.props.children) as React.ReactElement[];
   const lista = children[children.length - 1] as React.ReactElement<{ children: React.ReactNode[] }>;
   const [pressable] = React.Children.toArray(lista.props.children) as Array<
@@ -119,7 +120,7 @@ describe("BuscadorDireccion — validación de zona al elegir sugerencia", () =>
 
     expect(onUbicacion).not.toHaveBeenCalled();
     expect(onChangeText).not.toHaveBeenCalled();
-    expect(_setters[IDX_ERROR_ZONA]).toHaveBeenCalledWith(
+    expect(_setters[IDX_ERROR_CAMPO]).toHaveBeenCalledWith(
       expect.stringContaining("fuera de nuestra zona de entrega")
     );
     expect(tracker.track).toHaveBeenCalledWith(
@@ -145,11 +146,16 @@ describe("BuscadorDireccion — validación de zona al elegir sugerencia", () =>
       metodo_ubicacion: "pin_mapa",
       geocoded_direccion: "Cra 5 # 10-20, Florencia",
     });
-    expect(_setters[IDX_ERROR_ZONA]).toHaveBeenCalledWith(null);
+    expect(_setters[IDX_ERROR_CAMPO]).toHaveBeenCalledWith(null);
     expect(tracker.track).not.toHaveBeenCalled();
   });
 
-  it("si el detalle no resuelve, no rompe ni avisa nada", async () => {
+  // Esta prueba afirmaba lo contrario ("no rompe ni avisa nada") y consagraba un
+  // callejon sin salida: la sugerencia no trae coordenadas, hay que pedirlas en un
+  // segundo viaje, y si ese viaje falla el componente se quedaba mudo. Tocar la
+  // sugerencia no producia NADA — ni pin, ni aviso, ni rastro que permitiera
+  // medirlo. Es la explicacion mas probable de las 80 direcciones sin punto.
+  it("si el detalle no resuelve, avisa y manda al mapa en vez de quedarse mudo", async () => {
     vi.mocked(resolverDireccion).mockResolvedValue(null);
     fueraDeZonaMock.mockReturnValue(true);
 
@@ -157,8 +163,14 @@ describe("BuscadorDireccion — validación de zona al elegir sugerencia", () =>
     const onUbicacion = vi.fn<OnUbicacion>();
     await renderYExtraerElegir({ onChangeText, onUbicacion })();
 
+    // Sigue sin poner pin ni tocar el texto: no se inventa una ubicacion.
     expect(onUbicacion).not.toHaveBeenCalled();
-    expect(_setters[IDX_ERROR_ZONA]).not.toHaveBeenCalled();
+    expect(onChangeText).not.toHaveBeenCalled();
+    // Pero ahora dice que paso, y ofrece la salida que SIEMPRE funciona.
+    const mensaje = vi.mocked(_setters[IDX_ERROR_CAMPO]).mock.calls.at(-1)?.[0];
+    expect(mensaje).toMatch(/mapa/i);
+    // El fallo de Places no es "fuera de zona": mezclarlos ensuciaria el unico
+    // evento con el que se mide la cobertura real de la zona de reparto.
     expect(tracker.track).not.toHaveBeenCalled();
   });
 });

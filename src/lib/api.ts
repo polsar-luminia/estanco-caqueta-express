@@ -617,6 +617,12 @@ export interface Cliente {
   // Apple App Store §1.4.3 — confirmación explícita de mayoría de edad (18+ COL)
   edad_confirmada?: boolean;
   edad_confirmada_at?: string | null;
+  /** ¿Tiene al menos una dirección activa? Lo calcula el servidor y viaja en el
+   *  perfil a propósito: el muro de dirección (089) lo consulta desde un layout,
+   *  y sacarlo de la misma fuente que `edad_confirmada` evita una consulta nueva
+   *  y, sobre todo, el caché desfasado de la lista de direcciones. `undefined`
+   *  = el perfil todavía no cargó, que NO es lo mismo que "no tiene". */
+  tiene_direccion?: boolean;
 }
 
 export interface Producto {
@@ -1185,6 +1191,11 @@ export interface ConfigApp {
   // Estados extendidos (068): con la bandera prendida el timeline pinta los 6
   // pasos desde el arranque (preparado y "llegó" incluidos).
   estados_extendidos_activo?: boolean;
+  /** Muro de dirección en el registro (089). Nace apagada. Prendida, la pantalla
+   *  de dirección inicial pierde el botón "Lo hago después" y deja de exigir el
+   *  punto del mapa — sin lo segundo el muro sería infranqueable para quien niega
+   *  el GPS. */
+  direccion_obligatoria_registro?: boolean;
 }
 
 export async function getConfigApp(): Promise<ConfigApp> {

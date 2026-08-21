@@ -6,19 +6,17 @@ import { BackButton } from "../../src/components/BackButton";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { useRouter } from "expo-router";
 import { getDirecciones, crearDireccion, editarDireccion, setPredeterminada, eliminarDireccion, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
 import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { BuscadorDireccion } from "../../src/components/BuscadorDireccion";
 import { colors, shadows, fuentes } from "../../src/constants/theme";
-import { useUbicacionPicker } from "../../src/stores/ubicacionPicker";
+import { useConfirmarUbicacion } from "../../src/hooks/useConfirmarUbicacion";
 
 export default function DireccionesScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const queryClient = useQueryClient();
-  const abrirPicker = useUbicacionPicker((s) => s.abrir);
+  const confirmarUbicacion = useConfirmarUbicacion();
   const [mostrarForm, setMostrarForm] = useState(false);
   const [direccion, setDireccion] = useState("");
   const [etiqueta, setEtiqueta] = useState("Casa");
@@ -65,12 +63,11 @@ export default function DireccionesScreen() {
     onError: (err: Error) => Toast.show({ type: "error", text1: "No se pudo actualizar", text2: err.message }),
   });
 
-  const abrirMapaDireccion = (d: { id: number; lat?: number | null; lng?: number | null }) => {
-    abrirPicker(
-      (u) => mutEditarUbic.mutate({ id: d.id, u }),
-      d.lat != null && d.lng != null ? { lat: d.lat, lng: d.lng } : null,
-    );
-    router.push("/ubicacion");
+  // Tercera y ultima copia del bloque "abrir el mapa y aplicar el resultado".
+  // Las tres viven ahora en `useConfirmarUbicacion`, que ademas abre el pin cerca
+  // de la direccion escrita en vez de en el centro de Florencia.
+  const abrirMapaDireccion = (d: { id: number; direccion: string; lat?: number | null; lng?: number | null }) => {
+    confirmarUbicacion(d.direccion, d, (u) => mutEditarUbic.mutate({ id: d.id, u }));
   };
 
   const mutEliminar = useMutation({
@@ -157,7 +154,7 @@ export default function DireccionesScreen() {
                       <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{d.etiqueta}</Text>
                       {d.predeterminada && (
                         <View style={{ backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
-                          <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>PREDETERMINADA</Text>
+                          <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>PRINCIPAL</Text>
                         </View>
                       )}
                       {d.lat != null && (
@@ -224,6 +221,7 @@ export default function DireccionesScreen() {
                 referencia para el último tramo. */}
             <UbicacionButton
               value={ubicacion}
+              textoDireccion={direccion}
               onChange={(u) => {
                 setUbicacion(u);
                 setSilenciado(!!u);
@@ -264,13 +262,13 @@ export default function DireccionesScreen() {
                 onChangeText={(t) => { setDireccion(t); setSilenciado(false); }}
                 silenciado={silenciado}
                 onUbicacion={setUbicacion}
-                placeholder="Carrera 15 # 12-34"
+                placeholder="Ej: Carrera 15 # 12-34"
                 accessibilityLabel="Dirección"
               />
             </View>
 
             <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Notas (opcional)</Text>
-            <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontFamily: fuentes.destacado, fontSize: 14, color: colors.ink, marginBottom: 16 }} placeholder="Portería, dejar con vigilante..." placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline />
+            <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontFamily: fuentes.destacado, fontSize: 14, color: colors.ink, marginBottom: 16 }} placeholder="Ej: portería, dejar con vigilante" placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline />
 
             <View style={{ flexDirection: "row", gap: 8 }}>
               <Pressable

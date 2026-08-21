@@ -64,7 +64,7 @@ export function BuscadorDireccion({
   const [resolviendo, setResolviendo] = useState(false);
   // Dirección elegida fuera de la zona de reparto: se rechaza y se explica aquí
   // mismo, debajo del campo. Se limpia apenas el cliente vuelve a escribir.
-  const [errorZona, setErrorZona] = useState<string | null>(null);
+  const [errorCampo, setErrorCampo] = useState<string | null>(null);
   const { fueraDeZona } = useZonaEntrega();
   // Una sola sesión desde que empieza a escribir hasta que elige: Google cobra
   // por sesión, no por tecla. Sin esto, cada letra sería una búsqueda facturable.
@@ -112,7 +112,17 @@ export function BuscadorDireccion({
     // La sesión se cierra al pedir el detalle; la siguiente búsqueda abre otra.
     sesionRef.current = nuevoUuidV4();
     setResolviendo(false);
-    if (!r) return;
+
+    // Antes esto era `if (!r) return`: silencio absoluto. La sugerencia NO trae
+    // coordenadas —hay que pedirlas en un segundo viaje— y `resolverDireccion`
+    // devuelve null ante cualquier fallo, asi que tocar la sugerencia no hacia
+    // nada: ni pin, ni aviso, ni error. La persona toca, no pasa nada, y termina
+    // dandole al boton verde de abajo. Es la explicacion mas probable de las 80
+    // direcciones guardadas sin punto, y no dejaba ni un rastro para medirlo.
+    if (!r) {
+      setErrorCampo("No pudimos ubicar esa dirección. Escríbela y ubica el punto en el mapa.");
+      return;
+    }
 
     // El proxy de Places restringe las sugerencias a un círculo de 15 km, pero la
     // zona de reparto es más chica: en ese anillo Google resuelve direcciones a
@@ -120,10 +130,10 @@ export function BuscadorDireccion({
     // rechazo se lo daría el servidor al final del checkout, que es peor momento.
     if (fueraDeZona(r.lat, r.lng)) {
       tracker.track("fuera_de_zona", { lat: r.lat, lng: r.lng }, "buscador_direccion");
-      setErrorZona("Esa dirección está fuera de nuestra zona de entrega. Por ahora no llegamos hasta allá.");
+      setErrorCampo("Esa dirección está fuera de nuestra zona de entrega. Por ahora no llegamos hasta allá.");
       return;
     }
-    setErrorZona(null);
+    setErrorCampo(null);
 
     ignorarProximaRef.current = true;
     onChangeText(r.direccion || s.principal);
@@ -158,7 +168,7 @@ export function BuscadorDireccion({
           placeholderTextColor={colors.faint}
           value={value}
           onChangeText={(t) => {
-            setErrorZona(null);
+            setErrorCampo(null);
             onChangeText(t);
           }}
           accessibilityLabel={accessibilityLabel}
@@ -166,7 +176,7 @@ export function BuscadorDireccion({
         {(buscando || resolviendo) && <ActivityIndicator size="small" color={colors.green} />}
         {value.length > 0 && !buscando && !resolviendo && (
           <Pressable
-            onPress={() => { onChangeText(""); setSugerencias([]); setErrorZona(null); }}
+            onPress={() => { onChangeText(""); setSugerencias([]); setErrorCampo(null); }}
             hitSlop={12}
             accessibilityRole="button"
             accessibilityLabel="Borrar la dirección escrita"
@@ -176,12 +186,12 @@ export function BuscadorDireccion({
         )}
       </View>
 
-      {errorZona && (
+      {errorCampo && (
         <Text
           accessibilityRole="alert"
           style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.danger, marginTop: 6, paddingHorizontal: 4 }}
         >
-          {errorZona}
+          {errorCampo}
         </Text>
       )}
 
@@ -202,23 +212,35 @@ export function BuscadorDireccion({
               onPress={() => elegir(s)}
               accessibilityRole="button"
               accessibilityLabel={`Usar la dirección ${s.principal}, ${s.secundaria}`}
-              style={{
+              style={({ pressed }) => ({
                 minHeight: 52,
-                justifyContent: "center",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
                 paddingHorizontal: 14,
                 paddingVertical: 10,
                 borderTopWidth: i === 0 ? 0 : 0.5,
                 borderTopColor: colors.line,
-              }}
+                backgroundColor: pressed ? colors.line : "#fff",
+              })}
             >
-              <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
-                {s.principal}
-              </Text>
-              {!!s.secundaria && (
-                <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, marginTop: 1 }}>
-                  {s.secundaria}
+              {/* El pin y el chevron no son adorno. Hasta hoy cada fila era texto
+                  plano sobre blanco, indistinguible de un titulo, con el boton
+                  verde de guardar justo debajo — y la gente hacia lo obvio. De
+                  114 direcciones creadas en la ultima quincena, 13 quedaron sin
+                  punto. Lo que falta aqui es lo unico que dice "esto se toca". */}
+              <Feather name="map-pin" size={16} color={colors.green} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
+                  {s.principal}
                 </Text>
-              )}
+                {!!s.secundaria && (
+                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, marginTop: 1 }}>
+                    {s.secundaria}
+                  </Text>
+                )}
+              </View>
+              <Feather name="chevron-right" size={16} color={colors.faint} />
             </Pressable>
           ))}
         </View>

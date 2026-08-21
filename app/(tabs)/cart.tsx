@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react";
-import { View, Text, FlatList, TextInput, Pressable, Switch, KeyboardAvoidingView, Platform } from "react-native";
+import { useState, useRef, useEffect, useCallback, type ComponentRef } from "react";
+import { View, Text, FlatList, TextInput, Pressable, Switch, KeyboardAvoidingView, Platform, AppState } from "react-native";
 import { Image as ImagenExpo } from "expo-image";
-import { useRouter, Redirect } from "expo-router";
+import { useRouter, Redirect, useFocusEffect } from "expo-router";
 import * as Sentry from "@sentry/react-native";
 import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,7 +13,7 @@ import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
 import { useTecladoVisible } from "../../src/hooks/useTecladoVisible";
 import { crearPedido, getDirecciones, crearDireccion, editarDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, getEtaActual, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
-import { useUbicacionPicker } from "../../src/stores/ubicacionPicker";
+import { useConfirmarUbicacion } from "../../src/hooks/useConfirmarUbicacion";
 import { calcularResumen, envioDeZona } from "../../src/lib/resumenPedido";
 import { FrioRecordatorio } from "../../src/components/FrioRecordatorio";
 import { BuscadorDireccion } from "../../src/components/BuscadorDireccion";
@@ -149,7 +149,7 @@ export default function CartScreen() {
     }
   }, [configApp?.frio_imagen_url]);
 
-  const { data: direcciones = [], refetch: refetchDirs } = useQuery({
+  const { data: direcciones = [], refetch: refetchDirs, isFetched: direccionesCargadas } = useQuery({
     queryKey: ["direcciones"],
     queryFn: getDirecciones,
     enabled: isAuthenticated,
@@ -249,9 +249,12 @@ export default function CartScreen() {
   // el pin se guarda contra ESA dirección para que la próxima vez ya lo tenga.
   // Hoy solo el 39% de las direcciones activas tiene coordenadas, así que este
   // camino es el que hace viable prender `exigir_ubicacion` sin dejar a nadie fuera.
-  const abrirPicker = useUbicacionPicker((s) => s.abrir);
+  const confirmarUbicacion = useConfirmarUbicacion();
   const abrirMapaParaDireccion = (dir: DireccionGuardada) => {
-    abrirPicker(async (u) => {
+    // El texto de la dirección va como punto de partida: una dirección guardada
+    // sin pin es, por definición, una que nunca resolvió contra el mapa, así que
+    // abrir en el centro de Florencia deja a la persona arrastrando a ciegas.
+    confirmarUbicacion(dir.direccion, dir, async (u) => {
       try {
         await editarDireccion(dir.id, ubicacionABody(u));
         await refetchDirs();
@@ -262,9 +265,53 @@ export default function CartScreen() {
         setNuevaUbicacion(u);
         setMostrarNueva(true);
       }
-    }, dir.lat != null && dir.lng != null ? { lat: dir.lat, lng: dir.lng } : null);
-    router.push("/ubicacion");
+    });
   };
+
+  // Abrir el formulario no sirve de nada si queda bajo el pliegue: la tarjeta de
+  // Entrega vive en el pie de la lista y con tres productos en el carrito ya no se
+  // ve. Sin este desplazamiento el cliente toca "Pedir" y sigue viendo lo mismo,
+  // que es exactamente el bug que se esta arreglando.
+  const listaRef = useRef<FlatList>(null);
+  const tarjetaEntregaRef = useRef<View>(null);
+  const desplazarAEntrega = () => {
+    // Dos cuadros de gracia: el formulario se acaba de montar en este mismo
+    // render y antes de eso la tarjeta todavia mide lo que media cerrada.
+    setTimeout(() => {
+      const scroll = listaRef.current?.getNativeScrollRef();
+      const tarjeta = tarjetaEntregaRef.current;
+      if (!scroll || !tarjeta) return;
+      tarjeta.measureLayout(
+        // RN tipa getNativeScrollRef() como `View | ScrollViewComponent`, pero en
+        // ejecucion siempre devuelve la vista nativa del scroll. El tipo es mas
+        // ancho que la realidad y measureLayout no acepta la rama de clase.
+        scroll as ComponentRef<typeof View>,
+        (_x, y) => listaRef.current?.scrollToOffset({ offset: Math.max(0, y - 16), animated: true }),
+        // measureLayout falla si la vista se desmonto entre medias. No hay nada
+        // que hacer y tampoco es un error que valga la pena reportar.
+        () => {},
+      );
+    }, 120);
+  };
+
+  // Entrar al carrito sin NINGUNA direccion guardada abre el formulario de una
+  // vez. Antes hacian falta dos taps ("Agregar direccion" y luego "Pedir") para
+  // apenas enterarse de que faltaba; el 76% de los registrados nunca compro y
+  // hay $14,9M parados en carritos de gente sin direccion.
+  // El ref es por si acaso: con cero direcciones el enlace "Usar guardada" ni se
+  // pinta, pero si mas tarde aparece una (se guardo desde Mi perfil) el efecto no
+  // debe volver a abrir el formulario encima de lo que la persona este haciendo.
+  const entregaAutoAbiertaRef = useRef(false);
+  useEffect(() => {
+    if (entregaAutoAbiertaRef.current) return;
+    // Al invitado no se le pide direccion: rebota al registro y de ahi sale a la
+    // pantalla de direccion inicial. Pedirsela antes seria pedir datos a quien
+    // todavia no tiene cuenta.
+    if (!isAuthenticated || !direccionesCargadas) return;
+    if (items.length === 0 || direcciones.length > 0) return;
+    entregaAutoAbiertaRef.current = true;
+    setMostrarNueva(true);
+  }, [isAuthenticated, direccionesCargadas, direcciones.length, items.length]);
 
   const alternarFrio = (valor: boolean) => {
     setQuiereFrio(valor);
@@ -373,8 +420,59 @@ export default function CartScreen() {
   // re-render del invitado con carrito contaría un rebote nuevo.
   const muroTrackeadoRef = useRef(false);
 
+  // --- carrito_abandonado: el que se va SIN tocar "Pedir" ---
+  // El estado viaja por ref y no por dependencias del efecto a proposito. Con
+  // deps, useFocusEffect vuelve a correr su limpieza cada vez que cambia una —
+  // subir una cantidad, elegir direccion— y contaria un abandono por cada
+  // retoque del carrito, con la pantalla todavia abierta.
+  const estadoCarritoRef = useRef({ items_count: 0, subtotal: 0, tiene_direccion: false, supera_minimo: false, tienda_abierta: false, vio_formulario: false });
+  useEffect(() => {
+    estadoCarritoRef.current = {
+      items_count: items.length,
+      subtotal,
+      tiene_direccion: !!(dirActiva?.direccion || direccion.trim()),
+      supera_minimo: subtotal >= pedidoMinimo,
+      tienda_abierta: !!tienda.abierta,
+      vio_formulario: mostrarNueva,
+    };
+  });
+  // Intento de pedido en ESTA visita. Distinto de checkoutIniciadoRef, que es por
+  // montaje y no se puede reusar sin romper la deduplicacion de checkout_iniciado.
+  const pidioEnEstaVisitaRef = useRef(false);
+  const abandonoReportadoRef = useRef(false);
+  const reportarAbandono = useCallback(() => {
+    if (abandonoReportadoRef.current || pidioEnEstaVisitaRef.current) return;
+    const estado = estadoCarritoRef.current;
+    // Carrito vacio no es un abandono: o nunca hubo nada, o el pedido ya salio y
+    // el carrito se limpio solo.
+    if (estado.items_count === 0) return;
+    abandonoReportadoRef.current = true;
+    tracker.track('carrito_abandonado', estado, 'cart');
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      pidioEnEstaVisitaRef.current = false;
+      abandonoReportadoRef.current = false;
+      // Cerrar la app tambien es irse, y probablemente sea la forma mas comun.
+      // Sin esto solo se veria al que se cambia de pestaña. El tracker hace flush
+      // al pasar a background, asi que el evento alcanza a salir.
+      const sub = AppState.addEventListener('change', (estado) => {
+        if (estado !== 'active') reportarAbandono();
+      });
+      return () => {
+        sub.remove();
+        reportarAbandono();
+      };
+    }, [reportarAbandono]),
+  );
+
   const handlePedir = async () => {
     if (submitLockRef.current) return;
+    // Toco "Pedir": pase lo que pase despues, esta visita ya no cuenta como
+    // abandono silencioso — se cae en alguno de los pasos de checkout_abandonado,
+    // que es justo la diferencia que este evento existe para medir.
+    pidioEnEstaVisitaRef.current = true;
 
     // A.2 — base del embudo de checkout: intención real de pedir. Una vez por
     // intento; un reintento tras un fallo no vuelve a contarlo.
@@ -402,8 +500,20 @@ export default function CartScreen() {
     const not = dirActiva?.notas || notas.trim();
 
     if (!dir && !mostrarNueva) {
+      // Se mantiene el evento: es la linea base contra la que se mide si abrir el
+      // formulario aqui sirvio. Quitarlo al arreglar el flujo dejaria el arreglo
+      // sin forma de evaluarse.
       tracker.track('checkout_abandonado', { paso: 'sin_direccion', items_count: items.length }, 'cart');
-      Toast.show({ type: "error", text1: "Falta direccion", text2: "Selecciona o agrega una direccion" });
+      // Y ademas se abre el formulario, igual que `sin_pin` abre el mapa veinte
+      // lineas mas abajo. Era la unica de las seis validaciones del checkout que
+      // dejaba al cliente donde estaba: 52 abandonos en la 1.2.3 contra un aviso
+      // rojo sin salida. El formulario ya esta montado en esta misma pantalla, no
+      // hay a donde navegar; solo hay que abrirlo y traerlo a la vista.
+      setMostrarNueva(true);
+      desplazarAEntrega();
+      // `info` y no `error`: ya no es un callejon sin salida sino el siguiente
+      // paso del pedido, y el rojo le dice al cliente que hizo algo mal.
+      Toast.show({ type: "info", text1: "Falta tu dirección", text2: "Escríbela abajo para enviarte el pedido" });
       return;
     }
     // GPS-first: en una dirección nueva basta con la ubicación capturada O una
@@ -651,6 +761,7 @@ export default function CartScreen() {
     >
     <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       <FlatList automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive"
+        ref={listaRef}
         data={items}
         keyExtractor={(item) => String(item.productoId)}
         contentContainerStyle={{ padding: 16, paddingBottom: 200 }}
@@ -664,24 +775,31 @@ export default function CartScreen() {
         ListFooterComponent={
           <View style={{ gap: 24, marginTop: 24 }}>
             {/* Delivery - Direcciones Guardadas */}
-            <View className="p-5 rounded-2xl" style={{ backgroundColor: colors.surface, ...shadows.card }}>
+            <View ref={tarjetaEntregaRef} className="p-5 rounded-2xl" style={{ backgroundColor: colors.surface, ...shadows.card }}>
               <View className="flex-row items-center justify-between mb-4">
                 <View className="flex-row items-center">
                   <TruckIcon color="#1A1C1A" size={20} />
                   <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Entrega</Text>
                 </View>
-                <Pressable
-                  onPress={() => setMostrarNueva(!mostrarNueva)}
-                  accessibilityRole="button"
-                  accessibilityLabel={mostrarNueva ? "Usar una dirección guardada" : "Agregar una dirección nueva"}
-                  // Es solo un texto de 12 px dentro del encabezado: crece el
-                  // objetivo táctil sin mover la fila.
-                  hitSlop={12}
-                >
-                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>
-                    {mostrarNueva ? "Usar guardada" : "+ Nueva"}
-                  </Text>
-                </Pressable>
+                {/* Sin direcciones guardadas no hay nada que "usar guardada": el
+                    enlace llevaba a un estado vacio cuya unica accion era
+                    "Agregar direccion", o sea que volvia a abrir justo lo que se
+                    acababa de cerrar. Un circulo que no produce nada y que hace
+                    dudar de si el formulario de arriba era el correcto. */}
+                {direcciones.length > 0 && (
+                  <Pressable
+                    onPress={() => setMostrarNueva(!mostrarNueva)}
+                    accessibilityRole="button"
+                    accessibilityLabel={mostrarNueva ? "Usar una dirección guardada" : "Agregar una dirección nueva"}
+                    // Es solo un texto de 12 px dentro del encabezado: crece el
+                    // objetivo táctil sin mover la fila.
+                    hitSlop={12}
+                  >
+                    <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>
+                      {mostrarNueva ? "Usar guardada" : "+ Nueva"}
+                    </Text>
+                  </Pressable>
+                )}
               </View>
 
               {!mostrarNueva ? (
@@ -717,7 +835,7 @@ export default function CartScreen() {
                                 <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{d.etiqueta}</Text>
                                 {d.predeterminada && (
                                   <View style={{ backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
-                                    <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>DEFAULT</Text>
+                                    <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>PRINCIPAL</Text>
                                   </View>
                                 )}
                                 {d.lat != null && (
@@ -756,6 +874,7 @@ export default function CartScreen() {
                   {/* Ubicación GPS (opcional): al capturar, auto-llena la dirección (editable). */}
                   <UbicacionButton
                     value={nuevaUbicacion}
+                    textoDireccion={nuevaDireccion}
                     onChange={(u) => {
                       setNuevaUbicacion(u);
                       // Punto del mapa (pin_mapa) siempre reescribe; GPS solo si está vacía.
@@ -782,7 +901,7 @@ export default function CartScreen() {
                       onChangeText={(t) => { setNuevaDireccion(t); setSilenciadoDir(false); }}
                       silenciado={silenciadoDir}
                       onUbicacion={(u) => { setNuevaUbicacion(u); setSilenciadoDir(true); }}
-                      placeholder="Carrera 15 # 12-34"
+                      placeholder="Ej: Carrera 15 # 12-34"
                       accessibilityLabel="Dirección de entrega"
                     />
                   </View>
@@ -799,7 +918,7 @@ export default function CartScreen() {
                   </Text>
                   <TextInput
                     style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontFamily: fuentes.destacado, fontSize: 14, color: "#1A1C1A" }}
-                    placeholder="Portería, dejar con vigilante..."
+                    placeholder="Ej: portería, dejar con vigilante"
                     placeholderTextColor="#BCCABA"
                     value={nuevasNotas}
                     onChangeText={setNuevasNotas}

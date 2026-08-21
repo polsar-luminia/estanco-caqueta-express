@@ -3,8 +3,11 @@ import { Redirect, Tabs, useSegments, useRouter } from "expo-router";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
+import { getConfigApp } from "../../src/lib/api";
 import { useAuthStore } from "../../src/stores/auth";
 import { grupoDebeConfirmarEdad } from "../../src/lib/guardEdad";
+import { debeExigirDireccionInicial } from "../../src/lib/guardDireccion";
 import { useCartStore } from "../../src/stores/cart";
 import { HomeIcon, SearchIcon, CartIcon, OrdersIcon } from "../../src/components/icons/TabIcons";
 import { fuentes } from "../../src/constants/theme";
@@ -200,6 +203,12 @@ export default function TabLayout() {
   // del state — el badge no se actualizaba al limpiar carrito tras crear pedido.
   const itemCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.cantidad, 0));
   const segments = useSegments();
+  // Comparte caché con el resto de la app por la clave: no es una consulta extra.
+  const { data: configApp } = useQuery({
+    queryKey: ['config-app'],
+    queryFn: getConfigApp,
+    staleTime: 5 * 60 * 1000,
+  });
 
   if (isLoading) return null;
 
@@ -217,6 +226,25 @@ export default function TabLayout() {
   // dispara antes de mostrar nada.
   if (grupoDebeConfirmarEdad(segments as string[], "(tabs)", isAuthenticated, cliente != null, cliente?.edad_confirmada)) {
     return <Redirect href="/(auth)/edad-confirmar" />;
+  }
+
+  // Muro de dirección (089). Va DESPUES del age gate a propósito: si los dos
+  // pudieran disparar a la vez, la persona rebotaría entre las dos pantallas.
+  //
+  // Sin este guard, quitar el botón "Lo hago después" no sirve de nada: la
+  // pantalla de dirección inicial solo se alcanza desde edad-confirmar, y la edad
+  // se confirma una sola vez, así que matar la app era una salida perfectamente
+  // válida del onboarding — al reabrir se caía en el catálogo y nadie volvía a
+  // pedir la dirección nunca. Comprobado en el simulador el 20-ago-2026.
+  //
+  // Alcanza a las cuentas VIEJAS sin dirección, no solo a las nuevas: son
+  // justamente los 54 que se saltaron la pantalla y nunca crearon ninguna.
+  if (debeExigirDireccionInicial(
+    segments as string[], "(tabs)", isAuthenticated, cliente != null,
+    cliente?.edad_confirmada, cliente?.tiene_direccion,
+    configApp?.direccion_obligatoria_registro,
+  )) {
+    return <Redirect href="/(auth)/direccion-inicial" />;
   }
 
   return (
