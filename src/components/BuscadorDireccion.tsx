@@ -212,35 +212,57 @@ export function BuscadorDireccion({
               onPress={() => elegir(s)}
               accessibilityRole="button"
               accessibilityLabel={`Usar la dirección ${s.principal}, ${s.secundaria}`}
-              style={({ pressed }) => ({
+              // OJO: objeto plano, NO `({ pressed }) => ({...})`.
+              //
+              // La forma de funcion se agrego el 20-ago-2026 para pintar el fondo
+              // al presionar, y rompio la fila entera: el `flexDirection: "row"`
+              // dejaba de aplicarse y el pin quedaba ENCIMA de la direccion con la
+              // flecha DEBAJO, en columna. Costo dos vueltas de diagnostico porque
+              // el sintoma parecia de flexbox y no de como se pasa el estilo.
+              //
+              // Lo que lo delato: esta era la unica de las 112 filas horizontales
+              // de la app escrita con la forma de funcion. Las otras 111 usan
+              // objeto plano y todas funcionan. Si algun dia hace falta feedback
+              // de presionado aqui, probarlo en el simulador ANTES de darlo por
+              // bueno — no confiar en que la forma de funcion se comporte igual.
+              style={{
                 minHeight: 52,
                 flexDirection: "row",
-                alignItems: "center",
+                alignItems: "flex-start",
                 gap: 10,
                 paddingHorizontal: 14,
                 paddingVertical: 10,
                 borderTopWidth: i === 0 ? 0 : 0.5,
                 borderTopColor: colors.line,
-                backgroundColor: pressed ? colors.line : "#fff",
-              })}
+              }}
             >
-              {/* El pin y el chevron no son adorno. Hasta hoy cada fila era texto
-                  plano sobre blanco, indistinguible de un titulo, con el boton
-                  verde de guardar justo debajo — y la gente hacia lo obvio. De
-                  114 direcciones creadas en la ultima quincena, 13 quedaron sin
-                  punto. Lo que falta aqui es lo unico que dice "esto se toca". */}
-              <Feather name="map-pin" size={16} color={colors.green} />
+              {/* Segunda vuelta sobre esto (20-ago-2026): la primera version
+                  agregaba un subtitulo de texto porque el icono solo no
+                  explicaba nada. El dueño la rechazo — un mensaje explicando
+                  como usar la interfaz es la interfaz fallando, no una ayuda.
+                  Se reemplaza por diseño: el pin alineado con la PRIMERA linea
+                  (no centrado contra las dos, que lo dejaba flotando entre
+                  ambas y por eso "no se entendia"), y un icono de accion a la
+                  derecha en vez de nada — "send" en vez de chevron, porque esto
+                  ENVIA/APLICA la direccion, no navega a otra pantalla. */}
+              <Feather name="map-pin" size={16} color={colors.green} style={{ marginTop: 1 }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}>
+                <Text
+                  numberOfLines={1}
+                  style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.ink }}
+                >
                   {s.principal}
                 </Text>
                 {!!s.secundaria && (
-                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, marginTop: 1 }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, marginTop: 1 }}
+                  >
                     {s.secundaria}
                   </Text>
                 )}
               </View>
-              <Feather name="chevron-right" size={16} color={colors.faint} />
+              <Feather name="send" size={16} color={colors.green} style={{ marginTop: 1 }} />
             </Pressable>
           ))}
         </View>

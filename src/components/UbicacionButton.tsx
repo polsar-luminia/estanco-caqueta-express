@@ -310,7 +310,18 @@ export function UbicacionButton({ value, onChange, textoDireccion }: Props) {
 
       {error ? (
         <View style={{ marginTop: 6 }}>
-          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C" }}>{error}</Text>
+          {/* Iba en gris apagado ("#6D7B6C", el mismo tono de texto secundario)
+              pese a ser un mensaje que bloquea seguir — sin permiso, sin GPS, o
+              fuera de zona. Reportado en TestFlight (20-ago): se leia como texto
+              de relleno, no como algo que hay que atender. `colors.danger` iguala
+              el mismo mensaje de "fuera de zona" que ya usa BuscadorDireccion.tsx
+              — es el mismo problema, debe leerse igual en los dos caminos. */}
+          <Text
+            accessibilityRole="alert"
+            style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.danger }}
+          >
+            {error}
+          </Text>
           {abrirAjustes ? (
             <Pressable
               onPress={() => Linking.openSettings()}

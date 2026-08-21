@@ -92,11 +92,15 @@ function renderYExtraerElegir(props: { onChangeText: OnChangeText; onUbicacion: 
   }) as React.ReactElement<{ children: React.ReactNode[] }>;
 
   // Estructura: <View> [ <View fila input>, errorCampo && <Text>, <View lista> ] </View>
+  // La lista, a su vez: [ <Text> subtitulo, ...sugerencias ] — el subtitulo se
+  // agrego el 20-ago-2026 y es SIEMPRE el primer hijo, por eso el Pressable real
+  // es el ULTIMO, no el primero.
   const children = React.Children.toArray(result.props.children) as React.ReactElement[];
   const lista = children[children.length - 1] as React.ReactElement<{ children: React.ReactNode[] }>;
-  const [pressable] = React.Children.toArray(lista.props.children) as Array<
+  const listaChildren = React.Children.toArray(lista.props.children) as Array<
     React.ReactElement<{ onPress: () => Promise<void> }>
   >;
+  const pressable = listaChildren[listaChildren.length - 1];
   return pressable.props.onPress;
 }
 
