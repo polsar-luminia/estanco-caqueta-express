@@ -1,6 +1,12 @@
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://api.estancocaqueta.com/api/v1";
 
-export const WHATSAPP_SOPORTE = "https://wa.me/573189495704";
+// Temporal (22-ago-2026): el numero personal de soporte (318 949 5704) fue
+// bloqueado por Meta. Mientras se resuelve, el soporte entra por el numero de
+// marketing/Cloud API (+1 555-349-4324) — asi ademas queda registrado en
+// whatsapp_entrantes y dispara el aviso a Telegram, cosa que el numero
+// personal nunca hizo. Revertir cuando el personal se desbloquee, si se
+// prefiere separar los canales de nuevo.
+export const WHATSAPP_SOPORTE = "https://wa.me/15553494324";
 
 // Numero del WhatsApp Business de Estanco Caqueta Express (WABA verificada en Meta).
 // Se usa en el flujo "Olvide contrasena": el usuario abre WhatsApp y manda un saludo
