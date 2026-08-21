@@ -12,7 +12,7 @@ import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
 import { useTecladoVisible } from "../../src/hooks/useTecladoVisible";
-import { crearPedido, getDirecciones, crearDireccion, editarDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, getEtaActual, type DireccionGuardada, type CuponValidado, type UbicacionCapturada } from "../../src/lib/api";
+import { crearPedido, getDirecciones, crearDireccion, editarDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, getEtaActual, type DireccionGuardada, type CuponValidado, type UbicacionCapturada, type ApiError } from "../../src/lib/api";
 import { useConfirmarUbicacion } from "../../src/hooks/useConfirmarUbicacion";
 import { calcularResumen, envioDeZona } from "../../src/lib/resumenPedido";
 import { FrioRecordatorio } from "../../src/components/FrioRecordatorio";
@@ -704,6 +704,7 @@ export default function CartScreen() {
       router.push({ pathname: "/(tabs)/orders/[id]", params: { id: String(pedido.id) } });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo crear el pedido";
+      const codigo = (err as ApiError)?.body?.codigo_error;
       // El error del pedido no se mezcla con la pregunta del frío: se cierra la
       // tarjeta y el mensaje sale en el carrito, como siempre.
       setMostrarRecordatorioFrio(false);
@@ -714,6 +715,30 @@ export default function CartScreen() {
         setCuponValidado(null);
         setCodigoCupon("");
       }
+
+      // Al cliente le falta un dato, no se le rompió nada: "Error al crear
+      // pedido" lo asusta y además esconde el mensaje bueno en el subtítulo.
+      //
+      // POR QUE PASA SI LA APP YA VALIDA ANTES: la config vive en caché de 5
+      // minutos, así que en los minutos siguientes a prender `exigir_ubicacion`
+      // hay gente con la app abierta que todavía la cree apagada, se salta la
+      // validación local y choca contra el 400. Es justo el rato de mayor
+      // volumen de este error, y era el único camino que no abría el mapa —
+      // el cliente leía "ubícalo en el mapa" sin nada que tocar.
+      if (codigo === 'UBICACION_REQUERIDA') {
+        Toast.show({
+          type: "error",
+          text1: "Falta el punto de entrega",
+          text2: "Ubícalo en el mapa para que el domiciliario llegue exacto",
+        });
+        if (!mostrarNueva && dirActiva) abrirMapaParaDireccion(dirActiva);
+        return;
+      }
+      if (codigo === 'FUERA_DE_ZONA') {
+        Toast.show({ type: "error", text1: "Fuera de la zona de entrega", text2: msg });
+        return;
+      }
+
       Toast.show({ type: "error", text1: "Error al crear pedido", text2: msg });
     } finally {
       submitLockRef.current = false;
