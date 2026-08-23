@@ -28,20 +28,20 @@ export const STAGING_URL = "https://pruebas.estancocaqueta.com/api/v1";
 
 // Numeros que SIEMPRE trabajan contra staging. Solo cuentas del equipo.
 //
-// VACIA desde el 21-ago-2026. Tenia el numero del dueño (3183224021), y el
-// efecto no era el buscado: cada vez que abria la app de la tienda con SU
-// numero terminaba en staging sin quererlo — cuenta nueva en la base de
-// pruebas, catalogo de pruebas, y la franja naranja permanente. Se borro su
-// cuenta de staging tres veces creyendo que era basura de las pruebas, cuando
-// la causa era esta linea.
+// Vacia entre el 21 y el 23-ago-2026 (ver historial): tenia este mismo numero
+// y el dueño terminaba en staging sin querer al abrir la app de la tienda con
+// SU numero — cuenta nueva en la base de pruebas, catalogo de pruebas, franja
+// naranja permanente, y su cuenta de staging se borro tres veces creyendo que
+// era basura.
 //
-// Con la lista vacia el modo no se puede activar por ningun numero, que es
-// justo lo que se quiere: la app de la tienda va SIEMPRE a produccion. Para
-// probar staging quedan el simulador y el perfil `staging-ios` de eas.json.
-//
-// Si algun dia se vuelve a necesitar desde un celular, agregar aqui una linea
-// que NO sea la que se usa para comprar de verdad.
-export const TELEFONOS_PRUEBA: string[] = [];
+// Reactivada a proposito el 23-ago-2026 para probar la 1.3.2 (medio de pago +
+// soporte configurable) desde un TestFlight de PRODUCCION antes de decidir si
+// sale por OTA o binario nuevo: el build de la tienda es el mismo para todos,
+// y este numero es el unico interruptor que lo manda a staging sin tocar el
+// binario de nadie mas. Sigue siendo temporal — quitarlo de aqui en cuanto
+// termine la prueba, por la misma razon que se vacio la vez pasada: mientras
+// este numero siga aqui, NO sirve para comprar de verdad en la tienda.
+export const TELEFONOS_PRUEBA: string[] = ["3183224021"];
 
 const STORAGE_KEY = "backend_pruebas_activo";
 

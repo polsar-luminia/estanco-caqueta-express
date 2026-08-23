@@ -9,8 +9,8 @@ import Toast from "react-native-toast-message";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../src/stores/auth";
 import { useCartStore } from "../../src/stores/cart";
-import { WHATSAPP_SOPORTE } from "../../src/constants/config";
-import { getCuponesDisponibles } from "../../src/lib/api";
+import { getCuponesDisponibles, getConfigApp } from "../../src/lib/api";
+import { useSoporte } from "../../src/lib/soporte";
 import { CopyIcon } from "../../src/components/icons/AppIcons";
 import { colors, fuentes } from "../../src/constants/theme";
 
@@ -84,6 +84,15 @@ export default function ProfileScreen() {
   });
   const cuponesNuevos = cupones.filter((c) => !c.ya_usado).length;
 
+  // Mismo query key que cart.tsx y direccion-inicial.tsx: comparten cache, un
+  // solo round-trip aunque el cliente pase por varias pantallas.
+  const { data: configApp } = useQuery({
+    queryKey: ["config-app"],
+    queryFn: getConfigApp,
+    staleTime: 5 * 60 * 1000,
+  });
+  const { abrirWhatsApp } = useSoporte();
+
   // A REGISTRO y no a login: el invitado que llega aqui, por defecto, todavia
   // no tiene cuenta. Mismo criterio que el muro del carrito, que ya lo razonaba
   // asi y era el unico sitio que lo aplicaba.
@@ -114,9 +123,16 @@ export default function ProfileScreen() {
   const puntos = cliente?.puntos || 0;
   const totalPedidos = cliente?.total_pedidos ?? 0;
 
-  // Progress bar puntos (0-100 por ciclo)
-  const pct = Math.min(100, ((puntos % 100) / 100) * 100);
-  const puntosNext = 100 - (puntos % 100);
+  // Umbral real de canje (090): antes esta pantalla mostraba 200 aca y una
+  // barra de progreso POR CICLOS DE 100 mas abajo (`puntos % 100`) — dos
+  // numeros que no se correspondian entre si, y ninguno de los dos con lo que
+  // el servidor de verdad exigia. La barra por ciclos ademas se rompia justo
+  // en los multiplos de 100: alguien con exactamente 200 puntos (ya calificado)
+  // la veia en 0%, pidiendole 100 mas.
+  const puntosMeta = configApp?.puntos_envio_gratis ?? 200;
+  const yaCalifica = puntos >= puntosMeta;
+  const pct = Math.min(100, (puntos / puntosMeta) * 100);
+  const puntosNext = Math.max(0, puntosMeta - puntos);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: 112 }}>
@@ -126,7 +142,12 @@ export default function ProfileScreen() {
         colors={[colors.green, colors.greenDeep]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ paddingBottom: 28, position: "relative", overflow: "hidden" }}
+        // 44 y no 28: la tarjeta de stats flota con `marginBottom: -28`, así
+        // que con 28 las dos medidas se cancelaban y el borde inferior de la
+        // tarjeta caía EXACTAMENTE en el borde del verde — se veía cortada, y
+        // con `overflow: hidden` encima se le recortaba la sombra. Los 16 de
+        // más dejan ver dónde termina la tarjeta.
+        style={{ paddingBottom: 44, position: "relative", overflow: "hidden" }}
       >
         {/* Glow blanco sutil */}
         <View style={{
@@ -194,7 +215,7 @@ export default function ProfileScreen() {
         }}>
           {[
             { label: "Pedidos", value: String(totalPedidos), color: "#1FAF55", sub: "realizados" },
-            { label: "Puntos", value: `${puntos} pts`, color: colors.offer, sub: "200 = envío gratis" },
+            { label: "Puntos", value: `${puntos} pts`, color: colors.offer, sub: `${puntosMeta} = envío gratis` },
           ].map((stat, i) => (
             <View key={stat.label} style={{
               flex: 1, alignItems: "center",
@@ -213,8 +234,10 @@ export default function ProfileScreen() {
         </View>
       </LinearGradient>
 
-      {/* Spacer para compensar el float del stats row */}
-      <View style={{ height: 28 }} />
+      {/* Spacer para compensar el float del stats row. Baja de 28 a 12 porque
+          el gradiente ya aporta 16 de verde bajo la tarjeta: el hueco total
+          hasta el contenido siguiente sigue siendo el mismo de antes. */}
+      <View style={{ height: 12 }} />
 
       {/* ── Progress bar de puntos ───────────────────────────── */}
       <View style={{
@@ -225,7 +248,9 @@ export default function ProfileScreen() {
         <View style={{ marginBottom: 8 }}>
           <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Progreso de puntos</Text>
           <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: colors.offer, marginTop: 2 }}>
-            {puntosNext} pts para tu próximo envío gratis
+            {yaCalifica
+              ? "¡Ya tienes envío gratis disponible!"
+              : `${puntosNext} pts para tu próximo envío gratis`}
           </Text>
         </View>
         <View style={{ height: 6, borderRadius: 3, backgroundColor: "#F4F4F0" }}>
@@ -238,7 +263,7 @@ export default function ProfileScreen() {
         </View>
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 5 }}>
           <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#BCCABA" }}>0 pts</Text>
-          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#BCCABA" }}>100 pts</Text>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#BCCABA" }}>{puntosMeta} pts</Text>
         </View>
       </View>
 
@@ -327,7 +352,7 @@ export default function ProfileScreen() {
             icon="chat"
             label="Soporte WhatsApp"
             a11yLabel="Escribirle a soporte por WhatsApp"
-            onPress={() => Linking.openURL(WHATSAPP_SOPORTE)}
+            onPress={abrirWhatsApp}
           />
           <MenuItem
             icon="help_center"

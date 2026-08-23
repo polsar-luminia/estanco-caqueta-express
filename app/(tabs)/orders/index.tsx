@@ -15,8 +15,8 @@ import { useRouter, Redirect } from "expo-router";
 import { useAuthStore } from "../../../src/stores/auth";
 import Toast from "react-native-toast-message";
 import { getPedidos, getPedido, getProducto } from "../../../src/lib/api";
-import { WHATSAPP_SOPORTE } from "../../../src/constants/config";
 import { tracker } from "../../../src/lib/tracker";
+import { useSoporte } from "../../../src/lib/soporte";
 import type { Pedido } from "../../../src/lib/api";
 import { useCartStore } from "../../../src/stores/cart";
 import { queryClient } from "../../../src/lib/query-client";
@@ -332,11 +332,7 @@ function OrderCard({ item }: { item: Pedido }) {
 /* ── Seccion de ayuda (WhatsApp) ─────────────────────────── */
 
 function HelpSection() {
-  const handleWhatsApp = () => {
-    Linking.openURL(WHATSAPP_SOPORTE).catch(() => {
-      Linking.openURL(WHATSAPP_SOPORTE.replace("wa.me/", "api.whatsapp.com/send?phone="));
-    });
-  };
+  const { abrirWhatsApp: handleWhatsApp } = useSoporte();
 
   return (
     <Pressable

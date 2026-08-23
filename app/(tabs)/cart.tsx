@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, useCallback, type ComponentRef } from "react";
-import { View, Text, FlatList, TextInput, Pressable, Switch, KeyboardAvoidingView, Platform, AppState } from "react-native";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { View, Text, FlatList, TextInput, Pressable, KeyboardAvoidingView, Platform, AppState } from "react-native";
 import { Image as ImagenExpo } from "expo-image";
 import { useRouter, Redirect, useFocusEffect } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Sentry from "@sentry/react-native";
 import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
@@ -16,18 +17,24 @@ import { crearPedido, getDirecciones, crearDireccion, editarDireccion, validarCu
 import { useConfirmarUbicacion } from "../../src/hooks/useConfirmarUbicacion";
 import { calcularResumen, envioDeZona } from "../../src/lib/resumenPedido";
 import { FrioRecordatorio } from "../../src/components/FrioRecordatorio";
-import { BuscadorDireccion } from "../../src/components/BuscadorDireccion";
-import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { tracker } from "../../src/lib/tracker";
 import { metaLogInitiateCheckout, metaLogPurchase } from "../../src/lib/metaEvents";
-import { TruckIcon, TagIcon } from "../../src/components/icons/AppIcons";
 import { CartIcon } from "../../src/components/icons/TabIcons";
 import { formatCOP } from "../../src/lib/format";
 import { CartItem } from "../../src/components/CartItem";
 import { BandaOperativa } from "../../src/components/BandaOperativa";
 import { BandaCerrado } from "../../src/components/BandaCerrado";
+import { MEDIOS_PAGO_RESPALDO, ICONOS_MEDIO, ICONO_MEDIO_GENERICO } from "../../src/constants/config";
 import { colors, shadows, fuentes } from "../../src/constants/theme";
+import { FilaPedidoColapsado } from "../../src/components/checkout/FilaPedidoColapsado";
+import { BloquePuntoEntrega } from "../../src/components/checkout/BloquePuntoEntrega";
+import { FilaAccion } from "../../src/components/checkout/FilaAccion";
+import { BloqueExtras } from "../../src/components/checkout/BloqueExtras";
+import { ResumenTotales } from "../../src/components/checkout/ResumenTotales";
+import { HojaDireccion } from "../../src/components/checkout/HojaDireccion";
+import { HojaMedioPago } from "../../src/components/checkout/HojaMedioPago";
+import { HojaNotas } from "../../src/components/checkout/HojaNotas";
 
 function ChevronRightIcon() {
   return (
@@ -45,8 +52,31 @@ interface DatosPedido {
   ubicacionSnapshot: UbicacionCapturada | null;
 }
 
+// Borrador de dirección nueva, capturado al abrir la hoja para poder
+// restaurarlo si se cierra sin comprometer ("Usar esta dirección"). Sin esto,
+// editar dentro de la hoja y cerrar con el backdrop dejaría `mostrarNueva`
+// (si ya era true) con campos a medias, y handlePedir intentaría crear una
+// dirección invisible.
+interface BorradorDireccion {
+  direccion: string;
+  notas: string;
+  ubicacion: UbicacionCapturada | null;
+}
+
+// Modulo, no useRef: sobrevive a un REMOUNT del componente. 22 de 153 filas de
+// carrito_abandonado (23-ago-2026) eran copias exactas en el mismo instante —
+// mismo device, mismo payload, mismo created_at al microsegundo. Eso solo pasa
+// si dos llamadas a tracker.track() caen en el mismo flush, y un useRef no lo
+// evita si hay dos instancias del componente montadas a la vez (remount de
+// pestaña, no solo background+blur del mismo montaje). La ventana de 5 s
+// alcanza para cubrir ambos gatillos del mismo cierre sin suprimir un
+// abandono real de una visita distinta.
+let ultimoAbandonoReportado: { clave: string; en: number } | null = null;
+const VENTANA_DEDUP_ABANDONO_MS = 5_000;
+
 export default function CartScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const items = useCartStore((s) => s.items);
   const direccion = useCartStore((s) => s.direccion);
   const notas = useCartStore((s) => s.notas);
@@ -120,15 +150,33 @@ export default function CartScreen() {
   const [nuevasNotas, setNuevasNotas] = useState("");
   const [nuevaUbicacion, setNuevaUbicacion] = useState<UbicacionCapturada | null>(null);
   const [silenciadoDir, setSilenciadoDir] = useState(false);
+  // Nota editada desde el carrito para una dirección GUARDADA. null = "usa la
+  // de la dirección" — sin esto, las notas de una guardada no se podían tocar
+  // desde el checkout (se mandaba dirActiva.notas a secas).
+  const [notasOverride, setNotasOverride] = useState<string | null>(null);
   // Frío asegurado: intención del cliente. No se persiste entre sesiones.
   const [quiereFrio, setQuiereFrio] = useState(false);
+  // Medio de pago (093). "efectivo" preseleccionado: es lo que la mayoría usa
+  // hoy de facto, y garantiza que siempre haya un dato sin agregar un paso
+  // obligatorio al checkout — que es donde vive el 90% de los abandonos.
+  const [medioPago, setMedioPago] = useState("efectivo");
   const [mostrarRecordatorioFrio, setMostrarRecordatorioFrio] = useState(false);
   const [codigoCupon, setCodigoCupon] = useState("");
   const [cuponValidado, setCuponValidado] = useState<CuponValidado | null>(null);
   const [cuponError, setCuponError] = useState("");
   const [validandoCupon, setValidandoCupon] = useState(false);
+  const [cuponAbierto, setCuponAbierto] = useState(false);
   const cuponSubtotalRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
+
+  // Checkout denso (1.3.2/build 94): "Tu pedido" colapsado por defecto —
+  // los productos se ven al desplegar, no al abrir la tab.
+  const [pedidoAbierto, setPedidoAbierto] = useState(false);
+  const [hojaDireccionVisible, setHojaDireccionVisible] = useState(false);
+  const [hojaDireccionModo, setHojaDireccionModo] = useState<"lista" | "nueva">("lista");
+  const [hojaMedioPagoVisible, setHojaMedioPagoVisible] = useState(false);
+  const [hojaNotasVisible, setHojaNotasVisible] = useState(false);
+  const borradorDireccionRef = useRef<BorradorDireccion | null>(null);
 
   const tienda = useTiendaAbierta();
   const tecladoVisible = useTecladoVisible();
@@ -149,7 +197,7 @@ export default function CartScreen() {
     }
   }, [configApp?.frio_imagen_url]);
 
-  const { data: direcciones = [], refetch: refetchDirs, isFetched: direccionesCargadas } = useQuery({
+  const { data: direcciones = [], refetch: refetchDirs } = useQuery({
     queryKey: ["direcciones"],
     queryFn: getDirecciones,
     enabled: isAuthenticated,
@@ -159,12 +207,42 @@ export default function CartScreen() {
   const dirSeleccionada = direccionId ? direcciones.find((d) => d.id === direccionId) ?? null : null;
   const dirActiva = dirSeleccionada || dirPredeterminada;
 
+  // Síntesis de la dirección nueva en progreso, para que el bloque de punto de
+  // entrega tenga algo que mostrar (mapa/CTA) mientras se llena el formulario
+  // dentro de la hoja, sin esperar a que se guarde como DireccionGuardada real.
+  const dirParaMostrar: DireccionGuardada | null = mostrarNueva
+    ? {
+        id: -1,
+        etiqueta: "Nueva",
+        direccion: nuevaDireccion.trim() || nuevaUbicacion?.geocoded_direccion || "Ubicación en el mapa",
+        predeterminada: false,
+        lat: nuevaUbicacion?.lat ?? null,
+        lng: nuevaUbicacion?.lng ?? null,
+      }
+    : dirActiva ?? null;
+
+  const notasEfectivas = notasOverride ?? dirActiva?.notas ?? notas.trim();
+  const notasVisibles = mostrarNueva ? nuevasNotas : notasEfectivas;
+
   const subtotal = subtotalComputed;
   const puntos = cliente?.puntos || 0;
-  const puedeUsarPuntos = puntos >= 200;
+  // Umbral real de canje (090): antes esto y los otros dos "200" mas abajo
+  // estaban quemados por separado del texto de profile.tsx, que a su vez
+  // mostraba OTRO numero (100, de una barra de progreso que ni siquiera leia
+  // esta config). Un solo valor, del servidor, en los tres sitios.
+  const puntosParaEnvioGratis = configApp?.puntos_envio_gratis ?? 200;
+  const puedeUsarPuntos = puntos >= puntosParaEnvioGratis;
   const envioGratisMinimo = configApp?.envio_gratis_minimo ?? 150000;
   const envioCostoGlobal = configApp?.envio_costo ?? 5000;
   const pedidoMinimo = configApp?.pedido_minimo ?? 30000;
+  // Medio de pago (093). Nace apagada: sin la bandera, ni se renderiza la fila
+  // ni se manda medio_pago/paga_con al crear el pedido — el carrito se
+  // comporta byte a byte como antes de esta funcionalidad.
+  const medioPagoActivo = configApp?.medio_pago_activo === true;
+  const mediosPagoDisponibles = configApp?.medios_pago ?? MEDIOS_PAGO_RESPALDO;
+  const medioActivoObj = mediosPagoDisponibles.find((m) => m.codigo === medioPago);
+  const iconoMedioActivo = medioActivoObj ? (ICONOS_MEDIO[medioActivoObj.codigo] ?? ICONO_MEDIO_GENERICO) : ICONO_MEDIO_GENERICO;
+  const subtituloMedioPago = medioActivoObj?.etiqueta;
 
   // Punto de entrega actual: el pin recién capturado o el de la dirección elegida.
   // Se calcula aquí (y no solo dentro de handlePedir) porque la tarifa por zona
@@ -217,8 +295,16 @@ export default function CartScreen() {
     frio: frioAplicado,
     frioCosto,
   });
-  const envio = resumen.envio;
   const total = resumen.total;
+
+  // Espacio libre bajo el boton de confirmar. La tab bar FLOTA
+  // (position:absolute en (tabs)/_layout.tsx): bottom = insets.bottom-6 (o 18
+  // sin inset) y height 58. Con el `paddingBottom: 80` fijo de antes, en un
+  // telefono con inset (86pt de tab bar) al boton se le comian 6pt y se le
+  // cortaban las esquinas redondeadas. Se deriva de la MISMA formula para que
+  // no se vuelva a desalinear si la barra cambia de alto.
+  const altoTabBarFlotante = (insets.bottom > 0 ? insets.bottom - 6 : 18) + 58;
+  const respiroBarra = altoTabBarFlotante + 12;
 
   // El check arranca apagado en cada pedido y no se persiste entre sesiones. Un
   // check pegado que suma $1.000 sin que la gente lo note es una queja garantizada.
@@ -245,10 +331,21 @@ export default function CartScreen() {
     tracker.track('eta_mostrado', { min: eta.min, max: eta.max }, 'cart');
   }, [eta]);
 
+  // Denominador de "cuánto pesa no tener pin" — el tamaño real del problema
+  // contra el que va a chocar `exigir_ubicacion`. Se dispara cuando el CTA
+  // "falta el punto" REALMENTE se pinta en pantalla, no solo cuando handlePedir
+  // lo bloquea — así mide exposición, no solo bloqueo.
+  const dirsSinPinReportadasRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    if (!dirParaMostrar || dirParaMostrar.lat != null) return;
+    if (dirsSinPinReportadasRef.current.has(dirParaMostrar.id)) return;
+    dirsSinPinReportadasRef.current.add(dirParaMostrar.id);
+    tracker.track('entrega_sin_pin_mostrado', { items_count: items.length }, 'cart');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirParaMostrar?.id, dirParaMostrar?.lat, items.length]);
+
   // Una dirección guardada sin punto se completa abriendo el mapa: al confirmar,
   // el pin se guarda contra ESA dirección para que la próxima vez ya lo tenga.
-  // Hoy solo el 39% de las direcciones activas tiene coordenadas, así que este
-  // camino es el que hace viable prender `exigir_ubicacion` sin dejar a nadie fuera.
   const confirmarUbicacion = useConfirmarUbicacion();
   const abrirMapaParaDireccion = (dir: DireccionGuardada) => {
     // El texto de la dirección va como punto de partida: una dirección guardada
@@ -261,57 +358,59 @@ export default function CartScreen() {
         Toast.show({ type: "success", text1: "Punto guardado", text2: "Ya puedes confirmar tu pedido" });
       } catch {
         // Si no se pudo guardar contra la dirección, el punto igual sirve para
-        // este pedido: se usa como si fuera una dirección nueva.
+        // este pedido: se usa como si fuera una dirección nueva. Se abre la
+        // hoja en modo "nueva" para que se vea qué pasó — SIN borrador: ya se
+        // comprometió (mostrarNueva=true, nuevaUbicacion=u) antes de abrir la
+        // hoja, así que cerrarla con el backdrop no debe descartar el pin.
         setNuevaUbicacion(u);
         setMostrarNueva(true);
+        borradorDireccionRef.current = null;
+        hojaDireccionAbiertaEstaVisitaRef.current = true;
+        tracker.track('direccion_hoja_abierta', { n_direcciones: direcciones.length, origen: 'fallback_pin' }, 'cart');
+        setHojaDireccionModo('nueva');
+        setHojaDireccionVisible(true);
       }
     });
   };
 
-  // Abrir el formulario no sirve de nada si queda bajo el pliegue: la tarjeta de
-  // Entrega vive en el pie de la lista y con tres productos en el carrito ya no se
-  // ve. Sin este desplazamiento el cliente toca "Pedir" y sigue viendo lo mismo,
-  // que es exactamente el bug que se esta arreglando.
-  const listaRef = useRef<FlatList>(null);
-  const tarjetaEntregaRef = useRef<View>(null);
-  const desplazarAEntrega = () => {
-    // Dos cuadros de gracia: el formulario se acaba de montar en este mismo
-    // render y antes de eso la tarjeta todavia mide lo que media cerrada.
-    setTimeout(() => {
-      const scroll = listaRef.current?.getNativeScrollRef();
-      const tarjeta = tarjetaEntregaRef.current;
-      if (!scroll || !tarjeta) return;
-      tarjeta.measureLayout(
-        // RN tipa getNativeScrollRef() como `View | ScrollViewComponent`, pero en
-        // ejecucion siempre devuelve la vista nativa del scroll. El tipo es mas
-        // ancho que la realidad y measureLayout no acepta la rama de clase.
-        scroll as ComponentRef<typeof View>,
-        (_x, y) => listaRef.current?.scrollToOffset({ offset: Math.max(0, y - 16), animated: true }),
-        // measureLayout falla si la vista se desmonto entre medias. No hay nada
-        // que hacer y tampoco es un error que valga la pena reportar.
-        () => {},
-      );
-    }, 120);
+  // Abre la hoja de dirección, capturando el borrador vigente para poder
+  // restaurarlo si se cierra sin comprometer.
+  const hojaDireccionAbiertaEstaVisitaRef = useRef(false);
+  const abrirHojaDireccion = (modo: "lista" | "nueva", origen: "fila" | "sin_direccion" | "fallback_pin") => {
+    borradorDireccionRef.current = { direccion: nuevaDireccion, notas: nuevasNotas, ubicacion: nuevaUbicacion };
+    hojaDireccionAbiertaEstaVisitaRef.current = true;
+    tracker.track('direccion_hoja_abierta', { n_direcciones: direcciones.length, origen }, 'cart');
+    setHojaDireccionModo(modo);
+    setHojaDireccionVisible(true);
   };
 
-  // Entrar al carrito sin NINGUNA direccion guardada abre el formulario de una
-  // vez. Antes hacian falta dos taps ("Agregar direccion" y luego "Pedir") para
-  // apenas enterarse de que faltaba; el 76% de los registrados nunca compro y
-  // hay $14,9M parados en carritos de gente sin direccion.
-  // El ref es por si acaso: con cero direcciones el enlace "Usar guardada" ni se
-  // pinta, pero si mas tarde aparece una (se guardo desde Mi perfil) el efecto no
-  // debe volver a abrir el formulario encima de lo que la persona este haciendo.
-  const entregaAutoAbiertaRef = useRef(false);
-  useEffect(() => {
-    if (entregaAutoAbiertaRef.current) return;
-    // Al invitado no se le pide direccion: rebota al registro y de ahi sale a la
-    // pantalla de direccion inicial. Pedirsela antes seria pedir datos a quien
-    // todavia no tiene cuenta.
-    if (!isAuthenticated || !direccionesCargadas) return;
-    if (items.length === 0 || direcciones.length > 0) return;
-    entregaAutoAbiertaRef.current = true;
+  const cerrarHojaDireccion = () => {
+    // Descarta: si no se comprometió con "Usar esta dirección", los campos
+    // vuelven a como estaban ANTES de abrir la hoja.
+    if (borradorDireccionRef.current) {
+      setNuevaDireccion(borradorDireccionRef.current.direccion);
+      setNuevasNotas(borradorDireccionRef.current.notas);
+      setNuevaUbicacion(borradorDireccionRef.current.ubicacion);
+    }
+    setHojaDireccionVisible(false);
+  };
+
+  const usarNuevaDireccion = () => {
+    borradorDireccionRef.current = null;
     setMostrarNueva(true);
-  }, [isAuthenticated, direccionesCargadas, direcciones.length, items.length]);
+    setHojaDireccionVisible(false);
+  };
+
+  const seleccionarDireccion = (d: DireccionGuardada) => {
+    setDireccionId(d.id);
+    setMostrarNueva(false);
+    setNotasOverride(null);
+    borradorDireccionRef.current = null;
+    // con_pin responde si la dirección ya tiene coordenadas: es el numerador
+    // de "cuántas hay que mandar al mapa" (bloque F).
+    tracker.track('direccion_seleccionada', { direccion_id: d.id, con_pin: d.lat != null }, 'cart');
+    setHojaDireccionVisible(false);
+  };
 
   const alternarFrio = (valor: boolean) => {
     setQuiereFrio(valor);
@@ -334,6 +433,14 @@ export default function CartScreen() {
     frioOfrecidoRef.current = clave;
     tracker.track('frio_ofrecido', { n_elegibles: itemsElegibles.length, n_items: items.length }, 'cart');
   }, [frioActivo, hayElegibles, itemsElegibles.length, items.length, productoIds]);
+
+  const togglePedidoAbierto = () => {
+    setPedidoAbierto((v) => {
+      const nuevo = !v;
+      if (nuevo) tracker.track('carrito_items_desplegados', { items_count: items.length }, 'cart');
+      return nuevo;
+    });
+  };
 
   const handleValidarCupon = async () => {
     if (!codigoCupon.trim()) return;
@@ -407,8 +514,10 @@ export default function CartScreen() {
   // InitiateCheckout de Meta: una vez por intento de pedido. Los reintentos tras
   // un fallo NO lo re-disparan; se resetea junto con el idempotency key al éxito.
   const initiateCheckoutLogueadoRef = useRef(false);
-  // checkout_iniciado: una sola vez por intento de pedido, igual que el de Meta.
-  // Se libera al crear el pedido para que el siguiente pedido vuelva a contarse.
+  // checkout_iniciado: una sola vez por VISITA (build 94; antes era por montaje
+  // del tab — ver el reset en useFocusEffect mas abajo). Tambien se libera al
+  // crear el pedido para que un reintento dentro de la misma visita, tras un
+  // fallo, no re-cuente un segundo "toco Pedir".
   const checkoutIniciadoRef = useRef(false);
   // Composición de carrito para la que ya se mostró el recordatorio de frío. Un
   // modal que reaparece encima del botón de comprar es la forma más rápida de que
@@ -425,7 +534,25 @@ export default function CartScreen() {
   // deps, useFocusEffect vuelve a correr su limpieza cada vez que cambia una —
   // subir una cantidad, elegir direccion— y contaria un abandono por cada
   // retoque del carrito, con la pantalla todavia abierta.
-  const estadoCarritoRef = useRef({ items_count: 0, subtotal: 0, tiene_direccion: false, supera_minimo: false, tienda_abierta: false, vio_formulario: false });
+  //
+  // vio_formulario: desde el checkout denso (1.3.2/build 94) significa "abrió
+  // la hoja de dirección en esta visita" (hojaDireccionAbiertaEstaVisitaRef),
+  // NO "tiene el formulario inline abierto" como antes de la hoja — la serie
+  // NO es comparable a través del build 94.
+  //
+  // envio/total/envio_gratis/tiene_pin/frio (build 94): antes solo se sabia si
+  // el SUBTOTAL superaba el minimo, no si el envio o el frio pesaban en lo que
+  // la persona alcanzo a VER. Es lo que permite responder "vio el total y se
+  // fue" por inferencia — no dice el motivo, solo las condiciones. Se infiere
+  // en vez de preguntar porque el gatillo mas comun de este evento es la app
+  // yendose a background, donde no hay pantalla para mostrar una hoja de
+  // motivos. Los cinco salen de `resumen` (mismo calculo que usa el servidor)
+  // y `frioAplicado`, ya calculados mas arriba — no se recalcula nada aca.
+  const estadoCarritoRef = useRef({
+    items_count: 0, subtotal: 0, tiene_direccion: false, supera_minimo: false,
+    tienda_abierta: false, vio_formulario: false, envio: 0, total: 0,
+    envio_gratis: false, tiene_pin: false, frio: false,
+  });
   useEffect(() => {
     estadoCarritoRef.current = {
       items_count: items.length,
@@ -433,11 +560,17 @@ export default function CartScreen() {
       tiene_direccion: !!(dirActiva?.direccion || direccion.trim()),
       supera_minimo: subtotal >= pedidoMinimo,
       tienda_abierta: !!tienda.abierta,
-      vio_formulario: mostrarNueva,
+      vio_formulario: hojaDireccionAbiertaEstaVisitaRef.current,
+      envio: resumen.envio,
+      total: resumen.total,
+      envio_gratis: resumen.motivoEnvioGratis !== null,
+      tiene_pin: dirActiva?.lat != null && dirActiva?.lng != null,
+      frio: frioAplicado,
     };
   });
-  // Intento de pedido en ESTA visita. Distinto de checkoutIniciadoRef, que es por
-  // montaje y no se puede reusar sin romper la deduplicacion de checkout_iniciado.
+  // Intento de pedido en ESTA visita. Independiente de checkoutIniciadoRef:
+  // uno cuenta el boton tocado (una vez), el otro solo bloquea el reporte de
+  // carrito_abandonado una vez que ya se toco Pedir.
   const pidioEnEstaVisitaRef = useRef(false);
   const abandonoReportadoRef = useRef(false);
   const reportarAbandono = useCallback(() => {
@@ -447,6 +580,16 @@ export default function CartScreen() {
     // el carrito se limpio solo.
     if (estado.items_count === 0) return;
     abandonoReportadoRef.current = true;
+    // Deduplicacion entre remounts (ver comentario de ultimoAbandonoReportado):
+    // el ref de este componente no alcanza a cubrirlo si hay dos instancias
+    // montadas a la vez, asi que se compara contra el estado del MODULO.
+    const clave = JSON.stringify(estado);
+    const ahora = Date.now();
+    if (ultimoAbandonoReportado && ultimoAbandonoReportado.clave === clave
+      && ahora - ultimoAbandonoReportado.en < VENTANA_DEDUP_ABANDONO_MS) {
+      return;
+    }
+    ultimoAbandonoReportado = { clave, en: ahora };
     tracker.track('carrito_abandonado', estado, 'cart');
   }, []);
 
@@ -454,6 +597,17 @@ export default function CartScreen() {
     useCallback(() => {
       pidioEnEstaVisitaRef.current = false;
       abandonoReportadoRef.current = false;
+      hojaDireccionAbiertaEstaVisitaRef.current = false;
+      dirsSinPinReportadasRef.current = new Set();
+      // checkoutIniciadoRef se resetea aca, no solo al crear el pedido (mas
+      // abajo, en el camino de exito): antes era por MONTAJE del tab, asi que
+      // volver a esta pantalla sin desmontarla (cambiar de tab y regresar) no
+      // recontaba checkout_iniciado aunque si podia volver a contar
+      // carrito_abandonado — el denominador del embudo de checkout quedaba
+      // subcontado contra el numerador de abandonos. Alinearlo a la VISITA,
+      // igual que pidioEnEstaVisitaRef, es un corte de serie (build 94): ver
+      // docs/estanco/TELEMETRIA-EVENTOS.md.
+      checkoutIniciadoRef.current = false;
       // Cerrar la app tambien es irse, y probablemente sea la forma mas comun.
       // Sin esto solo se veria al que se cambia de pestaña. El tracker hace flush
       // al pasar a background, asi que el evento alcanza a salir.
@@ -497,23 +651,16 @@ export default function CartScreen() {
     }
 
     const dir = dirActiva?.direccion || direccion.trim();
-    const not = dirActiva?.notas || notas.trim();
 
     if (!dir && !mostrarNueva) {
       // Se mantiene el evento: es la linea base contra la que se mide si abrir el
       // formulario aqui sirvio. Quitarlo al arreglar el flujo dejaria el arreglo
       // sin forma de evaluarse.
       tracker.track('checkout_abandonado', { paso: 'sin_direccion', items_count: items.length }, 'cart');
-      // Y ademas se abre el formulario, igual que `sin_pin` abre el mapa veinte
-      // lineas mas abajo. Era la unica de las seis validaciones del checkout que
-      // dejaba al cliente donde estaba: 52 abandonos en la 1.2.3 contra un aviso
-      // rojo sin salida. El formulario ya esta montado en esta misma pantalla, no
-      // hay a donde navegar; solo hay que abrirlo y traerlo a la vista.
-      setMostrarNueva(true);
-      desplazarAEntrega();
+      abrirHojaDireccion('nueva', 'sin_direccion');
       // `info` y no `error`: ya no es un callejon sin salida sino el siguiente
       // paso del pedido, y el rojo le dice al cliente que hizo algo mal.
-      Toast.show({ type: "info", text1: "Falta tu dirección", text2: "Escríbela abajo para enviarte el pedido" });
+      Toast.show({ type: "info", text1: "Falta tu dirección", text2: "Agrégala para enviarte el pedido" });
       return;
     }
     // GPS-first: en una dirección nueva basta con la ubicación capturada O una
@@ -548,7 +695,7 @@ export default function CartScreen() {
     const dirFinal = mostrarNueva
       ? (nuevaDireccion.trim() || nuevaUbicacion?.geocoded_direccion || "Ubicación en el mapa")
       : dir;
-    const notFinal = mostrarNueva ? nuevasNotas.trim() : not;
+    const notFinal = mostrarNueva ? nuevasNotas.trim() : notasEfectivas;
 
     // Snapshot de ubicación para el pedido: pin recién capturado (nueva dirección)
     // o el pin ya guardado en la dirección seleccionada. El servidor recalcula fuera_zona.
@@ -655,6 +802,10 @@ export default function CartScreen() {
         // desde la base: si no hay nada elegible, no cobra y no falla.
         quiere_frio: conFrio,
         ...ubicacionABody(ubicacionSnapshot),
+        // Medio de pago (093): solo si la bandera está prendida. Con ella
+        // apagada no se manda nada nuevo — el servidor guarda NULL igual que
+        // con un binario que no conoce el campo.
+        ...(medioPagoActivo ? { medio_pago: medioPago } : {}),
       }, submitIdempotencyKeyRef.current);
       // Éxito: liberar el key y el id de dirección para que el próximo pedido empiece limpio
       submitIdempotencyKeyRef.current = null;
@@ -665,8 +816,16 @@ export default function CartScreen() {
       recordatorioMostradoRef.current = null;
       setMostrarRecordatorioFrio(false);
       setQuiereFrio(false);
+      setMedioPago("efectivo");
       setNuevaUbicacion(null);
-      tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos }, 'cart');
+      setNotasOverride(null);
+      setPedidoAbierto(false);
+      setCuponAbierto(false);
+      // medio_pago del PEDIDO devuelto por el servidor, no del estado local:
+      // el estado ya se reseteó arriba, y ademas el servidor es quien decide
+      // si lo que se mandó era válido (normalizarMedioPago puede haberlo
+      // descartado a NULL).
+      tracker.track('pedido_creado', { pedido_id: pedido.id, total: pedido.total, items_count: items.length, uso_cupon: !!cuponValidado, uso_puntos: usarPuntos && puedeUsarPuntos, medio_pago: pedido.medio_pago ?? undefined, pide_vuelto: pedido.paga_con != null, con_notas: !!notFinal }, 'cart');
       metaLogPurchase(pedido.total, { pedidoId: pedido.id, numItems: items.length });
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });
       queryClient.invalidateQueries({ queryKey: ["cupones-disponibles"] });
@@ -786,202 +945,85 @@ export default function CartScreen() {
     >
     <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       <FlatList automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive"
-        ref={listaRef}
-        data={items}
+        data={pedidoAbierto ? items : []}
         keyExtractor={(item) => String(item.productoId)}
-        contentContainerStyle={{ padding: 16, paddingBottom: 200 }}
+        contentContainerStyle={{ padding: 16, paddingTop: insets.top + 8, paddingBottom: 24 }}
         ListHeaderComponent={
-          <Text style={{ fontSize: 22, fontFamily: fuentes.titulo, color: "#1A1C1A", marginBottom: 16, letterSpacing: -0.5 }}>
-            Tu Carrito
-          </Text>
+          <View style={{ marginBottom: 12 }}>
+            <FilaPedidoColapsado nItems={items.length} subtotal={subtotal} abierto={pedidoAbierto} onToggle={togglePedidoAbierto} />
+          </View>
         }
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         renderItem={({ item }) => <CartItem item={item} />}
         ListFooterComponent={
-          <View style={{ gap: 24, marginTop: 24 }}>
-            {/* Delivery - Direcciones Guardadas */}
-            <View ref={tarjetaEntregaRef} className="p-5 rounded-2xl" style={{ backgroundColor: colors.surface, ...shadows.card }}>
-              <View className="flex-row items-center justify-between mb-4">
-                <View className="flex-row items-center">
-                  <TruckIcon color="#1A1C1A" size={20} />
-                  <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Entrega</Text>
-                </View>
-                {/* Sin direcciones guardadas no hay nada que "usar guardada": el
-                    enlace llevaba a un estado vacio cuya unica accion era
-                    "Agregar direccion", o sea que volvia a abrir justo lo que se
-                    acababa de cerrar. Un circulo que no produce nada y que hace
-                    dudar de si el formulario de arriba era el correcto. */}
-                {direcciones.length > 0 && (
-                  <Pressable
-                    onPress={() => setMostrarNueva(!mostrarNueva)}
-                    accessibilityRole="button"
-                    accessibilityLabel={mostrarNueva ? "Usar una dirección guardada" : "Agregar una dirección nueva"}
-                    // Es solo un texto de 12 px dentro del encabezado: crece el
-                    // objetivo táctil sin mover la fila.
-                    hitSlop={12}
-                  >
-                    <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>
-                      {mostrarNueva ? "Usar guardada" : "+ Nueva"}
-                    </Text>
-                  </Pressable>
-                )}
+          <View style={{ gap: 12, marginTop: pedidoAbierto ? 12 : 0 }}>
+            <BloquePuntoEntrega
+              dirActiva={dirParaMostrar}
+              eta={eta ?? null}
+              notas={notasVisibles}
+              exigirUbicacion={!!configApp?.exigir_ubicacion}
+              onCambiarDireccion={() => abrirHojaDireccion(direcciones.length > 0 ? "lista" : "nueva", "fila")}
+              onAgregarDireccion={() => abrirHojaDireccion("nueva", "fila")}
+              onUbicarEnMapa={() => {
+                if (mostrarNueva) {
+                  // Dirección nueva en progreso: si ya hay un pin capturado se
+                  // abre el mapa para AJUSTARLO; si no, se vuelve a la hoja
+                  // para capturarlo (botón de ubicación / mapa / buscador).
+                  if (nuevaUbicacion) {
+                    confirmarUbicacion(nuevaDireccion, nuevaUbicacion, (u) => setNuevaUbicacion(u));
+                  } else {
+                    abrirHojaDireccion("nueva", "fila");
+                  }
+                } else if (dirActiva) {
+                  abrirMapaParaDireccion(dirActiva);
+                }
+              }}
+              onEditarNotas={() => setHojaNotasVisible(true)}
+            />
+
+            {medioPagoActivo && (
+              <View className="rounded-2xl" style={{ backgroundColor: colors.surface, ...shadows.card, paddingHorizontal: 14 }}>
+                <FilaAccion
+                  icono={iconoMedioActivo.icon}
+                  colorIcono={iconoMedioActivo.color}
+                  etiqueta="Método de pago"
+                  valor={subtituloMedioPago}
+                  placeholder="Elige cómo vas a pagar"
+                  accion="Cambiar"
+                  onPress={() => {
+                    tracker.track('medio_pago_hoja_abierta', { medio_actual: medioPago }, 'cart');
+                    setHojaMedioPagoVisible(true);
+                  }}
+                  a11yLabel={`Cambiar método de pago. Actual: ${subtituloMedioPago ?? "sin elegir"}`}
+                />
               </View>
+            )}
 
-              {!mostrarNueva ? (
-                <>
-                  {/* Direcciones guardadas */}
-                  {direcciones.length > 0 ? (
-                    <View style={{ gap: 8 }}>
-                      {direcciones.map((d) => {
-                        const selected = dirActiva?.id === d.id;
-                        return (
-                          <Pressable
-                            key={d.id}
-                            onPress={() => {
-                              setDireccionId(d.id);
-                              // con_pin responde si la dirección ya tiene coordenadas: es
-                              // el numerador de "cuántas hay que mandar al mapa" (bloque F).
-                              tracker.track('direccion_seleccionada', { direccion_id: d.id, con_pin: d.lat != null }, 'cart');
-                            }}
-                            accessibilityRole="radio"
-                            accessibilityState={{ checked: selected }}
-                            accessibilityLabel={`Entregar en ${d.etiqueta}: ${d.direccion}`}
-                            className="flex-row items-center p-3 rounded-xl"
-                            style={{
-                              backgroundColor: "#fff",
-                              borderWidth: 2,
-                              borderColor: selected ? "#1FAF55" : "transparent",
-                              minHeight: 44,
-                            }}
-                          >
-                            <Feather name="map-pin" size={16} color={selected ? "#1FAF55" : "#9E9E9E"} />
-                            <View className="flex-1 ml-3">
-                              <View className="flex-row items-center" style={{ gap: 6 }}>
-                                <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{d.etiqueta}</Text>
-                                {d.predeterminada && (
-                                  <View style={{ backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
-                                    <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>PRINCIPAL</Text>
-                                  </View>
-                                )}
-                                {d.lat != null && (
-                                  <View style={{ flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
-                                    <Feather name="map-pin" size={8} color="#1FAF55" />
-                                    <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>CON UBICACIÓN</Text>
-                                  </View>
-                                )}
-                              </View>
-                              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C", marginTop: 2 }} numberOfLines={1}>
-                                {d.direccion}
-                              </Text>
-                            </View>
-                            {selected && <Feather name="check-circle" size={18} color="#1FAF55" />}
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  ) : (
-                    <Pressable
-                      onPress={() => setMostrarNueva(true)}
-                      accessibilityRole="button"
-                      accessibilityLabel="Agregar una dirección de entrega"
-                      className="items-center py-6 rounded-xl bg-white"
-                    >
-                      <Feather name="plus-circle" size={24} color="#1FAF55" />
-                      <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1FAF55", marginTop: 6 }}>
-                        Agregar dirección
-                      </Text>
-                    </Pressable>
-                  )}
-                </>
-              ) : (
-                <>
-                  {/* Nueva dirección */}
-                  {/* Ubicación GPS (opcional): al capturar, auto-llena la dirección (editable). */}
-                  <UbicacionButton
-                    value={nuevaUbicacion}
-                    textoDireccion={nuevaDireccion}
-                    onChange={(u) => {
-                      setNuevaUbicacion(u);
-                      // Punto del mapa (pin_mapa) siempre reescribe; GPS solo si está vacía.
-                      if (u?.geocoded_direccion && (u.metodo_ubicacion === "pin_mapa" || !nuevaDireccion.trim())) {
-                        setNuevaDireccion(u.geocoded_direccion);
-                      }
-                      // Con el punto puesto (GPS o pin) las sugerencias solo
-                      // estorban: el auto-llenado del campo disparaba la
-                      // búsqueda como si el cliente hubiera tecleado. "Quitar"
-                      // (u = null) las devuelve.
-                      setSilenciadoDir(u != null);
-                    }}
-                  />
-                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
-                    Dirección
+            {/* Cupón, colapsado: lo usa una minoría. Va ANTES de frío/puntos —
+                es una decisión de "¿tengo un código?", no de "¿qué le agrego
+                al pedido?", y se resuelve más rápido que esas dos. */}
+            {cuponValidado ? (
+              <View className="flex-row items-center p-3 rounded-xl" style={{ backgroundColor: colors.surface, ...shadows.card, borderWidth: 2, borderColor: colors.green }}>
+                <Feather name="check-circle" size={18} color={colors.green} />
+                <View className="flex-1 ml-3">
+                  <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: colors.green }}>
+                    {cuponValidado.cupon.codigo}
                   </Text>
-                  {/* Tercer camino, junto al botón de ubicación y al mapa: escribir
-                      y elegir una sugerencia, que llega con las coordenadas puestas. */}
-                  <View style={{ marginBottom: 4 }}>
-                    <BuscadorDireccion
-                      value={nuevaDireccion}
-                      // Igual que en el onboarding: con el punto puesto las
-                      // sugerencias solo estorban, y escribir las devuelve.
-                      onChangeText={(t) => { setNuevaDireccion(t); setSilenciadoDir(false); }}
-                      silenciado={silenciadoDir}
-                      onUbicacion={(u) => { setNuevaUbicacion(u); setSilenciadoDir(true); }}
-                      placeholder="Ej: Carrera 15 # 12-34"
-                      accessibilityLabel="Dirección de entrega"
-                    />
-                  </View>
-                  {/* El texto ya no es una alternativa al punto: es lo que el
-                      domiciliario lee cuando ya llegó a la cuadra. Decirlo evita que
-                      la gente escriba la dirección completa creyendo que reemplaza
-                      el mapa. */}
-                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#9AA69A", marginBottom: 12, marginLeft: 4 }}>
-                    El punto del mapa es el que usa el domiciliario. Esto le ayuda a
-                    identificar la casa cuando ya está cerca.
+                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C" }}>
+                    {cuponValidado.cupon.descripcion || (cuponValidado.cupon.tipo === "porcentaje" ? `${cuponValidado.cupon.valor}% de descuento` : `${formatCOP(cuponValidado.cupon.valor)} de descuento`)}
                   </Text>
-                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
-                    Notas (Opcional)
-                  </Text>
-                  <TextInput
-                    style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontFamily: fuentes.destacado, fontSize: 14, color: "#1A1C1A" }}
-                    placeholder="Ej: portería, dejar con vigilante"
-                    placeholderTextColor="#BCCABA"
-                    value={nuevasNotas}
-                    onChangeText={setNuevasNotas}
-                    multiline
-                    maxLength={200}
-                  />
-                </>
-              )}
-            </View>
-
-            {/* Cupon de descuento */}
-            <View className="p-5 rounded-2xl" style={{ backgroundColor: colors.surface, ...shadows.card }}>
-              <View className="flex-row items-center mb-3">
-                <TagIcon color="#1A1C1A" size={20} />
-                <Text style={{ fontSize: 18, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Cupon</Text>
-              </View>
-
-              {cuponValidado ? (
-                <View className="flex-row items-center p-3 rounded-xl bg-white" style={{ borderWidth: 2, borderColor: "#1FAF55" }}>
-                  <Feather name="check-circle" size={18} color="#1FAF55" />
-                  <View className="flex-1 ml-3">
-                    <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1FAF55" }}>
-                      {cuponValidado.cupon.codigo}
-                    </Text>
-                    <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C" }}>
-                      {cuponValidado.cupon.descripcion || (cuponValidado.cupon.tipo === "porcentaje" ? `${cuponValidado.cupon.valor}% de descuento` : `${formatCOP(cuponValidado.cupon.valor)} de descuento`)}
-                    </Text>
-                  </View>
-                  <Pressable onPress={handleQuitarCupon} accessibilityRole="button" accessibilityLabel="Quitar cupón" hitSlop={14}>
-                    <Feather name="x-circle" size={18} color="#9E9E9E" />
-                  </Pressable>
                 </View>
-              ) : (
+                <Pressable onPress={handleQuitarCupon} accessibilityRole="button" accessibilityLabel="Quitar cupón" hitSlop={14}>
+                  <Feather name="x-circle" size={18} color="#9E9E9E" />
+                </Pressable>
+              </View>
+            ) : cuponAbierto ? (
+              <View className="p-4 rounded-2xl" style={{ backgroundColor: colors.surface, ...shadows.card }}>
                 <View className="flex-row" style={{ gap: 8 }}>
                   <TextInput
                     style={{
                       flex: 1,
-                      backgroundColor: "#fff",
+                      backgroundColor: colors.lowfill,
                       borderRadius: 12,
                       paddingHorizontal: 16,
                       paddingVertical: 12,
@@ -996,6 +1038,7 @@ export default function CartScreen() {
                     value={codigoCupon}
                     onChangeText={(t) => { setCodigoCupon(t.toUpperCase()); setCuponError(""); }}
                     autoCapitalize="characters"
+                    autoFocus
                   />
                   <Pressable
                     onPress={handleValidarCupon}
@@ -1004,7 +1047,7 @@ export default function CartScreen() {
                     accessibilityLabel="Aplicar cupón"
                     accessibilityState={{ disabled: validandoCupon || !codigoCupon.trim() }}
                     style={{
-                      backgroundColor: codigoCupon.trim() ? "#1FAF55" : "#E2E3DF",
+                      backgroundColor: codigoCupon.trim() ? colors.green : "#E2E3DF",
                       borderRadius: 12,
                       paddingHorizontal: 16,
                       minHeight: 44,
@@ -1016,160 +1059,59 @@ export default function CartScreen() {
                     </Text>
                   </Pressable>
                 </View>
-              )}
-
-              {cuponError ? (
-                <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.danger, marginTop: 6, marginLeft: 4 }}>{cuponError}</Text>
-              ) : null}
-            </View>
-
-            {/* Barra progreso envio gratis */}
-            {subtotal < envioGratisMinimo && envio > 0 ? (
-              <View style={{ backgroundColor: '#F4F4F0', borderRadius: 12, padding: 12, marginBottom: 0 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: '#6D7B6C' }}>Faltan {formatCOP(envioGratisMinimo - subtotal)} para envío gratis</Text>
-                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: '#1FAF55' }}>{formatCOP(envioGratisMinimo)}</Text>
-                </View>
-                <View style={{ height: 4, borderRadius: 2, backgroundColor: '#E2E3DF' }}>
-                  <View style={{ height: 4, borderRadius: 2, backgroundColor: '#1FAF55', width: `${Math.min(100, (subtotal / envioGratisMinimo) * 100)}%` }} />
-                </View>
+                {cuponError ? (
+                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.danger, marginTop: 6, marginLeft: 4 }}>{cuponError}</Text>
+                ) : null}
               </View>
-            ) : subtotal >= envioGratisMinimo ? (
-              <View style={{ backgroundColor: '#F4F4F0', borderRadius: 12, padding: 12, alignItems: 'center' }}>
-                <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: '#1FAF55' }}>🎉 ¡Envío gratis!</Text>
-              </View>
-            ) : null}
+            ) : (
+              <Pressable
+                onPress={() => setCuponAbierto(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Agregar un cupón de descuento"
+                className="flex-row items-center justify-between p-3 rounded-2xl"
+                style={{ backgroundColor: colors.surface, ...shadows.card, minHeight: 44 }}
+              >
+                <View className="flex-row items-center" style={{ gap: 10 }}>
+                  <Feather name="tag" size={16} color="#6D7B6C" />
+                  <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>¿Tienes un cupón?</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color="#CBD3C7" />
+              </Pressable>
+            )}
 
-            {/* Puntos + Envio */}
-            <View className="rounded-2xl p-4 bg-white" style={{ ...shadows.card, gap: 12 }}>
-              <View className="flex-row justify-between">
-                <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#6D7B6C" }}>Subtotal</Text>
-                <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{formatCOP(subtotal)}</Text>
-              </View>
-              {descuentoCupon > 0 && (
-                <View className="flex-row justify-between">
-                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#1FAF55" }}>Descuento cupon</Text>
-                  <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1FAF55" }}>-{formatCOP(descuentoCupon)}</Text>
-                </View>
-              )}
-              {eta && (
-                <View className="flex-row justify-between items-center">
-                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#6D7B6C" }}>Llega en</Text>
-                  <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>
-                    {eta.min}–{eta.max} min
-                  </Text>
-                </View>
-              )}
-              <View className="flex-row justify-between items-center">
-                <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#6D7B6C" }}>Envio</Text>
-                <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: envio === 0 ? "#1FAF55" : "#1A1C1A" }}>
-                  {envio === 0 ? "¡Gratis!" : formatCOP(envio)}
-                </Text>
-              </View>
+            <BloqueExtras
+              frioActivo={frioActivo}
+              hayElegibles={hayElegibles}
+              quiereFrio={quiereFrio}
+              frioCosto={frioCosto}
+              todosElegibles={todosElegibles}
+              itemsElegibles={itemsElegibles}
+              onToggleFrio={alternarFrio}
+              mostrarPuntos={subtotal < envioGratisMinimo}
+              puedeUsarPuntos={puedeUsarPuntos}
+              puntosParaEnvioGratis={puntosParaEnvioGratis}
+              puntos={puntos}
+              usarPuntos={usarPuntos}
+              onToggleUsarPuntos={setUsarPuntos}
+            />
 
-              {/* Frío asegurado. Si no hay nada elegible el check no se muestra:
-                  nunca cobrar por aire. El texto dice exactamente qué va frío y
-                  qué no, que es lo que pidió el negocio. */}
-              {frioActivo && hayElegibles && (
-                <View
-                  className="rounded-xl p-3"
-                  style={{ backgroundColor: quiereFrio ? "rgba(15,58,107,0.08)" : colors.lowfill }}
-                >
-                  {/* El Switch va como hermano del Pressable, no dentro: anidado,
-                      un tap sobre él dispararía los dos handlers y el check
-                      quedaría igual que antes. */}
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                    <Pressable
-                      onPress={() => alternarFrio(!quiereFrio)}
-                      accessibilityRole="checkbox"
-                      accessibilityState={{ checked: quiereFrio }}
-                      accessibilityLabel={`Asegurar frío por ${formatCOP(frioCosto)}`}
-                      // Es un cargo, no una nota al pie: 44 pt de objetivo táctil.
-                      style={{ flex: 1, minHeight: 44, justifyContent: "center" }}
-                    >
-                      <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>
-                        ¿Lo quieres frío? +{formatCOP(frioCosto)}
-                      </Text>
-                      <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, lineHeight: 19, color: "#6D7B6C", marginTop: 3 }}>
-                        {todosElegibles
-                          ? "Todo tu pedido va frío."
-                          : `Aseguramos frío para: ${itemsElegibles.map((i) => i.nombre).slice(0, 3).join(", ")}${itemsElegibles.length > 3 ? ` y ${itemsElegibles.length - 3} más` : ""}. El resto de tu pedido va a temperatura ambiente.`}
-                      </Text>
-                    </Pressable>
-                    <Switch
-                      value={quiereFrio}
-                      onValueChange={alternarFrio}
-                      accessibilityLabel={`Asegurar frío por ${formatCOP(frioCosto)}`}
-                      trackColor={{ false: "#E2E3DF", true: "#0F3A6B" }}
-                      thumbColor="#fff"
-                    />
-                  </View>
-                </View>
-              )}
-
-              {resumen.frio > 0 && (
-                <View className="flex-row justify-between items-center">
-                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: "#6D7B6C" }}>Frío asegurado</Text>
-                  <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#0F3A6B" }}>
-                    {formatCOP(resumen.frio)}
-                  </Text>
-                </View>
-              )}
-              {puedeUsarPuntos && subtotal < envioGratisMinimo && (
-                <View className="flex-row justify-between items-center rounded-xl p-3" style={{ backgroundColor: colors.lowfill }}>
-                  <View className="flex-1">
-                    <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Usar 200 puntos</Text>
-                    <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C" }}>Envío gratis (tienes {puntos} pts)</Text>
-                  </View>
-                  <Switch
-                    value={usarPuntos}
-                    onValueChange={setUsarPuntos}
-                    trackColor={{ false: "#E2E3DF", true: "#1FAF55" }}
-                    thumbColor="#fff"
-                  />
-                </View>
-              )}
-              {!puedeUsarPuntos && puntos > 0 && subtotal < envioGratisMinimo && (
-                <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C", fontStyle: "italic" }}>
-                  Tienes {puntos} pts. Necesitas 200 para envío gratis.
-                </Text>
-              )}
-            </View>
-
-            {/* Express Banner */}
-            <LinearGradient
-              colors={["#1FAF55", "#006D30"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ borderRadius: 16, padding: 20, overflow: "hidden" }}
-            >
-              <View className="flex-row items-center">
-                <View className="flex-1">
-                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "rgba(255,255,255,0.7)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>
-                    Express Delivery
-                  </Text>
-                  <Text style={{ fontSize: 17, fontFamily: fuentes.destacado, color: "#fff", lineHeight: 22 }}>
-                    Domicilio en Florencia
-                  </Text>
-                  <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 4 }}>
-                    Efectivo, QR o datáfono contra entrega.
-                  </Text>
-                </View>
-                <Text style={{ fontFamily: fuentes.titulo, fontSize: 40, opacity: 0.2 }}>⚡</Text>
-              </View>
-            </LinearGradient>
+            <ResumenTotales
+              resumen={resumen}
+              envioCosto={envioCosto}
+              envioGratisMinimo={envioGratisMinimo}
+              cuponCodigo={cuponValidado?.cupon.codigo}
+            />
           </View>
         }
       />
 
-      {/* Barra inferior. Se esconde con el teclado abierto: el total y el boton de
-          pedir no aportan nada mientras se escribe, y en cambio tapan las
-          sugerencias de direccion, que es lo que la persona esta mirando. */}
+      {/* Barra inferior. Se esconde con el teclado abierto: en la pantalla base
+          solo queda el input del cupón, y la barra lo taparía. */}
       {!tecladoVisible && (
       <View
         className="bg-white px-6 pt-4"
         style={{
-          paddingBottom: 80,
+          paddingBottom: respiroBarra,
           borderTopWidth: 1,
           borderTopColor: "#E8E8E5",
           shadowColor: "#000",
@@ -1183,40 +1125,11 @@ export default function CartScreen() {
         <BandaCerrado tienda={tienda} compact style={{ marginBottom: 12 }} />
         <BandaOperativa tienda={tienda} compact style={{ marginBottom: 12 }} />
 
-        {/* Las notas van DEBAJO del total, no al lado. Puestas en la misma fila
-            competian por el ancho con un monto de 28 px y se cortaban contra el
-            borde: "Pedido minimo: $30.000 (faltan $10..." sin cerrar el parentesis.
-            Debajo tienen la pantalla entera y ya no dependen de que quepan. */}
-        <View className="mb-4">
-          <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5 }}>
-            Total a pagar
+        {subtotal < pedidoMinimo && (
+          <Text style={{ fontSize: 12, color: colors.offer, fontFamily: fuentes.destacado, marginBottom: 10, textAlign: "center" }}>
+            Pedido mínimo: {formatCOP(pedidoMinimo)} (faltan {formatCOP(pedidoMinimo - subtotal)})
           </Text>
-          <Text style={{ fontSize: 28, fontFamily: fuentes.titulo, color: colors.ink, letterSpacing: -1 }}>
-            {formatCOP(total)}
-          </Text>
-          {(() => {
-            const ahorroEnvio = envio === 0 ? envioCosto : 0;
-            const totalAhorro = descuentoCupon + ahorroEnvio;
-            return totalAhorro > 0 ? (
-              <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55", marginTop: 2 }}>
-                Ahorras {formatCOP(totalAhorro)} 🎉
-              </Text>
-            ) : null;
-          })()}
-          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C", fontStyle: "italic", marginTop: 4 }}>
-            {envio === 0 ? "Envío gratis con puntos 🎉" : `Incluye domicilio (${formatCOP(envio)})`}
-          </Text>
-          {resumen.frio > 0 && (
-            <Text style={{ fontSize: 12, color: "#0F3A6B", fontFamily: fuentes.destacado, marginTop: 2 }}>
-              Incluye frío asegurado ({formatCOP(resumen.frio)})
-            </Text>
-          )}
-          {subtotal < pedidoMinimo && (
-            <Text style={{ fontSize: 12, color: colors.offer, fontFamily: fuentes.destacado, marginTop: 2 }}>
-              Pedido mínimo: {formatCOP(pedidoMinimo)} (faltan {formatCOP(pedidoMinimo - subtotal)})
-            </Text>
-          )}
-        </View>
+        )}
 
         <Pressable
           onPress={handlePedir}
@@ -1248,13 +1161,52 @@ export default function CartScreen() {
             }}
           >
             <Text style={{ color: "#fff", fontFamily: fuentes.destacado, fontSize: 17, marginRight: 8 }}>
-              {loading ? "Enviando..." : !tienda.abierta ? "Tienda cerrada" : subtotal < pedidoMinimo ? `Faltan ${formatCOP(pedidoMinimo - subtotal)}` : "Confirmar pedido"}
+              {loading ? "Enviando..." : !tienda.abierta ? "Tienda cerrada" : subtotal < pedidoMinimo ? `Faltan ${formatCOP(pedidoMinimo - subtotal)}` : `Confirmar pedido · ${formatCOP(total)}`}
             </Text>
             {!loading && tienda.abierta && <ChevronRightIcon />}
           </LinearGradient>
         </Pressable>
       </View>
       )}
+
+      <HojaDireccion
+        visible={hojaDireccionVisible}
+        modoInicial={hojaDireccionModo}
+        direcciones={direcciones}
+        direccionActivaId={mostrarNueva ? null : (dirActiva?.id ?? null)}
+        onSeleccionar={seleccionarDireccion}
+        onUbicarEnMapa={(d) => { setHojaDireccionVisible(false); abrirMapaParaDireccion(d); }}
+        nuevaDireccion={nuevaDireccion}
+        onNuevaDireccion={setNuevaDireccion}
+        nuevasNotas={nuevasNotas}
+        onNuevasNotas={setNuevasNotas}
+        nuevaUbicacion={nuevaUbicacion}
+        onNuevaUbicacion={setNuevaUbicacion}
+        silenciado={silenciadoDir}
+        onSilenciado={setSilenciadoDir}
+        onUsarNueva={usarNuevaDireccion}
+        onCerrar={cerrarHojaDireccion}
+      />
+
+      <HojaMedioPago
+        visible={hojaMedioPagoVisible}
+        medios={mediosPagoDisponibles}
+        medioSeleccionado={medioPago}
+        onSeleccionar={(codigo) => {
+          setMedioPago(codigo);
+          // "efectivo" es el preseleccionado: cambio mide cuánta fricción
+          // quita tener el default preseleccionado.
+          tracker.track('medio_pago_elegido', { medio: codigo, cambio: codigo !== "efectivo" }, 'cart');
+        }}
+        onCerrar={() => setHojaMedioPagoVisible(false)}
+      />
+
+      <HojaNotas
+        visible={hojaNotasVisible}
+        valorInicial={notasVisibles}
+        onGuardar={(texto) => { if (mostrarNueva) setNuevasNotas(texto); else setNotasOverride(texto); }}
+        onCerrar={() => setHojaNotasVisible(false)}
+      />
 
       {/* Última pregunta antes de cobrar. Los dos botones crean el pedido: la
           tarjeta es una bifurcación, no un desvío. */}

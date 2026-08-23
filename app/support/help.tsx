@@ -1,22 +1,26 @@
 import { useState, useMemo } from "react";
-import { View, Text, ScrollView, Pressable, Linking } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { MessageIcon } from "../../src/components/icons/AppIcons";
 import { colors, shadows } from "../../src/constants/theme";
+import { useQuery } from "@tanstack/react-query";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
-import { WHATSAPP_SOPORTE } from "../../src/constants/config";
+import { useSoporte } from "../../src/lib/soporte";
+import { getConfigApp } from "../../src/lib/api";
+import { MEDIOS_PAGO_RESPALDO } from "../../src/constants/config";
 import { HORARIO_FALLBACK } from "../../src/components/BandaCerrado";
 
-const FAQ = [
+// Antes "¿Qué métodos de pago aceptan?" y el aviso de pedido incompleto
+// tenían el catálogo y el número de soporte quemados aquí — una TERCERA
+// fuente de verdad además de terms.tsx y metodos-pago.tsx. Ahora se arman en
+// el componente con lo que sirve /configuracion-app (093): un solo lugar
+// que puede desincronizarse, no tres.
+const FAQ_ESTATICA = [
   {
     q: "¿Cuál es el pedido mínimo?",
     a: "El pedido mínimo es de $30.000 COP para entregas a domicilio en Florencia.",
-  },
-  {
-    q: "¿Qué métodos de pago aceptan?",
-    a: "Pago contra entrega. Nuestros domiciliarios aceptan efectivo, transferencias por código QR y datáfono (tarjeta débito/crédito).",
   },
   {
     q: "¿Puedo cancelar mi pedido?",
@@ -24,7 +28,7 @@ const FAQ = [
   },
   {
     q: "¿Qué hago si mi pedido llega incompleto o dañado?",
-    a: "Contáctanos inmediatamente por WhatsApp al 318 949 5704. Tomaremos una foto del problema y te enviaremos un reemplazo o reembolso.",
+    a: "Contáctanos inmediatamente por WhatsApp. Tomaremos una foto del problema y te enviaremos un reemplazo o reembolso.",
   },
   {
     q: "¿Venden a menores de edad?",
@@ -67,20 +71,35 @@ export default function HelpScreen() {
   // que es lo que hacía que esta pantalla quedara mintiendo tras cada cambio.
   const tienda = useTiendaAbierta();
   const horario = tienda.horario?.length ? tienda.horario : HORARIO_FALLBACK;
+  const { telefono, correo, abrirWhatsApp, abrirTelefono } = useSoporte();
+
+  // Mismo queryKey que cart.tsx y las demás: comparten caché.
+  const { data: configApp } = useQuery({
+    queryKey: ["config-app"],
+    queryFn: getConfigApp,
+    staleTime: 5 * 60 * 1000,
+  });
+  const mediosPago = configApp?.medios_pago ?? MEDIOS_PAGO_RESPALDO;
 
   // La pregunta de horarios se arma con el mismo dato que ve la banda de
-  // cerrado, para que no puedan contradecirse.
+  // cerrado, para que no puedan contradecirse. La de métodos de pago, con el
+  // catálogo servido — así no hay un cuarto lugar que se desincroniza cuando
+  // cambie el catálogo real (los otros tres: cart.tsx, terms.tsx, metodos-pago.tsx).
   const faq = useMemo(() => {
     const lineas = horario.map(({ dias, horas }) => `${dias}: ${horas.join(" y ")}`).join("\n");
     return [
-      FAQ[0],
+      FAQ_ESTATICA[0],
       {
         q: "¿Cuáles son los horarios de entrega?",
         a: `${lineas}\n\nPedidos después del cierre se despachan al siguiente día.`,
       },
-      ...FAQ.slice(1),
+      {
+        q: "¿Qué métodos de pago aceptan?",
+        a: `Pago contra entrega. Aceptamos: ${mediosPago.map((m) => m.etiqueta).join(", ")}.`,
+      },
+      ...FAQ_ESTATICA.slice(1),
     ];
-  }, [horario]);
+  }, [horario, mediosPago]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg }}>
@@ -108,7 +127,7 @@ export default function HelpScreen() {
           </Text>
 
           <Pressable
-            onPress={() => Linking.openURL(WHATSAPP_SOPORTE)}
+            onPress={abrirWhatsApp}
             accessibilityRole="link"
             accessibilityLabel="Escribirnos por WhatsApp"
             className="flex-row items-center justify-center py-3.5 rounded-xl mb-3"
@@ -119,9 +138,9 @@ export default function HelpScreen() {
           </Pressable>
 
           <Pressable
-            onPress={() => Linking.openURL("tel:+573189495704")}
+            onPress={abrirTelefono}
             accessibilityRole="link"
-            accessibilityLabel="Llamarnos al 318 949 5704"
+            accessibilityLabel={`Llamarnos al ${telefono}`}
             className="flex-row items-center justify-center py-3.5 rounded-xl"
             style={{ backgroundColor: colors.surface }}
           >
@@ -141,7 +160,7 @@ export default function HelpScreen() {
             </View>
             <View className="flex-row" style={{ gap: 10 }}>
               <Feather name="mail" size={16} color={colors.green} style={{ marginTop: 2 }} />
-              <Text style={{ fontSize: 13, color: colors.muted }}>app@estancocaqueta.com</Text>
+              <Text style={{ fontSize: 13, color: colors.muted }}>{correo}</Text>
             </View>
             <View className="flex-row" style={{ gap: 10 }}>
               <Feather name="clock" size={16} color={colors.green} style={{ marginTop: 2 }} />

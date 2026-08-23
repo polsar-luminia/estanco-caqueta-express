@@ -23,6 +23,12 @@ const API_BASE = () => baseUrlActual();
 const FLUSH_INTERVAL_MS = 30_000;
 const MAX_QUEUE = 20;
 const MAX_QUEUE_SIZE = 200;
+// El backend corta cada POST en 50 filas (eventos.js). Sin este limite del
+// lado del cliente, un reencolado tras varios fallos de red puede juntar
+// hasta MAX_QUEUE_SIZE eventos y mandarlos en un solo POST: el backend
+// guardaria 50 y los otros se perderian en silencio (responde 204 igual).
+// Cortando aqui, el resto se queda en la cola para el siguiente flush.
+const MAX_BATCH_ENVIO = 50;
 
 // APP_VERSION (A.1) viaja como header del batch, no dentro de cada evento: es la
 // misma para todo el lote y repetirla por fila serían bytes de más en planes de
@@ -120,7 +126,15 @@ export type EventTipo =
   // Fuga de direccion (1.3.1). `checkout_abandonado` solo se dispara DENTRO de
   // handlePedir, o sea que solo mide al que llego a tocar "Pedir". De 277 que
   // agregan al carrito, 101 lo tocan: de los otros 176 no sabiamos nada.
-  | 'carrito_abandonado';
+  | 'carrito_abandonado'
+  // Medio de pago en el checkout (093). Que medio prefiere la gente, y cuanta
+  // friccion quita tener el default preseleccionado.
+  | 'medio_pago_elegido'
+  // Checkout denso (1.3.2/build 94).
+  | 'carrito_items_desplegados'
+  | 'direccion_hoja_abierta'
+  | 'medio_pago_hoja_abierta'
+  | 'entrega_sin_pin_mostrado';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -156,7 +170,7 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   tiempo_en_producto: ['producto_id', 'segundos'],
   sugerencia_clickeada: ['desde_producto', 'producto_clickeado', 'nombre'],
   cupon_aplicado: ['descuento', 'cupon_id'],
-  pedido_creado: ['pedido_id', 'total', 'items_count', 'uso_cupon', 'uso_puntos'],
+  pedido_creado: ['pedido_id', 'total', 'items_count', 'uso_cupon', 'uso_puntos', 'medio_pago', 'pide_vuelto', 'con_notas'],
   // 'q': término buscado — dato de comportamiento (qué buscan y no encuentran),
   // no PII. Clave para decisiones de surtido y campañas (M-OBS-22).
   busqueda_sin_resultado: ['q'],
@@ -178,6 +192,13 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // en el payload. ¿Qué pantallas se usan y cuáles no?
   pantalla_vista: [],
   // ¿Dónde exactamente se cae el pedido? `paso` es el punto del checkout.
+  //
+  // OJO con la semantica de checkout_iniciado: mide que TOCARON "Pedir", no que
+  // "entraron al checkout" — se dispara en handlePedir, antes de toda
+  // validacion. checkout_abandonado por lo tanto SOLO puede verse en quien ya
+  // toco el boton; quien arma carrito y se va sin tocarlo no deja ningun evento
+  // aca (para eso esta carrito_abandonado, mas abajo). No renombrar sin medir
+  // la serie historica que se pierde — ver docs/estanco/TELEMETRIA-EVENTOS.md.
   checkout_iniciado: ['items_count', 'subtotal'],
   checkout_abandonado: ['paso', 'items_count'],
   // Crítico para el bloque F: cuánta gente niega el GPS. Sin este número, exigir
@@ -281,7 +302,18 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // `checkout_abandonado` no puede: de los que ni lo intentan, a cuantos les
   // faltaba algo que la app YA sabia. Todo son booleanos y conteos: no dice
   // cual es la direccion ni donde queda, solo si la hay.
-  carrito_abandonado: ['items_count', 'subtotal', 'tiene_direccion', 'supera_minimo', 'tienda_abierta', 'vio_formulario'],
+  // (build 94) +envio/total/envio_gratis/tiene_pin/frio: antes solo se sabia
+  // que el subtotal superaba el minimo, no si el ENVIO o el FRIO pesaban en el
+  // total que la persona alcanzo a ver. Sigue sin decir POR QUE se fue —
+  // decidido a proposito: el gatillo mas comun de este evento es la app yendose
+  // a background, donde no hay pantalla para preguntar un motivo.
+  carrito_abandonado: ['items_count', 'subtotal', 'tiene_direccion', 'supera_minimo', 'tienda_abierta', 'vio_formulario', 'envio', 'total', 'envio_gratis', 'tiene_pin', 'frio'],
+  medio_pago_elegido: ['medio', 'cambio'],
+  // Checkout denso (1.3.2/build 94).
+  carrito_items_desplegados: ['items_count'],
+  direccion_hoja_abierta: ['n_direcciones', 'origen'],
+  medio_pago_hoja_abierta: ['medio_actual'],
+  entrega_sin_pin_mostrado: ['items_count'],
 };
 
 function aplicarAllowlist(
@@ -305,6 +337,11 @@ interface EventoInput {
   tipo: EventTipo;
   payload?: Record<string, unknown>;
   pantalla?: string;
+  // Reloj del telefono al ENCOLAR (094). Nunca se manda como hora absoluta:
+  // el backend solo usa la diferencia contra `t_envio` del lote (ver flush()),
+  // asi que un reloj desajustado no corrompe nada, solo cambia el delta que
+  // de todos modos se descarta si sale de rango.
+  t: number;
 }
 
 class Tracker {
@@ -352,7 +389,7 @@ class Tracker {
       });
       return;
     }
-    this.queue.push({ tipo, payload: aplicarAllowlist(tipo, payload), pantalla });
+    this.queue.push({ tipo, payload: aplicarAllowlist(tipo, payload), pantalla, t: Date.now() });
     if (this.queue.length >= MAX_QUEUE) {
       this.flush();
     }
@@ -360,10 +397,15 @@ class Tracker {
 
   async flush() {
     if (this.queue.length === 0) return;
-    const batch = this.queue.splice(0, this.queue.length);
+    const batch = this.queue.splice(0, Math.min(this.queue.length, MAX_BATCH_ENVIO));
+    // t_envio se toma UNA vez por lote, justo antes de serializar: el backend
+    // deriva ocurrido_at = NOW() - (t_envio - evento.t). Si el fetch falla y el
+    // batch se reencola (mas abajo), el proximo intento calcula un t_envio
+    // nuevo — es lo correcto, porque el envio de verdad ocurre despues.
+    const tEnvio = Date.now();
     let body: string;
     try {
-      body = JSON.stringify({ eventos: batch });
+      body = JSON.stringify({ eventos: batch, t_envio: tEnvio });
     } catch (err) {
       console.warn('[tracker] payload no serializable, descartando batch');
       Sentry.captureException(err instanceof Error ? err : new Error('tracker_payload_no_serializable'), {

@@ -48,7 +48,7 @@ export function calcularResumen(e: EntradaResumen): ResumenPedido {
   const descuento = Math.max(0, e.descuentoCupon || 0);
 
   // Mismo orden que el servidor: el monto y el cupon deciden primero, y solo si
-  // el envio todavia se cobra tiene sentido gastar los puntos. Canjear 200 puntos
+  // el envio todavia se cobra tiene sentido gastar los puntos. Canjear puntos
   // por un envio que ya era $0 no le da nada al cliente.
   const gratisPorMonto = subtotal >= e.envioGratisMinimo;
   const gratisPorCupon = !!e.cuponEnvioGratis;

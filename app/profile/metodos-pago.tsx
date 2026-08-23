@@ -1,36 +1,27 @@
 import { View, Text, ScrollView } from "react-native";
 import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { BackButton } from "../../src/components/BackButton";
 import { colors, radii, shadows, fuentes } from "../../src/constants/theme";
-
-const METODOS = [
-  {
-    icon: "dollar-sign" as const,
-    titulo: "Efectivo",
-    descripcion: "Paga en billetes al domiciliario cuando recibas tu pedido.",
-    color: colors.green,
-    bg: "rgba(31,175,85,0.08)",
-  },
-  {
-    icon: "smartphone" as const,
-    titulo: "Código QR",
-    descripcion: "El domiciliario lleva un código QR para pagar con Nequi, Daviplata o cualquier app bancaria.",
-    color: colors.pink,
-    bg: "rgba(224,69,123,0.08)",
-  },
-  {
-    icon: "credit-card" as const,
-    titulo: "Datáfono",
-    descripcion: "Tarjeta débito o crédito. El domiciliario lleva datáfono inalámbrico para pagar contra entrega.",
-    color: colors.purple,
-    bg: "rgba(124,92,255,0.08)",
-  },
-];
+import { getConfigApp } from "../../src/lib/api";
+import { MEDIOS_PAGO_RESPALDO, ICONOS_MEDIO, ICONO_MEDIO_GENERICO } from "../../src/constants/config";
 
 export default function MetodosPagoScreen() {
   const insets = useSafeAreaInsets();
+
+  // Mismo queryKey que cart.tsx y las demás: comparten caché.
+  const { data: configApp } = useQuery({
+    queryKey: ["config-app"],
+    queryFn: getConfigApp,
+    staleTime: 5 * 60 * 1000,
+  });
+  // Antes esta pantalla tenía su propio catálogo (093 lo generaliza): el
+  // servidor manda la lista vigente, y esto cae al respaldo local solo
+  // mientras arranca o si el backend no responde.
+  const medios = configApp?.medios_pago ?? MEDIOS_PAGO_RESPALDO;
+
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg }}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -53,17 +44,20 @@ export default function MetodosPagoScreen() {
           </Text>
         </View>
 
-        {METODOS.map((m) => (
-          <View key={m.titulo} style={{ backgroundColor: colors.surface, borderRadius: radii.card, padding: 20, flexDirection: "row", alignItems: "flex-start", gap: 16, ...shadows.card }}>
-            <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: m.bg, alignItems: "center", justifyContent: "center" }}>
-              <Feather name={m.icon} size={20} color={m.color} />
+        {medios.map((m) => {
+          const icono = ICONOS_MEDIO[m.codigo] ?? ICONO_MEDIO_GENERICO;
+          return (
+            <View key={m.codigo} style={{ backgroundColor: colors.surface, borderRadius: radii.card, padding: 20, flexDirection: "row", alignItems: "flex-start", gap: 16, ...shadows.card }}>
+              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: icono.bg, alignItems: "center", justifyContent: "center" }}>
+                <Feather name={icono.icon} size={20} color={icono.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: colors.ink, marginBottom: 4 }}>{m.etiqueta}</Text>
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: colors.muted, lineHeight: 19 }}>{m.descripcion}</Text>
+              </View>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontFamily: fuentes.destacado, color: colors.ink, marginBottom: 4 }}>{m.titulo}</Text>
-              <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: colors.muted, lineHeight: 19 }}>{m.descripcion}</Text>
-            </View>
-          </View>
-        ))}
+          );
+        })}
 
         <View style={{ backgroundColor: colors.lowfill, borderRadius: 12, padding: 16, marginTop: 8 }}>
           <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, textAlign: "center", lineHeight: 18 }}>

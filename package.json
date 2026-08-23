@@ -9,7 +9,8 @@
     "web": "expo start --web",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "docs:check": "node scripts/validar-docs.mjs"
   },
   "dependencies": {
     "@expo/config-plugins": "~55.0.5",

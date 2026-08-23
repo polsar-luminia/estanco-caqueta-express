@@ -402,7 +402,7 @@ export async function buscarProductos(
 // --- Pedidos ---
 
 export async function crearPedido(pedido: CrearPedidoInput, idempotencyKey?: string) {
-  return apiFetch<{ pedido: Pedido; puntos_ganados: number; puntos_usados: number; envio: number; descuento: number }>("/pedidos", {
+  return apiFetch<{ pedido: Pedido; puntos_ganados: number; puntos_usados: number; envio: number; descuento: number; vuelto?: number | null }>("/pedidos", {
     method: "POST",
     body: JSON.stringify(pedido),
     idempotencyKey,
@@ -555,6 +555,26 @@ export async function getPedido(id: number) {
 export interface MotivoCancelacion {
   codigo: string;
   etiqueta: string;
+}
+
+/** Un medio de pago del catalogo que sirve el servidor en /configuracion-app.
+ *  Catalogo cerrado a proposito: el icono y el color de cada medio los dibuja
+ *  el binario, asi que un codigo desconocido cae a un icono generico en vez
+ *  de romper la pantalla (ver ICONOS_MEDIO en constants/config.ts). */
+export interface MedioPago {
+  codigo: string;
+  etiqueta: string;
+  descripcion: string;
+  pide_vuelto: boolean;
+}
+
+/** Contacto de soporte servido por el backend (093). Reemplaza lo que antes
+ *  vivia solo en WHATSAPP_SOPORTE (constants/config.ts), que se mantiene como
+ *  respaldo de arranque en frio y del backend caido. */
+export interface SoporteConfig {
+  whatsapp_url: string;
+  telefono: string;
+  correo: string;
 }
 
 export async function cancelarPedido(id: number, motivo?: string, detalle?: string) {
@@ -793,6 +813,11 @@ export interface Pedido {
   // staff si existe, y llega en null cuando la bandera está apagada. La app nunca
   // ve los campos crudos, así que no puede saltarse la bandera pintándolos.
   eta?: { min: number; max: number; override: boolean } | null;
+  // Medio de pago declarado en el checkout (093). NULL = no declarado (pedido
+  // histórico o creado antes de que el selector estuviera prendido).
+  medio_pago?: string | null;
+  paga_con?: number | null;
+  vuelto?: number | null;
 }
 
 export interface LineaPedido {
@@ -821,6 +846,13 @@ export interface CrearPedidoInput {
   // Frío asegurado (bloque H): solo la INTENCIÓN. El servidor recalcula la
   // elegibilidad y el precio desde la base — el cliente nunca manda el monto.
   quiere_frio?: boolean;
+  // Medio de pago (093): preferencia informativa, nunca bloquea el checkout.
+  // Un código inválido o desconocido el servidor lo guarda como NULL, nunca
+  // rechaza el pedido por esto.
+  medio_pago?: string;
+  // Solo tiene sentido con medio_pago === "efectivo". Ausente = "tengo
+  // completo": el servidor no inventa un vuelto que nadie pidió.
+  paga_con?: number;
 }
 
 // --- Cupones ---
@@ -1196,6 +1228,20 @@ export interface ConfigApp {
    *  punto del mapa — sin lo segundo el muro sería infranqueable para quien niega
    *  el GPS. */
   direccion_obligatoria_registro?: boolean;
+  /** Puntos que cuesta canjear el envío gratis (090). Hasta esa migración la app
+   *  mostraba 200 en un sitio y 100 (calculado, sin relación con el servidor) en
+   *  otro — y el servidor exigía 200 quemado en el código sin leer esta config.
+   *  Default 200 si el backend viejo no la manda (binarios que no la conocen). */
+  puntos_envio_gratis?: number;
+  /** Medio de pago en el checkout (093). Nace apagada: sin esta bandera en
+   *  true, el carrito no muestra el selector — se comporta byte a byte como
+   *  hoy y no manda ningún campo nuevo al crear el pedido. */
+  medio_pago_activo?: boolean;
+  /** Catálogo activo, ya filtrado por el servidor. Ausente/backend viejo →
+   *  la app cae a MEDIOS_PAGO_RESPALDO (constants/config.ts). */
+  medios_pago?: MedioPago[];
+  /** Contacto de soporte (093). Ausente/backend viejo → WHATSAPP_SOPORTE. */
+  soporte?: SoporteConfig;
 }
 
 export async function getConfigApp(): Promise<ConfigApp> {

@@ -11,6 +11,12 @@ Todos los cambios notables del app móvil. Formato basado en [Keep a Changelog](
 > se reconstruyeron desde el historial de git el 2026-07-26, así que resumen el cambio pero no
 > tienen el nivel de detalle de las entradas escritas en su momento.
 
+## [Unreleased / configuración 1.3.1, builds 91–92]
+
+Los números existen en `app.json`, pero al verificar EAS el 21/08/2026 no existía build 91
+ni 92. Los OTA del runtime 1.3.1 no tenían receptor binario verificado. No reclasificar esta
+entrada como publicada hasta comprobar EAS y cada tienda; ver `docs/RELEASE-ESTADO.md`.
+
 ## [1.1.5 / build 64] — 2026-07-22 (binario) · OTAs hasta 2026-07-25
 
 Rama viva: `release/1.1.5`. El binario 64 se compiló en `057e247`; todo lo posterior se entregó

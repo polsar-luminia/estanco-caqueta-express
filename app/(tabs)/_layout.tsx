@@ -320,6 +320,11 @@ export default function TabLayout() {
         name="cart"
         options={{
           title: "Carrito",
+          // Checkout denso (1.3.2/build 94): cart era la ÚNICA tab que
+          // todavía pagaba el header del logo (100pt). Apagarlo devuelve
+          // ~53pt netos sin tocar un solo bloque de contenido — es lo que
+          // decide si el Total del desglose entra sobre el pliegue o no.
+          headerShown: false,
           tabBarButton: (props) => (
             <TabButton {...props} routeName="cart" label="Carrito" icon={CartIcon} badge={itemCount} />
           ),

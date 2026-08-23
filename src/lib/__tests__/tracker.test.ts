@@ -123,4 +123,95 @@ describe('tracker — release 1.2.0 (A.1 y A.3)', () => {
     expect(body.eventos[0].pantalla).toBe('product/[id]');
     expect(body.eventos[0].payload).toBeUndefined();
   });
+
+  it('medio_pago_elegido (093): solo `medio` y `cambio`, nunca el monto del vuelto', async () => {
+    tracker.track('medio_pago_elegido', { medio: 'efectivo', cambio: false, paga_con: 100000 } as any, 'cart');
+    await tracker.flush();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.eventos[0].payload).toEqual({ medio: 'efectivo', cambio: false });
+    expect(body.eventos[0].payload).not.toHaveProperty('paga_con');
+  });
+
+  it('pedido_creado (093): admite medio_pago y pide_vuelto', async () => {
+    tracker.track('pedido_creado', { pedido_id: 1, total: 30000, items_count: 2, uso_cupon: false, uso_puntos: false, medio_pago: 'datafono', pide_vuelto: false } as any);
+    await tracker.flush();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.eventos[0].payload).toEqual({ pedido_id: 1, total: 30000, items_count: 2, uso_cupon: false, uso_puntos: false, medio_pago: 'datafono', pide_vuelto: false });
+  });
+
+  it('carrito_abandonado (build 94): admite envio/total/envio_gratis/tiene_pin/frio', async () => {
+    tracker.track('carrito_abandonado', {
+      items_count: 2, subtotal: 12000, tiene_direccion: true, supera_minimo: false,
+      tienda_abierta: true, vio_formulario: false, envio: 5000, total: 17000,
+      envio_gratis: false, tiene_pin: false, frio: true,
+    } as any, 'cart');
+    await tracker.flush();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.eventos[0].payload).toEqual({
+      items_count: 2, subtotal: 12000, tiene_direccion: true, supera_minimo: false,
+      tienda_abierta: true, vio_formulario: false, envio: 5000, total: 17000,
+      envio_gratis: false, tiene_pin: false, frio: true,
+    });
+  });
+});
+
+describe('tracker — hora del hecho (094)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (tracker as any).queue = [];
+  });
+
+  it('cada evento encolado lleva `t` (reloj del telefono al encolar)', async () => {
+    const antes = Date.now();
+    tracker.track('app_abierta');
+    const despues = Date.now();
+    const encolado = (tracker as any).queue[0];
+    expect(typeof encolado.t).toBe('number');
+    expect(encolado.t).toBeGreaterThanOrEqual(antes);
+    expect(encolado.t).toBeLessThanOrEqual(despues);
+  });
+
+  it('el body del batch lleva `t_envio`, un solo valor para todo el lote', async () => {
+    tracker.track('app_abierta');
+    tracker.track('categoria_abierta', { categoria_id: 1, nombre: 'Ron' });
+    await tracker.flush();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(typeof body.t_envio).toBe('number');
+    expect(body.eventos).toHaveLength(2);
+    expect(typeof body.eventos[0].t).toBe('number');
+    expect(typeof body.eventos[1].t).toBe('number');
+  });
+
+  it('un reintento recalcula t_envio: no reusa el de la primera vez', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('red caida'));
+    tracker.track('app_abierta');
+    await tracker.flush(); // falla, se reencola
+    expect((tracker as any).queue).toHaveLength(1);
+
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 204 }));
+    await new Promise((r) => setTimeout(r, 5));
+    await tracker.flush(); // reintento
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[1][1] as RequestInit).body as string);
+    expect(body.eventos).toHaveLength(1);
+    expect(body.t_envio).toBeGreaterThan(body.eventos[0].t);
+  });
+});
+
+describe('tracker — corte de 50 por lote (094, espejo del corte del backend)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (tracker as any).queue = [];
+  });
+
+  it('con mas de 50 encolados, un flush manda 50 y deja el resto en la cola', async () => {
+    for (let i = 0; i < 55; i++) tracker.track('app_abierta');
+    // track() dispara flush automatico al llegar a MAX_QUEUE (20); forzamos un
+    // estado de cola grande directamente para probar el corte de flush() en
+    // aislamiento, sin depender de cuantos flushes automaticos ya corrieron.
+    (tracker as any).queue = Array.from({ length: 55 }, () => ({ tipo: 'app_abierta', t: Date.now() }));
+    await tracker.flush();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls.at(-1)![1] as RequestInit).body as string);
+    expect(body.eventos).toHaveLength(50);
+    expect((tracker as any).queue).toHaveLength(5);
+  });
 });

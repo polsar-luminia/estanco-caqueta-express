@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { colors, fuentes } from "../src/constants/theme";
 import { getCoberturaZona, evaluarZonasCliente, type UbicacionCapturada } from "../src/lib/api";
 import { useUbicacionPicker } from "../src/stores/ubicacionPicker";
-import { WHATSAPP_SOPORTE } from "../src/constants/config";
+import { useSoporte } from "../src/lib/soporte";
 import { tracker } from "../src/lib/tracker";
 
 // Centro de Florencia (fallback si no hay GPS ni pin inicial).
@@ -32,6 +32,7 @@ async function reverseGeocode(lat: number, lng: number): Promise<string | null> 
 export default function UbicacionScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { abrirWhatsApp } = useSoporte();
   const inicial = useUbicacionPicker((s) => s.inicial);
   const confirmar = useUbicacionPicker((s) => s.confirmar);
   const reset = useUbicacionPicker((s) => s.reset);
@@ -302,7 +303,7 @@ export default function UbicacionScreen() {
             él, la persona solo ve que el botón no funciona y se va. */}
         {!dentroZona ? (
           <Pressable
-            onPress={() => Linking.openURL(WHATSAPP_SOPORTE).catch(() => {})}
+            onPress={abrirWhatsApp}
             accessibilityRole="button"
             accessibilityLabel="Escribirnos por WhatsApp para preguntar por esta zona"
             style={{ minHeight: 44, marginTop: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.lowfill }}
