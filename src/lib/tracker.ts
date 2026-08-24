@@ -106,6 +106,10 @@ export type EventTipo =
   // Chat con el domiciliario (bloque 5 de la app de operaciones)
   | 'chat_abierto'
   | 'chat_mensaje_enviado'
+  // Código de entrega de 4 dígitos (097). El código en sí NUNCA va en el
+  // payload -- ver ALLOWED_KEYS mas abajo.
+  | 'codigo_entrega_visto'
+  | 'codigo_entrega_ayuda'
   // Fase 0 push (2026-08-05) — opt-in del permiso de notificaciones
   | 'push_permiso_pedido'
   | 'push_permiso_concedido'
@@ -279,6 +283,12 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // entrega —la dirección, con quién dejarlo, el nombre del portero— no tiene
   // por qué salir del teléfono dentro de un evento de analítica.
   chat_mensaje_enviado: ['pedido_id', 'largo'],
+
+  // --- Código de entrega de 4 dígitos (097) ---
+  // Cuántos pedidos con código llegan a mostrarlo, y cuántos de esos piden
+  // ayuda -- las dos preguntas que deciden si vale la pena exigirlo.
+  codigo_entrega_visto: ['pedido_id'],
+  codigo_entrega_ayuda: ['pedido_id'],
 
   // --- Fase 0 push (2026-08-05) ---
   // El permiso de push por fin se mide, como el de ubicación: sin la tasa de

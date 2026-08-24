@@ -11,6 +11,7 @@ import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline
 import { TarjetaResena } from "../../../src/components/TarjetaResena";
 import { HojaCancelar } from "../../../src/components/HojaCancelar";
 import { MapaDomiciliario } from "../../../src/components/MapaDomiciliario";
+import { TarjetaCodigoEntrega } from "../../../src/components/TarjetaCodigoEntrega";
 import { FotoEntrega } from "../../../src/components/FotoEntrega";
 import { SkeletonBox } from "../../../src/components/skeletons/SkeletonBox";
 import { ErrorState } from "../../../src/components/ErrorState";
@@ -140,7 +141,27 @@ export default function OrderDetailScreen() {
   // Antes era un Alert de si/no. Ahora abre la hoja de motivos: el negocio
   // necesita saber POR QUE se cae un pedido, y preguntarlo en el momento en que
   // la persona ya decidio cancelar es cuando de verdad responde.
+  // Código de entrega (097): se mide una sola vez por entrada a la pantalla,
+  // igual que el chat de arriba -- si se repitiera en cada refetch del
+  // sondeo de 15s, "vistos" dejaría de significar personas y pasaría a
+  // significar peticiones HTTP.
+  const codigoVistoRef = useRef(false);
+  useEffect(() => {
+    if (pedido?.codigo_entrega && !codigoVistoRef.current) {
+      codigoVistoRef.current = true;
+      tracker.track('codigo_entrega_visto', { pedido_id: pedidoId }, 'orders/[id]');
+    }
+  }, [pedido?.codigo_entrega, pedidoId]);
+
   const handleCancelar = () => setHojaCancelar(true);
+
+  // "No veo mi código": un toque de ayuda que abre el chat en vez de dejar
+  // al cliente sin salida. Se mide aparte de `codigo_entrega_visto` -- es el
+  // numero de cuanta gente NO entendio la pantalla, no cuanta la vio.
+  function handlePedirAyudaCodigo() {
+    tracker.track('codigo_entrega_ayuda', { pedido_id: pedidoId }, 'orders/[id]');
+    router.push(`/chat/${pedidoId}`);
+  }
 
   if (!Number.isFinite(pedidoId) || pedidoId <= 0) {
     return (
@@ -227,6 +248,8 @@ export default function OrderDetailScreen() {
           </View>
         )}
       </View>
+
+      <TarjetaCodigoEntrega pedido={pedido} onPedirAyuda={handlePedirAyudaCodigo} />
 
       {/* Productos */}
       <View className="bg-white rounded-2xl p-6" style={CARD_SHADOW}>
