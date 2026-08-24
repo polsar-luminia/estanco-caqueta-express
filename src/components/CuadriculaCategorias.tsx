@@ -14,6 +14,7 @@
 import { View, Text, Pressable, useWindowDimensions } from "react-native";
 import { ShimmerImage } from "./ShimmerImage";
 import { colors, radii, fuentes } from "../constants/theme";
+import { acomodarMosaico, medidasCelda } from "../lib/mosaico";
 import type { CategoriaGrande } from "../lib/api";
 
 interface Props {
@@ -23,12 +24,19 @@ interface Props {
 
 export function CuadriculaCategorias({ categorias, onSelect }: Props) {
   const { width } = useWindowDimensions();
-  // Cuatro columnas, como el borrador. Se calcula con el ancho real y no con una
-  // constante de modulo: la app se usa en telefonos de 320 dp y tambien rotada,
-  // y un ancho congelado al importar el archivo deja la ultima columna cortada.
+  // Cuatro columnas. Se calcula con el ancho real y no con una constante de
+  // modulo: la app se usa en telefonos de 320 dp y tambien rotada, y un ancho
+  // congelado al importar el archivo deja la ultima columna cortada.
   const COLUMNAS = 4;
-  const SEPARACION = 10;
-  const ancho = (width - 32 - SEPARACION * (COLUMNAS - 1)) / COLUMNAS;
+  const m = medidasCelda(width, COLUMNAS);
+
+  // El tamano de cada categoria lo manda el BACKEND (096, `mosaico_ancho` y
+  // `mosaico_alto`), no la app. Es lo que permite darle mas peso a Mercado o a
+  // Farmacia sin publicar una version en las tiendas.
+  //
+  // Sin nada configurado todas valen 1x1 y esto pinta exactamente la cuadricula
+  // de cuatro columnas iguales de antes.
+  const { celdas, filas } = acomodarMosaico(categorias, COLUMNAS);
 
   if (categorias.length === 0) return null;
 
@@ -47,15 +55,31 @@ export function CuadriculaCategorias({ categorias, onSelect }: Props) {
     onSelect(c.id);
   };
 
+  // Posicion absoluta y no flexbox: una tarjeta de dos filas al lado de dos de
+  // una sola no se puede expresar con `flexWrap` — dejaria el hueco. El alto
+  // del contenedor se declara porque un padre de hijos absolutos mide cero.
   return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, paddingHorizontal: 16, paddingTop: 4 }}>
-      {categorias.map((c) => (
+    <View
+      style={{
+        paddingHorizontal: 16,
+        paddingTop: 4,
+        height: m.altoTotal(filas),
+        position: "relative",
+      }}
+    >
+      {celdas.map(({ item: c, col, fila, ancho, alto }) => (
         <Pressable
           key={c.id}
           onPress={() => abrir(c)}
           accessibilityRole="button"
           accessibilityLabel={`${c.nombre}, ${c.cantidad_productos} productos`}
-          style={{ width: ancho }}
+          style={{
+            position: "absolute",
+            left: 16 + col * (m.celda + m.separacion),
+            top: 4 + fila * m.pasoY,
+            width: m.tramo(ancho),
+            height: m.tramoY(alto),
+          }}
         >
           {/* La baldosa gris es lo que dice "esto se toca". Era blanca sobre
               fondo blanco, asi que no habia boton: solo una foto flotando.
@@ -69,17 +93,24 @@ export function CuadriculaCategorias({ categorias, onSelect }: Props) {
 
               `contain` y no `cover`: con `cover` la foto tapa la baldosa entera y
               el gris no se ve por ningun lado. El padding es lo que deja el
-              marco visible alrededor del producto. */}
+              marco visible alrededor del producto.
+
+              El alto sale de `tramoImagen` y ya no de `aspectRatio: 1`: una
+              tarjeta ancha con aspecto cuadrado seria altisima y se comeria la
+              pantalla. */}
           <View
             style={{
               width: "100%",
-              aspectRatio: 1,
+              height: m.tramoImagen(alto),
               borderRadius: radii.tile,
               overflow: "hidden",
               backgroundColor: colors.baldosa,
               alignItems: "center",
               justifyContent: "center",
-              padding: 8,
+              // Una baldosa grande con el mismo margen de 8 deja la foto
+              // flotando en un marco enorme. Crece con el tamano, no con el
+              // gusto: la proporcion del marco se mantiene.
+              padding: 8 * Math.max(ancho, alto),
             }}
           >
             {(c.imagen_url_thumb || c.imagen_url) ? (
@@ -90,7 +121,7 @@ export function CuadriculaCategorias({ categorias, onSelect }: Props) {
               />
             ) : (
               <View style={{ width: "100%", height: "100%", backgroundColor: colors.greenTint, alignItems: "center", justifyContent: "center" }}>
-                <Text style={{ fontFamily: fuentes.titulo, fontSize: 20, color: colors.greenInk }}>
+                <Text style={{ fontFamily: fuentes.titulo, fontSize: 20 * Math.max(ancho, alto), color: colors.greenInk }}>
                   {c.nombre.slice(0, 1).toUpperCase()}
                 </Text>
               </View>

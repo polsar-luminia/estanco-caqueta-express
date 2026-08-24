@@ -231,7 +231,7 @@ export function DateSelector({ value, onChange }: Props) {
                       backgroundColor: isSelected ? "#F0FBF4" : "transparent",
                     }}
                   >
-                    <Text style={{ fontSize: 16, color: isSelected ? "#1FAF55" : "#1A1C1A", fontFamily: fuentes.destacado ? "700" : "400" }}>
+                    <Text style={{ fontSize: 16, color: isSelected ? "#1FAF55" : "#1A1C1A", fontFamily: fuentes.destacado }}>
                       {opt.label}
                     </Text>
                   </Pressable>

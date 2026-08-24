@@ -2,7 +2,7 @@ import { View, Text, ScrollView, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { colors } from "../../src/constants/theme";
+import { colors, fuentes } from "../../src/constants/theme";
 
 const SECTIONS = [
   {
@@ -63,17 +63,17 @@ export default function TermsScreen() {
         >
           <Feather name="arrow-left" size={22} color={colors.ink} />
         </Pressable>
-        <Text style={{ fontSize: 18, fontWeight: "700", color: colors.ink }}>Términos y Condiciones</Text>
+        <Text style={{ fontFamily: fuentes.destacado, fontSize: 18, color: colors.ink }}>Términos y Condiciones</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         {/* Header info */}
         <View className="rounded-2xl p-5 mb-5" style={{ backgroundColor: colors.lowfill }}>
-          <Text style={{ fontSize: 12, fontWeight: "700", color: colors.muted, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>
             Última actualización
           </Text>
-          <Text style={{ fontSize: 14, fontWeight: "600", color: colors.ink }}>Octubre 3, 2025</Text>
-          <Text style={{ fontSize: 12, color: colors.muted, marginTop: 8, lineHeight: 18 }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: colors.ink }}>Octubre 3, 2025</Text>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted, marginTop: 8, lineHeight: 18 }}>
             Al usar Estanco Caquetá Express, aceptas los siguientes términos y condiciones que regulan el servicio.
           </Text>
         </View>
@@ -82,10 +82,10 @@ export default function TermsScreen() {
         <View style={{ gap: 20 }}>
           {SECTIONS.map((sec, i) => (
             <View key={i}>
-              <Text style={{ fontSize: 15, fontWeight: "700", color: colors.ink, marginBottom: 8 }}>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 15, color: colors.ink, marginBottom: 8 }}>
                 {sec.title}
               </Text>
-              <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 20 }}>
+              <Text style={{ fontFamily: fuentes.destacado, fontSize: 13, color: colors.muted, lineHeight: 20 }}>
                 {sec.body}
               </Text>
             </View>
@@ -94,10 +94,10 @@ export default function TermsScreen() {
 
         {/* Footer */}
         <View className="items-center mt-8">
-          <Text style={{ fontSize: 12, color: colors.faint, textAlign: "center", letterSpacing: 1, textTransform: "uppercase" }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.faint, textAlign: "center", letterSpacing: 1, textTransform: "uppercase" }}>
             Organización Polo & Salazar ZOMAC S.A.S.
           </Text>
-          <Text style={{ fontSize: 12, color: colors.faint, marginTop: 2 }}>
+          <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.faint, marginTop: 2 }}>
             NIT 901.327.818-0 • Florencia, Caquetá
           </Text>
         </View>

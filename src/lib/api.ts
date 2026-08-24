@@ -695,6 +695,11 @@ export interface Categoria {
 // Una categoria grande y sus subcategorias (GET /catalogo/categorias/arbol).
 export interface CategoriaGrande extends Categoria {
   subcategorias: Categoria[];
+  // Tamano en la cuadricula del inicio (migracion 096): columnas (1-4) y filas
+  // (1-2) que ocupa. Opcionales porque un backend anterior a la 096 no los
+  // manda, y en ese caso la cuadricula cae a 1x1 — que es como se veia antes.
+  mosaico_ancho?: number | null;
+  mosaico_alto?: number | null;
 }
 
 export interface CategoriaDetalle {

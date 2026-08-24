@@ -182,7 +182,7 @@ function TabButton({ onPress, onLongPress, accessibilityState, label, icon: Icon
       {/* Label */}
       <Text style={{
         fontSize: 12,
-        fontFamily: fuentes.destacado ? "700" : "500",
+        fontFamily: fuentes.destacado,
         color: focused ? "#fff" : "rgba(26,28,26,0.38)",
         marginTop: 3,
       }}>

@@ -106,7 +106,7 @@ export function HojaCancelar({
                   size={19}
                   color={activo ? "#1FAF55" : "#B6BDB5"}
                 />
-                <Text style={{ flex: 1, fontSize: 15, color: "#1A1C1A", fontFamily: fuentes.destacado ? "700" : "500" }}>
+                <Text style={{ flex: 1, fontSize: 15, color: "#1A1C1A", fontFamily: fuentes.destacado }}>
                   {m.etiqueta}
                 </Text>
               </Pressable>

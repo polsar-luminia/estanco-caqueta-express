@@ -126,7 +126,7 @@ export function OrderStatusTimeline({ estado, pedido, estadosExtendidos = false 
               <Text
                 style={{
                   fontSize: 14,
-                  fontFamily: fuentes.destacado ? "800" : done ? "700" : "500",
+                  fontFamily: fuentes.destacado,
                   color: current ? colors.greenInk : done ? colors.ink : colors.faint,
                 }}
               >

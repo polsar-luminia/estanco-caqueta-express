@@ -117,12 +117,22 @@ export const medidas = {
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 } as const;
 
-// Tipografía: tamaños y pesos base del rediseño.
+// Tipografía: tamaños base del rediseño.
+//
+// SIN USO HOY (nadie lo importa), pero lleva `fontFamily` a proposito. Tal como
+// estaba —solo tamano y peso— el primero que lo adoptara habria pintado esa
+// pantalla entera con la fuente del sistema sin que nada fallara, que es
+// exactamente lo que ya paso en las tres pantallas de `app/support/`.
+//
+// Tampoco lleva `fontWeight`: de cada familia hay UNA sola cara cargada
+// (Oswald-Bold, ArchivoBlack-Regular), asi que un peso encima no elige nada y
+// en Android dispara negrita sintetica sobre una fuente que ya es bold. El
+// enfasis en esta app se da con color y tamano, no con peso.
 export const type = {
-  h1: { fontSize: 20, fontWeight: "800" as const, letterSpacing: -0.2 },
-  title: { fontSize: 15, fontWeight: "800" as const, letterSpacing: -0.1 },
-  body: { fontSize: 13.5, fontWeight: "500" as const },
-  price: { fontSize: 14, fontWeight: "800" as const },
-  label: { fontSize: 12, fontWeight: "900" as const, letterSpacing: 1.2, textTransform: "uppercase" as const },
-  meta: { fontSize: 12, fontWeight: "500" as const },
+  h1: { fontSize: 20, fontFamily: fuentes.titulo, letterSpacing: -0.2 },
+  title: { fontSize: 15, fontFamily: fuentes.destacado, letterSpacing: -0.1 },
+  body: { fontSize: 13.5, fontFamily: fuentes.destacado },
+  price: { fontSize: 14, fontFamily: fuentes.destacado },
+  label: { fontSize: 12, fontFamily: fuentes.destacado, letterSpacing: 1.2, textTransform: "uppercase" as const },
+  meta: { fontSize: 12, fontFamily: fuentes.destacado },
 } as const;

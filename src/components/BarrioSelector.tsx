@@ -201,7 +201,7 @@ export function BarrioSelector({ value, onSelect, textoLibre = "", onTextoLibreC
                       backgroundColor: seleccionado ? "rgba(31,175,85,0.06)" : "transparent",
                     }}
                   >
-                    <Text style={{ fontSize: 14, color: seleccionado ? "#1FAF55" : "#1A1C1A", fontFamily: fuentes.destacado ? "700" : "400" }}>
+                    <Text style={{ fontSize: 14, color: seleccionado ? "#1FAF55" : "#1A1C1A", fontFamily: fuentes.destacado }}>
                       {b.nombre}
                     </Text>
                     {seleccionado && <Feather name="check" size={16} color="#1FAF55" />}

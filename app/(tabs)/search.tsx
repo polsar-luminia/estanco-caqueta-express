@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { buscarProductos, getCategorias, getDestacados, type Categoria } from "../../src/lib/api";
+import { buscarProductos, getCategoriasArbol, getDestacados, type Categoria } from "../../src/lib/api";
 import { filtrarCategoriasIOS, filtrarProductosIOS } from "../../src/lib/iosFilters";
 import { tracker } from "../../src/lib/tracker";
 import { metaLogSearch } from "../../src/lib/metaEvents";
@@ -56,9 +56,9 @@ function CategoryGridItem({ cat, onPress }: { cat: Categoria; onPress: () => voi
           alignItems: "center", justifyContent: "center",
         }}
       >
-        {cat.imagen_url && !imageErrored ? (
+        {(cat.imagen_url_thumb || cat.imagen_url) && !imageErrored ? (
           <Image
-            source={{ uri: cat.imagen_url }}
+            source={{ uri: cat.imagen_url_thumb || cat.imagen_url }}
             style={{ width: 30, height: 30 }}
             contentFit="contain"
             onError={() => setImageErrored(true)}
@@ -151,9 +151,17 @@ export default function SearchScreen() {
   const noResults = debouncedQuery.length >= 2 && resultados.length === 0 && !isLoading && !isError;
   const showExplore = debouncedQuery.length < 2;
 
+  // El ARBOL, no la lista plana. La plana solo trae categorias con productos
+  // PROPIOS, o sea las hojas: una categoria padre como "Mercado" —cuyos 24
+  // productos cuelgan de Granos, Enlatados, Lacteos y Jabon— no aparecia por
+  // ningun lado, mientras sus cuatro hijas si salian sueltas y sin nada que
+  // dijera de donde vienen. No fallaba nada: la pantalla se veia completa.
+  //
+  // El endpoint plano NO se toca: lo consumen los binarios 1.2.3, que son la
+  // mayoria del parque y no saben abrir un padre.
   const { data: categoriasRaw = [] } = useQuery({
-    queryKey: ["categorias"],
-    queryFn: getCategorias,
+    queryKey: ["categorias-arbol"],
+    queryFn: getCategoriasArbol,
   });
   // Apple §1.4.3 — filtro centralizado de tabaco/vape para iOS.
   const categorias = filtrarCategoriasIOS(categoriasRaw);
