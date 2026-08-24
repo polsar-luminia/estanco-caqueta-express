@@ -818,6 +818,12 @@ export interface Pedido {
   medio_pago?: string | null;
   paga_con?: number | null;
   vuelto?: number | null;
+  // Código de entrega de 4 dígitos (097). Solo llega mientras el pedido está
+  // en `domiciliario_llego` Y las banderas del servidor lo permiten -- el
+  // servidor lo borra de la respuesta en cuanto el pedido avanza. NUNCA
+  // asumir que si faltó es un error: la ausencia es el estado normal
+  // mientras la funcionalidad esté dormida (nace apagada a propósito).
+  codigo_entrega?: string | null;
 }
 
 export interface LineaPedido {
