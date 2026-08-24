@@ -1,29 +1,35 @@
 import { useState, useRef } from "react";
 import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BackButton } from "../../src/components/BackButton";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { getDirecciones, crearDireccion, editarDireccion, setPredeterminada, eliminarDireccion, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
+import { getDirecciones, crearDireccion, setPredeterminada, eliminarDireccion, ubicacionABody, type UbicacionCapturada } from "../../src/lib/api";
 import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { UbicacionButton } from "../../src/components/UbicacionButton";
 import { BuscadorDireccion } from "../../src/components/BuscadorDireccion";
 import { colors, shadows, fuentes } from "../../src/constants/theme";
-import { useConfirmarUbicacion } from "../../src/hooks/useConfirmarUbicacion";
+import { tracker } from "../../src/lib/tracker";
+
+const ORIGEN = "perfil";
 
 export default function DireccionesScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const queryClient = useQueryClient();
-  const confirmarUbicacion = useConfirmarUbicacion();
   const [mostrarForm, setMostrarForm] = useState(false);
   const [direccion, setDireccion] = useState("");
-  const [etiqueta, setEtiqueta] = useState("Casa");
+  const [etiqueta, setEtiqueta] = useState("");
   const [notas, setNotas] = useState("");
   const [ubicacion, setUbicacion] = useState<UbicacionCapturada | null>(null);
   // Ver BuscadorDireccion: con el punto puesto, las sugerencias estorban.
   const [silenciado, setSilenciado] = useState(false);
+  // Salida de "fuera de zona" del mapa (Direcciones 1.3.2): habilita guardar
+  // sin `ubicacion` SOLO para la dirección con la que se concedió. Cambiar el
+  // texto la revoca — ver el onChangeText de abajo.
+  const [permitirSinPin, setPermitirSinPin] = useState(false);
 
   const { data: direcciones = [], isLoading, isError, isFetching } = useQuery({
     queryKey: ["direcciones"],
@@ -44,9 +50,12 @@ export default function DireccionesScreen() {
     },
     onSuccess: () => {
       idemKeyRef.current = null;
+      if (!ubicacion) {
+        tracker.track('direccion_sin_pin_guardada', { origen: ORIGEN }, ORIGEN);
+      }
       refetch();
       setMostrarForm(false);
-      setDireccion(""); setNotas(""); setEtiqueta("Casa"); setUbicacion(null);
+      setDireccion(""); setNotas(""); setEtiqueta(""); setUbicacion(null); setPermitirSinPin(false);
       Toast.show({ type: "success", text1: "Dirección guardada" });
     },
     onError: (err: Error) => Toast.show({ type: "error", text1: err.message }),
@@ -57,22 +66,14 @@ export default function DireccionesScreen() {
     onSuccess: refetch,
   });
 
-  const mutEditarUbic = useMutation({
-    mutationFn: ({ id, u }: { id: number; u: UbicacionCapturada }) => editarDireccion(id, ubicacionABody(u)),
-    onSuccess: () => { refetch(); Toast.show({ type: "success", text1: "Ubicación actualizada" }); },
-    onError: (err: Error) => Toast.show({ type: "error", text1: "No se pudo actualizar", text2: err.message }),
-  });
-
-  // Tercera y ultima copia del bloque "abrir el mapa y aplicar el resultado".
-  // Las tres viven ahora en `useConfirmarUbicacion`, que ademas abre el pin cerca
-  // de la direccion escrita en vez de en el centro de Florencia.
-  const abrirMapaDireccion = (d: { id: number; direccion: string; lat?: number | null; lng?: number | null }) => {
-    confirmarUbicacion(d.direccion, d, (u) => mutEditarUbic.mutate({ id: d.id, u }));
-  };
-
   const mutEliminar = useMutation({
     mutationFn: eliminarDireccion,
-    onSuccess: () => { refetch(); Toast.show({ type: "success", text1: "Dirección eliminada" }); },
+    onSuccess: (_data, id) => {
+      const d = direcciones.find((x) => x.id === id);
+      tracker.track('direccion_eliminada', { con_pin: d?.lat != null, era_predeterminada: !!d?.predeterminada }, ORIGEN);
+      refetch();
+      Toast.show({ type: "success", text1: "Dirección eliminada" });
+    },
     onError: (err: Error) => Toast.show({ type: "error", text1: "No se pudo eliminar", text2: err.message }),
   });
 
@@ -86,9 +87,11 @@ export default function DireccionesScreen() {
     // el 61% de las guardadas está así. Las que ya existen no se tocan: se
     // completan cuando el cliente las use.
     //
-    // No deja a nadie sin salida: el mapa funciona sin ningún permiso de
-    // ubicación, así que siempre hay forma de poner el punto.
-    if (!ubicacion || ubicacion.lat == null) {
+    // Única excepción: `permitirSinPin`, que solo se enciende cuando el mapa
+    // mismo dijo "por ahora no llegamos hasta aquí" y la persona eligió
+    // guardar el texto de todos modos (Direcciones 1.3.2). No deja a nadie sin
+    // salida: el mapa funciona sin ningún permiso de ubicación.
+    if ((!ubicacion || ubicacion.lat == null) && !permitirSinPin) {
       Toast.show({
         type: "error",
         text1: "Falta el punto de entrega",
@@ -96,7 +99,16 @@ export default function DireccionesScreen() {
       });
       return;
     }
-    mutCrear.mutate({ etiqueta, direccion: direccion.trim(), notas: notas.trim() || undefined, ...ubicacionABody(ubicacion) });
+    mutCrear.mutate({
+      // Vacío se OMITE (no "Casa" a mano): al crear, el servidor ya aplica ese
+      // default (clientes.js). Al editar es distinto — ver [id].tsx.
+      ...(etiqueta.trim() ? { etiqueta: etiqueta.trim() } : {}),
+      direccion: direccion.trim(),
+      notas: notas.trim() || undefined,
+      // ubicacionABody(null) = {}: es justo lo que necesita el camino
+      // "guardar sin el punto" (permitirSinPin) — sin coords, dirección manual.
+      ...ubicacionABody(ubicacion),
+    });
   };
 
   const handleEliminar = (id: number) => {
@@ -105,8 +117,6 @@ export default function DireccionesScreen() {
       { text: "Sí", style: "destructive", onPress: () => mutEliminar.mutate(id) },
     ]);
   };
-
-  const etiquetas = ["Casa", "Trabajo", "Otro"];
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.bg }}>
@@ -149,9 +159,11 @@ export default function DireccionesScreen() {
                   <View style={{ flex: 1 }}>
                     {/* flexWrap: con PREDETERMINADA + CON UBICACIÓN la fila se
                         desbordaba por encima de la basura de eliminar y la
-                        dejaba intocable. Los chips ahora bajan de línea. */}
+                        dejaba intocable. Los chips ahora bajan de línea. La
+                        etiqueta ahora es texto libre (Direcciones 1.3.2):
+                        numberOfLines evita que una larga vuelva a desbordar. */}
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                      <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>{d.etiqueta}</Text>
+                      <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: "#1A1C1A", flexShrink: 1 }} numberOfLines={1}>{d.etiqueta}</Text>
                       {d.predeterminada && (
                         <View style={{ backgroundColor: "rgba(31,175,85,0.1)", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 }}>
                           <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>PRINCIPAL</Text>
@@ -194,17 +206,21 @@ export default function DireccionesScreen() {
                     <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>Predeterminada</Text>
                   </Pressable>
                 )}
+                {/* "Editar ubicación"/"Agregar ubicación" se reemplazó por un
+                    único "Editar" (Direcciones 1.3.2): etiqueta, dirección,
+                    notas y pin ahora viven en una pantalla propia — no un
+                    <Modal>, porque el Toast raíz queda detrás de un Modal
+                    nativo (ver cart.tsx:762) y esta pantalla tiene dos toasts
+                    de error. El mapa se alcanza desde adentro. */}
                 <Pressable
-                  onPress={() => abrirMapaDireccion(d)}
-                  disabled={mutEditarUbic.isPending}
+                  onPress={() => router.push(`/profile/direccion/${d.id}`)}
                   accessibilityRole="button"
-                  accessibilityLabel={d.lat != null ? `Editar la ubicación en el mapa de ${d.etiqueta}` : `Agregar una ubicación en el mapa a ${d.etiqueta}`}
-                  accessibilityState={{ disabled: mutEditarUbic.isPending }}
+                  accessibilityLabel={`Editar ${d.etiqueta}`}
                   hitSlop={{ top: 8, bottom: 8 }}
                   style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, borderRadius: 8, backgroundColor: colors.lowfill }}
                 >
-                  <Feather name="map" size={12} color="#1FAF55" />
-                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>{d.lat != null ? "Editar ubicación" : "Agregar ubicación"}</Text>
+                  <Feather name="edit-2" size={12} color="#1FAF55" />
+                  <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#1FAF55" }}>Editar</Text>
                 </Pressable>
               </View>
             </View>
@@ -216,12 +232,15 @@ export default function DireccionesScreen() {
           <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, ...shadows.card }}>
             <Text style={{ fontSize: 16, fontFamily: fuentes.destacado, color: colors.ink, marginBottom: 16 }}>Nueva dirección</Text>
 
-            {/* El punto es OBLIGATORIO al crear (ver handleGuardar). Va primero
-                porque es lo que define la dirección; el texto de abajo es la
-                referencia para el último tramo. */}
+            {/* El punto es OBLIGATORIO al crear (ver handleGuardar), salvo que
+                el mapa mismo haya dicho "fuera de zona" y se eligió guardar
+                sin él. Va primero porque es lo que define la dirección; el
+                texto de abajo es la referencia para el último tramo. */}
             <UbicacionButton
               value={ubicacion}
               textoDireccion={direccion}
+              origen={ORIGEN}
+              onSinPin={() => setPermitirSinPin(true)}
               onChange={(u) => {
                 setUbicacion(u);
                 setSilenciado(!!u);
@@ -233,24 +252,32 @@ export default function DireccionesScreen() {
               }}
             />
 
-            {/* Etiqueta */}
-            <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Etiqueta</Text>
-            <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
-              {etiquetas.map((e) => (
-                <Pressable
-                  key={e}
-                  onPress={() => setEtiqueta(e)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: etiqueta === e }}
-                  accessibilityLabel={`Etiquetar la dirección como ${e}`}
-                  // Chips en fila: solo hitSlop vertical para no invadir el chip vecino.
-                  hitSlop={{ top: 8, bottom: 8 }}
-                  style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: etiqueta === e ? "#1FAF55" : colors.lowfill }}
-                >
-                  <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: etiqueta === e ? "#fff" : "#6D7B6C" }}>{e}</Text>
-                </Pressable>
-              ))}
-            </View>
+            {permitirSinPin && (!ubicacion || ubicacion.lat == null) ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16, backgroundColor: "rgba(220,38,38,0.08)", borderRadius: 8, padding: 10 }}>
+                <Feather name="alert-triangle" size={14} color="#DC2626" />
+                <Text style={{ flex: 1, fontSize: 12.5, lineHeight: 17, fontFamily: fuentes.destacado, color: "#DC2626" }}>
+                  Fuera de nuestra zona · se guardará sin punto en el mapa
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Etiqueta libre (Direcciones 1.3.2): los chips "Casa/Trabajo/Otro"
+                se cayeron — 10 direcciones quedaron como "Otro" sin decir nada,
+                y nada en el backend ni en el admin depende de esos literales.
+                Vacío = "Casa" (el default del servidor). */}
+            <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Etiqueta</Text>
+            <TextInput
+              style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontFamily: fuentes.destacado, fontSize: 14, color: colors.ink, marginBottom: 4 }}
+              placeholder="Casa"
+              placeholderTextColor="#BCCABA"
+              value={etiqueta}
+              // NUNCA trim() aquí: borraría el espacio en cada tecla y "Casa de
+              // mi mamá" sería imposible de escribir. El trim va al guardar.
+              onChangeText={setEtiqueta}
+              maxLength={24}
+              accessibilityLabel="Etiqueta de la dirección"
+            />
+            <Text style={{ fontSize: 11.5, fontFamily: fuentes.destacado, color: "#9AA69A", marginBottom: 16 }}>Si lo dejas vacío, la llamamos Casa.</Text>
 
             <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Dirección *</Text>
             {/* Tercer camino para fijar el punto: escribir y elegir una sugerencia
@@ -259,7 +286,13 @@ export default function DireccionesScreen() {
             <View style={{ marginBottom: 12 }}>
               <BuscadorDireccion
                 value={direccion}
-                onChangeText={(t) => { setDireccion(t); setSilenciado(false); }}
+                onChangeText={(t) => {
+                  setDireccion(t);
+                  setSilenciado(false);
+                  // El permiso de guardar sin pin es para ESTA dirección; si el
+                  // texto cambia, hay que volver a pasar por el mapa.
+                  setPermitirSinPin(false);
+                }}
                 silenciado={silenciado}
                 onUbicacion={setUbicacion}
                 placeholder="Ej: Carrera 15 # 12-34"
@@ -268,11 +301,11 @@ export default function DireccionesScreen() {
             </View>
 
             <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Notas (opcional)</Text>
-            <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontFamily: fuentes.destacado, fontSize: 14, color: colors.ink, marginBottom: 16 }} placeholder="Ej: portería, dejar con vigilante" placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline />
+            <TextInput style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 13, fontFamily: fuentes.destacado, fontSize: 14, color: colors.ink, marginBottom: 16 }} placeholder="Ej: portería, dejar con vigilante" placeholderTextColor="#BCCABA" value={notas} onChangeText={setNotas} multiline maxLength={300} />
 
             <View style={{ flexDirection: "row", gap: 8 }}>
               <Pressable
-                onPress={() => { setMostrarForm(false); setUbicacion(null); }}
+                onPress={() => { setMostrarForm(false); setUbicacion(null); setPermitirSinPin(false); }}
                 accessibilityRole="button"
                 accessibilityLabel="Cancelar y cerrar el formulario de nueva dirección"
                 style={{ flex: 1, paddingVertical: 12, minHeight: 44, justifyContent: "center", borderRadius: 12, backgroundColor: colors.lowfill, alignItems: "center" }}

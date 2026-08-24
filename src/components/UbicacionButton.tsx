@@ -29,6 +29,14 @@ interface Props {
    * de antes.
    */
   textoDireccion?: string;
+  /** Qué pantalla abre el mapa — solo telemetría (Direcciones 1.3.2). */
+  origen: string;
+  /**
+   * El mapa devolvió "guardar la dirección sin el punto" (fuera de zona). El
+   * llamador decide si eso habilita guardar sin `value`; este componente solo
+   * avisa y limpia el pin.
+   */
+  onSinPin?: () => void;
 }
 
 // Un cold-fix de GPS en dispositivo real (sobre todo bajo techo) suele pasar de
@@ -67,7 +75,7 @@ function aUbicacion(pos: Location.LocationObject, geocoded: string | null): Ubic
   };
 }
 
-export function UbicacionButton({ value, onChange, textoDireccion }: Props) {
+export function UbicacionButton({ value, onChange, textoDireccion, origen, onSinPin }: Props) {
   const confirmarUbicacion = useConfirmarUbicacion();
   const { fueraDeZona } = useZonaEntrega();
   const [estado, setEstado] = useState<Estado>("idle");
@@ -203,7 +211,19 @@ export function UbicacionButton({ value, onChange, textoDireccion }: Props) {
     // `confirmarUbicacion` es el mismo bloque que antes estaba escrito a mano
     // aqui, en cart.tsx y en direcciones.tsx. Lo que agrega es el punto de
     // partida: pin actual -> geocode del texto escrito -> centro de Florencia.
-    confirmarUbicacion(textoDireccion ?? "", value, (u) => onChange(u));
+    confirmarUbicacion(
+      textoDireccion ?? "",
+      value,
+      (u, ctx) => {
+        if (u == null && ctx.motivo === "fuera_zona") {
+          onSinPin?.();
+          onChange(null);
+          return;
+        }
+        onChange(u);
+      },
+      origen,
+    );
   };
 
   // Estado: ubicación capturada → mini-mapa con el pin + acciones.

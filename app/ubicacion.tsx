@@ -34,6 +34,7 @@ export default function UbicacionScreen() {
   const router = useRouter();
   const { abrirWhatsApp } = useSoporte();
   const inicial = useUbicacionPicker((s) => s.inicial);
+  const origen = useUbicacionPicker((s) => s.origen);
   const confirmar = useUbicacionPicker((s) => s.confirmar);
   const reset = useUbicacionPicker((s) => s.reset);
 
@@ -184,12 +185,23 @@ export default function UbicacionScreen() {
       metodo_ubicacion: "pin_mapa",
       geocoded_direccion: geocoded,
     };
-    confirmar(u);
+    confirmar(u, "confirmado");
     router.back();
   };
 
-  const onCancelar = () => {
-    reset();
+  // El botón inferior YA NO es un alias de la flecha atrás (Direcciones
+  // 1.3.2). Dentro de zona vuelve sin cambiar nada — el formulario conserva
+  // lo escrito, así que "Cancelar" sería mentira. Fuera de zona revive la
+  // salida original del mapa (PLAN-GEOLOCALIZACION.md): guardar el texto sin
+  // el punto, en vez de dejar a quien pide "para un tercero en el borde de la
+  // zona" sin ninguna salida más que WhatsApp.
+  const onSalir = () => {
+    tracker.track('ubicacion_cancelada', { dentro_zona: dentroZona, origen: origen ?? undefined }, 'ubicacion');
+    if (dentroZona) {
+      reset();
+    } else {
+      confirmar(null, "fuera_zona");
+    }
     router.back();
   };
 
@@ -199,7 +211,7 @@ export default function UbicacionScreen() {
 
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 8, paddingBottom: 12, paddingHorizontal: 12, backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.line }}>
-        <Pressable onPress={onCancelar} hitSlop={10} style={{ padding: 6 }} accessibilityRole="button" accessibilityLabel="Volver">
+        <Pressable onPress={onSalir} hitSlop={10} style={{ padding: 6 }} accessibilityRole="button" accessibilityLabel="Volver">
           <Feather name="arrow-left" size={22} color="#1A1C1A" />
         </Pressable>
         <Text style={{ flex: 1, fontSize: 16, fontFamily: fuentes.destacado, color: "#1A1C1A", textAlign: "center", marginRight: 34 }}>
@@ -330,12 +342,14 @@ export default function UbicacionScreen() {
         </Pressable>
 
         <Pressable
-          onPress={onCancelar}
+          onPress={onSalir}
           accessibilityRole="button"
-          accessibilityLabel="Escribir la direccion manualmente en vez de usar el mapa"
+          accessibilityLabel={dentroZona ? "Volver sin ubicar el punto" : "Guardar la dirección sin el punto en el mapa"}
           style={{ minHeight: 44, marginTop: 8, paddingVertical: 10, alignItems: "center", justifyContent: "center" }}
         >
-          <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#6D7B6C" }}>Escribir dirección manualmente</Text>
+          <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#6D7B6C" }}>
+            {dentroZona ? "Volver sin ubicar el punto" : "Guardar la dirección sin el punto"}
+          </Text>
         </Pressable>
       </View>
     </View>

@@ -37,13 +37,13 @@ import { tracker } from "../../src/lib/tracker";
 import { useAuthStore } from "../../src/stores/auth";
 import { colors, radii, fuentes } from "../../src/constants/theme";
 
-const ETIQUETAS = ["Casa", "Trabajo", "Otro"];
-
 export default function DireccionInicialScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
-  const [etiqueta, setEtiqueta] = useState("Casa");
+  const [etiqueta, setEtiqueta] = useState("");
+  // Salida de "fuera de zona" del mapa (Direcciones 1.3.2): ver direcciones.tsx.
+  const [permitirSinPin, setPermitirSinPin] = useState(false);
   const [direccion, setDireccion] = useState("");
   const [notas, setNotas] = useState("");
   const [ubicacion, setUbicacion] = useState<UbicacionCapturada | null>(null);
@@ -111,7 +111,9 @@ export default function DireccionInicialScreen() {
       Toast.show({ type: "error", text1: "Escribe tu dirección" });
       return;
     }
-    // Sin punto no se guarda, con muro o sin él.
+    // Sin punto no se guarda, con muro o sin él — salvo `permitirSinPin`, que
+    // solo se enciende cuando el mapa mismo dijo "fuera de zona" y la persona
+    // eligió guardar el texto de todos modos (Direcciones 1.3.2).
     //
     // Antes esta línea decía `!obligatoria &&`: prender el muro RELAJABA el pin,
     // por miedo a dejar sin cuenta a quien niega el GPS. El miedo no se sostiene
@@ -119,7 +121,7 @@ export default function DireccionInicialScreen() {
     // negado el GPS—, y con `exigir_ubicacion` prendida era además contradictorio:
     // esa persona chocaba igual contra el checkout, con el carrito lleno, que es
     // exactamente lo que este muro existe para evitar.
-    if (!ubicacion || ubicacion.lat == null) {
+    if ((!ubicacion || ubicacion.lat == null) && !permitirSinPin) {
       Toast.show({
         type: "error",
         text1: "Falta el punto de entrega",
@@ -127,8 +129,12 @@ export default function DireccionInicialScreen() {
       });
       return;
     }
+    if (!ubicacion) {
+      tracker.track("direccion_sin_pin_guardada", { origen: "onboarding" }, "direccion-inicial");
+    }
     mutCrear.mutate({
-      etiqueta,
+      // Vacío se OMITE: el servidor aplica su default ('Casa').
+      ...(etiqueta.trim() ? { etiqueta: etiqueta.trim() } : {}),
       direccion: direccion.trim(),
       notas: notas.trim() || undefined,
       predeterminada: true,
@@ -176,28 +182,25 @@ export default function DireccionInicialScreen() {
           sin llamarte.
         </Text>
 
-        {/* Etiqueta */}
-        <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
-          {ETIQUETAS.map((e) => (
-            <Pressable
-              key={e}
-              onPress={() => setEtiqueta(e)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: etiqueta === e }}
-              style={{
-                paddingHorizontal: 16, minHeight: 40, justifyContent: "center",
-                borderRadius: radii.input,
-                backgroundColor: etiqueta === e ? colors.green : "#fff",
-                borderWidth: 1,
-                borderColor: etiqueta === e ? colors.green : colors.line,
-              }}
-            >
-              <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, color: etiqueta === e ? "#fff" : colors.muted }}>
-                {e}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        {/* Etiqueta libre (Direcciones 1.3.2): ver direcciones.tsx — mismo
+            razonamiento, se cayeron los chips "Casa/Trabajo/Otro". */}
+        <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: colors.muted, marginBottom: 6 }}>
+          ETIQUETA (OPCIONAL)
+        </Text>
+        <TextInput
+          value={etiqueta}
+          onChangeText={setEtiqueta}
+          maxLength={24}
+          placeholder="Casa"
+          placeholderTextColor={colors.faint}
+          accessibilityLabel="Etiqueta de la dirección"
+          style={{
+            backgroundColor: "#fff", borderRadius: radii.input,
+            paddingHorizontal: 16, paddingVertical: 12,
+            fontFamily: fuentes.destacado, fontSize: 14, color: colors.ink, minHeight: 48,
+            marginBottom: 16,
+          }}
+        />
 
         {/* Dirección con autocompletado */}
         <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: colors.muted, marginBottom: 6 }}>
@@ -207,7 +210,7 @@ export default function DireccionInicialScreen() {
           value={direccion}
           // Escribir reactiva las sugerencias: fijar el punto no bloquea corregir
           // la direccion a mano despues.
-          onChangeText={(t) => { setDireccion(t); setSilenciado(false); }}
+          onChangeText={(t) => { setDireccion(t); setSilenciado(false); setPermitirSinPin(false); }}
           silenciado={silenciado}
           // Elegir una sugerencia tambien deja el punto resuelto.
           onUbicacion={(u) => { setUbicacion(u); setSilenciado(true); }}
@@ -220,17 +223,30 @@ export default function DireccionInicialScreen() {
           <UbicacionButton
             value={ubicacion}
             textoDireccion={direccion}
+            origen="onboarding"
+            onSinPin={() => setPermitirSinPin(true)}
             onChange={(u) => {
               setUbicacion(u);
               setSilenciado(!!u);
-              // Si el punto trajo dirección y el campo está vacío, se rellena solo:
-              // un toque menos y menos posibilidad de escribir algo que no cuadra.
-              if (u?.geocoded_direccion && !direccion.trim()) {
+              // Alineado con perfil y checkout (Direcciones 1.3.2): un punto
+              // elegido en el mapa (pin_mapa) siempre reescribe la dirección;
+              // antes solo rellenaba si el campo estaba vacío. El GPS sigue sin
+              // pisar lo escrito.
+              if (u?.geocoded_direccion && (u.metodo_ubicacion === "pin_mapa" || !direccion.trim())) {
                 setDireccion(u.geocoded_direccion);
               }
             }}
           />
         </View>
+
+        {permitirSinPin && (!ubicacion || ubicacion.lat == null) ? (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12, backgroundColor: "rgba(220,38,38,0.08)", borderRadius: 8, padding: 10 }}>
+            <Feather name="alert-triangle" size={14} color="#DC2626" />
+            <Text style={{ flex: 1, fontSize: 12.5, lineHeight: 17, fontFamily: fuentes.destacado, color: "#DC2626" }}>
+              Fuera de nuestra zona · se guardará sin punto en el mapa
+            </Text>
+          </View>
+        ) : null}
 
         {/* Notas */}
         <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: colors.muted, marginTop: 20, marginBottom: 6 }}>

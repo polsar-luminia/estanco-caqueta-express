@@ -134,7 +134,13 @@ export type EventTipo =
   | 'carrito_items_desplegados'
   | 'direccion_hoja_abierta'
   | 'medio_pago_hoja_abierta'
-  | 'entrega_sin_pin_mostrado';
+  | 'entrega_sin_pin_mostrado'
+  // Direcciones 1.3.2: una sola salida sin pin (fuera de zona), edicion de
+  // direccion guardada, y el complemento de ubicacion_pin_confirmado.
+  | 'direccion_sin_pin_guardada'
+  | 'ubicacion_cancelada'
+  | 'direccion_editada'
+  | 'direccion_eliminada';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -314,6 +320,20 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   direccion_hoja_abierta: ['n_direcciones', 'origen'],
   medio_pago_hoja_abierta: ['medio_actual'],
   entrega_sin_pin_mostrado: ['items_count'],
+
+  // --- Direcciones 1.3.2 ---
+  // Revive la salida "fuera de zona, guardar sin el punto" (perfil,
+  // onboarding, carrito): cuanta gente la usa de verdad al guardar, no solo
+  // cuantos la piden en el mapa (eso lo cubre ubicacion_cancelada).
+  direccion_sin_pin_guardada: ['origen'],
+  // Complemento de ubicacion_pin_confirmado: cuantos abren el mapa y se
+  // rinden (o guardan sin pin), y desde donde. Subcuenta en Android: el back
+  // fisico hace pop del Stack sin pasar por este handler.
+  ubicacion_cancelada: ['dentro_zona', 'origen'],
+  // Que se edita de verdad en Mis Direcciones — nunca el texto de la
+  // etiqueta/direccion/notas, que puede llevar nombres de personas.
+  direccion_editada: ['cambio_etiqueta', 'cambio_direccion', 'cambio_notas', 'cambio_pin'],
+  direccion_eliminada: ['con_pin', 'era_predeterminada'],
 };
 
 function aplicarAllowlist(

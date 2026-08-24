@@ -39,6 +39,11 @@ interface Props {
   onNuevaUbicacion: (u: UbicacionCapturada | null) => void;
   silenciado: boolean;
   onSilenciado: (v: boolean) => void;
+  /** Salida de "fuera de zona" del mapa (Direcciones 1.3.2): ver cart.tsx. */
+  permitirSinPin: boolean;
+  onSinPin: () => void;
+  /** Qué pantalla abre el mapa — solo telemetría. */
+  origen: string;
 
   onUsarNueva: () => void;
   onCerrar: () => void;
@@ -59,6 +64,9 @@ export function HojaDireccion({
   onNuevaUbicacion,
   silenciado,
   onSilenciado,
+  permitirSinPin,
+  onSinPin,
+  origen,
   onUsarNueva,
   onCerrar,
 }: Props) {
@@ -71,7 +79,11 @@ export function HojaDireccion({
     if (visible) setModo(modoInicial);
   }, [visible, modoInicial]);
 
-  const puedeUsarNueva = !!nuevaDireccion.trim() || !!nuevaUbicacion;
+  // Antes era un OR (bastaba texto o pin): era la única llave abierta por la
+  // que nacían direcciones sin punto (Direcciones 1.3.2, ver cart.tsx). Ahora
+  // hace falta el texto Y (el pin O el permiso de fuera de zona).
+  const puedeUsarNueva = !!nuevaDireccion.trim() && (!!nuevaUbicacion || permitirSinPin);
+  const faltaSoloElPin = !!nuevaDireccion.trim() && !nuevaUbicacion && !permitirSinPin;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCerrar}>
@@ -166,6 +178,8 @@ export function HojaDireccion({
               <UbicacionButton
                 value={nuevaUbicacion}
                 textoDireccion={nuevaDireccion}
+                origen={origen}
+                onSinPin={onSinPin}
                 onChange={(u) => {
                   onNuevaUbicacion(u);
                   if (u?.geocoded_direccion && (u.metodo_ubicacion === "pin_mapa" || !nuevaDireccion.trim())) {
@@ -187,9 +201,29 @@ export function HojaDireccion({
                   accessibilityLabel="Dirección de entrega"
                 />
               </View>
-              <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#9AA69A", marginBottom: 12, marginLeft: 4 }}>
-                El punto del mapa es el que usa el domiciliario. Esto le ayuda a identificar la casa cuando ya está cerca.
-              </Text>
+              {/* Antes era un solo texto evergreen. Con el AND-gate de arriba,
+                  un boton gris deshabilitado sin explicacion es peor que el OR
+                  que reemplaza — se le dice a la persona QUE falta y donde
+                  tocar (Direcciones 1.3.2). */}
+              {faltaSoloElPin ? (
+                <Text
+                  accessibilityRole="alert"
+                  style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.danger, marginBottom: 12, marginLeft: 4 }}
+                >
+                  Falta el punto en el mapa — tócalo arriba o usa tu ubicación actual.
+                </Text>
+              ) : permitirSinPin && !nuevaUbicacion ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12, backgroundColor: "rgba(220,38,38,0.08)", borderRadius: 8, padding: 10 }}>
+                  <Feather name="alert-triangle" size={14} color="#DC2626" />
+                  <Text style={{ flex: 1, fontSize: 12, lineHeight: 16, fontFamily: fuentes.destacado, color: "#DC2626" }}>
+                    Fuera de nuestra zona · se guardará sin punto en el mapa
+                  </Text>
+                </View>
+              ) : (
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#9AA69A", marginBottom: 12, marginLeft: 4 }}>
+                  El punto del mapa es el que usa el domiciliario. Esto le ayuda a identificar la casa cuando ya está cerca.
+                </Text>
+              )}
               <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, marginLeft: 4 }}>
                 Notas (Opcional)
               </Text>

@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
-import { useUbicacionPicker } from "../stores/ubicacionPicker";
+import { useUbicacionPicker, type MotivoUbicacion } from "../stores/ubicacionPicker";
 import type { UbicacionCapturada } from "../lib/api";
 
 // Del punto que ya se tiene solo interesan las coordenadas. Exigir el
@@ -59,11 +59,18 @@ export async function puntoDePartida(
 }
 
 /**
- * Devuelve `confirmar(texto, ubicacionConocida, alConfirmar)`.
+ * Devuelve `confirmar(texto, ubicacionConocida, alConfirmar, origen)`.
  *
- * `alConfirmar` recibe la ubicación YA confirmada por la persona en el mapa, y
- * es donde el llamador guarda. Si cierra el mapa sin confirmar, no se llama y no
- * se guarda nada — que es lo correcto: sin punto confirmado no hay dirección.
+ * `alConfirmar` recibe lo que la persona decidió en el mapa:
+ *   - pin confirmado dentro de zona: `(u, { motivo: "confirmado" })`;
+ *   - "guardar la dirección sin el punto" (fuera de zona, Direcciones 1.3.2):
+ *     `(null, { motivo: "fuera_zona" })` — el llamador decide si eso habilita
+ *     guardar sin ubicación.
+ * Si vuelve sin ninguna de las dos (flecha atrás / "volver sin ubicar el
+ * punto" dentro de zona), NO se llama — nada cambia, que es lo correcto.
+ *
+ * `origen` es solo para telemetría (`ubicacion_cancelada`, `ubicacion_pin_*`):
+ * qué pantalla abrió el mapa.
  */
 export function useConfirmarUbicacion() {
   const router = useRouter();
@@ -72,10 +79,11 @@ export function useConfirmarUbicacion() {
   return async (
     texto: string,
     conocida: PuntoConocido | null,
-    alConfirmar: (u: UbicacionCapturada) => void,
+    alConfirmar: (u: UbicacionCapturada | null, ctx: { motivo: MotivoUbicacion }) => void,
+    origen?: string,
   ) => {
     const inicial = await puntoDePartida(texto, conocida);
-    abrirPicker((u) => alConfirmar(u), inicial);
+    abrirPicker((u, ctx) => alConfirmar(u, ctx), inicial, origen);
     router.push("/ubicacion");
   };
 }

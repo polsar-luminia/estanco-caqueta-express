@@ -61,6 +61,7 @@ interface BorradorDireccion {
   direccion: string;
   notas: string;
   ubicacion: UbicacionCapturada | null;
+  permitirSinPin: boolean;
 }
 
 // Modulo, no useRef: sobrevive a un REMOUNT del componente. 22 de 153 filas de
@@ -150,6 +151,10 @@ export default function CartScreen() {
   const [nuevasNotas, setNuevasNotas] = useState("");
   const [nuevaUbicacion, setNuevaUbicacion] = useState<UbicacionCapturada | null>(null);
   const [silenciadoDir, setSilenciadoDir] = useState(false);
+  // Salida de "fuera de zona" del mapa (Direcciones 1.3.2): habilita usar la
+  // dirección nueva sin pin SOLO para el texto con el que se concedió — ver
+  // cambiarNuevaDireccion más abajo, que la revoca al reescribir.
+  const [permitirSinPin, setPermitirSinPin] = useState(false);
   // Nota editada desde el carrito para una dirección GUARDADA. null = "usa la
   // de la dirección" — sin esto, las notas de una guardada no se podían tocar
   // desde el checkout (se mandaba dirActiva.notas a secas).
@@ -351,7 +356,11 @@ export default function CartScreen() {
     // El texto de la dirección va como punto de partida: una dirección guardada
     // sin pin es, por definición, una que nunca resolvió contra el mapa, así que
     // abrir en el centro de Florencia deja a la persona arrastrando a ciegas.
-    confirmarUbicacion(dir.direccion, dir, async (u) => {
+    confirmarUbicacion(dir.direccion, dir, async (u, ctx) => {
+      // "Guardar sin el punto" (fuera de zona, Direcciones 1.3.2) no aplica
+      // aquí: esta dirección YA existe y ya se podía usar sin pin. No hay nada
+      // que mutar — se vuelve tal cual estaba.
+      if (u == null || ctx.motivo === "fuera_zona") return;
       try {
         await editarDireccion(dir.id, ubicacionABody(u));
         await refetchDirs();
@@ -370,14 +379,14 @@ export default function CartScreen() {
         setHojaDireccionModo('nueva');
         setHojaDireccionVisible(true);
       }
-    });
+    }, "carrito");
   };
 
   // Abre la hoja de dirección, capturando el borrador vigente para poder
   // restaurarlo si se cierra sin comprometer.
   const hojaDireccionAbiertaEstaVisitaRef = useRef(false);
   const abrirHojaDireccion = (modo: "lista" | "nueva", origen: "fila" | "sin_direccion" | "fallback_pin") => {
-    borradorDireccionRef.current = { direccion: nuevaDireccion, notas: nuevasNotas, ubicacion: nuevaUbicacion };
+    borradorDireccionRef.current = { direccion: nuevaDireccion, notas: nuevasNotas, ubicacion: nuevaUbicacion, permitirSinPin };
     hojaDireccionAbiertaEstaVisitaRef.current = true;
     tracker.track('direccion_hoja_abierta', { n_direcciones: direcciones.length, origen }, 'cart');
     setHojaDireccionModo(modo);
@@ -391,8 +400,17 @@ export default function CartScreen() {
       setNuevaDireccion(borradorDireccionRef.current.direccion);
       setNuevasNotas(borradorDireccionRef.current.notas);
       setNuevaUbicacion(borradorDireccionRef.current.ubicacion);
+      setPermitirSinPin(borradorDireccionRef.current.permitirSinPin);
     }
     setHojaDireccionVisible(false);
+  };
+
+  // Envuelve setNuevaDireccion: el permiso de guardar sin pin es para el texto
+  // con el que se concedió (Direcciones 1.3.2) — si la persona lo reescribe,
+  // hay que volver a pasar por el mapa.
+  const cambiarNuevaDireccion = (t: string) => {
+    setNuevaDireccion(t);
+    setPermitirSinPin(false);
   };
 
   const usarNuevaDireccion = () => {
@@ -405,6 +423,7 @@ export default function CartScreen() {
     setDireccionId(d.id);
     setMostrarNueva(false);
     setNotasOverride(null);
+    setPermitirSinPin(false);
     borradorDireccionRef.current = null;
     // con_pin responde si la dirección ya tiene coordenadas: es el numerador
     // de "cuántas hay que mandar al mapa" (bloque F).
@@ -663,11 +682,20 @@ export default function CartScreen() {
       Toast.show({ type: "info", text1: "Falta tu dirección", text2: "Agrégala para enviarte el pedido" });
       return;
     }
-    // GPS-first: en una dirección nueva basta con la ubicación capturada O una
-    // dirección escrita. Ya no se pide barrio (la cobertura se calcula del GPS).
-    if (mostrarNueva && !nuevaDireccion.trim() && !nuevaUbicacion) {
-      tracker.track('checkout_abandonado', { paso: 'sin_ubicacion', items_count: items.length }, 'cart');
-      Toast.show({ type: "error", text1: "Falta la ubicación", text2: "Ubica tu punto en el mapa o usa tu ubicación actual" });
+    // GPS-first: en una dirección nueva hace falta el texto Y (el punto O el
+    // permiso de "fuera de zona"). Ya no se pide barrio (la cobertura se
+    // calcula del GPS). Antes esto era un OR (bastaba texto o pin) y era la
+    // única llave abierta por la que nacían direcciones sin punto: en agosto,
+    // 18 de 60 direcciones creadas desde el checkout no tenían coordenadas —
+    // perfil y onboarding ya lo bloqueaban, solo el carrito no (Direcciones 1.3.2).
+    if (mostrarNueva && !nuevaDireccion.trim()) {
+      tracker.track('checkout_abandonado', { paso: 'sin_direccion', items_count: items.length }, 'cart');
+      Toast.show({ type: "error", text1: "Falta la dirección", text2: "Escríbela o elige una sugerencia" });
+      return;
+    }
+    if (mostrarNueva && !nuevaUbicacion && !permitirSinPin) {
+      tracker.track('checkout_abandonado', { paso: 'sin_pin', items_count: items.length }, 'cart');
+      Toast.show({ type: "error", text1: "Falta el punto de entrega", text2: "Ubica tu punto en el mapa o usa tu ubicación actual" });
       return;
     }
 
@@ -777,6 +805,9 @@ export default function CartScreen() {
           const nueva = await crearDireccion({ direccion: dirFinal, notas: notFinal || undefined, predeterminada: true, ...ubicacionABody(nuevaUbicacion) }, direccionIdemKeyRef.current);
           direccionCreadaIdRef.current = nueva.id;
           tracker.track('direccion_creada', { con_pin: !!nuevaUbicacion }, 'cart');
+          if (!nuevaUbicacion) {
+            tracker.track('direccion_sin_pin_guardada', { origen: 'carrito' }, 'cart');
+          }
           try {
             await refetchDirs();
           } catch {
@@ -970,7 +1001,14 @@ export default function CartScreen() {
                   // abre el mapa para AJUSTARLO; si no, se vuelve a la hoja
                   // para capturarlo (botón de ubicación / mapa / buscador).
                   if (nuevaUbicacion) {
-                    confirmarUbicacion(nuevaDireccion, nuevaUbicacion, (u) => setNuevaUbicacion(u));
+                    confirmarUbicacion(nuevaDireccion, nuevaUbicacion, (u, ctx) => {
+                      if (u == null && ctx.motivo === "fuera_zona") {
+                        setPermitirSinPin(true);
+                        setNuevaUbicacion(null);
+                        return;
+                      }
+                      setNuevaUbicacion(u);
+                    }, "carrito");
                   } else {
                     abrirHojaDireccion("nueva", "fila");
                   }
@@ -1177,13 +1215,16 @@ export default function CartScreen() {
         onSeleccionar={seleccionarDireccion}
         onUbicarEnMapa={(d) => { setHojaDireccionVisible(false); abrirMapaParaDireccion(d); }}
         nuevaDireccion={nuevaDireccion}
-        onNuevaDireccion={setNuevaDireccion}
+        onNuevaDireccion={cambiarNuevaDireccion}
         nuevasNotas={nuevasNotas}
         onNuevasNotas={setNuevasNotas}
         nuevaUbicacion={nuevaUbicacion}
         onNuevaUbicacion={setNuevaUbicacion}
         silenciado={silenciadoDir}
         onSilenciado={setSilenciadoDir}
+        permitirSinPin={permitirSinPin}
+        onSinPin={() => setPermitirSinPin(true)}
+        origen="carrito"
         onUsarNueva={usarNuevaDireccion}
         onCerrar={cerrarHojaDireccion}
       />
