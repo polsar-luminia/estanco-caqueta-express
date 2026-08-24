@@ -1,6 +1,12 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
+# Sin barra Y con barra: la barra sola NO cubre un SYMLINK llamado node_modules
+# (git no lo ve como directorio). Al crear un worktree se enlaza node_modules al
+# repo principal, y ese enlace se colo en un commit apuntando a una ruta
+# absoluta de esta maquina — que despues quedo apuntandose a si mismo y dejo el
+# proyecto sin dependencias hasta reinstalarlas.
+node_modules
 node_modules/
 
 # Expo
