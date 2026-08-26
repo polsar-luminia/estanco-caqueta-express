@@ -74,6 +74,7 @@ vi.mock("@sentry/react-native", () => ({
 
 vi.mock("expo-router", () => ({
   useRouter: () => ({ replace: vi.fn(), back: vi.fn(), push: vi.fn(), canGoBack: () => false }),
+  useLocalSearchParams: () => ({}),
   Link: ({ children }: any) => React.createElement("Link", null, children),
 }));
 

@@ -10,6 +10,10 @@ import { colors, fuentes } from "../../constants/theme";
 interface Props {
   icono: keyof typeof Feather.glyphMap;
   colorIcono?: string;
+  /** Nodo de ícono ya armado (p.ej. LogoFranquicia para una tarjeta guardada).
+   *  Tiene prioridad sobre `icono` si ambos llegan — mismo patrón que
+   *  FilaSeleccionable.iconoNode. */
+  iconoNode?: React.ReactNode;
   etiqueta: string;
   valor?: string;
   valorNode?: React.ReactNode;
@@ -25,6 +29,7 @@ interface Props {
 export function FilaAccion({
   icono,
   colorIcono = colors.green,
+  iconoNode,
   etiqueta,
   valor,
   valorNode,
@@ -49,7 +54,7 @@ export function FilaAccion({
         minHeight: 44,
       }}
     >
-      <Feather name={icono} size={18} color={colorIcono} />
+      {iconoNode ?? <Feather name={icono} size={18} color={colorIcono} />}
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: colors.muted }}>{etiqueta}</Text>
         {valorNode ? (

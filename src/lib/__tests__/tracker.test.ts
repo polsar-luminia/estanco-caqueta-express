@@ -63,6 +63,38 @@ describe('tracker — allowlist M-OBS-21', () => {
     expect(body.eventos[0].payload).toBeUndefined();
   });
 
+  it('registro_completado: conserva solo el origen tipado y telefono_verificado', async () => {
+    tracker.track('registro_completado', {
+      telefono_verificado: true,
+      origen: 'checkout',
+      telefono: '3001234567',
+    } as any, 'register');
+    await tracker.flush();
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.eventos[0].payload).toEqual({
+      telefono_verificado: true,
+      origen: 'checkout',
+    });
+  });
+
+  it.each([
+    undefined,
+    { telefono_verificado: true },
+    { telefono_verificado: 'si', origen: 'checkout' },
+    { telefono_verificado: true, origen: 'campana_inventada' },
+  ])('registro_completado: descarta payload invalido %#', async (payload) => {
+    tracker.track('registro_completado', payload as any, 'register');
+    await tracker.flush();
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+    expect(vi.mocked(Sentry.addBreadcrumb)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'tracker',
+        level: 'warning',
+        data: { tipo: 'registro_completado' },
+      }),
+    );
+  });
+
   it('busqueda: incluye `q` y `resultados` (M-OBS-22 — término es dato de comportamiento, no PII)', async () => {
     tracker.track('busqueda', { q: 'whisky', resultados: 5 } as any, 'search');
     await tracker.flush();

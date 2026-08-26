@@ -823,6 +823,18 @@ export interface Pedido {
   medio_pago?: string | null;
   paga_con?: number | null;
   vuelto?: number | null;
+  // Estado del cobro con tarjeta (100/102, fase 3). Solo viene no-null cuando
+  // medio_pago === "tarjeta" y ya existe al menos un intento de pago; el
+  // backend manda el ÚLTIMO intento (un reintento tras DECLINED/ERROR abre
+  // una fila nueva). `estado` sigue el vocabulario de Wompi, no el de pedidos.
+  pago?: {
+    estado: "PENDING" | "APPROVED" | "DECLINED" | "VOIDED" | "ERROR" | string;
+    monto: number;
+    brand: string | null;
+    last_four: string | null;
+    creado_at: string;
+    finalizado_at: string | null;
+  } | null;
   // Código de entrega de 4 dígitos (097). Solo llega mientras el pedido está
   // en `domiciliario_llego` Y las banderas del servidor lo permiten -- el
   // servidor lo borra de la respuesta en cuanto el pedido avanza. NUNCA
@@ -1451,4 +1463,44 @@ export async function eliminarMetodoPago(id: number): Promise<{ ok: true }> {
 
 export async function marcarMetodoPredeterminado(id: number): Promise<{ ok: true }> {
   return apiFetch<{ ok: true }>(`/pagos/metodos/${id}/predeterminada`, { method: "PUT" });
+}
+
+// --- Cobro del pedido (fase 3: checkout + detalle) ---
+// Contrato exacto: packages/api/src/routes/pagos.js POST /pedidos/:id/pagar.
+// El pedido SIEMPRE se crea primero con crearPedido() (medio_pago: "tarjeta");
+// esta es la llamada SIGUIENTE, separada a propósito (ver comentario del
+// backend): el pedido no se pierde si el cobro falla en el camino.
+export interface RespuestaPagar {
+  pago_id: number;
+  transaccion_id: string | null;
+  estado: string;
+  /** Solo cuando el backend detecta que ya había un pago APPROVED (doble-tap
+   *  o reintento tras perder la respuesta): no vuelve a cobrar. */
+  ya_pagado?: boolean;
+  ok?: boolean;
+}
+
+export async function pagarPedido(
+  pedidoId: number,
+  params: {
+    metodo_pago_id: number;
+    customer_email: string;
+    acceptance_token: string;
+    accept_personal_auth: string;
+  }
+): Promise<RespuestaPagar> {
+  return apiFetch<RespuestaPagar>(`/pedidos/${pedidoId}/pagar`, {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+// "Pagar contra entrega" desde el detalle del pedido, cuando el cobro con
+// tarjeta falló. Solo permite caer A "efectivo" — el backend rechaza
+// cualquier otro valor (nunca salta el cobro real de POST /pedidos/:id/pagar).
+export async function cambiarMedioPagoAEfectivo(pedidoId: number): Promise<{ id: number; medio_pago: string }> {
+  return apiFetch<{ id: number; medio_pago: string }>(`/pedidos/${pedidoId}/medio-pago`, {
+    method: "PUT",
+    body: JSON.stringify({ medio_pago: "efectivo" }),
+  });
 }

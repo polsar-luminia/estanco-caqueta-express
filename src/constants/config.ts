@@ -69,6 +69,10 @@ export const ICONOS_MEDIO: Record<string, { icon: "dollar-sign" | "smartphone" |
   efectivo: { icon: "dollar-sign", color: colors.green, bg: "rgba(31,175,85,0.08)" },
   transferencia: { icon: "smartphone", color: colors.pink, bg: "rgba(224,69,123,0.08)" },
   datafono: { icon: "credit-card", color: colors.purple, bg: "rgba(124,92,255,0.08)" },
+  // Respaldo SOLO para cuando no se conoce la franquicia (p.ej. la fila de
+  // "Método de pago" del carrito antes de que carguen las tarjetas guardadas).
+  // Una tarjeta guardada real siempre se pinta con LogoFranquicia, no con esto.
+  tarjeta: { icon: "credit-card", color: colors.blue, bg: "rgba(58,120,255,0.08)" },
 };
 export const ICONO_MEDIO_GENERICO = { icon: "circle" as const, color: colors.muted, bg: "rgba(150,150,150,0.08)" };
 

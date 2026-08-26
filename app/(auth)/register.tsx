@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Image, Alert, Linking } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
@@ -15,9 +15,11 @@ import { DateValue, toISODate, calcularEdad } from "../../src/components/DateSel
 import { InputField } from "../../src/components/InputField";
 import { UserIcon, PhoneIcon, LockIcon } from "../../src/components/icons/AppIcons";
 import { colors, shadows, fuentes } from "../../src/constants/theme";
+import { crearPayloadRegistroCompletado } from "../../src/lib/registroOrigen";
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { origen: origenParam } = useLocalSearchParams<{ origen?: string | string[] }>();
   const insets = useSafeAreaInsets();
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -242,7 +244,7 @@ export default function RegisterScreen() {
     try {
       await register(telefono.trim(), nombre.trim(), password, iso, aceptaMercadeo, codigo.trim());
       tracker.track('registro_codigo_verificado', {}, 'register');
-      tracker.track('registro_completado', { telefono_verificado: true }, 'register');
+      tracker.track('registro_completado', crearPayloadRegistroCompletado(origenParam), 'register');
       tracker.track('consentimiento_mercadeo_cambiado', { otorgado: aceptaMercadeo, origen: 'registro' }, 'register');
       metaLogRegistration();
     } catch (err: unknown) {

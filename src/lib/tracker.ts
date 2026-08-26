@@ -16,6 +16,7 @@ import { getToken } from './api';
 import { obtenerDeviceId } from './deviceId';
 import { APP_VERSION } from './appVersion';
 import { baseUrlActual } from './backendPruebas';
+import { esOrigenRegistro } from './registroOrigen';
 
 // La telemetria sigue al backend activo: en modo pruebas los eventos caen en la
 // base de staging y no ensucian los embudos reales.
@@ -51,7 +52,6 @@ export type EventTipo =
   | 'app_error'
   | 'app_abierta'
   | 'categoria_abierta'
-  | 'registro_completado'
   | 'consentimiento_mercadeo_cambiado'
   | 'sesion_iniciada'
   | 'cupon_copiado'
@@ -121,6 +121,7 @@ export type EventTipo =
   | 'registro_codigo_reenviado'
   | 'registro_codigo_verificado'
   | 'registro_codigo_fallido'
+  | 'registro_completado'
   // Rediseno del catalogo (1.3.0). La pantalla de inicio no tenia NI UN evento
   // propio: no se medía impresion ni clic de hero, combo, destacado, banner de
   // ofertas ni tira de categorias. Lo unico era pantalla_vista.
@@ -182,9 +183,9 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // o merece pantalla propia. NO se mide el deslizamiento del carril — eso es
   // friccion fisica, no intencion, e inflaria la cola sin responder nada.
   carril_mostrar_mas: ['seccion_id', 'titulo', 'destino'],
-  // `telefono_verificado`: si la cuenta nació con el número confirmado por OTP.
-  // Cuando la mayoría llegue en true, se puede prender registro_otp_obligatorio.
-  registro_completado: ['telefono_verificado'],
+  // `origen` separa el muro de compra de un registro exploratorio. El contrato
+  // runtime, ademas de esta allowlist de keys, se valida en validarPayload().
+  registro_completado: ['telefono_verificado', 'origen'],
   // Cuantos autorizan mercadeo al registrarse y cuantos lo revocan despues. Sin
   // esto no hay forma de saber si la casilla desmarcada mato el canal o no.
   // `otorgado` y `origen` no son PII: no identifican a nadie por si solos.
@@ -412,6 +413,17 @@ function aplicarAllowlist(
   return Object.keys(filtered).length > 0 ? filtered : undefined;
 }
 
+function validarPayload(tipo: EventTipo, payload?: Record<string, unknown>): boolean {
+  if (tipo !== 'registro_completado') return true;
+
+  // En el binario nuevo ambos campos son obligatorios. La API conserva
+  // compatibilidad con eventos antiguos sin `origen`, pero este tracker no debe
+  // volver a producir filas ambiguas ni aceptar enums inventados via casts.
+  return payload != null
+    && typeof payload.telefono_verificado === 'boolean'
+    && esOrigenRegistro(payload.origen);
+}
+
 interface EventoInput {
   tipo: EventTipo;
   payload?: Record<string, unknown>;
@@ -464,6 +476,15 @@ class Tracker {
         category: 'tracker',
         level: 'warning',
         message: 'evento desconocido descartado',
+        data: { tipo },
+      });
+      return;
+    }
+    if (!validarPayload(tipo, payload)) {
+      Sentry.addBreadcrumb({
+        category: 'tracker',
+        level: 'warning',
+        message: 'payload de evento invalido descartado',
         data: { tipo },
       });
       return;

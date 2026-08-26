@@ -13,7 +13,7 @@ import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
 import { useTecladoVisible } from "../../src/hooks/useTecladoVisible";
-import { crearPedido, getDirecciones, crearDireccion, editarDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, getEtaActual, type DireccionGuardada, type CuponValidado, type UbicacionCapturada, type ApiError } from "../../src/lib/api";
+import { crearPedido, getDirecciones, crearDireccion, editarDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, getEtaActual, getMetodosPago, getTokensAceptacion, pagarPedido, type DireccionGuardada, type CuponValidado, type UbicacionCapturada, type ApiError, type MetodoPago } from "../../src/lib/api";
 import { useConfirmarUbicacion } from "../../src/hooks/useConfirmarUbicacion";
 import { calcularResumen, envioDeZona } from "../../src/lib/resumenPedido";
 import { FrioRecordatorio } from "../../src/components/FrioRecordatorio";
@@ -35,6 +35,7 @@ import { ResumenTotales } from "../../src/components/checkout/ResumenTotales";
 import { HojaDireccion } from "../../src/components/checkout/HojaDireccion";
 import { HojaMedioPago } from "../../src/components/checkout/HojaMedioPago";
 import { HojaNotas } from "../../src/components/checkout/HojaNotas";
+import { LogoFranquicia } from "../../src/components/LogoFranquicia";
 
 function ChevronRightIcon() {
   return (
@@ -245,9 +246,48 @@ export default function CartScreen() {
   // comporta byte a byte como antes de esta funcionalidad.
   const medioPagoActivo = configApp?.medio_pago_activo === true;
   const mediosPagoDisponibles = configApp?.medios_pago ?? MEDIOS_PAGO_RESPALDO;
-  const medioActivoObj = mediosPagoDisponibles.find((m) => m.codigo === medioPago);
+  // Fase 3 (pago con tarjeta guardada): "tarjeta" en `mediosPagoDisponibles`
+  // ES la señal de que el backend ya filtró por bandera + versión — mismo
+  // criterio que metodos-pago.tsx (no duplicar la condición aquí).
+  const pagoTarjetaActivo = mediosPagoDisponibles.some((m) => m.codigo === "tarjeta");
+  // Clave NUEVA ["metodos-pago"], compartida con metodos-pago.tsx: una
+  // tarjeta recién guardada allá tiene que verse aquí sin esperar el
+  // staleTime de 5 min de ["config-app"].
+  const { data: metodosPago, isLoading: cargandoMetodosPago } = useQuery({
+    queryKey: ["metodos-pago"],
+    queryFn: getMetodosPago,
+    enabled: pagoTarjetaActivo,
+  });
+  // `medioPago` sigue siendo un string; una tarjeta se codifica como
+  // "tarjeta:<metodo_id>" (plan §3). Partirlo así, en vez de un segundo
+  // estado, evita que el resto del carrito (crearPedido, resets, etc.) tenga
+  // que aprender una forma nueva de estado.
+  const medioPagoEsTarjeta = medioPago.startsWith("tarjeta:");
+  const tarjetaSeleccionadaId = medioPagoEsTarjeta ? Number(medioPago.slice("tarjeta:".length)) : null;
+  const tarjetaSeleccionada = medioPagoEsTarjeta
+    ? metodosPago?.find((m) => m.id === tarjetaSeleccionadaId) ?? null
+    : null;
+  const medioActivoObj = mediosPagoDisponibles.find((m) => m.codigo === (medioPagoEsTarjeta ? "tarjeta" : medioPago));
   const iconoMedioActivo = medioActivoObj ? (ICONOS_MEDIO[medioActivoObj.codigo] ?? ICONO_MEDIO_GENERICO) : ICONO_MEDIO_GENERICO;
-  const subtituloMedioPago = medioActivoObj?.etiqueta;
+  const subtituloMedioPago = medioPagoEsTarjeta
+    ? (tarjetaSeleccionada ? `•••• ${tarjetaSeleccionada.last_four}` : "Tarjeta guardada")
+    : medioActivoObj?.etiqueta;
+
+  // metodos_pago_vacio_visto (checkout): una vez por apertura de la hoja con
+  // la sección de tarjetas vacía. Se resetea al cerrar para que la próxima
+  // apertura (p.ej. tras "Agregar tarjeta" y volver) pueda medir de nuevo.
+  const vacioCheckoutTrackeadoRef = useRef(false);
+  useEffect(() => {
+    if (!hojaMedioPagoVisible) {
+      vacioCheckoutTrackeadoRef.current = false;
+      return;
+    }
+    if (!pagoTarjetaActivo || cargandoMetodosPago || vacioCheckoutTrackeadoRef.current) return;
+    if ((metodosPago?.length ?? 0) === 0) {
+      vacioCheckoutTrackeadoRef.current = true;
+      tracker.track("metodos_pago_vacio_visto", { origen: "checkout" }, "cart");
+    }
+  }, [hojaMedioPagoVisible, pagoTarjetaActivo, cargandoMetodosPago, metodosPago]);
 
   // Punto de entrega actual: el pin recién capturado o el de la dirección elegida.
   // Se calcula aquí (y no solo dentro de handlePedir) porque la tarifa por zona
@@ -659,7 +699,7 @@ export default function CartScreen() {
     // registro ya ofrece "¿Ya tienes una cuenta? Iniciar sesión" para el que sí.
     if (!cliente) {
       tracker.track('checkout_abandonado', { paso: 'registro', items_count: items.length }, 'cart');
-      router.push("/(auth)/register");
+      router.push({ pathname: "/(auth)/register", params: { origen: "checkout" } });
       return;
     }
 
@@ -836,7 +876,11 @@ export default function CartScreen() {
         // Medio de pago (093): solo si la bandera está prendida. Con ella
         // apagada no se manda nada nuevo — el servidor guarda NULL igual que
         // con un binario que no conoce el campo.
-        ...(medioPagoActivo ? { medio_pago: medioPago } : {}),
+        // Una tarjeta se codifica localmente como "tarjeta:<metodo_id>"
+        // (fase 3): el servidor solo conoce "tarjeta" — el id viaja aparte,
+        // al paso de cobro (POST /pedidos/:id/pagar), que corre DESPUÉS de
+        // crear el pedido, nunca en este body.
+        ...(medioPagoActivo ? { medio_pago: medioPagoEsTarjeta ? "tarjeta" : medioPago } : {}),
       }, submitIdempotencyKeyRef.current);
       // Éxito: liberar el key y el id de dirección para que el próximo pedido empiece limpio
       submitIdempotencyKeyRef.current = null;
@@ -892,6 +936,41 @@ export default function CartScreen() {
       //    en el detalle que retorna a "Mis pedidos"
       router.replace("/(tabs)/orders");
       router.push({ pathname: "/(tabs)/orders/[id]", params: { id: String(pedido.id) } });
+
+      // Cobro con tarjeta (fase 3): paso SIGUIENTE a crear el pedido, nunca
+      // adentro — el pedido de arriba ya quedó creado pase lo que pase acá.
+      // Un fallo aquí NO bloquea la navegación (ya ocurrió, dos líneas
+      // arriba): el bloque de estado de pago del detalle (orders/[id].tsx)
+      // es quien maneja el resto, con reintento incluido.
+      if (medioPagoEsTarjeta && tarjetaSeleccionadaId) {
+        tracker.track('pago_iniciado', { pedido_id: pedido.id, monto: pedido.total }, 'cart');
+        const emailPago = clienteActualizado?.email ?? cliente?.email;
+        if (emailPago) {
+          try {
+            const tokens = await getTokensAceptacion();
+            await pagarPedido(pedido.id, {
+              metodo_pago_id: tarjetaSeleccionadaId,
+              customer_email: emailPago,
+              acceptance_token: tokens.acceptance_token ?? "",
+              accept_personal_auth: tokens.accept_personal_auth ?? "",
+            });
+          } catch (errPago: unknown) {
+            Sentry.captureException(errPago instanceof Error ? errPago : new Error(String(errPago)), {
+              tags: { flow: "pago_tarjeta", action: "pagar_checkout" },
+            });
+          }
+        } else {
+          // Sin correo no se puede llamar POST /pedidos/:id/pagar (el backend
+          // lo exige y responde 400): el pedido queda creado con
+          // medio_pago='tarjeta' y SIN ninguna fila en `pagos`. El detalle
+          // del pedido trata "todavía no hay intento de cobro" igual que uno
+          // fallido -- ofrece reintentar (ahí sí se pide el correo) o caer a
+          // contra entrega.
+          Sentry.captureMessage("Cobro con tarjeta en checkout sin email de cliente disponible", {
+            tags: { flow: "pago_tarjeta", action: "pagar_checkout" },
+          });
+        }
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo crear el pedido";
       const codigo = (err as ApiError)?.body?.codigo_error;
@@ -950,7 +1029,7 @@ export default function CartScreen() {
       muroTrackeadoRef.current = true;
       tracker.track('registro_muro_mostrado', { items_count: items.length, subtotal }, 'cart');
     }
-    return <Redirect href="/(auth)/register" />;
+    return <Redirect href={{ pathname: "/(auth)/register", params: { origen: "checkout" } }} />;
   }
 
   if (items.length === 0) {
@@ -1024,6 +1103,7 @@ export default function CartScreen() {
                 <FilaAccion
                   icono={iconoMedioActivo.icon}
                   colorIcono={iconoMedioActivo.color}
+                  iconoNode={medioPagoEsTarjeta ? <LogoFranquicia brand={tarjetaSeleccionada?.brand ?? ""} size={28} /> : undefined}
                   etiqueta="Método de pago"
                   valor={subtituloMedioPago}
                   placeholder="Elige cómo vas a pagar"
@@ -1233,11 +1313,18 @@ export default function CartScreen() {
         visible={hojaMedioPagoVisible}
         medios={mediosPagoDisponibles}
         medioSeleccionado={medioPago}
+        tarjetas={metodosPago ?? []}
+        pagoTarjetaActivo={pagoTarjetaActivo}
         onSeleccionar={(codigo) => {
           setMedioPago(codigo);
           // "efectivo" es el preseleccionado: cambio mide cuánta fricción
           // quita tener el default preseleccionado.
           tracker.track('medio_pago_elegido', { medio: codigo, cambio: codigo !== "efectivo" }, 'cart');
+        }}
+        onAgregarTarjeta={() => {
+          setHojaMedioPagoVisible(false);
+          tracker.track('tarjeta_guardado_iniciado', { origen: 'checkout' }, 'cart');
+          router.push("/profile/metodos-pago/nueva?origen=checkout");
         }}
         onCerrar={() => setHojaMedioPagoVisible(false)}
       />

@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import Toast from "react-native-toast-message";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getConfigApp, getPedido, cancelarPedido } from "../../../src/lib/api";
+import { getConfigApp, getPedido, cancelarPedido, cambiarMedioPagoAEfectivo } from "../../../src/lib/api";
 import { tracker } from "../../../src/lib/tracker";
 import { formatCOP, formatDate, formatTime } from "../../../src/lib/format";
 import { OrderStatusTimeline } from "../../../src/components/OrderStatusTimeline";
 import { TarjetaResena } from "../../../src/components/TarjetaResena";
 import { HojaCancelar } from "../../../src/components/HojaCancelar";
+import { HojaReintentarPago } from "../../../src/components/checkout/HojaReintentarPago";
+import { LogoFranquicia } from "../../../src/components/LogoFranquicia";
 import { MapaDomiciliario } from "../../../src/components/MapaDomiciliario";
 import { TarjetaCodigoEntrega } from "../../../src/components/TarjetaCodigoEntrega";
 import { FotoEntrega } from "../../../src/components/FotoEntrega";
@@ -20,7 +22,22 @@ import * as Sentry from "@sentry/react-native";
 import { Feather } from "@expo/vector-icons";
 import { Image as ImagenExpo } from "expo-image";
 import { CARD_SHADOW } from "../../../src/constants/styles";
-import { fuentes } from "../../../src/constants/theme";
+import { colors, fuentes } from "../../../src/constants/theme";
+
+// >90s en PENDING: el texto cambia de "confirmando" a "se está demorando"
+// (plan §4). El polling sigue igual; solo cambia lo que lee el cliente.
+const MS_PAGO_DEMORADO = 90_000;
+
+// Ventana de gracia tras crear el pedido en la que `pago == null` todavía
+// puede significar "el POST /pedidos/:id/pagar del checkout sigue en vuelo"
+// (se dispara DESPUÉS de navegar al detalle, ver cart.tsx) y no "nunca se
+// intentó cobrar". Pasada esta ventana, null se trata como un fallo real —
+// mismo bloque que DECLINED/ERROR, con los mismos dos botones.
+const MS_GRACIA_PAGO_NULO = 15_000;
+function dentroDeGraciaPago(creadoAt: string | undefined): boolean {
+  if (!creadoAt) return false;
+  return Date.now() - new Date(creadoAt).getTime() < MS_GRACIA_PAGO_NULO;
+}
 
 /* ── Skeleton de carga ───────────────────────────────────── */
 
@@ -103,8 +120,23 @@ export default function OrderDetailScreen() {
     queryKey: ["pedido", pedidoId],
     queryFn: () => getPedido(pedidoId),
     // M-ORD-11: no seguir haciendo polling si el pedido ya está en estado final.
-    refetchInterval: (query) =>
-      ["entregado", "cancelado"].includes(query.state.data?.estado ?? "") ? false : 15000,
+    // Fase 3 (100/102): mientras el cobro con tarjeta sigue PENDING, bajar a
+    // 3s — es el momento en que el cliente está mirando la pantalla en vivo
+    // esperando saber si el banco aprobó, y 15s ahí se siente colgado.
+    refetchInterval: (query) => {
+      const d = query.state.data;
+      if (!d) return 15000;
+      if (["entregado", "cancelado"].includes(d.estado)) return false;
+      if (d.medio_pago === "tarjeta") {
+        if (d.pago?.estado === "PENDING") return 3000;
+        // `pago` todavía null: puede ser que el POST /pedidos/:id/pagar del
+        // checkout siga en vuelo (se dispara DESPUÉS de navegar acá, ver
+        // cart.tsx). Sondeo rápido solo en la ventana de gracia inicial; pasado
+        // eso, un pago que nunca llegó a intentarse no es "está por llegar".
+        if (d.pago == null && dentroDeGraciaPago(d.created_at)) return 3000;
+      }
+      return 15000;
+    },
     // Esta pantalla existe para mostrar en qué va el pedido, así que servir una
     // copia de hace rato es servir lo contrario de lo que promete. El staleTime
     // global es de 5 minutos: si el pedido pasó a entregado mientras el cliente
@@ -116,6 +148,44 @@ export default function OrderDetailScreen() {
   });
 
   const [hojaCancelar, setHojaCancelar] = useState(false);
+  const [hojaReintentarPago, setHojaReintentarPago] = useState(false);
+
+  // "Pagar contra entrega" (fase 3, §4 del plan): un cambio de medio_pago del
+  // pedido, nada más — PATCH /pedidos/:id/medio-pago solo permite caer A
+  // 'efectivo'. Al invalidar, avanzarEstadoPedido() (backend) ya ve el
+  // medio_pago fresco la próxima vez que alguien intente avanzarlo.
+  const contraEntregaMutation = useMutation({
+    mutationFn: () => cambiarMedioPagoAEfectivo(pedidoId),
+    onSuccess: () => {
+      tracker.track('pago_cambiado_a_contraentrega', { pedido_id: pedidoId, medio: 'efectivo' }, 'orders/[id]');
+      queryClient.invalidateQueries({ queryKey: ["pedido", pedidoId] });
+      Toast.show({ type: "success", text1: "Ahora pagas contra entrega" });
+    },
+    onError: (err: Error) => {
+      Sentry.captureException(err, { tags: { flow: "pago_tarjeta", action: "contraentrega" } });
+      Toast.show({ type: "error", text1: "No se pudo cambiar el medio de pago", text2: err.message });
+    },
+  });
+
+  // pago_aprobado / pago_rechazado: una sola vez por resultado final, no en
+  // cada tick del polling (que reconsulta el mismo estado repetidas veces
+  // mientras el cliente sigue en la pantalla). Mismo patrón que
+  // codigoVistoRef más abajo.
+  const pagoResultadoTrackeadoRef = useRef<string | null>(null);
+  useEffect(() => {
+    const estadoPago = pedido?.pago?.estado;
+    if (!estadoPago || estadoPago === pagoResultadoTrackeadoRef.current) return;
+    if (estadoPago === "APPROVED") {
+      pagoResultadoTrackeadoRef.current = estadoPago;
+      const segundos = pedido?.pago?.creado_at
+        ? Math.round((Date.now() - new Date(pedido.pago.creado_at).getTime()) / 1000)
+        : 0;
+      tracker.track('pago_aprobado', { pedido_id: pedidoId, segundos }, 'orders/[id]');
+    } else if (estadoPago === "DECLINED" || estadoPago === "ERROR") {
+      pagoResultadoTrackeadoRef.current = estadoPago;
+      tracker.track('pago_rechazado', { pedido_id: pedidoId, motivo: estadoPago }, 'orders/[id]');
+    }
+  }, [pedido?.pago?.estado, pedido?.pago?.creado_at, pedidoId]);
 
   const cancelMutation = useMutation({
     mutationFn: ({ motivo, detalle }: { motivo: string; detalle?: string }) =>
@@ -219,6 +289,92 @@ export default function OrderDetailScreen() {
       // "Cancelar pedido" no quede tapado por la barra de tabs flotante.
       contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 112 }}
     >
+      {/* Estado del pago con tarjeta (fase 3, §4 del plan). Solo pedidos
+          medio_pago==='tarjeta' -- para efectivo/transferencia/datáfono
+          `pedido.pago` siempre es null y este bloque no se pinta: nada
+          cambia para ellos. */}
+      {pedido.medio_pago === "tarjeta" && (
+        <>
+          {(pedido.pago?.estado === "PENDING" || (pedido.pago == null && dentroDeGraciaPago(pedido.created_at))) && (
+            <View
+              className="rounded-2xl p-5"
+              style={{ backgroundColor: colors.lowfill, flexDirection: "row", alignItems: "center", gap: 12, ...CARD_SHADOW }}
+            >
+              <ActivityIndicator color={colors.green} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14.5, fontFamily: fuentes.destacado, color: colors.ink }}>
+                  {pedido.pago?.creado_at && Date.now() - new Date(pedido.pago.creado_at).getTime() > MS_PAGO_DEMORADO
+                    ? "Se está demorando más de lo normal"
+                    : "Confirmando tu pago…"}
+                </Text>
+                <Text style={{ fontFamily: fuentes.destacado, fontSize: 12.5, color: colors.muted, marginTop: 2 }}>
+                  {pedido.pago?.creado_at && Date.now() - new Date(pedido.pago.creado_at).getTime() > MS_PAGO_DEMORADO
+                    ? "Puedes cerrar la app; te avisamos cuando esté listo."
+                    : "Estamos hablando con tu banco. No cierres la app."}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {pedido.pago?.estado === "APPROVED" && (
+            <View
+              className="rounded-2xl p-5"
+              style={{ backgroundColor: colors.greenTint, flexDirection: "row", alignItems: "center", gap: 12, ...CARD_SHADOW }}
+            >
+              <Feather name="check-circle" size={22} color={colors.greenInk} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14.5, fontFamily: fuentes.destacado, color: colors.greenInk }}>
+                  Pago aprobado · {formatCOP(pedido.pago.monto)}
+                </Text>
+                {pedido.pago.last_four && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 }}>
+                    <LogoFranquicia brand={pedido.pago.brand ?? ""} size={18} />
+                    <Text style={{ fontFamily: fuentes.destacado, fontSize: 12.5, color: colors.greenInk }}>
+                      •••• {pedido.pago.last_four}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {((pedido.pago == null && !dentroDeGraciaPago(pedido.created_at)) ||
+            (pedido.pago != null && ["DECLINED", "ERROR", "VOIDED"].includes(pedido.pago.estado))) && (
+            <View className="rounded-2xl p-5" style={{ backgroundColor: "rgba(220,38,38,0.08)", ...CARD_SHADOW }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                <Feather name="alert-circle" size={22} color={colors.danger} />
+                <Text style={{ flex: 1, fontSize: 14.5, fontFamily: fuentes.destacado, color: colors.danger, lineHeight: 20 }}>
+                  {pedido.pago == null
+                    ? "No pudimos iniciar tu pago. Tu pedido está guardado — elige cómo pagar."
+                    : "Tu banco rechazó el pago. Tu pedido está guardado — elige cómo pagar."}
+                </Text>
+              </View>
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <Pressable
+                  onPress={() => setHojaReintentarPago(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Intentar con otra tarjeta"
+                  style={{ flex: 1, paddingVertical: 12, borderRadius: 14, alignItems: "center", backgroundColor: colors.green }}
+                >
+                  <Text style={{ fontSize: 13.5, fontFamily: fuentes.destacado, color: "#fff" }}>Otra tarjeta</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => contraEntregaMutation.mutate()}
+                  disabled={contraEntregaMutation.isPending}
+                  accessibilityRole="button"
+                  accessibilityLabel="Pagar contra entrega"
+                  style={{ flex: 1, paddingVertical: 12, borderRadius: 14, alignItems: "center", borderWidth: 1.5, borderColor: colors.green }}
+                >
+                  <Text style={{ fontSize: 13.5, fontFamily: fuentes.destacado, color: colors.green }}>
+                    {contraEntregaMutation.isPending ? "Cambiando…" : "Contra entrega"}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+        </>
+      )}
+
       {/* Estado y timeline */}
       <View className="bg-white rounded-2xl p-6" style={CARD_SHADOW}>
         <Text className="text-xl text-on-surface mb-1 font-titulo">
@@ -470,6 +626,18 @@ export default function OrderDetailScreen() {
         enviando={cancelMutation.isPending}
         onCerrar={() => setHojaCancelar(false)}
         onConfirmar={(motivo, detalle) => cancelMutation.mutate({ motivo, detalle })}
+      />
+
+      <HojaReintentarPago
+        visible={hojaReintentarPago}
+        pedidoId={pedidoId}
+        monto={pedido.total}
+        onCerrar={() => setHojaReintentarPago(false)}
+        onExito={() => {
+          setHojaReintentarPago(false);
+          queryClient.invalidateQueries({ queryKey: ["pedido", pedidoId] });
+          Toast.show({ type: "success", text1: "Cobrando…", text2: "Te avisamos apenas confirme el banco" });
+        }}
       />
 
     </>
