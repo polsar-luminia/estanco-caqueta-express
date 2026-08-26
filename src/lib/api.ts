@@ -1313,3 +1313,142 @@ export interface Combo {
 export async function getCombos(): Promise<Combo[]> {
   return apiFetch('/combos');
 }
+
+// --- Pago con tarjeta guardada (Wompi, fase 2) ---
+// Contrato exacto en Polo Dashboard: packages/api/src/routes/pagos.js.
+// NUNCA loguear ni persistir number/cvc — ver src/lib/wompiJwe.ts.
+
+/** Los dos consentimientos de WOMPI (no son los de la tabla `consentimientos`
+ *  propia): hay que mostrarlos y hacerlos aceptar ANTES de tokenizar. */
+export interface TokensAceptacion {
+  acceptance_token: string | null;
+  permalink_acceptance: string | null;
+  accept_personal_auth: string | null;
+  permalink_personal_auth: string | null;
+}
+
+export async function getTokensAceptacion(): Promise<TokensAceptacion> {
+  return apiFetch<TokensAceptacion>("/pagos/tokens-aceptacion");
+}
+
+/** `publicKey`: PEM RSA para armarJWE(). `wompiPublicKey`/`wompiBaseUrl`: con
+ *  qué llave y contra qué URL de Wompi mandar el JWE con POST /tokens/cards
+ *  DIRECTO desde la app (nunca hardcodeados en el binario — ver comentario
+ *  en lib/wompi.js del backend: la app no puede decidir sola si le toca
+ *  sandbox o producción). */
+export interface TokenizacionInfo {
+  publicKey: string | null;
+  wompiPublicKey: string;
+  wompiBaseUrl: string;
+}
+
+export async function getLlaveTokenizacion(): Promise<TokenizacionInfo> {
+  return apiFetch<TokenizacionInfo>("/pagos/llave-tokenizacion");
+}
+
+/** Respuesta de Wompi a POST /tokens/cards. `status` AVAILABLE de una sola
+ *  vez no pasa casi nunca con 3DS -- lo normal es seguir con crearMetodoPago. */
+export interface TokenTarjeta {
+  id: string;
+  status: string;
+  brand?: string | null;
+}
+
+export async function tokenizarTarjeta(
+  info: TokenizacionInfo,
+  datos: import("./wompiJwe").DatosTarjetaJWE
+): Promise<TokenTarjeta> {
+  if (!info.publicKey) throw new Error("Falta la llave de tokenización de Wompi");
+  const { armarJWE } = await import("./wompiJwe");
+  const jwe = armarJWE(info.publicKey, datos);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const res = await fetch(`${info.wompiBaseUrl}/tokens/cards`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${info.wompiPublicKey}`,
+      },
+      body: JSON.stringify({ payload: jwe }),
+      signal: controller.signal,
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok || !body?.data?.id) {
+      throw new Error(body?.error?.reason || body?.error?.type || "Wompi rechazó la tarjeta");
+    }
+    return { id: body.data.id, status: body.data.status, brand: body.data.brand ?? null };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+export interface MetodoPago {
+  id: number;
+  brand: string;
+  last_four: string;
+  exp_month: string;
+  exp_year: string;
+  validity_ends_at: string | null;
+  is_three_ds: boolean;
+  predeterminada: boolean;
+  creada_at: string;
+}
+
+export async function getMetodosPago(): Promise<MetodoPago[]> {
+  const r = await apiFetch<{ metodos: MetodoPago[] }>("/pagos/metodos");
+  return r.metodos ?? [];
+}
+
+/** 201 = quedó AVAILABLE de una. 202 = 3DS en curso; seguir con
+ *  getEstadoMetodoPago(payment_source_id) hasta AVAILABLE/DECLINED/ERROR. */
+export type RespuestaCrearMetodo =
+  | { estado: "listo"; metodo: MetodoPago }
+  | { estado: "en_curso"; payment_source_id: string; status: string; three_ds_auth: unknown };
+
+export async function crearMetodoPago(params: {
+  token: string;
+  customer_email: string;
+  acceptance_token: string;
+  accept_personal_auth: string;
+  three_ds_auth_type?: string;
+}): Promise<RespuestaCrearMetodo> {
+  // apiFetch descarta el status HTTP (201 vs 202: ver su `return res.json()`
+  // final, ambos son res.ok) — se distingue por el SHAPE del body, no por el
+  // código: 201 trae `metodo`, 202 trae `payment_source_id`.
+  const r = await apiFetch<
+    { metodo: MetodoPago } | { payment_source_id: string; status: string; three_ds_auth: unknown }
+  >("/pagos/metodos", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+  if ("metodo" in r) return { estado: "listo", metodo: r.metodo };
+  return { estado: "en_curso", payment_source_id: r.payment_source_id, status: r.status, three_ds_auth: r.three_ds_auth };
+}
+
+export interface EstadoMetodoPago {
+  status: string | null;
+  three_ds_auth: {
+    current_step?: string;
+    current_step_status?: string;
+    three_ds_method_data?: string;
+    challenge_url?: string;
+    [key: string]: unknown;
+  } | null;
+  three_ds_auth_type?: string | null;
+  /** Presente solo el poll en que Wompi devolvió AVAILABLE: es el momento en
+   *  que el backend por fin escribe los datos reales sobre la fila placeholder. */
+  metodo?: MetodoPago | null;
+}
+
+export async function getEstadoMetodoPago(paymentSourceId: string): Promise<EstadoMetodoPago> {
+  return apiFetch<EstadoMetodoPago>(`/pagos/metodos/${encodeURIComponent(paymentSourceId)}/estado`);
+}
+
+export async function eliminarMetodoPago(id: number): Promise<{ ok: true }> {
+  return apiFetch<{ ok: true }>(`/pagos/metodos/${id}`, { method: "DELETE" });
+}
+
+export async function marcarMetodoPredeterminado(id: number): Promise<{ ok: true }> {
+  return apiFetch<{ ok: true }>(`/pagos/metodos/${id}/predeterminada`, { method: "PUT" });
+}

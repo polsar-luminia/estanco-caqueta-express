@@ -18,5 +18,23 @@ export default function ProfileLayout() {
     return <Redirect href="/(auth)/edad-confirmar" />;
   }
 
-  return <Stack screenOptions={{ headerShown: true, headerTintColor: "#17994A" }} />;
+  return (
+    <Stack screenOptions={{ headerShown: true, headerTintColor: "#17994A" }}>
+      <Stack.Screen
+        name="metodos-pago/nueva"
+        options={{
+          headerShown: false,
+          // fullScreenModal y no "modal": mismo motivo que "ubicacion" en el
+          // _layout raíz (el pageSheet de iOS trae su propio gesto de
+          // deslizar para cerrar) pero aquí pesa más todavía — un swipe hacia
+          // abajo a mitad de un challenge 3DS abandona la autenticación del
+          // banco. Se registra ACÁ (no en el _layout raíz, como "ubicacion")
+          // porque "nueva.tsx" vive dentro del grupo profile/ y el Stack que
+          // de verdad lo presenta es este, no el de app/_layout.tsx.
+          presentation: "fullScreenModal",
+          gestureEnabled: false,
+        }}
+      />
+    </Stack>
+  );
 }

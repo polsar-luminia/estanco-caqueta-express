@@ -144,7 +144,26 @@ export type EventTipo =
   | 'direccion_sin_pin_guardada'
   | 'ubicacion_cancelada'
   | 'direccion_editada'
-  | 'direccion_eliminada';
+  | 'direccion_eliminada'
+  // Pago con tarjeta guardada (Wompi, fase 2 — PLAN-UI-PAGO-TARJETA-PRUEBAS.md
+  // "Telemetría"). Los 12 tipos entran en el mismo commit aunque esta fase
+  // solo DISPARA los 7 de "Mis tarjetas"/"Alta" (tarjeta_*/metodos_pago_vacio_visto):
+  // los 5 de pago_* (checkout, fase 3) quedan registrados y sin uso para no
+  // tener que volver a tocar TIPOS_VALIDOS del backend cuando se implementen.
+  // Registrados en el backend desde la 100 (eventos.js TIPOS_VALIDOS) aunque
+  // `pago_tarjeta_activo` siga apagada.
+  | 'tarjeta_guardado_iniciado'
+  | 'tarjeta_contratos_abiertos'
+  | 'tarjeta_3ds_challenge_mostrado'
+  | 'tarjeta_guardada'
+  | 'tarjeta_guardado_fallido'
+  | 'tarjeta_eliminada'
+  | 'pago_iniciado'
+  | 'pago_aprobado'
+  | 'pago_rechazado'
+  | 'pago_abandonado'
+  | 'pago_cambiado_a_contraentrega'
+  | 'metodos_pago_vacio_visto';
 
 // Allowlist por evento — toda key fuera de esta lista se omite del payload
 // enviado al backend. Añadir un evento nuevo requiere registrarlo aquí
@@ -344,6 +363,36 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // etiqueta/direccion/notas, que puede llevar nombres de personas.
   direccion_editada: ['cambio_etiqueta', 'cambio_direccion', 'cambio_notas', 'cambio_pin'],
   direccion_eliminada: ['con_pin', 'era_predeterminada'],
+
+  // --- Pago con tarjeta guardada (Wompi, fase 2) ---
+  // Cero PII SIEMPRE: nunca last_four, PAN, CVC, nombre, email ni cedula.
+  // `franquicia` no es PII (visa|mastercard|otra) — dice que parque de
+  // emisores hay que soportar, no quien es el cliente.
+  //
+  // ¿Guardan tarjeta antes de comprar (perfil) o en medio de la compra
+  // (checkout)?
+  tarjeta_guardado_iniciado: ['origen'],
+  // ¿Alguien abre los PDF de Wompi? 'cual': privacidad | datos.
+  tarjeta_contratos_abiertos: ['cual'],
+  // Que proporcion de emisores pide challenge visible (vs. no_challenge).
+  tarjeta_3ds_challenge_mostrado: ['franquicia'],
+  // Cuanto tarda de verdad guardar una tarjeta, en telefono barato.
+  tarjeta_guardada: ['franquicia', 'con_3ds', 'segundos'],
+  // La razon #1 por la que no se puede pagar con tarjeta. `motivo`: enum
+  // corto (bin_sin_3ds | declinada | challenge_abandonado | timeout | red |
+  // error). `paso`: formulario | token | fuente | challenge | cobro.
+  tarjeta_guardado_fallido: ['motivo', 'paso', 'franquicia'],
+  // ¿Se eliminan por caducidad (validity_ends_at vencido) o por decision?
+  tarjeta_eliminada: ['motivo_disponible'],
+  // --- Checkout con tarjeta (fase 3 — registrados aqui, sin disparar todavia) ---
+  pago_iniciado: ['pedido_id', 'monto'],
+  pago_aprobado: ['pedido_id', 'segundos'],
+  pago_rechazado: ['pedido_id', 'motivo'],
+  pago_abandonado: ['pedido_id', 'segundos', 'paso'],
+  pago_cambiado_a_contraentrega: ['pedido_id', 'medio'],
+  // Cuantos llegan al muro "elige tarjeta pero no tiene ninguna" sin tarjeta
+  // guardada. 'origen': perfil | checkout.
+  metodos_pago_vacio_visto: ['origen'],
 };
 
 function aplicarAllowlist(
