@@ -24,7 +24,7 @@ export const WHATSAPP_NEGOCIO_LINK = `https://wa.me/${WHATSAPP_NEGOCIO}?text=${e
 export const APP_STORE_URL = "https://apps.apple.com/app/id6769148116";
 export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=co.estancocaqueta.express";
 
-// --- Medio de pago (093) y soporte configurable ---
+// --- Medio de pago (093, catalogo reducido 27-ago-2026) y soporte configurable ---
 //
 // El catalogo REAL y el numero de soporte vigente viven en el backend
 // (/configuracion-app: medios_pago, soporte). Lo de aqui es SOLO el respaldo:
@@ -35,7 +35,12 @@ import { colors } from "./theme";
 
 /** Igual al texto que hoy prometen help.tsx y terms.tsx. Si el backend
  *  cambia el catalogo, esto queda desactualizado hasta el proximo release —
- *  que es exactamente el problema que 093 resuelve para el camino feliz. */
+ *  que es exactamente el problema que 093 resuelve para el camino feliz.
+ *
+ *  SOLO 'efectivo' (decision del dueño, 27-ago-2026: catalogo real reducido a
+ *  efectivo/tarjeta). Sin backend no hay forma de saber si el cliente tiene
+ *  tarjetas guardadas ni de cobrarlas, asi que ofrecer "tarjeta" aqui seria
+ *  ofrecer un medio que no se puede completar. */
 export const MEDIOS_PAGO_RESPALDO: {
   codigo: string;
   etiqueta: string;
@@ -45,20 +50,8 @@ export const MEDIOS_PAGO_RESPALDO: {
   {
     codigo: "efectivo",
     etiqueta: "Efectivo",
-    descripcion: "Paga en billetes al domiciliario cuando recibas tu pedido.",
+    descripcion: "Paga en billetes, QR o datáfono al domiciliario cuando recibas tu pedido.",
     pide_vuelto: true,
-  },
-  {
-    codigo: "transferencia",
-    etiqueta: "Transferencia / QR",
-    descripcion: "El domiciliario lleva un código QR para pagar con Nequi, Daviplata o cualquier app bancaria.",
-    pide_vuelto: false,
-  },
-  {
-    codigo: "datafono",
-    etiqueta: "Datáfono",
-    descripcion: "Tarjeta débito o crédito. El domiciliario lleva datáfono inalámbrico para pagar contra entrega.",
-    pide_vuelto: false,
   },
 ];
 
@@ -67,8 +60,6 @@ export const MEDIOS_PAGO_RESPALDO: {
  *  pantalla — es la misma regla que protege el catálogo propio de productos. */
 export const ICONOS_MEDIO: Record<string, { icon: "dollar-sign" | "smartphone" | "credit-card" | "circle"; color: string; bg: string }> = {
   efectivo: { icon: "dollar-sign", color: colors.green, bg: "rgba(31,175,85,0.08)" },
-  transferencia: { icon: "smartphone", color: colors.pink, bg: "rgba(224,69,123,0.08)" },
-  datafono: { icon: "credit-card", color: colors.purple, bg: "rgba(124,92,255,0.08)" },
   // Respaldo SOLO para cuando no se conoce la franquicia (p.ej. la fila de
   // "Método de pago" del carrito antes de que carguen las tarjetas guardadas).
   // Una tarjeta guardada real siempre se pinta con LogoFranquicia, no con esto.

@@ -2,16 +2,26 @@
 // Modal que HojaCancelar/HojaDireccion. Reemplaza la lista de radios que vivía
 // siempre desplegada en el carrito por una fila compacta con "Cambiar".
 //
-// Fase 3 (checkout con tarjeta guardada, plan PLAN-UI-PAGO-TARJETA-PRUEBAS.md
-// §3): las tarjetas guardadas van PRIMERO (radio, con badge PREDETERMINADA en
-// la primera si aplica), luego "Agregar tarjeta" (fila de ACCIÓN, no radio —
-// navega y cierra la hoja), un separador de línea, y por último los medios
-// contra entrega de siempre (SelectorMedioPago, sin tocar).
+// Catalogo reducido a DOS medios (27-ago-2026, decision del dueño):
+// 'transferencia'/'datafono' se retiraron, asi que ya no hace falta una lista
+// plana de medios contra entrega — 'efectivo' es la unica. La hoja pasa a
+// mostrar exactamente DOS filas de nivel superior, Efectivo y Tarjeta, y la
+// segunda se despliega en una sub-lista anidada con las tarjetas guardadas +
+// "Agregar tarjeta" (mismo patron de siempre: radio con badge PREDETERMINADA
+// en la primera si aplica, "Agregar tarjeta" como fila de ACCION que navega y
+// cierra la hoja, nunca una sub-lista vacia sin la fila de agregar).
+//
+// `mediosContraEntrega` (todo lo que no es 'tarjeta' en el catalogo real, que
+// hoy es solo 'efectivo') sigue viniendo de SelectorMedioPago en vez de
+// hardcodear "Efectivo": si el catalogo real alguna vez vuelve a tener mas de
+// un medio contra entrega, esta hoja no necesita otro cambio.
 
+import { useEffect, useState } from "react";
 import { View, Text, Pressable, Modal, ScrollView, Dimensions } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fuentes } from "../../constants/theme";
+import { ICONOS_MEDIO } from "../../constants/config";
 import type { MedioPago, MetodoPago } from "../../lib/api";
 import { SelectorMedioPago } from "../SelectorMedioPago";
 import { FilaSeleccionable } from "./FilaSeleccionable";
@@ -45,10 +55,44 @@ export function HojaMedioPago({
   onAgregarTarjeta,
 }: Props) {
   const insets = useSafeAreaInsets();
-  // 'tarjeta' no es un medio contra entrega: la sección de tarjetas de arriba
-  // la reemplaza por completo. Pasarla también a SelectorMedioPago duplicaría
+  // 'tarjeta' no es un medio contra entrega: la fila de "Tarjeta" de abajo la
+  // reemplaza por completo. Pasarla también a SelectorMedioPago duplicaría
   // la opción.
   const mediosContraEntrega = medios.filter((m) => m.codigo !== "tarjeta");
+  const medioPagoEsTarjeta = medioSeleccionado.startsWith("tarjeta:");
+
+  // Sub-lista de tarjetas: abierta o cerrada. Arranca reflejando la selección
+  // vigente (si ya venía en "tarjeta:<id>", la hoja abre con la sub-lista ya
+  // desplegada) y se vuelve a sincronizar cada vez que la hoja se abre — el
+  // cliente pudo agregar o elegir una tarjeta en otra visita y volver.
+  const [sublistaAbierta, setSublistaAbierta] = useState(medioPagoEsTarjeta);
+  useEffect(() => {
+    if (visible) setSublistaAbierta(medioSeleccionado.startsWith("tarjeta:"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+
+  const seleccionarContraEntrega = (codigo: string) => {
+    setSublistaAbierta(false);
+    onSeleccionar(codigo);
+  };
+
+  const alternarTarjeta = () => {
+    if (sublistaAbierta) {
+      setSublistaAbierta(false);
+      return;
+    }
+    setSublistaAbierta(true);
+    // Sin tarjeta elegida todavia: preseleccionar la predeterminada (con una
+    // sola tarjeta, el backend YA la marca predeterminada siempre — ver
+    // GET /pagos/metodos). Con 0 tarjetas no hay nada que preseleccionar; la
+    // sub-lista abre mostrando solo "Agregar tarjeta".
+    if (!medioPagoEsTarjeta && tarjetas.length > 0) {
+      const predeterminada = tarjetas.find((t) => t.predeterminada) ?? tarjetas[0];
+      onSeleccionar(`tarjeta:${predeterminada.id}`);
+    }
+  };
+
+  const iconoTarjeta = ICONOS_MEDIO.tarjeta;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCerrar}>
@@ -80,66 +124,106 @@ export function HojaMedioPago({
           showsVerticalScrollIndicator={false}
         >
           <View style={{ gap: 8 }}>
-            {pagoTarjetaActivo && (
-              <>
-                {tarjetas.map((t) => {
-                  const codigo = `tarjeta:${t.id}`;
-                  return (
-                    <FilaSeleccionable
-                      key={codigo}
-                      seleccionado={medioSeleccionado === codigo}
-                      onPress={() => onSeleccionar(codigo)}
-                      iconoNode={<LogoFranquicia brand={t.brand} size={32} />}
-                      titulo={`•••• ${t.last_four}`}
-                      subtitulo={`Vence ${t.exp_month}/${t.exp_year}`}
-                      badges={t.predeterminada ? [{ texto: "PREDETERMINADA" }] : undefined}
-                      a11yLabel={`Pagar con tarjeta terminada en ${t.last_four}`}
-                    />
-                  );
-                })}
-
-                {/* Fila de ACCIÓN, no radio: no lleva borde verde ni
-                    check-circle, y su onPress navega en vez de seleccionar. */}
-                <Pressable
-                  onPress={onAgregarTarjeta}
-                  accessibilityRole="button"
-                  accessibilityLabel="Agregar tarjeta"
-                  className="flex-row items-center p-3 rounded-xl"
-                  style={{ minHeight: 44 }}
-                >
-                  <View
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      backgroundColor: "rgba(31,175,85,0.08)",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Feather name="plus" size={16} color={colors.green} />
-                  </View>
-                  <View className="flex-1 ml-3">
-                    <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.green }}>
-                      Agregar tarjeta
-                    </Text>
-                    {tarjetas.length === 0 && (
-                      <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", marginTop: 2 }}>
-                        Paga en un toque la próxima vez
-                      </Text>
-                    )}
-                  </View>
-                </Pressable>
-
-                <View style={{ height: 1, backgroundColor: colors.line, marginVertical: 4 }} />
-              </>
-            )}
-
+            {/* Fila de nivel superior 1: Efectivo (y cualquier otro medio
+                contra entrega que el catalogo real llegue a tener). */}
             <SelectorMedioPago
               medios={mediosContraEntrega}
               medioSeleccionado={medioSeleccionado}
-              onSeleccionar={onSeleccionar}
+              onSeleccionar={seleccionarContraEntrega}
             />
+
+            {pagoTarjetaActivo && (
+              <View>
+                {/* Fila de nivel superior 2: Tarjeta. El radio refleja la
+                    seleccion REAL (una tarjeta elegida), no si la sub-lista
+                    esta desplegada -- las dos cosas pueden diferir (p.ej.
+                    reabrir para cambiar de tarjeta sin haber decidido aun). */}
+                <FilaSeleccionable
+                  seleccionado={medioPagoEsTarjeta}
+                  onPress={alternarTarjeta}
+                  iconoNode={
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        backgroundColor: iconoTarjeta.bg,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Feather name={iconoTarjeta.icon} size={16} color={iconoTarjeta.color} />
+                    </View>
+                  }
+                  titulo="Tarjeta"
+                  a11yLabel="Pagar con tarjeta guardada"
+                />
+
+                {sublistaAbierta && (
+                  <View
+                    style={{
+                      marginTop: 8,
+                      marginLeft: 14,
+                      paddingLeft: 12,
+                      borderLeftWidth: 2,
+                      borderLeftColor: colors.line,
+                      gap: 8,
+                    }}
+                  >
+                    {tarjetas.map((t) => {
+                      const codigo = `tarjeta:${t.id}`;
+                      return (
+                        <FilaSeleccionable
+                          key={codigo}
+                          seleccionado={medioSeleccionado === codigo}
+                          onPress={() => onSeleccionar(codigo)}
+                          iconoNode={<LogoFranquicia brand={t.brand} size={32} />}
+                          titulo={`•••• ${t.last_four}`}
+                          subtitulo={`Vence ${t.exp_month}/${t.exp_year}`}
+                          badges={t.predeterminada ? [{ texto: "PREDETERMINADA" }] : undefined}
+                          a11yLabel={`Pagar con tarjeta terminada en ${t.last_four}`}
+                        />
+                      );
+                    })}
+
+                    {/* Fila de ACCIÓN, no radio: no lleva borde verde ni
+                        check-circle, y su onPress navega en vez de
+                        seleccionar. Nunca una sub-lista vacía sin esta fila —
+                        con 0 tarjetas es lo ÚNICO que se ve aquí adentro. */}
+                    <Pressable
+                      onPress={onAgregarTarjeta}
+                      accessibilityRole="button"
+                      accessibilityLabel="Agregar tarjeta"
+                      className="flex-row items-center p-3 rounded-xl"
+                      style={{ minHeight: 44 }}
+                    >
+                      <View
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          backgroundColor: "rgba(31,175,85,0.08)",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Feather name="plus" size={16} color={colors.green} />
+                      </View>
+                      <View className="flex-1 ml-3">
+                        <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.green }}>
+                          Agregar tarjeta
+                        </Text>
+                        {tarjetas.length === 0 && (
+                          <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: "#6D7B6C", marginTop: 2 }}>
+                            Paga en un toque la próxima vez
+                          </Text>
+                        )}
+                      </View>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            )}
           </View>
         </ScrollView>
 

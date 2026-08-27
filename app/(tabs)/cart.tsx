@@ -162,10 +162,13 @@ export default function CartScreen() {
   const [notasOverride, setNotasOverride] = useState<string | null>(null);
   // Frío asegurado: intención del cliente. No se persiste entre sesiones.
   const [quiereFrio, setQuiereFrio] = useState(false);
-  // Medio de pago (093). "efectivo" preseleccionado: es lo que la mayoría usa
-  // hoy de facto, y garantiza que siempre haya un dato sin agregar un paso
-  // obligatorio al checkout — que es donde vive el 90% de los abandonos.
-  const [medioPago, setMedioPago] = useState("efectivo");
+  // Medio de pago (093, catalogo reducido 27-ago-2026). Ya NO arranca en
+  // "efectivo" fijo: con tarjeta guardada de verdad, inventarle un medio a la
+  // primera compra de alguien es peor que preguntarle una vez. Arranca vacío
+  // y un efecto más abajo (una sola vez por cliente cargado) lo preselecciona
+  // con el ÚLTIMO medio que usó -- o lo deja vacío si nunca ha comprado, que
+  // es lo que bloquea "Confirmar pedido" en handlePedir hasta que elija.
+  const [medioPago, setMedioPago] = useState("");
   const [mostrarRecordatorioFrio, setMostrarRecordatorioFrio] = useState(false);
   const [codigoCupon, setCodigoCupon] = useState("");
   const [cuponValidado, setCuponValidado] = useState<CuponValidado | null>(null);
@@ -272,6 +275,85 @@ export default function CartScreen() {
   const subtituloMedioPago = medioPagoEsTarjeta
     ? (tarjetaSeleccionada ? `•••• ${tarjetaSeleccionada.last_four}` : "Tarjeta guardada")
     : medioActivoObj?.etiqueta;
+
+  // Familia del medio para TELEMETRÍA: "tarjeta", "efectivo" o "". Nunca el
+  // "tarjeta:<id>" crudo — es un id interno de metodo de pago, y
+  // metodos-pago/nueva.tsx deja constancia expresa de que ningun dato de
+  // tarjeta llega a tracker.track(). Ademas deja el evento con tres valores
+  // posibles en vez de uno por tarjeta de cada cliente, y ninguna pregunta de
+  // negocio necesita saber CUAL tarjeta.
+  const familiaMedio = (codigo: string) => (codigo.startsWith("tarjeta:") ? "tarjeta" : codigo);
+
+  // Preselección del medio de pago (catalogo reducido, 27-ago-2026): UNA sola
+  // vez por cliente cargado, no cada render -- si se dejara correr en cada
+  // cambio, pisaría lo que el cliente acabe de elegir a mano en la hoja.
+  // - Primera compra (ultimo_medio_pago null): se deja vacío a propósito; es
+  //   lo que hace que handlePedir bloquee "Confirmar pedido" hasta que elija.
+  // - Si compró antes en efectivo: arranca en efectivo, igual que siempre.
+  // - Si compró antes con tarjeta: arranca en la tarjeta PREDETERMINADA
+  //   VIGENTE (no la de aquel pedido -- esa pudo eliminarse desde entonces).
+  //   Espera a que cargue metodosPago porque sin eso no hay id que preseleccionar.
+  //   Sin ninguna tarjeta viva hoy, cae al mismo criterio que primera compra:
+  //   vacío, y que el cliente elija en la hoja.
+  const medioPagoInicializadoRef = useRef(false);
+  useEffect(() => {
+    if (medioPagoInicializadoRef.current || !medioPagoActivo || !cliente) return;
+    // `medio_pago_preseleccion` es el DENOMINADOR de "quitar la preselección,
+    // ¿sube el abandono?". Sin él, checkout_abandonado{paso:'medio_pago'} es un
+    // numerador sin con qué dividirse: sube solo con el tráfico y no se puede
+    // comparar contra nada. Se emite en el mismo punto donde se marca el ref
+    // —o sea exactamente una vez por visita, y SIEMPRE, salga por donde salga.
+    const listo = (estado: string, medio: string) => {
+      medioPagoInicializadoRef.current = true;
+      tracker.track('medio_pago_preseleccion', { estado, medio }, 'cart');
+    };
+    const ultimo = cliente.ultimo_medio_pago;
+    if (!ultimo) return listo('vacio_primera_compra', '');
+    if (ultimo !== "tarjeta") {
+      // Un ultimo_medio_pago histórico ('transferencia'/'datafono', retirados
+      // del catálogo el 27-ago-2026) NO se preselecciona. Copiarlo a ciegas
+      // dejaría medioPago NO vacío con medioActivoObj undefined: el guard de
+      // handlePedir (`!medioPago`) no dispara, la fila muestra el placeholder,
+      // y el servidor lo descarta a NULL en silencio — pedido sin medio de pago
+      // registrado y nadie se entera. Con el catálogo recién recortado esto no
+      // es hipotético: le pasa a todo el que compró así la última vez.
+      if (!mediosPagoDisponibles.some((m) => m.codigo === ultimo)) {
+        return listo('vacio_medio_retirado', '');
+      }
+      setMedioPago(ultimo);
+      return listo('preseleccionado', ultimo);
+    }
+    if (!pagoTarjetaActivo) return listo('vacio_tarjeta_no_disponible', '');
+    if (cargandoMetodosPago) return; // esperar la carga; no marcar como listo todavía
+    const predeterminada = metodosPago?.find((m) => m.predeterminada);
+    if (!predeterminada) return listo('vacio_tarjeta_no_disponible', '');
+    setMedioPago(`tarjeta:${predeterminada.id}`);
+    listo('preseleccionado', 'tarjeta');
+  }, [cliente, medioPagoActivo, pagoTarjetaActivo, cargandoMetodosPago, metodosPago, mediosPagoDisponibles]);
+
+  // Saneamiento del medio elegido. La preselección de arriba corre UNA vez;
+  // esto vigila lo que pasa DESPUÉS, que es donde estaba el hueco:
+  //
+  // El cliente elige `tarjeta:12`, se va a /profile/metodos-pago, la elimina, y
+  // vuelve al carrito. `medioPago` sigue siendo "tarjeta:12" —no vacío—, así que
+  // el guard de handlePedir lo deja pasar: el pedido SE CREA con medio_pago
+  // 'tarjeta' y recién POST /pedidos/:id/pagar responde 404, con el pedido ya
+  // hecho. La salida (pago_cambiado_a_contraentrega) es una recuperación, no una
+  // prevención: el cliente ya vio un error donde no debía haber ninguno.
+  //
+  // Se vuelve a VACÍO y no a 'efectivo': el medio se elige explícitamente
+  // (decisión del 27-ago-2026), y el guard existente reabre la hoja solo.
+  useEffect(() => {
+    if (!medioPagoActivo || !medioPago) return;
+    if (medioPagoEsTarjeta) {
+      // Mientras carga no se sabe si la tarjeta existe; borrarla aquí haría
+      // parpadear la fila en cada refetch de ["metodos-pago"].
+      if (cargandoMetodosPago || !metodosPago) return;
+      if (!metodosPago.some((m) => m.id === tarjetaSeleccionadaId)) setMedioPago("");
+      return;
+    }
+    if (!mediosPagoDisponibles.some((m) => m.codigo === medioPago)) setMedioPago("");
+  }, [medioPago, medioPagoEsTarjeta, tarjetaSeleccionadaId, medioPagoActivo, cargandoMetodosPago, metodosPago, mediosPagoDisponibles]);
 
   // metodos_pago_vacio_visto (checkout): una vez por apertura de la hoja con
   // la sección de tarjetas vacía. Se resetea al cerrar para que la próxima
@@ -760,6 +842,19 @@ export default function CartScreen() {
     }
     if (items.length === 0) return;
 
+    // Primera compra sin medio de pago elegido (catalogo reducido,
+    // 27-ago-2026): en vez de deshabilitar "Confirmar pedido" -- lo que
+    // obligaria a duplicar aqui las mismas condiciones de disabled que ya
+    // tiene el boton (loading/tienda/pedido_minimo) solo para agregar una
+    // mas -- se abre la hoja directo y se corta el submit. Mismo criterio que
+    // "sin_direccion" un poco mas arriba: el toque en "Confirmar" abre el
+    // siguiente paso en vez de fallar en seco.
+    if (medioPagoActivo && !medioPago) {
+      tracker.track('checkout_abandonado', { paso: 'medio_pago', items_count: items.length }, 'cart');
+      setHojaMedioPagoVisible(true);
+      return;
+    }
+
     const dirFinal = mostrarNueva
       ? (nuevaDireccion.trim() || nuevaUbicacion?.geocoded_direccion || "Ubicación en el mapa")
       : dir;
@@ -891,7 +986,11 @@ export default function CartScreen() {
       recordatorioMostradoRef.current = null;
       setMostrarRecordatorioFrio(false);
       setQuiereFrio(false);
-      setMedioPago("efectivo");
+      // medioPago NO se resetea: si el cliente pide otra vez en la misma
+      // visita, lo más probable es que quiera el mismo medio que acaba de
+      // usar -- que es exactamente lo que ultimo_medio_pago haría igual en
+      // la siguiente sesión. Resetear a un valor fijo aquí sería mentirle al
+      // patrón que el resto de este cambio implementa.
       setNuevaUbicacion(null);
       setNotasOverride(null);
       setPedidoAbierto(false);
@@ -1094,7 +1193,7 @@ export default function CartScreen() {
                   placeholder="Elige cómo vas a pagar"
                   accion="Cambiar"
                   onPress={() => {
-                    tracker.track('medio_pago_hoja_abierta', { medio_actual: medioPago }, 'cart');
+                    tracker.track('medio_pago_hoja_abierta', { medio_actual: familiaMedio(medioPago) }, 'cart');
                     setHojaMedioPagoVisible(true);
                   }}
                   a11yLabel={`Cambiar método de pago. Actual: ${subtituloMedioPago ?? "sin elegir"}`}
@@ -1302,9 +1401,15 @@ export default function CartScreen() {
         pagoTarjetaActivo={pagoTarjetaActivo}
         onSeleccionar={(codigo) => {
           setMedioPago(codigo);
-          // "efectivo" es el preseleccionado: cambio mide cuánta fricción
-          // quita tener el default preseleccionado.
-          tracker.track('medio_pago_elegido', { medio: codigo, cambio: codigo !== "efectivo" }, 'cart');
+          // `cambio` = eligió algo distinto de lo que traía puesto al abrir la
+          // hoja. Antes era `codigo !== "efectivo"`, que medía otra cosa y
+          // dejó de significar nada cuando 'efectivo' dejó de ser el default:
+          // en la primera compra NO hay nada preseleccionado, así que todo
+          // parecía un "cambio" cuando en realidad era la primera elección.
+          tracker.track('medio_pago_elegido', {
+            medio: familiaMedio(codigo),
+            cambio: familiaMedio(codigo) !== familiaMedio(medioPago),
+          }, 'cart');
         }}
         onAgregarTarjeta={() => {
           setHojaMedioPagoVisible(false);

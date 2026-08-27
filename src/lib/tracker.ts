@@ -135,6 +135,7 @@ export type EventTipo =
   // Medio de pago en el checkout (093). Que medio prefiere la gente, y cuanta
   // friccion quita tener el default preseleccionado.
   | 'medio_pago_elegido'
+  | 'medio_pago_preseleccion'
   // Checkout denso (1.3.2/build 94).
   | 'carrito_items_desplegados'
   | 'direccion_hoja_abierta'
@@ -345,6 +346,11 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // a background, donde no hay pantalla para preguntar un motivo.
   carrito_abandonado: ['items_count', 'subtotal', 'tiene_direccion', 'supera_minimo', 'tienda_abierta', 'vio_formulario', 'envio', 'total', 'envio_gratis', 'tiene_pin', 'frio'],
   medio_pago_elegido: ['medio', 'cambio'],
+  // Denominador de "quitar la preseleccion, subio el abandono?".
+  // estado: 'preseleccionado' | 'vacio_primera_compra' |
+  //         'vacio_tarjeta_no_disponible' | 'vacio_medio_retirado'.
+  // medio: familia ('efectivo' | 'tarjeta' | ''), nunca 'tarjeta:<id>'.
+  medio_pago_preseleccion: ['estado', 'medio'],
   // Checkout denso (1.3.2/build 94).
   carrito_items_desplegados: ['items_count'],
   direccion_hoja_abierta: ['n_direcciones', 'origen'],

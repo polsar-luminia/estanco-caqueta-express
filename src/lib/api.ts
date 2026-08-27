@@ -643,6 +643,14 @@ export interface Cliente {
    *  y, sobre todo, el caché desfasado de la lista de direcciones. `undefined`
    *  = el perfil todavía no cargó, que NO es lo mismo que "no tiene". */
   tiene_direccion?: boolean;
+  /** Medio de pago del pedido MAS RECIENTE del cliente (sin contar
+   *  cancelados), o null si nunca ha comprado. Catalogo reducido (27-ago-2026):
+   *  el carrito lo usa para preseleccionar en la primera visita al checkout
+   *  de una sesión sin forzar nada en la primerísima compra. Si el valor es
+   *  'tarjeta', el carrito NO guarda aquí cuál — usa la tarjeta
+   *  `predeterminada` VIGENTE de GET /pagos/metodos, porque esta pudo
+   *  eliminarse desde el último pedido. */
+  ultimo_medio_pago?: string | null;
 }
 
 export interface Producto {
