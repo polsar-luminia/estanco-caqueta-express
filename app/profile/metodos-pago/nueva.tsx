@@ -390,6 +390,12 @@ export default function NuevaTarjetaScreen() {
         customer_email: email.trim(),
         acceptance_token: tokensAceptacion?.acceptance_token ?? "",
         accept_personal_auth: tokensAceptacion?.accept_personal_auth ?? "",
+        // Wompi no devuelve el vencimiento en ningún campo de
+        // payment_sources — el backend lo necesita ahora, es la única vez
+        // que la app lo tiene a mano. No es secreto (mismo nivel que
+        // last_four); ya se limpiaron number/cvc arriba, esto se queda.
+        exp_month: datosTarjeta.exp_month,
+        exp_year: datosTarjeta.exp_year,
       });
 
       if (resp.estado === "listo") {

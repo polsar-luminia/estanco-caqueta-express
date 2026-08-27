@@ -1424,6 +1424,12 @@ export async function crearMetodoPago(params: {
   acceptance_token: string;
   accept_personal_auth: string;
   three_ds_auth_type?: string;
+  // Wompi no devuelve el vencimiento en NINGUN campo de payment_sources —
+  // el backend lo necesita porque no hay otro momento en que la app se lo
+  // vuelva a mandar. No es secreto (mismo nivel que last_four); el número
+  // y el CVC nunca viajan por acá.
+  exp_month: string;
+  exp_year: string;
 }): Promise<RespuestaCrearMetodo> {
   // apiFetch descarta el status HTTP (201 vs 202: ver su `return res.json()`
   // final, ambos son res.ok) — se distingue por el SHAPE del body, no por el
