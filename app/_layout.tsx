@@ -269,6 +269,19 @@ export default envolverConSentry(function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="checkout/confirmando-pago"
+            options={{
+              headerShown: false,
+              // Mismo motivo que profile/metodos-pago/nueva.tsx durante el
+              // challenge 3DS: abandonar a mitad del cobro deja al cliente
+              // sin saber si el banco aprobó, con el pedido YA creado y
+              // reservando stock. No hay "cerrar sin guardar" acá — la única
+              // salida es que el cobro resuelva (aprobado, rechazado, o el
+              // cliente elige contra entrega desde esta misma pantalla).
+              gestureEnabled: false,
+            }}
+          />
+          <Stack.Screen
             name="support/help"
             options={{ headerShown: false }}
           />

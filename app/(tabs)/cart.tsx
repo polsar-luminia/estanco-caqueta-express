@@ -13,7 +13,7 @@ import { useCartStore } from "../../src/stores/cart";
 import { useAuthStore } from "../../src/stores/auth";
 import { useTiendaAbierta } from "../../src/hooks/useTiendaAbierta";
 import { useTecladoVisible } from "../../src/hooks/useTecladoVisible";
-import { crearPedido, getDirecciones, crearDireccion, editarDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, getEtaActual, getMetodosPago, getTokensAceptacion, pagarPedido, type DireccionGuardada, type CuponValidado, type UbicacionCapturada, type ApiError, type MetodoPago } from "../../src/lib/api";
+import { crearPedido, getDirecciones, crearDireccion, editarDireccion, validarCupon, getConfigApp, getEstadoTienda, getProducto, ubicacionABody, validarCobertura, getFrioCarrito, getEtaActual, getMetodosPago, type DireccionGuardada, type CuponValidado, type UbicacionCapturada, type ApiError, type MetodoPago } from "../../src/lib/api";
 import { useConfirmarUbicacion } from "../../src/hooks/useConfirmarUbicacion";
 import { calcularResumen, envioDeZona } from "../../src/lib/resumenPedido";
 import { FrioRecordatorio } from "../../src/components/FrioRecordatorio";
@@ -930,46 +930,31 @@ export default function CartScreen() {
         text2: `Pedido #${pedido.numero_orden_cliente ?? pedido.id} - ${formatCOP(pedido.total)}`,
         visibilityTime: 3000,
       });
-      // Replace cart con la lista de pedidos + push detalle encima:
-      // 1. replace borra cart del stack (carrito ya esta vacio, no tiene sentido volver)
-      // 2. push deja stack: orders/index -> orders/[id], lo que da back button automatico
-      //    en el detalle que retorna a "Mis pedidos"
-      router.replace("/(tabs)/orders");
-      router.push({ pathname: "/(tabs)/orders/[id]", params: { id: String(pedido.id) } });
-
-      // Cobro con tarjeta (fase 3): paso SIGUIENTE a crear el pedido, nunca
-      // adentro — el pedido de arriba ya quedó creado pase lo que pase acá.
-      // Un fallo aquí NO bloquea la navegación (ya ocurrió, dos líneas
-      // arriba): el bloque de estado de pago del detalle (orders/[id].tsx)
-      // es quien maneja el resto, con reintento incluido.
       if (medioPagoEsTarjeta && tarjetaSeleccionadaId) {
-        tracker.track('pago_iniciado', { pedido_id: pedido.id, monto: pedido.total }, 'cart');
-        const emailPago = clienteActualizado?.email ?? cliente?.email;
-        if (emailPago) {
-          try {
-            const tokens = await getTokensAceptacion();
-            await pagarPedido(pedido.id, {
-              metodo_pago_id: tarjetaSeleccionadaId,
-              customer_email: emailPago,
-              acceptance_token: tokens.acceptance_token ?? "",
-              accept_personal_auth: tokens.accept_personal_auth ?? "",
-            });
-          } catch (errPago: unknown) {
-            Sentry.captureException(errPago instanceof Error ? errPago : new Error(String(errPago)), {
-              tags: { flow: "pago_tarjeta", action: "pagar_checkout" },
-            });
-          }
-        } else {
-          // Sin correo no se puede llamar POST /pedidos/:id/pagar (el backend
-          // lo exige y responde 400): el pedido queda creado con
-          // medio_pago='tarjeta' y SIN ninguna fila en `pagos`. El detalle
-          // del pedido trata "todavía no hay intento de cobro" igual que uno
-          // fallido -- ofrece reintentar (ahí sí se pide el correo) o caer a
-          // contra entrega.
-          Sentry.captureMessage("Cobro con tarjeta en checkout sin email de cliente disponible", {
-            tags: { flow: "pago_tarjeta", action: "pagar_checkout" },
-          });
-        }
+        // Cobro con tarjeta: checkout/confirmando-pago.tsx es la ÚNICA
+        // dueña del cobro y de qué pasa si el banco rechaza (rediseño
+        // 27-ago-2026 — antes esto se disparaba fire-and-forget desde acá
+        // MIENTRAS el cliente ya estaba viendo el detalle del pedido, que
+        // además le ofrecía "Otra tarjeta"/"Contra entrega" ahí mismo; el
+        // detalle es de solo lectura, esa decisión ya no le corresponde).
+        // El pedido de arriba ya quedó creado pase lo que pase con el cobro
+        // — replace y no push: el carrito ya está vacío, no hay nada útil a
+        // lo que volver.
+        router.replace({
+          pathname: "/checkout/confirmando-pago",
+          params: {
+            pedidoId: String(pedido.id),
+            metodoPagoId: String(tarjetaSeleccionadaId),
+            monto: String(pedido.total),
+          },
+        });
+      } else {
+        // Replace cart con la lista de pedidos + push detalle encima:
+        // 1. replace borra cart del stack (carrito ya esta vacio, no tiene sentido volver)
+        // 2. push deja stack: orders/index -> orders/[id], lo que da back button automatico
+        //    en el detalle que retorna a "Mis pedidos"
+        router.replace("/(tabs)/orders");
+        router.push({ pathname: "/(tabs)/orders/[id]", params: { id: String(pedido.id) } });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo crear el pedido";
