@@ -147,6 +147,27 @@ export default function OrderDetailScreen() {
     enabled: Number.isFinite(pedidoId) && pedidoId > 0,
   });
 
+  // BUG REAL encontrado en simulador contra sandbox (27-ago-2026):
+  // dentroDeGraciaPago()/MS_PAGO_DEMORADO comparan contra Date.now() EN EL
+  // RENDER, pero mientras `pago` sigue null en cada poll, TanStack Query
+  // devuelve la MISMA referencia de `pedido` (structural sharing: el JSON no
+  // cambió) y el componente NUNCA se vuelve a renderizar, aunque el refetch
+  // de la red sí siga ocurriendo cada 15s. El resultado: "Confirmando tu
+  // pago…" se queda congelado para siempre, sin pasar nunca al bloque de
+  // reintento — se comprobó en vivo, 2+ minutos sin salir de ese estado.
+  // Este tick fuerza un re-render propio (no depende de que los datos
+  // cambien) mientras haya algo tiempo-dependiente que reevaluar; se apaga
+  // solo apenas el pago tiene un resultado real, para no gastar batería de
+  // por vida en un pedido ya resuelto.
+  const [, forzarTick] = useState(0);
+  useEffect(() => {
+    const tarjetaSinResolver = pedido?.medio_pago === "tarjeta"
+      && (pedido.pago == null || pedido.pago.estado === "PENDING");
+    if (!tarjetaSinResolver) return;
+    const id = setInterval(() => forzarTick((n) => n + 1), 2000);
+    return () => clearInterval(id);
+  }, [pedido?.medio_pago, pedido?.pago]);
+
   const [hojaCancelar, setHojaCancelar] = useState(false);
   const [hojaReintentarPago, setHojaReintentarPago] = useState(false);
 
