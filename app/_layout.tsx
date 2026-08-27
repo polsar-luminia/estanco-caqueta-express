@@ -269,6 +269,18 @@ export default envolverConSentry(function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="checkout/index"
+            options={{
+              headerShown: false,
+              // Reversible a propósito (Rediseño canasta/checkout): volver a
+              // la canasta es un caso de uso real (ajustar cantidades), a
+              // diferencia de confirmando-pago de abajo. Lo que hace esto
+              // seguro vive en src/lib/intentoPedido.ts, que sobrevive al
+              // desmontaje de esta pantalla.
+              gestureEnabled: true,
+            }}
+          />
+          <Stack.Screen
             name="checkout/confirmando-pago"
             options={{
               headerShown: false,

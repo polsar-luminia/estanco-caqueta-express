@@ -15,6 +15,24 @@ function MinusIcon() {
   );
 }
 
+// Referencia visual del carrito estilo Rappi (Rediseño canasta/checkout):
+// en cantidad 1, el "-" se reemplaza por un ícono de basura — tocar ahí YA
+// va a eliminar el producto, así que decirlo es más claro que un signo menos
+// que en realidad borra.
+function TrashIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 7h16M9 7V4h6v3m-8 0 1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13"
+        stroke={colors.offer}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 function PlusIcon() {
   return (
     <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
@@ -91,10 +109,10 @@ export function CartItem({ item }: Props) {
           // el area tactil crezca sin que la pastilla se vea mas grande.
           style={{ minWidth: 44, minHeight: 44 }}
           hitSlop={4}
-          accessibilityLabel="Reducir cantidad"
+          accessibilityLabel={item.cantidad === 1 ? "Eliminar del carrito" : "Reducir cantidad"}
           accessibilityRole="button"
         >
-          <MinusIcon />
+          {item.cantidad === 1 ? <TrashIcon /> : <MinusIcon />}
         </Pressable>
         <Text style={{ fontFamily: fuentes.destacado, fontSize: 14, minWidth: 16, textAlign: "center" }}>
           {item.cantidad}

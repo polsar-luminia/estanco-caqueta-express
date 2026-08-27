@@ -136,6 +136,10 @@ export type EventTipo =
   // friccion quita tener el default preseleccionado.
   | 'medio_pago_elegido'
   | 'medio_pago_preseleccion'
+  // Rediseño canasta/checkout (Parte 2).
+  | 'canasta_continuar'
+  | 'complementa_mostrado'
+  | 'canasta_vaciada'
   // Checkout denso (1.3.2/build 94).
   | 'carrito_items_desplegados'
   | 'direccion_hoja_abierta'
@@ -351,6 +355,12 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   //         'vacio_tarjeta_no_disponible' | 'vacio_medio_retirado'.
   // medio: familia ('efectivo' | 'tarjeta' | ''), nunca 'tarjeta:<id>'.
   medio_pago_preseleccion: ['estado', 'medio'],
+  // Tap en "Continuar" de la canasta, antes de navegar al checkout —
+  // denominador del embudo nuevo (canasta_continuar -> checkout_iniciado).
+  canasta_continuar: ['items_count', 'subtotal'],
+  // El carril "Complementa tu pedido" se pintó con >=2 productos.
+  complementa_mostrado: ['seed_id', 'n_sugerencias', 'items_count'],
+  canasta_vaciada: ['items_count', 'subtotal'],
   // Checkout denso (1.3.2/build 94).
   carrito_items_desplegados: ['items_count'],
   direccion_hoja_abierta: ['n_direcciones', 'origen'],
