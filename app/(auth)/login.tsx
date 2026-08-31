@@ -257,7 +257,13 @@ export default function LoginScreen() {
               <LockIcon color={colors.muted} size={18} />
               <TextInput
                 style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 15, color: colors.ink }}
-                placeholder="••••••••"
+                // El placeholder NO puede ser puntos: es indistinguible de una
+                // contraseña ya escrita, asi que nadie sabe si el campo esta vacio
+                // o lleno. Lo encontro un explorador encarnando a un usuario, que
+                // tropezo con ello cuatro veces seguidas ("muestra punticos y yo no
+                // he escrito nada"), y antes habia hecho perder pasos a una prueba
+                // manual por lo mismo.
+                placeholder="Tu contraseña"
                 placeholderTextColor={colors.faint}
                 secureTextEntry={!showPass}
                 autoCapitalize="none"

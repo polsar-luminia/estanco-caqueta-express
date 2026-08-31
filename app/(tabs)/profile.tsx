@@ -12,6 +12,7 @@ import { useCartStore } from "../../src/stores/cart";
 import { getCuponesDisponibles, getConfigApp } from "../../src/lib/api";
 import { useSoporte } from "../../src/lib/soporte";
 import { CopyIcon } from "../../src/components/icons/AppIcons";
+import { MuroInvitado } from "../../src/components/MuroInvitado";
 import { colors, fuentes } from "../../src/constants/theme";
 
 function MenuItem({ icon, label, badge, onPress, a11yLabel }: { icon: string; label: string; badge?: string; onPress?: () => void; a11yLabel: string }) {
@@ -96,7 +97,20 @@ export default function ProfileScreen() {
   // A REGISTRO y no a login: el invitado que llega aqui, por defecto, todavia
   // no tiene cuenta. Mismo criterio que el muro del carrito, que ya lo razonaba
   // asi y era el unico sitio que lo aplicaba.
-  if (!isAuthenticated) return <Redirect href="/(auth)/register" />;
+  // Un invitado que toca el icono de SU cuenta esta buscando su cuenta: es de
+  // los que mas probablemente ya la tiene. Mandarlo derecho a un formulario de
+  // registro alimenta el mismo bucle que el muro del carrito —"no puedo entrar,
+  // me registro, ya tienes cuenta"— y esta era la puerta que quedaba abierta.
+  // Encontrado el 31-ago-2026 por un explorador que encarnaba justamente a esa
+  // persona.
+  if (!isAuthenticated) {
+    return (
+      <MuroInvitado
+        titulo="Entra a tu cuenta"
+        subtitulo="Aquí ves tus pedidos, tus puntos y tus direcciones."
+      />
+    );
+  }
 
   const handleLogout = () => {
     Alert.alert("Cerrar sesión", "¿Quieres salir de tu cuenta?", [

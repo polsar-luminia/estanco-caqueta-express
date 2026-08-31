@@ -77,3 +77,8 @@ builds/
 # arriba solo cubre los que quedan dentro de esa carpeta; este cae al lado del
 # package.json y `git add -A` se lo lleva.
 build-*.tar.gz
+
+# Capturas y bitacoras del explorador de Kimi: son de cada corrida, pesan
+# ~200 KB por paso y no describen el codigo. Se conservan en disco para la
+# autopsia de un hallazgo, no en el repo.
+scripts/kimi-logs/

@@ -21,6 +21,7 @@ import { nuevoUuidV4 } from "../../src/lib/uuid";
 import { tracker } from "../../src/lib/tracker";
 import { metaLogInitiateCheckout, metaLogPurchase } from "../../src/lib/metaEvents";
 import { CartIcon } from "../../src/components/icons/TabIcons";
+import { MuroInvitado } from "../../src/components/MuroInvitado";
 import { formatCOP } from "../../src/lib/format";
 import { CartItem } from "../../src/components/CartItem";
 import { BandaOperativa } from "../../src/components/BandaOperativa";
@@ -962,33 +963,10 @@ export default function CartScreen() {
       tracker.track('registro_muro_mostrado', { items_count: items.length, subtotal }, 'cart');
     }
     return (
-      <View className="flex-1 items-center justify-center px-8" style={{ backgroundColor: colors.bg }}>
-        <CartIcon color="#BCCABA" size={48} />
-        <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: "#3D4A3C", marginTop: 12, textAlign: "center" }}>
-          Un paso antes de tu pedido
-        </Text>
-        <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.muted, marginTop: 6, marginBottom: 26, textAlign: "center" }}>
-          Tu carrito te espera. Solo necesitamos saber quién eres.
-        </Text>
-
-        <Pressable
-          onPress={() => router.push("/(auth)/register")}
-          accessibilityRole="button"
-          accessibilityLabel="Crear una cuenta nueva"
-          style={{ width: "100%", backgroundColor: colors.green, paddingVertical: 16, borderRadius: 14, alignItems: "center", ...shadows.greenBtn }}
-        >
-          <Text style={{ color: colors.white, fontFamily: fuentes.destacado, fontSize: 16 }}>Crear mi cuenta</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => router.push("/(auth)/login")}
-          accessibilityRole="button"
-          accessibilityLabel="Iniciar sesión con una cuenta existente"
-          style={{ width: "100%", marginTop: 12, paddingVertical: 15, borderRadius: 14, borderWidth: 1.5, borderColor: colors.green, alignItems: "center" }}
-        >
-          <Text style={{ color: colors.green, fontFamily: fuentes.destacado, fontSize: 16 }}>Ya tengo cuenta</Text>
-        </Pressable>
-      </View>
+      <MuroInvitado
+        titulo="Un paso antes de tu pedido"
+        subtitulo="Tu carrito te espera. Solo necesitamos saber quién eres."
+      />
     );
   }
 

@@ -393,7 +393,13 @@ export default function RegisterScreen() {
           <InputField
             label="Contraseña"
             icon={<LockIcon color={colors.muted} size={18} />}
-            placeholder="••••••••"
+            // El placeholder NO puede ser puntos: es indistinguible de una
+            // contraseña ya escrita, asi que nadie sabe si el campo esta vacio
+            // o lleno. Lo encontro un explorador encarnando a un usuario, que
+            // tropezo con ello cuatro veces seguidas ("muestra punticos y yo no
+            // he escrito nada"), y antes habia hecho perder pasos a una prueba
+            // manual por lo mismo.
+            placeholder="Mínimo 8 caracteres"
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPass}
