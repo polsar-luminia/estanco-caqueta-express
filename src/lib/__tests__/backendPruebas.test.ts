@@ -1,22 +1,25 @@
 /**
  * El interruptor de staging por número de teléfono.
  *
- * Reactivado el 23-ago-2026 con el número del dueño (3183224021) para probar
- * la 1.3.2 desde un TestFlight de producción — ver el comentario largo en
- * backendPruebas.ts sobre por qué se vació antes (bc4edf8, tres cuentas de
- * staging borradas por error) y por qué esto es temporal.
+ * LA LISTA ESTÁ VACÍA Y ASÍ DEBE QUEDARSE. Se pobló el 23-ago-2026 con el
+ * número del dueño para probar la 1.3.2 desde un TestFlight de producción, con
+ * la nota de quitarlo "en cuanto termine la prueba"; la 1.3.2 lleva publicada
+ * desde entonces y el número seguía ahí el 31-ago, mientras STAGING-ESTANCO.md
+ * afirmaba desde el 21/08 que la lista estaba vacía.
  *
- * Lo que se protege aquí: el número de prueba manda TODO a staging, cualquier
- * otro va a prod, y el modo pegajoso (AsyncStorage) queda coherente entre
- * sesiones sin estados mixtos.
+ * Por qué importa más de lo que parece: `aplicarModoPorTelefono()` corre en
+ * `login.tsx` ANTES de autenticar, así que la pantalla de login es un
+ * interruptor de entorno accionable desde el campo de teléfono. Mientras un
+ * número esté aquí, su dueño NO puede comprar de verdad —la app entera lo manda
+ * a staging— y el síntoma es que sus pedidos no existen para el negocio. Ya
+ * pasó una vez (bc4edf8, tres cuentas de staging creadas por error).
  *
- * La limpieza automática del modo pegajoso cuando la lista queda vacía
- * (`hidratarModoPruebas`, agregada en bc4edf8) sigue en el código pero no
- * tiene prueba dedicada mientras la lista esté poblada de verdad: con
- * TELEFONOS_PRUEBA no vacía, un flag guardado de "1" hidrata como activo por
- * diseño (es justo el modo pegajoso funcionando). Si la lista se vacía otra
- * vez, esa prueba debe volver — se borró aquí en vez de dejarla fingiendo una
- * lista vacía que la fuente ya no tiene.
+ * Para probar contra staging está el perfil `staging` de eas.json, que no
+ * depende de que nadie se acuerde de revertir una constante.
+ *
+ * Lo que se protege aquí: que la lista esté vacía, que con la lista vacía nadie
+ * pueda irse a staging tecleando un número, y que el modo pegajoso guardado de
+ * una sesión anterior se limpie solo al arrancar.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -35,46 +38,51 @@ import {
   aplicarModoPorTelefono,
   baseUrlActual,
   modoPruebasActivo,
-  STAGING_URL,
   TELEFONOS_PRUEBA,
   hidratarModoPruebas,
 } from "../backendPruebas";
 
 beforeEach(async () => {
+  for (const k of Object.keys(almacen)) delete almacen[k];
   await hidratarModoPruebas();
-  await aplicarModoPorTelefono("3009999999"); // resetear a prod entre pruebas
 });
 
 describe("backendPruebas", () => {
-  it("el número del dueño está en la lista de prueba, a propósito", () => {
-    // Si esta prueba falla porque la lista está vacía: la reactivación de
-    // TELEFONOS_PRUEBA se revirtió sin querer. Si falla porque tiene OTRO
-    // número: alguien puso ahí una cuenta que sí se usa para comprar de
-    // verdad, y eso es exactamente el bug de bc4edf8 repitiéndose.
-    expect(TELEFONOS_PRUEBA).toEqual(["3183224021"]);
+  it("la lista de teléfonos de prueba está VACÍA", () => {
+    // Si esta prueba falla, alguien volvió a poner un número aquí. Antes de
+    // "arreglar" la prueba: ese número deja de poder comprar de verdad, y el
+    // fallo no avisa a nadie más que a quien lea este comentario.
+    expect(TELEFONOS_PRUEBA).toEqual([]);
   });
 
-  it("número de prueba → staging; cualquier otro → prod", async () => {
-    expect(esTelefonoPrueba("3183224021")).toBe(true);
-    expect(esTelefonoPrueba(" 3183224021 ")).toBe(true);
+  it("con la lista vacía, ningún teléfono manda la app a staging", async () => {
+    expect(esTelefonoPrueba("3183224021")).toBe(false);
     expect(esTelefonoPrueba("3001234567")).toBe(false);
 
-    expect(baseUrlActual()).toBe("https://prod.local/api/v1");
-
     await aplicarModoPorTelefono("3183224021");
-    expect(modoPruebasActivo()).toBe(true);
-    expect(baseUrlActual()).toBe(STAGING_URL);
-
-    // Un cliente normal en el mismo dispositivo devuelve la app a producción.
-    await aplicarModoPorTelefono("3009999999");
     expect(modoPruebasActivo()).toBe(false);
     expect(baseUrlActual()).toBe("https://prod.local/api/v1");
   });
 
-  it("persiste el modo para el próximo arranque (pegajoso)", async () => {
-    await aplicarModoPorTelefono("3183224021");
-    expect(almacen["backend_pruebas_activo"]).toBe("1");
-    await aplicarModoPorTelefono("3009999999");
+  it("limpia el modo pegajoso que quedó guardado de una versión anterior", async () => {
+    // EL CASO REAL QUE CREA ESTA OTA: un dispositivo que quedó en modo staging
+    // mientras la lista estaba poblada. `aplicarModoPorTelefono` solo corre al
+    // iniciar sesión, así que sin esta limpieza seguiría hablando con staging
+    // para siempre — sus pedidos no existirían para el negocio y nada lo
+    // delataría, porque la app funciona igual de bien contra el otro backend.
+    //
+    // Hay que rearmar el módulo: `hidratarModoPruebas` memoiza su promesa y se
+    // autoinvoca al importarse, así que llamarla otra vez no relee nada. Lo que
+    // se prueba es el ARRANQUE, y el arranque ocurre una vez.
+    vi.resetModules();
+    almacen["backend_pruebas_activo"] = "1";
+    const mod = await import("../backendPruebas");
+    await mod.hidratarModoPruebas();
+    expect(mod.modoPruebasActivo()).toBe(false);
+    expect(mod.baseUrlActual()).toBe("https://prod.local/api/v1");
+    // El borrado de la clave es fire-and-forget dentro de la hidratación: se
+    // deja pasar un turno del bucle de eventos antes de mirarla.
+    await new Promise((r) => setTimeout(r, 0));
     expect(almacen["backend_pruebas_activo"]).toBeUndefined();
   });
 });

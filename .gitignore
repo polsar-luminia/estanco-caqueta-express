@@ -72,3 +72,8 @@ scripts/monkey-logs/
 # ~34 MB cada .tar.gz: no van al repo. `*.ipa` ya estaba, pero faltaban el
 # tarball del simulador y el .app extraido, y `git add -A` los arrastro.
 builds/
+
+# Tarball suelto que deja `eas build --local` en la raiz (~35 MB). `builds/` de
+# arriba solo cubre los que quedan dentro de esa carpeta; este cae al lado del
+# package.json y `git add -A` se lo lleva.
+build-*.tar.gz

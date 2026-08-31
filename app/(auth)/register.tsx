@@ -401,6 +401,15 @@ export default function RegisterScreen() {
             onToggleSecure={() => setShowPass(!showPass)}
             onBlur={validarPassword}
             error={errorPassword}
+            // Le dicen al gestor de contraseñas del sistema que esto es una
+            // contraseña NUEVA, para que ofrezca guardarla. Sin estas dos props
+            // el telefono no propone nada al crearla —solo el campo de login
+            // las tenia—, asi que la persona se inventa una clave que su
+            // dispositivo nunca guardo y una semana despues, cuando expira la
+            // sesion, tiene que recordarla de memoria. Es la raiz de "no me
+            // acuerdo", y no se arregla con nada del lado del servidor.
+            textContentType="newPassword"
+            autoComplete="new-password"
           />
 
           {/* Fecha de nacimiento — un solo campo con auto-formato */}

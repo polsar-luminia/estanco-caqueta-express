@@ -89,6 +89,11 @@ export async function apiFetch<T = any>(
     // endpoint protegido.
     const esEndpointAuth = /^\/clientes\/(login|registrar|reset-password)/.test(path);
     if (token && !esEndpointAuth) {
+      // El evento `sesion_expirada` NO se emite aqui aunque este sea el punto
+      // exacto donde se detecta: `tracker.ts` importa `getToken` de este mismo
+      // archivo, asi que importarlo de vuelta seria un ciclo. Lo emite el
+      // handler de `stores/auth.ts`, que es ademas donde la distincion tiene
+      // sentido: por ahi pasa la expiracion y no el logout voluntario.
       await removeToken();
       _onUnauthorized?.();
     }
@@ -160,6 +165,26 @@ export async function apiFetch<T = any>(
       msg = 'Error del servidor, intenta de nuevo';
     } else if (res.status === 403) {
       msg = 'No tienes permiso para hacer esto';
+    } else if (res.status === 429) {
+      // EL CASO QUE PRODUCIA LA CADENA `Error 429`, literal, en la pantalla.
+      //
+      // La whitelist de arriba tenia el copy VIEJO del backend
+      // ('Demasiados intentos fallidos, intente de nuevo en 15 minutos') y el
+      // backend hacia rato mandaba otro. No coincidian, el body no traia
+      // `mostrable`, y 429 no caia en ninguna rama especial: terminaba en el
+      // `else` de abajo. 33 eventos de produccion registran exactamente eso —
+      // sin explicacion, sin tiempo de espera y sin salida.
+      //
+      // Ahora hay dos redes debajo del texto del servidor: `mostrable: true`
+      // (que el backend ya manda desde el 31-ago-2026) y esta rama por STATUS,
+      // que no puede desincronizarse de ningun copy. Y el `retry-after` que ya
+      // venia en la cabecera y se tiraba a la basura convierte un "espera" sin
+      // numero en una espera con final.
+      const espera = Number(res.headers?.get?.('retry-after'));
+      const minutos = Number.isFinite(espera) && espera > 0 ? Math.ceil(espera / 60) : null;
+      msg = minutos
+        ? `Demasiados intentos. Espera ${minutos} minuto${minutos === 1 ? '' : 's'} o toca «¿Olvidaste tu contraseña?».`
+        : 'Demasiados intentos. Espera unos minutos o toca «¿Olvidaste tu contraseña?».';
     } else {
       msg = `Error ${res.status}`;
     }
@@ -172,6 +197,16 @@ export async function apiFetch<T = any>(
     const apiError = new Error(msg) as ApiError;
     apiError.status = res.status;
     if (bodyParsed) apiError.body = body;
+    // `retry-after` viene en la CABECERA, no en el body, y hasta hoy se tiraba
+    // a la basura. Es lo que convierte un "espera unos minutos" sin numero en
+    // una espera con final, y lo que le da a `login_bloqueado` sus segundos.
+    // `?.` a proposito: un Response del fetch real SIEMPRE trae headers, pero
+    // aqui llegan tambien respuestas fabricadas (pruebas, y cualquier capa que
+    // se interponga). Leerlo a secas convierte un 400 corriente en un
+    // "Cannot read properties of undefined", que es un error que apunta al
+    // lado equivocado y ademas TAPA el mensaje real del servidor.
+    const retry = Number(res.headers?.get?.('retry-after'));
+    if (Number.isFinite(retry) && retry > 0) apiError.retryAfter = retry;
     throw apiError;
   }
 
@@ -184,6 +219,8 @@ export async function apiFetch<T = any>(
 export type ApiError = Error & {
   status?: number;
   body?: { error?: string; soporte_url?: string; codigo_error?: string } & Record<string, unknown>;
+  /** Segundos de espera del header `retry-after`, cuando el servidor lo manda (429). */
+  retryAfter?: number;
 };
 
 export async function loginCliente(telefono: string, password: string) {

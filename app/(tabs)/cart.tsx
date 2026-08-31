@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { View, Text, FlatList, TextInput, Pressable, KeyboardAvoidingView, Platform, AppState } from "react-native";
 import { Image as ImagenExpo } from "expo-image";
-import { useRouter, Redirect, useFocusEffect } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Sentry from "@sentry/react-native";
 import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
@@ -940,8 +940,19 @@ export default function CartScreen() {
   // Items en el cart (Zustand persistido) sobreviven el registro y se mantienen
   // disponibles al volver. Bloqueamos cart únicamente cuando hay items pendientes
   // (un guest que solo abre el tab ve la pantalla vacía y puede volver a explorar).
-  // A REGISTRO, no a login: la mayoría de invitados no tiene cuenta, y el pie del
-  // registro ya ofrece "¿Ya tienes una cuenta? Iniciar sesión" para el que sí.
+  //
+  // ANTES ESTO ERA UN `<Redirect href="/(auth)/register" />` A SECAS, y ahi se
+  // cerraba un bucle medido: 151 dispositivos abrieron /register dentro de los
+  // 10 minutos siguientes a fallar el login, y 40 recibieron "este número ya
+  // tiene una cuenta" (50 eventos `registro_codigo_fallido` con motivo
+  // telefono_ya_registrado). Alguien que no puede entrar deduce que no tiene
+  // cuenta, va a crearla, y el sistema le dice que ya la tiene. El muro
+  // alimentaba ese bucle desde el otro extremo: mandaba a TODOS a registro. La
+  // salida existia —el pie de /register ofrece "Inicia sesión"— pero al final
+  // de la pantalla, despues del formulario.
+  //
+  // Ahora se pregunta. Crear cuenta sigue siendo lo primero (la mayoria de
+  // invitados si es nueva), pero entrar deja de estar escondido.
   if (isAuthLoading) return null;
   if (!isAuthenticated && items.length > 0) {
     // El rebote se mide UNA vez por montaje: es la base del embudo
@@ -950,7 +961,35 @@ export default function CartScreen() {
       muroTrackeadoRef.current = true;
       tracker.track('registro_muro_mostrado', { items_count: items.length, subtotal }, 'cart');
     }
-    return <Redirect href="/(auth)/register" />;
+    return (
+      <View className="flex-1 items-center justify-center px-8" style={{ backgroundColor: colors.bg }}>
+        <CartIcon color="#BCCABA" size={48} />
+        <Text style={{ fontSize: 20, fontFamily: fuentes.titulo, color: "#3D4A3C", marginTop: 12, textAlign: "center" }}>
+          Un paso antes de tu pedido
+        </Text>
+        <Text style={{ fontSize: 14, fontFamily: fuentes.destacado, color: colors.muted, marginTop: 6, marginBottom: 26, textAlign: "center" }}>
+          Tu carrito te espera. Solo necesitamos saber quién eres.
+        </Text>
+
+        <Pressable
+          onPress={() => router.push("/(auth)/register")}
+          accessibilityRole="button"
+          accessibilityLabel="Crear una cuenta nueva"
+          style={{ width: "100%", backgroundColor: colors.green, paddingVertical: 16, borderRadius: 14, alignItems: "center", ...shadows.greenBtn }}
+        >
+          <Text style={{ color: colors.white, fontFamily: fuentes.destacado, fontSize: 16 }}>Crear mi cuenta</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push("/(auth)/login")}
+          accessibilityRole="button"
+          accessibilityLabel="Iniciar sesión con una cuenta existente"
+          style={{ width: "100%", marginTop: 12, paddingVertical: 15, borderRadius: 14, borderWidth: 1.5, borderColor: colors.green, alignItems: "center" }}
+        >
+          <Text style={{ color: colors.green, fontFamily: fuentes.destacado, fontSize: 16 }}>Ya tengo cuenta</Text>
+        </Pressable>
+      </View>
+    );
   }
 
   if (items.length === 0) {

@@ -34,14 +34,21 @@ export const STAGING_URL = "https://pruebas.estancocaqueta.com/api/v1";
 // naranja permanente, y su cuenta de staging se borro tres veces creyendo que
 // era basura.
 //
-// Reactivada a proposito el 23-ago-2026 para probar la 1.3.2 (medio de pago +
-// soporte configurable) desde un TestFlight de PRODUCCION antes de decidir si
-// sale por OTA o binario nuevo: el build de la tienda es el mismo para todos,
-// y este numero es el unico interruptor que lo manda a staging sin tocar el
-// binario de nadie mas. Sigue siendo temporal — quitarlo de aqui en cuanto
-// termine la prueba, por la misma razon que se vacio la vez pasada: mientras
-// este numero siga aqui, NO sirve para comprar de verdad en la tienda.
-export const TELEFONOS_PRUEBA: string[] = ["3183224021"];
+// VACIA. Se reactivo el 23-ago-2026 con un numero para probar la 1.3.2 desde un
+// TestFlight de produccion, con la nota de quitarlo "en cuanto termine la
+// prueba". La 1.3.2 lleva publicada desde entonces y el numero seguia aqui.
+//
+// Se vacia el 31-ago-2026 por lo que descubrio la auditoria del ingreso, y no
+// es solo higiene: `aplicarModoPorTelefono()` corre en `login.tsx` ANTES de
+// autenticar, o sea que la pantalla de login es un interruptor de entorno
+// accionable desde el campo de telefono. Mientras un numero este en esta lista
+// su dueño NO puede comprar de verdad —la app entera lo manda a staging— y el
+// sintoma es que sus pedidos simplemente no existen para el negocio.
+//
+// STAGING-ESTANCO.md ya declaraba esta lista vacia desde el 21/08 y llevaba
+// diez dias sin serlo. Para probar contra staging esta el perfil `staging` de
+// eas.json, que no depende de que nadie se acuerde de revertir una constante.
+export const TELEFONOS_PRUEBA: string[] = [];
 
 const STORAGE_KEY = "backend_pruebas_activo";
 

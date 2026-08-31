@@ -22,13 +22,39 @@ export default function LoginScreen() {
   const [focusedField, setFocusedField] = useState<"phone" | "password" | null>(null);
   const [loginError, setLoginError] = useState(false);
   const [loginErrorMsg, setLoginErrorMsg] = useState("");
+  // Tras 2 fallos la recuperacion deja de ser un enlace pequeño y pasa a ser un
+  // boton. Es el unico camino que de verdad rescata gente: de 155 dispositivos
+  // que llegaron a /forgot-password, 82 entraron despues. Y el momento es
+  // estrechisimo — de los que fallan, o se resuelve en la misma sentada o se
+  // pierden: 131 de 217 no volvieron nunca, y solo 21 volvieron pasada la hora.
+  const [fallos, setFallos] = useState(0);
   const login = useAuthStore((s) => s.login);
   const submittingRef = useRef(false);
+
+  // Misma limpieza que hace el backend, para no mandar algo que ya sabemos que
+  // va a fallar. `login.tsx` era la UNICA de las tres pantallas que no validaba
+  // el formato (register.tsx y forgot-password.tsx si lo hacen desde siempre),
+  // asi que un digito de mas o un "+57" volvia como "Teléfono o contraseña
+  // incorrectos" — un mensaje que apunta al lado equivocado y manda a la
+  // persona a cambiar una contraseña que estaba bien.
+  const telefonoLimpio = (t: string) => {
+    const limpio = t.replace(/[\s.\-()]/g, "");
+    if (/^\d{10}$/.test(limpio)) return limpio;
+    const sinIndicativo = limpio.replace(/^\+?57/, "");
+    return /^3\d{9}$/.test(sinIndicativo) ? sinIndicativo : limpio;
+  };
 
   const handleLogin = async () => {
     if (submittingRef.current) return;
     if (!telefono || !password) {
       Toast.show({ type: "error", text1: "Ingresa tu teléfono y contraseña" });
+      return;
+    }
+    const tel = telefonoLimpio(telefono);
+    if (!/^\d{10}$/.test(tel)) {
+      setLoginError(true);
+      setLoginErrorMsg("Escribe los 10 dígitos de tu celular, sin +57");
+      Toast.show({ type: "error", text1: "Teléfono incompleto", text2: "Son 10 dígitos, sin el +57" });
       return;
     }
     submittingRef.current = true;
@@ -41,14 +67,31 @@ export default function LoginScreen() {
       // Numero de prueba -> toda la app pasa a staging ANTES de autenticar (el
       // token queda emitido por el backend correcto). Cualquier otro numero
       // devuelve la app a produccion. Ver src/lib/backendPruebas.ts.
-      await aplicarModoPorTelefono(telefono);
-      await login(telefono.trim(), password);
+      await aplicarModoPorTelefono(tel);
+      await login(tel, password);
+      setFallos(0);
       tracker.track("sesion_iniciada", {}, "login");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo iniciar sesión";
+      const status = (err as { status?: number } | undefined)?.status;
+      setFallos((n) => n + 1);
       // El mensaje del backend es una etiqueta acotada (credenciales, bloqueo,
       // red), no texto del usuario: no lleva PII.
       tracker.track("login_fallido", { motivo: msg.slice(0, 80) }, "login");
+      // Un bloqueo NO es un fallo de credenciales, y hasta hoy se contaban
+      // juntos. Los 33 casos de `Error 429` se identificaron por el TEXTO del
+      // mensaje, que es fragil: un cambio de copy en el backend rompia la
+      // metrica en silencio, y de hecho ya habia pasado. El status no se
+      // desincroniza de ningun copy.
+      //   429 = limitador (por IP+telefono) · 423 = bloqueo de la cuenta
+      if (status === 429 || status === 423) {
+        const espera = (err as { retryAfter?: number } | undefined)?.retryAfter;
+        tracker.track(
+          "login_bloqueado",
+          { origen: status === 429 ? "rate_limit" : "lockout", espera_segundos: espera },
+          "login",
+        );
+      }
       Sentry.captureException(err instanceof Error ? err : new Error(msg), {
         tags: { flow: "auth", screen: "login" },
       });
@@ -233,18 +276,43 @@ export default function LoginScreen() {
               </Text>
             )}
 
-            {/* Olvidaste contraseña */}
-            <Pressable
-              onPress={() => router.push("/(auth)/forgot-password")}
-              accessibilityRole="button"
-              accessibilityLabel="Recuperar tu contraseña"
-              hitSlop={16}
-              style={{ alignSelf: "flex-end", marginTop: 4 }}
-            >
-              <Text style={{ fontSize: 12, color: colors.green, fontFamily: fuentes.destacado }}>
-                ¿Olvidaste tu contraseña?
-              </Text>
-            </Pressable>
+            {/* Olvidaste contraseña.
+                Con 2 o mas fallos deja de ser un enlace de 12px alineado a la
+                derecha y pasa a ser un boton de ancho completo. No es cosmetica:
+                es la unica salida que rescata gente (82 de 155), y la ventana
+                para usarla es la misma sentada — quien no la encuentra ahi, no
+                vuelve. */}
+            {fallos >= 2 ? (
+              <Pressable
+                onPress={() => router.push("/(auth)/forgot-password")}
+                accessibilityRole="button"
+                accessibilityLabel="Recuperar tu contraseña"
+                style={{
+                  marginTop: 12,
+                  paddingVertical: 13,
+                  borderRadius: radii.input,
+                  borderWidth: 1.5,
+                  borderColor: colors.green,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 14, color: colors.green, fontFamily: fuentes.destacado }}>
+                  Recuperar mi contraseña
+                </Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => router.push("/(auth)/forgot-password")}
+                accessibilityRole="button"
+                accessibilityLabel="Recuperar tu contraseña"
+                hitSlop={16}
+                style={{ alignSelf: "flex-end", marginTop: 4 }}
+              >
+                <Text style={{ fontSize: 12, color: colors.green, fontFamily: fuentes.destacado }}>
+                  ¿Olvidaste tu contraseña?
+                </Text>
+              </Pressable>
+            )}
           </View>
 
           {/* Botón Ingresar */}

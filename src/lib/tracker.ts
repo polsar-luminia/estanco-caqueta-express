@@ -83,6 +83,11 @@ export type EventTipo =
   | 'direccion_seleccionada'
   | 'login_iniciado'
   | 'login_fallido'
+  // Ingreso, auditoria del 31-ago-2026. Registrados en el backend (eventos.js
+  // TIPOS_VALIDOS) ANTES de que saliera este OTA: al reves, el servidor los
+  // descarta con un 204 en silencio y la instrumentacion nace muerta.
+  | 'sesion_expirada'
+  | 'login_bloqueado'
   | 'producto_agotado_visto'
   // H — frío asegurado
   | 'frio_ofrecido'
@@ -226,6 +231,14 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   direccion_seleccionada: ['direccion_id', 'con_pin'],
   login_iniciado: ['origen'],
   login_fallido: ['motivo'],
+  // La sesion dura 7 dias exactos y no se renueva: toda la base vuelve al login
+  // cada semana. Sin payload a proposito — lo que hace falta saber es CUANDO
+  // pasa y a cuantos, y cualquier dato de la ruta que la disparo empieza a
+  // parecerse a un rastro de navegacion.
+  sesion_expirada: [],
+  // `origen` distingue el limitador (rate_limit) del bloqueo de cuenta
+  // (lockout), que son cosas distintas y hasta hoy se contaban juntas.
+  login_bloqueado: ['origen', 'espera_segundos'],
   // Demanda insatisfecha por producto.
   producto_agotado_visto: ['producto_id', 'nombre'],
 
