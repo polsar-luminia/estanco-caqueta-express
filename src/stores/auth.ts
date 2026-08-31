@@ -2,6 +2,7 @@ import { create } from "zustand";
 import * as Sentry from "@sentry/react-native";
 import * as Notifications from "expo-notifications";
 import { metaIdentify, metaClearUser } from "../lib/metaEvents";
+import { tracker } from "../lib/tracker";
 import {
   getToken,
   setToken,
@@ -184,6 +185,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 
 // Cuando apiFetch recibe un 401, resetea el store sin dep circular
 registerUnauthorizedHandler(() => {
+  // POR AQUI SOLO PASA LA EXPIRACION, NO EL LOGOUT VOLUNTARIO — `logout()`
+  // limpia el estado por su cuenta y nunca llama a este handler. La sesion dura
+  // 7 dias exactos y no se renueva, asi que toda la base vuelve al login cada
+  // semana, pero esa expiracion era INVISIBLE: la persona reaparecia en el
+  // login y no habia forma de saber si venia de una sesion caida o de haberse
+  // deslogueado. Va aqui y no en `api.ts` porque `tracker.ts` importa de
+  // `api.ts`: al reves seria un ciclo.
+  tracker.track("sesion_expirada", {}, undefined);
   // M-PERS-13: limpieza OS-side igual que en logout manual.
   void limpiarNotificacionesOS();
   void runLogoutHandlers();

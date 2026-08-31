@@ -21,8 +21,28 @@ export default function LoginScreen() {
   const [focusedField, setFocusedField] = useState<"phone" | "password" | null>(null);
   const [loginError, setLoginError] = useState(false);
   const [loginErrorMsg, setLoginErrorMsg] = useState("");
+  // Error del TELEFONO, separado del de credenciales: un aviso de formato bajo
+  // el campo de contraseña es el mismo defecto que este trabajo arregla.
+  const [errorTelefono, setErrorTelefono] = useState("");
+  // Tras 2 fallos la recuperacion deja de ser un enlace pequeño y pasa a ser un
+  // boton. Es el unico camino que rescata gente: de 155 dispositivos que
+  // llegaron a /forgot-password, 82 entraron despues. Y la ventana es la misma
+  // sentada — de 217 que fallaron, 131 no volvieron nunca.
+  const [fallos, setFallos] = useState(0);
   const login = useAuthStore((s) => s.login);
   const submittingRef = useRef(false);
+
+  // Misma limpieza que hace el backend, para no mandar algo que ya sabemos que
+  // va a fallar. `login.tsx` era la UNICA de las tres pantallas que no validaba
+  // el formato (register.tsx y forgot-password.tsx si lo hacen), asi que un
+  // digito de mas o un "+57" volvia como "Teléfono o contraseña incorrectos" —
+  // un mensaje que apunta al lado equivocado.
+  const telefonoLimpio = (t: string) => {
+    const limpio = t.replace(/[\s.\-()]/g, "");
+    if (/^\d{10}$/.test(limpio)) return limpio;
+    const sinIndicativo = limpio.replace(/^\+?57/, "");
+    return /^3\d{9}$/.test(sinIndicativo) ? sinIndicativo : limpio;
+  };
 
   const handleLogin = async () => {
     if (submittingRef.current) return;
@@ -30,6 +50,13 @@ export default function LoginScreen() {
       Toast.show({ type: "error", text1: "Ingresa tu teléfono y contraseña" });
       return;
     }
+    const tel = telefonoLimpio(telefono);
+    if (!/^\d{10}$/.test(tel)) {
+      setErrorTelefono("Escribe los 10 dígitos de tu celular, sin +57");
+      Toast.show({ type: "error", text1: "Teléfono incompleto", text2: "Son 10 dígitos, sin el +57" });
+      return;
+    }
+    setErrorTelefono("");
     submittingRef.current = true;
     setLoading(true);
     setLoginError(false);
@@ -37,13 +64,28 @@ export default function LoginScreen() {
     // pedidos. Sin estos dos eventos no hay forma de saberlo.
     tracker.track("login_iniciado", { origen: "login" }, "login");
     try {
-      await login(telefono.trim(), password);
+      await login(tel, password);
+      setFallos(0);
       tracker.track("sesion_iniciada", {}, "login");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "No se pudo iniciar sesión";
+      const status = (err as { status?: number } | undefined)?.status;
+      setFallos((n) => n + 1);
       // El mensaje del backend es una etiqueta acotada (credenciales, bloqueo,
       // red), no texto del usuario: no lleva PII.
       tracker.track("login_fallido", { motivo: msg.slice(0, 80) }, "login");
+      // Un bloqueo NO es un fallo de credenciales, y hasta hoy se contaban
+      // juntos. Los 33 casos de 429 se identificaron por el TEXTO del mensaje,
+      // que se rompe con cada cambio de copy. El status no.
+      //   429 = limitador (por IP+telefono) · 423 = bloqueo de la cuenta
+      if (status === 429 || status === 423) {
+        const espera = (err as { retryAfter?: number } | undefined)?.retryAfter;
+        tracker.track(
+          "login_bloqueado",
+          { origen: status === 429 ? "rate_limit" : "lockout", espera_segundos: espera },
+          "login",
+        );
+      }
       Sentry.captureException(err instanceof Error ? err : new Error(msg), {
         tags: { flow: "auth", screen: "login" },
       });
@@ -65,8 +107,9 @@ export default function LoginScreen() {
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1.5,
-    borderColor:
-      focusedField === "phone" ? colors.green : colors.line,
+    borderColor: errorTelefono
+      ? colors.danger
+      : focusedField === "phone" ? colors.green : colors.line,
   };
 
   const passwordStyle = {
@@ -177,12 +220,17 @@ export default function LoginScreen() {
                 placeholderTextColor={colors.faint}
                 keyboardType="phone-pad"
                 value={telefono}
-                onChangeText={setTelefono}
+                onChangeText={(v) => { setTelefono(v); if (errorTelefono) setErrorTelefono(""); }}
                 autoCapitalize="none"
                 onFocus={() => setFocusedField("phone")}
                 onBlur={() => setFocusedField(null)}
               />
             </View>
+            {errorTelefono !== "" && (
+              <Text style={{ fontSize: 12, color: colors.danger, fontWeight: "500", marginTop: 4, marginLeft: 4 }}>
+                {errorTelefono}
+              </Text>
+            )}
           </View>
 
           {/* Campo Contraseña */}
@@ -228,18 +276,42 @@ export default function LoginScreen() {
               </Text>
             )}
 
-            {/* Olvidaste contraseña */}
-            <Pressable
-              onPress={() => router.push("/(auth)/forgot-password")}
-              accessibilityRole="button"
-              accessibilityLabel="Recuperar tu contraseña"
-              hitSlop={16}
-              style={{ alignSelf: "flex-end", marginTop: 4 }}
-            >
-              <Text style={{ fontSize: 12, color: colors.green, fontWeight: "600" }}>
-                ¿Olvidaste tu contraseña?
-              </Text>
-            </Pressable>
+            {/* Olvidaste contraseña.
+                Con 2 o mas fallos deja de ser un enlace de 12px alineado a la
+                derecha y pasa a ser un boton de ancho completo. Es la unica
+                salida que rescata gente, y la ventana para usarla es la misma
+                sentada — quien no la encuentra ahi, no vuelve. */}
+            {fallos >= 2 ? (
+              <Pressable
+                onPress={() => router.push("/(auth)/forgot-password")}
+                accessibilityRole="button"
+                accessibilityLabel="Recuperar tu contraseña"
+                style={{
+                  marginTop: 12,
+                  paddingVertical: 13,
+                  borderRadius: radii.input,
+                  borderWidth: 1.5,
+                  borderColor: colors.green,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontSize: 14, color: colors.green, fontWeight: "600" }}>
+                  Recuperar mi contraseña
+                </Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => router.push("/(auth)/forgot-password")}
+                accessibilityRole="button"
+                accessibilityLabel="Recuperar tu contraseña"
+                hitSlop={16}
+                style={{ alignSelf: "flex-end", marginTop: 4 }}
+              >
+                <Text style={{ fontSize: 12, color: colors.green, fontWeight: "600" }}>
+                  ¿Olvidaste tu contraseña?
+                </Text>
+              </Pressable>
+            )}
           </View>
 
           {/* Botón Ingresar */}

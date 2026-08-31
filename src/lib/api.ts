@@ -154,19 +154,53 @@ export async function apiFetch<T = any>(
       msg = 'Error del servidor, intenta de nuevo';
     } else if (res.status === 403) {
       msg = 'No tienes permiso para hacer esto';
+    } else if (res.status === 429) {
+      // EL CASO QUE PRODUCIA LA CADENA `Error 429`, literal, en la pantalla.
+      // La whitelist de arriba tenia el copy VIEJO del backend y el backend
+      // hacia rato mandaba otro; no coincidian, el body no traia `mostrable`, y
+      // 429 no caia en ninguna rama especial: terminaba en el `else`. 33 eventos
+      // de produccion registran exactamente eso — sin explicacion, sin tiempo de
+      // espera y sin salida, y con el canje del codigo de recuperacion tambien
+      // bloqueado.
+      //
+      // Esta rama va por STATUS, que no puede desincronizarse de ningun copy, y
+      // el `retry-after` que ya venia en la cabecera y se tiraba a la basura
+      // convierte un "espera" sin numero en una espera con final.
+      const espera = Number(res.headers?.get?.('retry-after'));
+      const minutos = Number.isFinite(espera) && espera > 0 ? Math.ceil(espera / 60) : null;
+      msg = minutos
+        ? `Demasiados intentos. Espera ${minutos} minuto${minutos === 1 ? '' : 's'} o toca «¿Olvidaste tu contraseña?».`
+        : 'Demasiados intentos. Espera unos minutos o toca «¿Olvidaste tu contraseña?».';
     } else {
       msg = `Error ${res.status}`;
     }
     if (__DEV__ && errorField && !ERRORES_USUARIO[errorField]) {
       console.warn(`[apiFetch] body.error sin whitelist → enmascarado. status=${res.status} path=${path} error="${errorField}"`);
     }
-    throw new Error(msg);
+    // El status viaja en el error (aditivo: quien solo lee .message no cambia).
+    // Es lo que permite distinguir un bloqueo (429/423) de una credencial mala
+    // sin regex sobre el texto — que es como se venian identificando y por eso
+    // la metrica se rompia con cada cambio de copy.
+    const apiError = new Error(msg) as ApiError;
+    apiError.status = res.status;
+    if (bodyParsed) apiError.body = body;
+    const retry = Number(res.headers?.get?.('retry-after'));
+    if (Number.isFinite(retry) && retry > 0) apiError.retryAfter = retry;
+    throw apiError;
   }
 
   return res.json();
 }
 
 // --- Auth ---
+
+/** Error de apiFetch con el status HTTP y el body original adjuntos. */
+export type ApiError = Error & {
+  status?: number;
+  body?: { error?: string } & Record<string, unknown>;
+  /** Segundos de espera del header `retry-after`, cuando el servidor lo manda (429). */
+  retryAfter?: number;
+};
 
 export async function loginCliente(telefono: string, password: string) {
   return apiFetch<{ token: string; cliente: Cliente }>("/clientes/login", {

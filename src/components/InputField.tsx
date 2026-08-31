@@ -1,5 +1,5 @@
 import { ReactNode, useRef, useState } from "react";
-import { View, Text, TextInput, Pressable, KeyboardTypeOptions } from "react-native";
+import { View, Text, TextInput, Pressable, KeyboardTypeOptions, TextInputProps } from "react-native";
 import { EyeIcon, EyeOffIcon } from "./icons/AppIcons";
 import { colors, radii } from "../constants/theme";
 
@@ -18,6 +18,13 @@ interface InputFieldProps {
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
   returnKeyType?: "done" | "go" | "next" | "search" | "send";
   onSubmitEditing?: () => void;
+  // Se exponen para que los campos que CREAN contraseña puedan declararse como
+  // tales ante el gestor de contraseñas del sistema. Hasta hoy solo el campo de
+  // login los tenia (login.tsx usa su propio TextInput), asi que el telefono
+  // podia AUTOCOMPLETAR una contraseña existente pero nunca ofrecia GUARDAR la
+  // recien creada. Esa es la raiz de "no me acuerdo de mi contraseña".
+  textContentType?: TextInputProps["textContentType"];
+  autoComplete?: TextInputProps["autoComplete"];
 }
 
 export function InputField({
@@ -35,13 +42,31 @@ export function InputField({
   autoCapitalize,
   returnKeyType,
   onSubmitEditing,
+  textContentType,
+  autoComplete,
 }: InputFieldProps) {
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
+  // Un campo de contraseña NUNCA se capitaliza ni se autocorrige. El default
+  // "words" es correcto para nombres y direcciones, pero sobre una contraseña la
+  // rompe en silencio: el teclado le mete mayuscula a la primera letra AL
+  // CREARLA (registro y reset usan este componente) mientras que login.tsx tiene
+  // su propio TextInput con autoCapitalize="none". La persona guarda
+  // "Susana123" creyendo que puso "susana123" y despues no puede entrar, con el
+  // mensaje "Teléfono o contraseña incorrectos" apuntando al lado equivocado.
+  //
+  // `showToggle` cuenta como contraseña, y esa es la condicion que importa: con
+  // `secureTextEntry` a secas el campo quedaria desprotegido justo en el estado
+  // en que SI capitaliza. Android suprime la capitalizacion del teclado mientras
+  // el campo es seguro; en cuanto se toca el ojito deja de serlo y Gboard
+  // recupera su comportamiento normal. Comprobado en Android 14 + Gboard.
+  const esPassword = secureTextEntry || showToggle;
   const autoCapitalizeFinal =
     autoCapitalize ??
-    (keyboardType === "phone-pad" || keyboardType === "email-address" ? "none" : "words");
+    (esPassword || keyboardType === "phone-pad" || keyboardType === "email-address"
+      ? "none"
+      : "words");
 
   // Asegurar foco explicito al tocar cualquier parte del campo (no solo el TextInput).
   // Sin esto, en algunos casos (sin border/shadow visibles) iOS no detecta correctamente
@@ -96,6 +121,10 @@ export function InputField({
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); onBlur?.(); }}
           autoCapitalize={autoCapitalizeFinal}
+          autoCorrect={!esPassword}
+          spellCheck={!esPassword}
+          textContentType={textContentType}
+          autoComplete={autoComplete}
           returnKeyType={returnKeyType ?? "next"}
           onSubmitEditing={onSubmitEditing}
         />
