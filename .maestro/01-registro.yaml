@@ -63,27 +63,43 @@ appId: co.estancocaqueta.express
           notVisible: "No pudimos cargar el catálogo"
           timeout: 30000
 
-# Invitado → login → "Crear cuenta"
+# Invitado → REGISTRO.
+#
+# Desde el 18-ago-2026 (d2df8ac "el invitado va a REGISTRO, no a login") tocar
+# "Mi perfil" sin sesion cae DIRECTO en el formulario de registro. Antes caia en
+# el login y habia que tocar "Crear una cuenta nueva"; ese rodeo ya no existe.
+# Este flujo no se actualizo entonces, asi que llevaba desde esa fecha fallando
+# en su primer paso — y como la suite tampoco se podia correr (el esquema del
+# arnes estaba viejo y el inicio ni cargaba), nadie lo supo.
+#
+# Se contempla igual el resto de estados posibles, que siguen siendo reales:
+# una sesion viva (en iOS el Keychain sobrevive a clearState) deja el PERFIL, y
+# un token revocado deja el LOGIN.
 - tapOn: "Abrir mi perfil"
 
-# Si quedo una sesion viva (en iOS el Keychain sobrevive a clearState y hasta a
-# la desinstalacion en el simulador), cerrarla para volver al estado invitado.
 - runFlow:
     when:
-      # Se condiciona a NO estar en el login, no a ver el boton de cerrar
-      # sesion: ese boton vive al final del perfil, bajo el pliegue, y `visible`
-      # no lo encuentra sin hacer scroll antes.
-      notVisible: "Iniciar sesión"
+      notVisible: "Crea tu cuenta gratis"
     commands:
-      - scrollUntilVisible:
-          element: "Cerrar sesión y salir de mi cuenta"
-      - tapOn: "Cerrar sesión y salir de mi cuenta"
-      - tapOn: "Sí"
-      - extendedWaitUntil:
-          visible: "Iniciar sesión"
-          timeout: 15000
-- assertVisible: "Iniciar sesión"
-- tapOn: "Crear una cuenta nueva"
+      # No estamos en el registro. Si tampoco hay login a la vista, es el perfil
+      # con sesion viva: cerrarla. El boton vive bajo el pliegue, por eso el
+      # scroll antes del tap.
+      - runFlow:
+          when:
+            notVisible: "Iniciar sesión"
+          commands:
+            - scrollUntilVisible:
+                element: "Cerrar sesión y salir de mi cuenta"
+            - tapOn: "Cerrar sesión y salir de mi cuenta"
+            - tapOn: "Sí"
+      # Si quedamos en el login, de ahi al registro.
+      - runFlow:
+          when:
+            visible: "Iniciar sesión"
+          commands:
+            - tapOn: "Crear una cuenta nueva"
+
+- assertVisible: "Crea tu cuenta gratis"
 
 # Formulario de registro (los placeholders son los selectores estables)
 - tapOn:

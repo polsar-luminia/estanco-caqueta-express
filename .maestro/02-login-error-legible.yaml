@@ -50,6 +50,22 @@ appId: co.estancocaqueta.express
 
 - tapOn: "Abrir mi perfil"
 
+# Desde el 18-ago-2026 (d2df8ac "el invitado va a REGISTRO, no a login") un
+# invitado que toca "Mi perfil" NO cae en el login: cae en el REGISTRO. Estos
+# flujos nunca se actualizaron, asi que la suite entera llevaba desde entonces
+# fallando en su primer paso — y como nadie la corria, nadie lo supo.
+#
+# El pie del registro lleva al login. Ojo con el selector: el texto visible es
+# "Inicia sesión" pero el accessibilityLabel es "Iniciar sesión con una cuenta
+# existente", y Maestro exige coincidencia COMPLETA (no subcadena), que es
+# justamente por lo que el `notVisible: "Iniciar sesión"` de abajo daba TRUE en
+# el registro y mandaba al flujo a cerrar una sesion que no existia.
+- runFlow:
+    when:
+      visible: "Iniciar sesión con una cuenta existente"
+    commands:
+      - tapOn: "Iniciar sesión con una cuenta existente"
+
 # Si quedo una sesion viva (en iOS el Keychain sobrevive a clearState y hasta a
 # la desinstalacion en el simulador), cerrarla para volver al estado invitado.
 - runFlow:
