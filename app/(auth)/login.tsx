@@ -28,6 +28,11 @@ export default function LoginScreen() {
   // estrechisimo — de los que fallan, o se resuelve en la misma sentada o se
   // pierden: 131 de 217 no volvieron nunca, y solo 21 volvieron pasada la hora.
   const [fallos, setFallos] = useState(0);
+  // Error del TELEFONO, separado del de credenciales. Sin esto el aviso de
+  // formato salia bajo el campo de contraseña y con ese campo en rojo — o sea,
+  // el mismo defecto que este trabajo viene a arreglar: un mensaje que señala
+  // al campo equivocado.
+  const [errorTelefono, setErrorTelefono] = useState("");
   const login = useAuthStore((s) => s.login);
   const submittingRef = useRef(false);
 
@@ -52,11 +57,11 @@ export default function LoginScreen() {
     }
     const tel = telefonoLimpio(telefono);
     if (!/^\d{10}$/.test(tel)) {
-      setLoginError(true);
-      setLoginErrorMsg("Escribe los 10 dígitos de tu celular, sin +57");
+      setErrorTelefono("Escribe los 10 dígitos de tu celular, sin +57");
       Toast.show({ type: "error", text1: "Teléfono incompleto", text2: "Son 10 dígitos, sin el +57" });
       return;
     }
+    setErrorTelefono("");
     submittingRef.current = true;
     setLoading(true);
     setLoginError(false);
@@ -113,8 +118,9 @@ export default function LoginScreen() {
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1.5,
-    borderColor:
-      focusedField === "phone" ? colors.green : colors.line,
+    borderColor: errorTelefono
+      ? colors.danger
+      : focusedField === "phone" ? colors.green : colors.line,
   };
 
   const passwordStyle = {
@@ -225,12 +231,17 @@ export default function LoginScreen() {
                 placeholderTextColor={colors.faint}
                 keyboardType="phone-pad"
                 value={telefono}
-                onChangeText={setTelefono}
+                onChangeText={(v) => { setTelefono(v); if (errorTelefono) setErrorTelefono(""); }}
                 autoCapitalize="none"
                 onFocus={() => setFocusedField("phone")}
                 onBlur={() => setFocusedField(null)}
               />
             </View>
+            {errorTelefono !== "" && (
+              <Text style={{ fontSize: 12, color: colors.danger, fontFamily: fuentes.destacado, marginTop: 4, marginLeft: 4 }}>
+                {errorTelefono}
+              </Text>
+            )}
           </View>
 
           {/* Campo Contraseña */}
