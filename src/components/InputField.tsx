@@ -1,5 +1,5 @@
 import { ReactNode, useRef, useState } from "react";
-import { View, Text, TextInput, Pressable, KeyboardTypeOptions, TextInputProps } from "react-native";
+import { View, Text, TextInput, Pressable, KeyboardTypeOptions, TextInputProps, Platform } from "react-native";
 import { EyeIcon, EyeOffIcon } from "./icons/AppIcons";
 import { colors, radii, fuentes } from "../constants/theme";
 
@@ -61,6 +61,27 @@ export function InputField({
   // seguidos y se rindio. `showToggle` cuenta como contraseña: con el ojito
   // abierto el campo es texto normal y el teclado capitaliza a la vista.
   const esPassword = secureTextEntry || showToggle;
+  // ANDROID: con el ojito ABIERTO no basta `autoCapitalize="none"` ni
+  // `autoCorrect={false}`. Gboard mantiene la palabra EN COMPOSICION (subrayada,
+  // con la tira de sugerencias activa) y al confirmarla —basta con tocar otro
+  // campo— la sustituye por la sugerencia resaltada. Escribir `hola` y pasar al
+  // campo siguiente deja `Hola ` en el campo: mayuscula inicial Y espacio final.
+  //
+  // Es el mismo desenlace que el defecto original (la persona guarda una
+  // contraseña distinta de la que escribio y despues no puede entrar) por un
+  // camino distinto, y por eso el primer arreglo no lo tapaba. Se descubrio el
+  // 31-ago-2026 con un explorador que escribio una contraseña de solo letras;
+  // la prueba manual habia usado `susana123`, y con digitos Gboard no ofrece
+  // sustitucion — por eso paso limpia.
+  //
+  // `visible-password` mapea a TYPE_TEXT_VARIATION_VISIBLE_PASSWORD, que es el
+  // tipo de campo que Gboard SI respeta para apagar sugerencias y composicion.
+  // Solo en Android: en iOS no existe ese tipo y el campo seguro ya no compone.
+  const keyboardTypeFinal: KeyboardTypeOptions =
+    esPassword && !secureTextEntry && Platform.OS === "android"
+      ? "visible-password"
+      : keyboardType;
+
   const autoCapitalizeFinal =
     autoCapitalize ??
     (esPassword || keyboardType === "phone-pad" || keyboardType === "email-address"
@@ -109,11 +130,16 @@ export function InputField({
       >
         <View style={{ marginRight: 12 }}>{icon}</View>
         <TextInput
+          // REMONTAJE AL ALTERNAR EL OJITO. Android fija el `inputType` del campo
+          // al crearlo; cambiar `secureTextEntry` sobre el MISMO campo montado no
+          // lo reaplica, asi que `visible-password` de abajo no llegaba a surtir
+          // efecto y Gboard seguia componiendo y sustituyendo la palabra.
+          key={esPassword ? (secureTextEntry ? "oculta" : "visible") : "normal"}
           ref={inputRef}
           style={{ flex: 1, fontFamily: fuentes.destacado, fontSize: 16, color: colors.ink }}
           placeholder={placeholder}
           placeholderTextColor={colors.faint}
-          keyboardType={keyboardType}
+          keyboardType={keyboardTypeFinal}
           secureTextEntry={secureTextEntry}
           value={value}
           onChangeText={onChangeText}
