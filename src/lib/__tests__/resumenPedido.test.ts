@@ -4,7 +4,6 @@ import { calcularResumen, envioDeZona } from '../resumenPedido';
 const BASE = {
   subtotal: 50000,
   envioCosto: 5000,
-  envioGratisMinimo: 150000,
 };
 
 describe('calcularResumen', () => {
@@ -18,21 +17,18 @@ describe('calcularResumen', () => {
     expect(r.total).toBe(45000);
   });
 
-  it('regala el envio al pasar el minimo por monto', () => {
-    const r = calcularResumen({ ...BASE, subtotal: 150000 });
-    expect(r).toMatchObject({ envio: 0, total: 150000, motivoEnvioGratis: 'monto' });
-  });
-
   it('regala el envio con puntos cuando todavia se cobraba', () => {
     const r = calcularResumen({ ...BASE, usaPuntos: true });
     expect(r).toMatchObject({ envio: 0, motivoEnvioGratis: 'puntos' });
   });
 
-  it('si el envio ya era gratis por monto, el motivo no son los puntos', () => {
-    // Importa para la UI: decirle "usaste tus puntos" a alguien a quien el servidor
-    // no se los va a descontar seria mentirle.
-    const r = calcularResumen({ ...BASE, subtotal: 200000, usaPuntos: true });
-    expect(r.motivoEnvioGratis).toBe('monto');
+  it('un subtotal enorme NO regala el envio', () => {
+    // Espejo de la prueba adversaria del servidor. El envio gratis por monto se
+    // acabo el 12-sep-2026 y esta es la que impide que vuelva sin que nadie lo
+    // note: si alguien reintroduce un `gratisPorMonto` al rediseniar el checkout,
+    // aca revienta antes de que un cliente vea "Gratis!" y le cobren $5.000.
+    const r = calcularResumen({ ...BASE, subtotal: 999_999_999 });
+    expect(r).toMatchObject({ envio: 5000, motivoEnvioGratis: null });
   });
 
   it('el cupon de envio gratis manda sobre los puntos', () => {
@@ -76,8 +72,11 @@ describe('calcularResumen — frío asegurado', () => {
   });
 
   it('el envío gratis no cubre el frío', () => {
-    const r = calcularResumen({ ...BASE, subtotal: 150000, frio: true, frioCosto: 1000 });
-    expect(r).toMatchObject({ envio: 0, frio: 1000, total: 151000 });
+    // Conseguía el envío gratis con subtotal 150000, por el umbral por monto que
+    // se acabó el 12-sep-2026. La regla que prueba —el frío se cobra igual— no
+    // cambió: se llega por el camino que sí queda.
+    const r = calcularResumen({ ...BASE, cuponEnvioGratis: true, frio: true, frioCosto: 1000 });
+    expect(r).toMatchObject({ envio: 0, frio: 1000, total: 51000 });
   });
 
   it('el precio del frío sale de la configuración, no de un valor fijo', () => {

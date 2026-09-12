@@ -12,6 +12,13 @@
  * solo lugar puro y con tests evita tocar dos veces el punto donde un error cobra de mas.
  *
  * Espejo de packages/api/src/routes/pedidos.js (calculo de envio y total).
+ *
+ * 12-sep-2026: SE ACABO EL ENVIO GRATIS POR MONTO. Aca vivia `gratisPorMonto`
+ * (`subtotal >= envioGratisMinimo`), que era 4 de cada 5 envios regalados. Ya no
+ * existe ese camino ni en el servidor ni aca. Quedan dos, los dos deliberados:
+ * un cupon de tipo envio_gratis, y el canje de puntos (500 desde la migracion
+ * 111). El servidor sigue mandando `envio_gratis_minimo` en /configuracion-app,
+ * pero es una lapida para los binarios sin OTA — no volver a leerla desde aca.
  */
 
 export interface EntradaResumen {
@@ -21,8 +28,6 @@ export interface EntradaResumen {
   descuentoCupon?: number;
   /** Costo de envio a aplicar: el de la zona si la tiene, si no el global. */
   envioCosto: number;
-  /** A partir de este subtotal el envio es gratis. */
-  envioGratisMinimo: number;
   /** El cliente pidio canjear puntos Y tiene saldo suficiente. */
   usaPuntos?: boolean;
   /** El cupon aplicado es de tipo envio_gratis. */
@@ -40,29 +45,26 @@ export interface ResumenPedido {
   frio: number;
   total: number;
   /** Para explicarle al cliente por que no le cobramos envio. */
-  motivoEnvioGratis: 'monto' | 'puntos' | 'cupon' | null;
+  motivoEnvioGratis: 'puntos' | 'cupon' | null;
 }
 
 export function calcularResumen(e: EntradaResumen): ResumenPedido {
   const subtotal = Math.max(0, e.subtotal || 0);
   const descuento = Math.max(0, e.descuentoCupon || 0);
 
-  // Mismo orden que el servidor: el monto y el cupon deciden primero, y solo si
-  // el envio todavia se cobra tiene sentido gastar los puntos. Canjear puntos
-  // por un envio que ya era $0 no le da nada al cliente.
-  const gratisPorMonto = subtotal >= e.envioGratisMinimo;
+  // Mismo orden que el servidor: el cupon decide primero, y solo si el envio
+  // todavia se cobra tiene sentido gastar los puntos. Canjear puntos por un
+  // envio que ya era $0 no le da nada al cliente.
   const gratisPorCupon = !!e.cuponEnvioGratis;
   const gratisPorPuntos = !!e.usaPuntos;
 
   let motivoEnvioGratis: ResumenPedido['motivoEnvioGratis'] = null;
-  if (gratisPorMonto) motivoEnvioGratis = 'monto';
-  else if (gratisPorCupon) motivoEnvioGratis = 'cupon';
+  if (gratisPorCupon) motivoEnvioGratis = 'cupon';
   else if (gratisPorPuntos) motivoEnvioGratis = 'puntos';
 
   const envio = motivoEnvioGratis ? 0 : Math.max(0, e.envioCosto || 0);
 
   // El frio se suma AL FINAL, fuera del subtotal. Esa es toda la regla:
-  //  - no acerca a nadie al envio gratis (que se mide contra el subtotal),
   //  - no cuenta para el pedido minimo,
   //  - no genera puntos,
   //  - y ningun cupon de descuento lo toca, porque los cupones son sobre mercancia.

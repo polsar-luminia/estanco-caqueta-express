@@ -1252,6 +1252,12 @@ export interface ConfigApp {
   /** Catalogo de motivos de cancelacion. Viene del servidor para poder cambiarlo
    *  sin publicar app (Android sigue en 1.2.3 y no recibe los OTA de 1.3.0). */
   motivos_cancelacion?: MotivoCancelacion[];
+  /** @deprecated Lapida de compatibilidad (12-sep-2026). El envio gratis por
+   *  monto se acabo; el servidor responde una constante inalcanzable
+   *  (ENVIO_GRATIS_MINIMO_LAPIDA en packages/api/src/lib/envio.js) solo para que
+   *  los binarios SIN OTA, que calculan el resumen en el telefono, no caigan a su
+   *  respaldo de 150.000 y prometan un envio gratis que el servidor no da.
+   *  NO volver a leerlo: el codigo nuevo ya no lo usa en ninguna parte. */
   envio_gratis_minimo: number;
   envio_costo: number;
   pedido_minimo: number;

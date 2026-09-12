@@ -8,14 +8,14 @@
  * detectado al rediseñar el checkout (1.3.2/build 94). Se extrae a un
  * archivo puro con su propia prueba precisamente para que no se repita al
  * volver a tocar el desglose.
+ *
+ * 12-sep-2026: se fue el caso "monto" con el envio gratis por monto. Quedan los
+ * dos motivos deliberados: cupon y puntos.
  */
-import { formatCOP } from "./format";
 import type { ResumenPedido } from "./resumenPedido";
 
-export function copyEnvioGratis(motivo: ResumenPedido["motivoEnvioGratis"], envioGratisMinimo: number): string | null {
+export function copyEnvioGratis(motivo: ResumenPedido["motivoEnvioGratis"]): string | null {
   switch (motivo) {
-    case "monto":
-      return `Envío gratis por superar ${formatCOP(envioGratisMinimo)}`;
     case "cupon":
       return "Envío gratis con tu cupón";
     case "puntos":

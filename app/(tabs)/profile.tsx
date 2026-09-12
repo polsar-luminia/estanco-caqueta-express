@@ -143,7 +143,13 @@ export default function ProfileScreen() {
   // el servidor de verdad exigia. La barra por ciclos ademas se rompia justo
   // en los multiplos de 100: alguien con exactamente 200 puntos (ya calificado)
   // la veia en 0%, pidiendole 100 mas.
-  const puntosMeta = configApp?.puntos_envio_gratis ?? 200;
+  //
+  // 500 desde la migracion 111 (12-sep-2026), y desde entonces es el UNICO
+  // camino por el que el cliente puede dejar de pagar el domicilio por su
+  // cuenta: el envio gratis por monto se acabo. El respaldo sigue al del
+  // servidor a proposito — si se separan, esta pantalla promete un canje que el
+  // servidor no va a hacer.
+  const puntosMeta = configApp?.puntos_envio_gratis ?? 500;
   const yaCalifica = puntos >= puntosMeta;
   const pct = Math.min(100, (puntos / puntosMeta) * 100);
   const puntosNext = Math.max(0, puntosMeta - puntos);

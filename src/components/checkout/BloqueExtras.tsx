@@ -17,7 +17,6 @@ interface Props {
   itemsElegibles: { nombre: string }[];
   onToggleFrio: (v: boolean) => void;
 
-  mostrarPuntos: boolean;
   puedeUsarPuntos: boolean;
   puntosParaEnvioGratis: number;
   puntos: number;
@@ -33,7 +32,6 @@ export function BloqueExtras({
   todosElegibles,
   itemsElegibles,
   onToggleFrio,
-  mostrarPuntos,
   puedeUsarPuntos,
   puntosParaEnvioGratis,
   puntos,
@@ -41,7 +39,11 @@ export function BloqueExtras({
   onToggleUsarPuntos,
 }: Props) {
   const hayFrio = frioActivo && hayElegibles;
-  const hayPuntos = mostrarPuntos && (puedeUsarPuntos || puntos > 0);
+  // Antes esto llevaba un `mostrarPuntos` que el carrito calculaba como
+  // `subtotal < envioGratisMinimo`: el canje se escondia cuando el pedido ya
+  // tenia envio gratis por monto. Ese camino se acabo el 12-sep-2026, asi que el
+  // canje es lo unico que le queda al cliente y no hay razon para esconderlo.
+  const hayPuntos = puedeUsarPuntos || puntos > 0;
   if (!hayFrio && !hayPuntos) return null;
 
   return (
@@ -78,7 +80,7 @@ export function BloqueExtras({
         </View>
       )}
 
-      {mostrarPuntos && puedeUsarPuntos && (
+      {puedeUsarPuntos && (
         <View className="flex-row justify-between items-center rounded-xl p-3" style={{ backgroundColor: colors.lowfill }}>
           <View className="flex-1">
             <Text style={{ fontSize: 13, fontFamily: fuentes.destacado, color: "#1A1C1A" }}>Usar {puntosParaEnvioGratis} puntos</Text>
@@ -92,7 +94,7 @@ export function BloqueExtras({
           />
         </View>
       )}
-      {mostrarPuntos && !puedeUsarPuntos && puntos > 0 && (
+      {!puedeUsarPuntos && puntos > 0 && (
         <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C", fontStyle: "italic", marginLeft: 4 }}>
           Tienes {puntos} pts. Necesitas {puntosParaEnvioGratis} para envío gratis.
         </Text>

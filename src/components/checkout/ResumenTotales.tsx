@@ -2,12 +2,14 @@
 // app/(tabs)/orders/[id].tsx:262-311 (el desglose canónico que ya usa el
 // detalle de pedido), más dos cosas que ese no necesita:
 //
-//   1. La barra de "faltan $X para envío gratis" absorbida como renglón bajo
-//      Domicilio (antes era una tarjeta suelta de 50pt en cart.tsx).
-//   2. El copy de "por qué el envío es gratis" derivado de
+//   1. El copy de "por qué el envío es gratis" derivado de
 //      `resumen.motivoEnvioGratis`, que calcularResumen() YA calcula y que
 //      antes nadie usaba: la barra inferior decía SIEMPRE "con tus puntos",
 //      así hubiera sido gratis por monto o por cupón.
+//
+// 12-sep-2026: aquí vivía también la barra de "faltan $X para envío gratis".
+// Se fue con el envío gratis por monto. No reintroducirla: ya no hay ningún
+// monto que alcanzar, y una barra que no se llena nunca es peor que ninguna.
 //
 // Recibe el ResumenPedido ENTERO, no subtotal/total sueltos, para que sea
 // imposible recalcular nada aquí: resumenPedido.ts es espejo del servidor y
@@ -22,7 +24,6 @@ import type { ResumenPedido } from "../../lib/resumenPedido";
 interface Props {
   resumen: ResumenPedido;
   envioCosto: number;
-  envioGratisMinimo: number;
   cuponCodigo?: string | null;
 }
 
@@ -42,12 +43,11 @@ function Renglon({ etiqueta, valor, color, hairline = true }: { etiqueta: string
   );
 }
 
-export function ResumenTotales({ resumen, envioCosto, envioGratisMinimo, cuponCodigo }: Props) {
+export function ResumenTotales({ resumen, envioCosto, cuponCodigo }: Props) {
   const { subtotal, descuento, envio, frio, total, motivoEnvioGratis } = resumen;
-  const faltaParaGratis = envio > 0 ? Math.max(0, envioGratisMinimo - subtotal) : 0;
   const ahorroEnvio = envio === 0 && motivoEnvioGratis ? envioCosto : 0;
   const totalAhorro = descuento + ahorroEnvio;
-  const copyGratis = envio === 0 ? copyEnvioGratis(motivoEnvioGratis, envioGratisMinimo) : null;
+  const copyGratis = envio === 0 ? copyEnvioGratis(motivoEnvioGratis) : null;
 
   return (
     <View className="rounded-2xl p-4 bg-white" style={{ backgroundColor: colors.surface }}>
@@ -62,22 +62,6 @@ export function ResumenTotales({ resumen, envioCosto, envioGratisMinimo, cuponCo
         </View>
         {copyGratis ? (
           <Text style={{ fontSize: 12, fontFamily: fuentes.destacado, color: colors.green, marginTop: 2 }}>{copyGratis}</Text>
-        ) : faltaParaGratis > 0 ? (
-          <View style={{ marginTop: 8 }}>
-            <Text style={{ fontFamily: fuentes.destacado, fontSize: 12, color: "#6D7B6C", marginBottom: 4 }}>
-              Faltan {formatCOP(faltaParaGratis)} para envío gratis
-            </Text>
-            <View style={{ height: 4, borderRadius: 2, backgroundColor: colors.line }}>
-              <View
-                style={{
-                  height: 4,
-                  borderRadius: 2,
-                  backgroundColor: colors.green,
-                  width: `${Math.min(100, (subtotal / envioGratisMinimo) * 100)}%`,
-                }}
-              />
-            </View>
-          </View>
         ) : null}
       </View>
 
