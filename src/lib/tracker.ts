@@ -337,12 +337,9 @@ const ALLOWED_KEYS: Record<EventTipo, readonly string[]> = {
   // decidido a proposito: el gatillo mas comun de este evento es la app yendose
   // a background, donde no hay pantalla para preguntar un motivo.
   //
-  // OJO AL LEER LA SERIE `envio_gratis` EN RETROSPECTIVA: desde el 12-sep-2026
-  // cambia de composicion, no de definicion. Antes el 68% de los envios
-  // regalados venia del umbral por monto; desde esa fecha ese camino no existe y
-  // solo quedan cupon y puntos. Una caida en esa serie a partir de ahi es el
-  // cambio de politica, no una regresion. (`supera_minimo` es sobre
-  // `pedido_minimo`, otra cosa: no lo toco este cambio.)
+  // OJO CON LA VENTANA DEL 12 AL 13-sep-2026 AL LEER `envio_gratis`: el umbral
+  // por monto se quito y se repuso un dia despues. En esas ~36 horas la serie cae
+  // por el cambio de politica y su reversa, no por comportamiento de nadie.
   carrito_abandonado: ['items_count', 'subtotal', 'tiene_direccion', 'supera_minimo', 'tienda_abierta', 'vio_formulario', 'envio', 'total', 'envio_gratis', 'tiene_pin', 'frio'],
   medio_pago_elegido: ['medio', 'cambio'],
   // Checkout denso (1.3.2/build 94).

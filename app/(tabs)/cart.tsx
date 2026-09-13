@@ -239,9 +239,11 @@ export default function CartScreen() {
   //
   // 500 desde la migracion 111 (12-sep-2026). El respaldo tiene que seguir al
   // del servidor: si se separan, el telefono habilita el switch con un saldo que
-  // el servidor no acepta, muestra envio $0 y le cobran $5.000.
+  // el servidor no acepta, muestra envio $0 y le cobran $5.000. Mismo argumento
+  // para envioGratisMinimo, que se lee de la config por la misma razon.
   const puntosParaEnvioGratis = configApp?.puntos_envio_gratis ?? 500;
   const puedeUsarPuntos = puntos >= puntosParaEnvioGratis;
+  const envioGratisMinimo = configApp?.envio_gratis_minimo ?? 150000;
   const envioCostoGlobal = configApp?.envio_costo ?? 5000;
   const pedidoMinimo = configApp?.pedido_minimo ?? 30000;
   // Medio de pago (093). Nace apagada: sin la bandera, ni se renderiza la fila
@@ -298,6 +300,7 @@ export default function CartScreen() {
     subtotal,
     descuentoCupon,
     envioCosto,
+    envioGratisMinimo,
     usaPuntos: usarPuntos && puedeUsarPuntos,
     cuponEnvioGratis: cuponValidado?.cupon.tipo === 'envio_gratis',
     frio: frioAplicado,
@@ -1144,6 +1147,7 @@ export default function CartScreen() {
               todosElegibles={todosElegibles}
               itemsElegibles={itemsElegibles}
               onToggleFrio={alternarFrio}
+              mostrarPuntos={subtotal < envioGratisMinimo}
               puedeUsarPuntos={puedeUsarPuntos}
               puntosParaEnvioGratis={puntosParaEnvioGratis}
               puntos={puntos}
@@ -1154,6 +1158,7 @@ export default function CartScreen() {
             <ResumenTotales
               resumen={resumen}
               envioCosto={envioCosto}
+              envioGratisMinimo={envioGratisMinimo}
               cuponCodigo={cuponValidado?.cupon.codigo}
             />
           </View>
