@@ -26,29 +26,51 @@ import { API_URL } from "../constants/config";
 // el dominio dedicado.
 export const STAGING_URL = "https://pruebas.estancocaqueta.com/api/v1";
 
-// Numeros que SIEMPRE trabajan contra staging. Solo cuentas del equipo.
+// Numeros que trabajan contra staging, Y HASTA CUANDO. Solo cuentas del equipo.
 //
-// Vacia entre el 21 y el 23-ago-2026 (ver historial): tenia este mismo numero
-// y el dueño terminaba en staging sin querer al abrir la app de la tienda con
-// SU numero — cuenta nueva en la base de pruebas, catalogo de pruebas, franja
-// naranja permanente, y su cuenta de staging se borro tres veces creyendo que
-// era basura.
+// LO QUE ESTA LISTA LE HACE A UN NUMERO: `aplicarModoPorTelefono()` corre en
+// login/registro/recuperacion ANTES de autenticar, o sea que la pantalla de
+// ingreso es un interruptor de entorno accionable desde el campo de telefono.
+// Mientras un numero este vigente aqui, su dueño NO puede comprar de verdad —la
+// app entera lo manda a staging— y el sintoma es que sus pedidos simplemente no
+// existen para el negocio. Ya paso: el 23-ago-2026 se puso el numero del dueño
+// "solo mientras se prueba la 1.3.2", la 1.3.2 se publico, y el numero seguia
+// aqui el 31-ago cuando lo encontro la auditoria del ingreso. Antes de eso
+// (21-ago) el mismo numero le habia borrado tres veces su cuenta de staging
+// creyendo que era basura.
 //
-// VACIA. Se reactivo el 23-ago-2026 con un numero para probar la 1.3.2 desde un
-// TestFlight de produccion, con la nota de quitarlo "en cuanto termine la
-// prueba". La 1.3.2 lleva publicada desde entonces y el numero seguia aqui.
+// POR ESO LA LISTA VENCE SOLA. La leccion de aquel incidente no fue "hay que
+// acordarse de quitarlo": fue que nadie se acuerda. `listaVigente()` devuelve
+// vacio pasada esta fecha, y `hidratarModoPruebas()` aprovecha el mismo camino
+// que ya existia para apagarle el modo pegajoso al dispositivo en el siguiente
+// arranque. Vencer devuelve el telefono a PRODUCCION, que es el estado seguro:
+// lo peor que pasa al vencerse es tener que extender la fecha; lo peor que pasa
+// sin vencimiento es un mes de compras que el negocio nunca vio.
 //
-// Se vacia el 31-ago-2026 por lo que descubrio la auditoria del ingreso, y no
-// es solo higiene: `aplicarModoPorTelefono()` corre en `login.tsx` ANTES de
-// autenticar, o sea que la pantalla de login es un interruptor de entorno
-// accionable desde el campo de telefono. Mientras un numero este en esta lista
-// su dueño NO puede comprar de verdad —la app entera lo manda a staging— y el
-// sintoma es que sus pedidos simplemente no existen para el negocio.
+// Extender = subir esta fecha en un commit, no "recordarlo". Terminar antes =
+// vaciar la lista. Las dos cosas viajan por OTA, que es JS puro.
 //
-// STAGING-ESTANCO.md ya declaraba esta lista vacia desde el 21/08 y llevaba
-// diez dias sin serlo. Para probar contra staging esta el perfil `staging` de
-// eas.json, que no depende de que nadie se acuerde de revertir una constante.
-export const TELEFONOS_PRUEBA: string[] = [];
+// Alternativa sin ninguno de estos riesgos, cuando no hace falta que sea EL
+// telefono real: el perfil `staging` de eas.json compila un binario aparte que
+// apunta a pruebas y no depende de revertir una constante.
+export const TELEFONOS_PRUEBA_HASTA = "2026-10-07";
+
+// 07-sep-2026: 3054239970 (cuenta del equipo, id 2 en produccion) para recorrer
+// el flujo completo contra staging desde la app normal de la tienda. Esa cuenta
+// NO existe en la base de staging: hay que registrarla alla la primera vez.
+export const TELEFONOS_PRUEBA: string[] = ["3054239970"];
+
+// Fin del dia, hora de Colombia (UTC-5). El reloj es el del telefono, y esta
+// bien que asi sea: adelantarlo solo apaga el modo pruebas, que es el lado
+// seguro del error.
+function vencida(hoy: Date): boolean {
+  return hoy.getTime() > new Date(`${TELEFONOS_PRUEBA_HASTA}T23:59:59-05:00`).getTime();
+}
+
+/** La lista que de verdad manda hoy. Vacia una vez vencida. */
+export function listaVigente(hoy: Date = new Date()): string[] {
+  return vencida(hoy) ? [] : TELEFONOS_PRUEBA;
+}
 
 const STORAGE_KEY = "backend_pruebas_activo";
 
@@ -73,9 +95,12 @@ export function hidratarModoPruebas(): Promise<void> {
         // "arreglaba" solo si cerraba sesion y volvia a entrar, que es
         // exactamente lo que nadie adivina que hay que hacer.
         //
-        // Con la lista vacia el modo no puede estar activo legitimamente, asi
-        // que apagarlo aqui es correcto por construccion, no un parche.
-        const sinNumerosDePrueba = TELEFONOS_PRUEBA.length === 0;
+        // Sin lista vigente el modo no puede estar activo legitimamente, asi
+        // que apagarlo aqui es correcto por construccion, no un parche. Es
+        // tambien lo que le da dientes al vencimiento: el dia despues de
+        // TELEFONOS_PRUEBA_HASTA, el siguiente arranque devuelve el telefono a
+        // produccion sin que nadie toque nada ni tenga que cerrar sesion.
+        const sinNumerosDePrueba = listaVigente().length === 0;
         activo = v === "1" && !sinNumerosDePrueba;
         if (v === "1" && sinNumerosDePrueba) {
           AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
@@ -89,7 +114,7 @@ export function hidratarModoPruebas(): Promise<void> {
 hidratarModoPruebas();
 
 export function esTelefonoPrueba(telefono: string): boolean {
-  return TELEFONOS_PRUEBA.includes(telefono.trim());
+  return listaVigente().includes(telefono.trim());
 }
 
 export function modoPruebasActivo(): boolean {
